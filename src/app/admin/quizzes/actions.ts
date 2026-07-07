@@ -37,8 +37,8 @@ export async function updateQuizTitleAction(
     where: { id: parsed.data.quizId },
     data: { title: parsed.data.title },
   });
-  revalidatePath(`/admin/quizzes/${parsed.data.quizId}`);
-  return undefined;
+  revalidatePath("/admin/lessons");
+  redirect("/admin/lessons");
 }
 
 export async function deleteQuizAction(quizId: string, lessonId: string) {

@@ -24,7 +24,7 @@ export function QuizTitleForm({ quizId, title }: { quizId: string; title: string
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover disabled:opacity-50"
+        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
       >
         {pending ? "Đang lưu..." : "Lưu"}
       </button>
