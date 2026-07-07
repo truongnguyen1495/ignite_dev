@@ -1,5 +1,12 @@
+import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { authConfig } from "@/lib/auth.config";
+
+// Middleware runs on the Edge runtime, which cannot bundle Prisma Client or
+// bcrypt — so this uses its own lightweight NextAuth instance built from the
+// edge-safe authConfig only (no Credentials provider), instead of importing
+// the full auth() from src/lib/auth.ts.
+const { auth } = NextAuth(authConfig);
 
 // This middleware is a coarse, Edge-runtime redirect for UX only (fast bounce
 // to /login, no flash of protected content). It reads claims off the JWT and
