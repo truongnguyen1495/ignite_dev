@@ -28,9 +28,9 @@ export function QuestionForm({
   const [error, formAction, pending] = useActionState(action, undefined);
 
   return (
-    <form action={formAction} className="max-w-xl space-y-4">
+    <form action={formAction} className="space-y-4">
       <div>
-        <label htmlFor="text" className="block text-sm font-medium mb-1">
+        <label htmlFor="text" className="mb-1.5 block text-sm font-medium text-foreground">
           Câu hỏi
         </label>
         <textarea
@@ -39,12 +39,12 @@ export function QuestionForm({
           defaultValue={initialText}
           required
           rows={3}
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
         />
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium">
+        <p className="text-sm font-medium text-foreground">
           Đáp án (tick vào ô vuông cho (các) đáp án đúng — có thể chọn nhiều)
         </p>
         {rows.map((row, i) => (
@@ -54,7 +54,7 @@ export function QuestionForm({
               name="optionCorrect"
               value={i}
               defaultChecked={row.isCorrect}
-              className="h-4 w-4"
+              className="h-4 w-4 accent-primary"
             />
             <input
               type="text"
@@ -62,13 +62,13 @@ export function QuestionForm({
               defaultValue={row.text}
               required
               placeholder={`Đáp án ${i + 1}`}
-              className="flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
             />
             {rows.length > 2 && (
               <button
                 type="button"
                 onClick={() => setRows(rows.filter((r) => r.key !== row.key))}
-                className="text-sm text-red-600"
+                className="text-sm text-danger"
               >
                 Xóa
               </button>
@@ -80,17 +80,17 @@ export function QuestionForm({
           onClick={() =>
             setRows([...rows, { key: crypto.randomUUID(), text: "", isCorrect: false }])
           }
-          className="text-sm text-zinc-500 hover:underline"
+          className="text-sm text-muted hover:text-foreground"
         >
           + Thêm đáp án
         </button>
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-zinc-900"
+        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
       >
         {pending ? "Đang lưu..." : "Lưu câu hỏi"}
       </button>

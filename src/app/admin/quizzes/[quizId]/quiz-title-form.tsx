@@ -7,10 +7,10 @@ export function QuizTitleForm({ quizId, title }: { quizId: string; title: string
   const [error, formAction, pending] = useActionState(updateQuizTitleAction, undefined);
 
   return (
-    <form action={formAction} className="flex max-w-xl items-end gap-2">
+    <form action={formAction} className="flex items-end gap-2">
       <input type="hidden" name="quizId" value={quizId} />
       <div className="flex-1">
-        <label htmlFor="title" className="block text-sm font-medium mb-1">
+        <label htmlFor="title" className="mb-1.5 block text-sm font-medium text-foreground">
           Tiêu đề bài test
         </label>
         <input
@@ -18,17 +18,17 @@ export function QuizTitleForm({ quizId, title }: { quizId: string; title: string
           name="title"
           defaultValue={title}
           required
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
         />
       </div>
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md border border-zinc-300 px-3 py-2 text-sm disabled:opacity-50 dark:border-zinc-700"
+        className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover disabled:opacity-50"
       >
         {pending ? "Đang lưu..." : "Lưu"}
       </button>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </form>
   );
 }

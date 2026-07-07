@@ -1,3 +1,4 @@
+import { CheckCircle2, XCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
 import { approveLevelUpRequestAction } from "./actions";
@@ -21,15 +22,15 @@ export default async function LevelUpRequestsPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-3">
-        <h1 className="text-xl font-semibold">Yêu cầu lên cấp đang chờ</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Yêu cầu lên cấp đang chờ</h1>
         {pending.length === 0 ? (
-          <p className="text-sm text-zinc-500">Không có yêu cầu nào đang chờ duyệt.</p>
+          <p className="text-sm text-muted">Không có yêu cầu nào đang chờ duyệt.</p>
         ) : (
           <ul className="space-y-3">
             {pending.map((req) => (
-              <li key={req.id} className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-                <p className="font-medium">{req.student.name}</p>
-                <p className="text-sm text-zinc-500">
+              <li key={req.id} className="rounded-xl border border-border bg-surface p-6">
+                <p className="font-medium text-foreground">{req.student.name}</p>
+                <p className="text-sm text-muted">
                   {req.student.email} · Đang ở {LEVEL_LABELS[req.fromLevel]}, xin lên {LEVEL_LABELS[req.toLevel]}
                 </p>
                 <div className="mt-3 flex flex-wrap items-center gap-4">
@@ -38,7 +39,7 @@ export default async function LevelUpRequestsPage() {
                     <select
                       name="toLevel"
                       defaultValue={req.toLevel}
-                      className="rounded-md border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                      className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
                     >
                       {ORDERED_LEVELS.map((level) => (
                         <option key={level} value={level}>
@@ -48,8 +49,9 @@ export default async function LevelUpRequestsPage() {
                     </select>
                     <button
                       type="submit"
-                      className="rounded-md bg-zinc-900 px-3 py-1 text-sm font-medium text-white dark:bg-white dark:text-zinc-900"
+                      className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
                     >
+                      <CheckCircle2 className="h-4 w-4" />
                       Duyệt
                     </button>
                   </form>
@@ -62,20 +64,28 @@ export default async function LevelUpRequestsPage() {
       </div>
 
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-zinc-500">Lịch sử gần đây</h2>
+        <h2 className="text-sm font-semibold text-muted">Lịch sử gần đây</h2>
         {history.length === 0 ? (
-          <p className="text-sm text-zinc-500">Chưa có yêu cầu nào được xử lý.</p>
+          <p className="text-sm text-muted">Chưa có yêu cầu nào được xử lý.</p>
         ) : (
           <ul className="space-y-2">
             {history.map((req) => (
-              <li key={req.id} className="rounded-lg border border-zinc-100 p-3 text-sm dark:border-zinc-900">
-                <span className="font-medium">{req.student.name}</span> — {LEVEL_LABELS[req.fromLevel]} →{" "}
-                {LEVEL_LABELS[req.toLevel]} —{" "}
-                <span className={req.status === "APPROVED" ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"}>
-                  {req.status === "APPROVED" ? "Đã duyệt" : "Đã từ chối"}
+              <li key={req.id} className="flex items-center justify-between rounded-lg border border-border bg-surface p-3 text-sm">
+                <span>
+                  <span className="font-medium text-foreground">{req.student.name}</span>{" "}
+                  <span className="text-muted">
+                    — {LEVEL_LABELS[req.fromLevel]} → {LEVEL_LABELS[req.toLevel]}
+                    {req.status === "REJECTED" && req.reviewerNote && ` (${req.reviewerNote})`}
+                  </span>
                 </span>
-                {req.status === "REJECTED" && req.reviewerNote && (
-                  <span className="text-zinc-500"> ({req.reviewerNote})</span>
+                {req.status === "APPROVED" ? (
+                  <span className="flex items-center gap-1 text-success">
+                    <CheckCircle2 className="h-4 w-4" /> Đã duyệt
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-danger">
+                    <XCircle className="h-4 w-4" /> Đã từ chối
+                  </span>
                 )}
               </li>
             ))}

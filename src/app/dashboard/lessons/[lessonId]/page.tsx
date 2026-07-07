@@ -1,9 +1,11 @@
 import Link from "next/link";
 import Markdown from "react-markdown";
+import { ClipboardList } from "lucide-react";
 import { requireLessonAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { YoutubeEmbed } from "@/components/youtube-embed";
+import { BackLink } from "@/components/ui/back-link";
 
 export default async function StudentLessonPage({
   params,
@@ -22,24 +24,23 @@ export default async function StudentLessonPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href={`/dashboard/levels/${lesson.level}`} className="text-sm text-zinc-500 hover:underline">
-          ← {LEVEL_LABELS[lesson.level]}
-        </Link>
-        <h1 className="mt-1 text-xl font-semibold">{lesson.title}</h1>
+        <BackLink href={`/dashboard/levels/${lesson.level}`}>{LEVEL_LABELS[lesson.level]}</BackLink>
+        <h1 className="mt-2 text-2xl font-semibold text-foreground">{lesson.title}</h1>
       </div>
 
       {lesson.youtubeId && <YoutubeEmbed videoId={lesson.youtubeId} />}
 
-      <article className="prose prose-zinc max-w-none dark:prose-invert">
+      <article className="prose prose-invert max-w-none rounded-xl border border-border bg-surface p-6">
         <Markdown>{lesson.content}</Markdown>
       </article>
 
       {quiz && (
         <Link
           href={`/dashboard/quizzes/${quiz.id}`}
-          className="inline-block rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-zinc-900"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
         >
-          Làm bài test →
+          <ClipboardList className="h-4 w-4" />
+          Làm bài test
         </Link>
       )}
     </div>

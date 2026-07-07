@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { XCircle } from "lucide-react";
 import { rejectLevelUpRequestAction } from "./actions";
 
 export function RejectForm({ requestId }: { requestId: string }) {
@@ -14,16 +15,17 @@ export function RejectForm({ requestId }: { requestId: string }) {
         name="reviewerNote"
         required
         placeholder="Lý do từ chối"
-        className="rounded-md border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+        className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
       />
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md border border-red-300 px-3 py-1 text-sm text-red-700 disabled:opacity-50 dark:border-red-900 dark:text-red-400"
+        className="flex items-center gap-1.5 rounded-lg border border-danger/30 px-3 py-1.5 text-sm font-medium text-danger transition-colors hover:bg-danger-bg disabled:opacity-50"
       >
+        <XCircle className="h-4 w-4" />
         {pending ? "..." : "Từ chối"}
       </button>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </form>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Clock, CheckCircle2, XCircle } from "lucide-react";
 import { requireActiveStudent } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { LEVEL_LABELS, isMaxLevel, nextLevel } from "@/lib/levels";
@@ -27,49 +28,50 @@ export default async function LevelUpPage() {
 
   return (
     <div className="max-w-xl space-y-6">
-      <h1 className="text-xl font-semibold">Xin lên cấp</h1>
-      <p className="text-sm text-zinc-500">
-        Cấp hiện tại: <span className="font-medium text-zinc-900 dark:text-zinc-100">{LEVEL_LABELS[student.grantedLevel]}</span>
+      <h1 className="text-2xl font-semibold text-foreground">Xin lên cấp</h1>
+      <p className="text-sm text-muted">
+        Cấp hiện tại: <span className="font-medium text-foreground">{LEVEL_LABELS[student.grantedLevel]}</span>
       </p>
 
       {latestRequest && (
-        <div className="rounded-lg border border-zinc-200 p-4 text-sm dark:border-zinc-800">
-          <p>
+        <div className="rounded-xl border border-border bg-surface p-6 text-sm">
+          <p className="text-foreground">
             Yêu cầu gần nhất: lên <span className="font-medium">{LEVEL_LABELS[latestRequest.toLevel]}</span>
           </p>
-          <p className="mt-1">
-            Trạng thái:{" "}
-            <span
-              className={
-                latestRequest.status === "APPROVED"
-                  ? "text-green-700 dark:text-green-400"
-                  : latestRequest.status === "REJECTED"
-                    ? "text-red-700 dark:text-red-400"
-                    : "text-zinc-500"
-              }
-            >
-              {STATUS_LABELS[latestRequest.status]}
-            </span>
+          <p className="mt-2 flex items-center gap-1.5">
+            {latestRequest.status === "APPROVED" ? (
+              <span className="flex items-center gap-1.5 text-success">
+                <CheckCircle2 className="h-4 w-4" /> {STATUS_LABELS[latestRequest.status]}
+              </span>
+            ) : latestRequest.status === "REJECTED" ? (
+              <span className="flex items-center gap-1.5 text-danger">
+                <XCircle className="h-4 w-4" /> {STATUS_LABELS[latestRequest.status]}
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-muted">
+                <Clock className="h-4 w-4" /> {STATUS_LABELS[latestRequest.status]}
+              </span>
+            )}
           </p>
           {latestRequest.status === "REJECTED" && latestRequest.reviewerNote && (
-            <p className="mt-1 text-zinc-500">Lý do từ chối: {latestRequest.reviewerNote}</p>
+            <p className="mt-1 text-muted">Lý do từ chối: {latestRequest.reviewerNote}</p>
           )}
         </div>
       )}
 
       {atMaxLevel ? (
-        <p className="text-sm text-zinc-500">Bạn đã ở cấp cao nhất.</p>
+        <p className="text-sm text-muted">Bạn đã ở cấp cao nhất.</p>
       ) : hasPending ? (
-        <p className="text-sm text-zinc-500">Yêu cầu của bạn đang chờ Super Admin duyệt.</p>
+        <p className="text-sm text-muted">Yêu cầu của bạn đang chờ Super Admin duyệt.</p>
       ) : incompleteQuizzes.length > 0 ? (
         <div className="space-y-2">
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-muted">
             Bạn cần đạt tất cả bài test ở {LEVEL_LABELS[student.grantedLevel]} trước khi xin lên cấp. Còn thiếu:
           </p>
           <ul className="space-y-1 text-sm">
             {incompleteQuizzes.map((quiz) => (
               <li key={quiz.id}>
-                <Link href={`/dashboard/lessons/${quiz.lessonId}`} className="text-zinc-900 hover:underline dark:text-zinc-100">
+                <Link href={`/dashboard/lessons/${quiz.lessonId}`} className="text-foreground hover:text-primary">
                   {quiz.lesson.title}
                 </Link>
               </li>

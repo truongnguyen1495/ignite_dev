@@ -1,6 +1,6 @@
 export function YoutubeEmbed({ videoId }: { videoId: string }) {
   return (
-    <div className="aspect-video w-full overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+    <div className="aspect-video w-full overflow-hidden rounded-lg border border-border">
       <iframe
         className="h-full w-full"
         src={`https://www.youtube.com/embed/${videoId}`}

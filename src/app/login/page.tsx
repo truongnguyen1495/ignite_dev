@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { BrandLogo } from "@/components/brand-logo";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage() {
@@ -19,11 +20,13 @@ export default async function LoginPage() {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-4">
-      <div className="mb-8 text-center">
-        <h1 className="text-2xl font-semibold">LMS Nội Bộ</h1>
-        <p className="text-sm text-zinc-500">Đăng nhập để tiếp tục</p>
+      <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-8">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <BrandLogo />
+          <p className="mt-3 text-sm text-muted">Đăng nhập để tiếp tục</p>
+        </div>
+        <LoginForm />
       </div>
-      <LoginForm />
     </div>
   );
 }

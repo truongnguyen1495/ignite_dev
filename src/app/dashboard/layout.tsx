@@ -1,7 +1,16 @@
-import Link from "next/link";
+import { LayoutDashboard, ArrowUpCircle, GraduationCap } from "lucide-react";
 import { requireActiveStudent } from "@/lib/access";
 import { LEVEL_LABELS } from "@/lib/levels";
+import { Sidebar, type NavItem } from "@/components/ui/sidebar";
+import { BrandLogo } from "@/components/brand-logo";
 import { LogoutButton } from "@/components/logout-button";
+
+const iconClass = "h-4 w-4";
+
+const NAV_ITEMS: NavItem[] = [
+  { href: "/dashboard", label: "5 Cấp đào tạo", icon: <LayoutDashboard className={iconClass} />, exact: true },
+  { href: "/dashboard/level-up", label: "Xin lên cấp", icon: <ArrowUpCircle className={iconClass} /> },
+];
 
 export default async function DashboardLayout({
   children,
@@ -11,26 +20,18 @@ export default async function DashboardLayout({
   const student = await requireActiveStudent();
 
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="border-b border-zinc-200 dark:border-zinc-800">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="/dashboard" className="font-semibold">
-              LMS Nội Bộ
-            </Link>
-            <Link href="/dashboard/level-up" className="text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
-              Xin lên cấp
-            </Link>
-          </nav>
-          <div className="flex items-center gap-3 text-sm">
-            <span className="text-zinc-500">
-              {student.name} · {LEVEL_LABELS[student.grantedLevel]}
-            </span>
-            <LogoutButton />
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">{children}</main>
+    <div className="flex min-h-screen">
+      <Sidebar items={NAV_ITEMS} brand={<BrandLogo subtitle="Học viên" />} />
+      <div className="flex flex-1 flex-col">
+        <header className="flex items-center justify-end gap-4 border-b border-border px-8 py-4">
+          <span className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs text-muted">
+            <GraduationCap className="h-3.5 w-3.5 text-primary" />
+            {student.name} <span className="text-foreground">({LEVEL_LABELS[student.grantedLevel]})</span>
+          </span>
+          <LogoutButton />
+        </header>
+        <main className="flex-1 px-8 py-8">{children}</main>
+      </div>
     </div>
   );
 }

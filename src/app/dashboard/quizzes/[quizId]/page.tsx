@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { requireQuizAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { submitQuizAttemptAction } from "../actions";
+import { BackLink } from "@/components/ui/back-link";
 
 export default async function TakeQuizPage({
   params,
@@ -24,25 +24,31 @@ export default async function TakeQuizPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href={`/dashboard/lessons/${quiz.lessonId}`} className="text-sm text-zinc-500 hover:underline">
-          ← Quay lại bài học
-        </Link>
-        <h1 className="mt-1 text-xl font-semibold">{quiz.title}</h1>
+        <BackLink href={`/dashboard/lessons/${quiz.lessonId}`}>Quay lại bài học</BackLink>
+        <h1 className="mt-2 text-2xl font-semibold text-foreground">{quiz.title}</h1>
       </div>
 
       {questions.length === 0 ? (
-        <p className="text-sm text-zinc-500">Bài test này chưa có câu hỏi.</p>
+        <p className="text-sm text-muted">Bài test này chưa có câu hỏi.</p>
       ) : (
         <form action={submitQuizAttemptAction.bind(null, quiz.id)} className="space-y-6">
           {questions.map((question, index) => (
-            <fieldset key={question.id} className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-              <legend className="px-1 font-medium">
+            <fieldset key={question.id} className="rounded-xl border border-border bg-surface p-6">
+              <legend className="px-1 font-medium text-foreground">
                 {index + 1}. {question.text}
               </legend>
-              <div className="mt-2 space-y-2">
+              <div className="mt-3 space-y-2">
                 {question.options.map((option) => (
-                  <label key={option.id} className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" name={`answer-${question.id}`} value={option.id} className="h-4 w-4" />
+                  <label
+                    key={option.id}
+                    className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-foreground hover:bg-surface-hover"
+                  >
+                    <input
+                      type="checkbox"
+                      name={`answer-${question.id}`}
+                      value={option.id}
+                      className="h-4 w-4 accent-primary"
+                    />
                     {option.text}
                   </label>
                 ))}
@@ -51,7 +57,7 @@ export default async function TakeQuizPage({
           ))}
           <button
             type="submit"
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-zinc-900"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
           >
             Nộp bài
           </button>

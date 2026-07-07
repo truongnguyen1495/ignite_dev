@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LMS Nội Bộ",
+  title: "LMS IGNITE",
   description: "Hệ thống đào tạo nội bộ 5 cấp",
 };
 

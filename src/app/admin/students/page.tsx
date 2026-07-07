@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { Plus, Eye } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { LEVEL_LABELS } from "@/lib/levels";
+import { LevelBadge } from "@/components/ui/level-badge";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { ToggleStudentStatusButton, DeleteStudentButton } from "./[studentId]/danger-actions";
 
 export default async function StudentsPage() {
   const students = await prisma.user.findMany({
@@ -11,49 +14,61 @@ export default async function StudentsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Học viên</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Danh sách Học viên ({students.length})</h1>
         <Link
           href="/admin/students/new"
-          className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white dark:bg-white dark:text-zinc-900"
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
         >
-          + Thêm học viên
+          <Plus className="h-4 w-4" />
+          Thêm Học viên Mới
         </Link>
       </div>
 
       {students.length === 0 ? (
-        <p className="text-sm text-zinc-500">Chưa có học viên nào.</p>
+        <p className="text-sm text-muted">Chưa có học viên nào.</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
+        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="w-full text-sm">
-            <thead className="border-b border-zinc-200 bg-zinc-50 text-left dark:border-zinc-800 dark:bg-zinc-900">
+            <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted">
               <tr>
-                <th className="px-4 py-2 font-medium">Tên</th>
-                <th className="px-4 py-2 font-medium">Email</th>
-                <th className="px-4 py-2 font-medium">Cấp hiện tại</th>
-                <th className="px-4 py-2 font-medium">Trạng thái</th>
-                <th className="px-4 py-2 font-medium"></th>
+                <th className="px-6 py-3 font-medium">Họ tên</th>
+                <th className="px-6 py-3 font-medium">Tài khoản</th>
+                <th className="px-6 py-3 font-medium">Cấp độ hiện tại</th>
+                <th className="px-6 py-3 font-medium">Trạng thái</th>
+                <th className="px-6 py-3 font-medium text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody>
               {students.map((student) => (
-                <tr key={student.id} className="border-b border-zinc-100 last:border-0 dark:border-zinc-900">
-                  <td className="px-4 py-2">{student.name}</td>
-                  <td className="px-4 py-2 text-zinc-500">{student.email}</td>
-                  <td className="px-4 py-2">{LEVEL_LABELS[student.grantedLevel]}</td>
-                  <td className="px-4 py-2">
-                    {student.status === "ACTIVE" ? (
-                      <span className="text-green-700 dark:text-green-400">Hoạt động</span>
-                    ) : (
-                      <span className="text-red-700 dark:text-red-400">Đã khóa</span>
-                    )}
+                <tr key={student.id} className="border-b border-border last:border-0 hover:bg-surface-hover">
+                  <td className="px-6 py-4 font-medium text-foreground">{student.name}</td>
+                  <td className="px-6 py-4 text-muted">{student.email}</td>
+                  <td className="px-6 py-4">
+                    <LevelBadge level={student.grantedLevel} />
                   </td>
-                  <td className="px-4 py-2 text-right">
-                    <Link
-                      href={`/admin/students/${student.id}`}
-                      className="text-zinc-500 hover:underline"
-                    >
-                      Sửa
-                    </Link>
+                  <td className="px-6 py-4">
+                    <StatusBadge status={student.status} />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-end gap-1">
+                      <Link
+                        href={`/admin/students/${student.id}`}
+                        title="Xem / sửa"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Link>
+                      <ToggleStudentStatusButton
+                        studentId={student.id}
+                        locked={student.status === "LOCKED"}
+                        iconOnly
+                      />
+                      <DeleteStudentButton
+                        studentId={student.id}
+                        studentName={student.name}
+                        iconOnly
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

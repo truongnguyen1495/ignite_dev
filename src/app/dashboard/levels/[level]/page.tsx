@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BookOpen } from "lucide-react";
 import { requireLevelAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { LEVEL_LABELS, parseLevel } from "@/lib/levels";
+import { BackLink } from "@/components/ui/back-link";
 
 export default async function LevelPage({
   params,
@@ -27,22 +29,21 @@ export default async function LevelPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/dashboard" className="text-sm text-zinc-500 hover:underline">
-          ← Quay lại
-        </Link>
-        <h1 className="mt-1 text-xl font-semibold">{LEVEL_LABELS[level]}</h1>
+        <BackLink href="/dashboard">Quay lại</BackLink>
+        <h1 className="mt-2 text-2xl font-semibold text-foreground">{LEVEL_LABELS[level]}</h1>
       </div>
       {lessons.length === 0 ? (
-        <p className="text-sm text-zinc-500">Chưa có bài học nào ở cấp này.</p>
+        <p className="text-sm text-muted">Chưa có bài học nào ở cấp này.</p>
       ) : (
         <ul className="space-y-2">
           {lessons.map((lesson) => (
             <li key={lesson.id}>
               <Link
                 href={`/dashboard/lessons/${lesson.id}`}
-                className="block rounded-lg border border-zinc-200 p-4 hover:border-zinc-400 dark:border-zinc-800"
+                className="flex items-center gap-3 rounded-xl border border-border bg-surface p-4 hover:border-primary/50"
               >
-                {lesson.title}
+                <BookOpen className="h-4 w-4 text-primary" />
+                <span className="text-foreground">{lesson.title}</span>
               </Link>
             </li>
           ))}

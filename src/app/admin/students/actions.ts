@@ -118,5 +118,4 @@ export async function deleteStudentAction(studentId: string) {
   await requireActiveSuperAdmin();
   await prisma.user.delete({ where: { id: studentId, role: "STUDENT" } });
   revalidatePath("/admin/students");
-  redirect("/admin/students");
 }

@@ -10,8 +10,10 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Cài đặt</h1>
-      <SettingsForm passPercentage={settings.passPercentage} />
+      <h1 className="text-2xl font-semibold text-foreground">Cài đặt</h1>
+      <div className="max-w-sm rounded-xl border border-border bg-surface p-6">
+        <SettingsForm passPercentage={settings.passPercentage} />
+      </div>
     </div>
   );
 }

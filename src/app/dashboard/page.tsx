@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Lock, Unlock, AlertTriangle } from "lucide-react";
 import { requireActiveStudent } from "@/lib/access";
-import { ORDERED_LEVELS, LEVEL_LABELS, hasLevelAccess } from "@/lib/levels";
+import { ORDERED_LEVELS, LEVEL_NAMES, hasLevelAccess } from "@/lib/levels";
+import { LevelBadge } from "@/components/ui/level-badge";
 
 export default async function StudentDashboardPage({
   searchParams,
@@ -13,27 +15,35 @@ export default async function StudentDashboardPage({
   return (
     <div className="space-y-6">
       {denied && (
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+        <p className="flex items-center gap-2 rounded-lg border border-danger/30 bg-danger-bg px-4 py-3 text-sm text-danger">
+          <AlertTriangle className="h-4 w-4" />
           Bạn không có quyền truy cập nội dung đó.
         </p>
       )}
-      <h1 className="text-xl font-semibold">5 Cấp Đào Tạo</h1>
+      <h1 className="text-2xl font-semibold text-foreground">5 Cấp Đào Tạo</h1>
       <div className="grid gap-4 sm:grid-cols-2">
         {ORDERED_LEVELS.map((level) => {
           const unlocked = hasLevelAccess(student.grantedLevel, level);
           const card = (
             <div
-              className={`rounded-lg border p-4 ${
+              className={`rounded-xl border p-5 transition-colors ${
                 unlocked
-                  ? "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800"
-                  : "border-zinc-100 bg-zinc-50 opacity-60 dark:border-zinc-900 dark:bg-zinc-900"
+                  ? "border-border bg-surface hover:border-primary/50"
+                  : "border-border bg-surface/40 opacity-60"
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="font-medium">{LEVEL_LABELS[level]}</span>
-                {!unlocked && <span aria-hidden>🔒</span>}
+                <div className="flex items-center gap-2">
+                  <LevelBadge level={level} />
+                  <span className="font-medium text-foreground">{LEVEL_NAMES[level]}</span>
+                </div>
+                {unlocked ? (
+                  <Unlock className="h-4 w-4 text-success" />
+                ) : (
+                  <Lock className="h-4 w-4 text-muted" />
+                )}
               </div>
-              <p className="mt-1 text-sm text-zinc-500">
+              <p className="mt-2 text-sm text-muted">
                 {unlocked ? "Đã mở khóa" : "Chưa được cấp quyền"}
               </p>
             </div>

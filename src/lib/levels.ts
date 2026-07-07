@@ -16,6 +16,14 @@ export const LEVEL_LABELS: Record<Level, string> = {
   CORE_LEADER: "Cấp 5: Core leader",
 };
 
+export const LEVEL_NAMES: Record<Level, string> = {
+  CUSTOMER: "Customer",
+  NEW_STARTER: "New starter",
+  JUNIOR: "Junior",
+  SENIOR: "Senior",
+  CORE_LEADER: "Core leader",
+};
+
 export const ORDERED_LEVELS: Level[] = (
   Object.keys(LEVEL_ORDER) as Level[]
 ).sort((a, b) => LEVEL_ORDER[a] - LEVEL_ORDER[b]);

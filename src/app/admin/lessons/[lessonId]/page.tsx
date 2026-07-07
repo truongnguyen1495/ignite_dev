@@ -1,9 +1,11 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ClipboardList } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { BackLink } from "@/components/ui/back-link";
 import { EditLessonForm } from "./edit-lesson-form";
 import { DeleteLessonButton } from "./delete-lesson-button";
 import { createQuizForLessonAction } from "../../quizzes/actions";
+import Link from "next/link";
 
 export default async function EditLessonPage({
   params,
@@ -22,35 +24,36 @@ export default async function EditLessonPage({
   return (
     <div className="space-y-8">
       <div>
-        <Link href="/admin/lessons" className="text-sm text-zinc-500 hover:underline">
-          ← Quay lại
-        </Link>
-        <h1 className="mt-1 text-xl font-semibold">{lesson.title}</h1>
+        <BackLink href="/admin/lessons">Quay lại</BackLink>
+        <h1 className="mt-2 text-2xl font-semibold text-foreground">{lesson.title}</h1>
       </div>
 
-      <EditLessonForm
-        lessonId={lesson.id}
-        title={lesson.title}
-        level={lesson.level}
-        content={lesson.content}
-        youtubeId={lesson.youtubeId}
-        order={lesson.order}
-      />
+      <div className="max-w-xl rounded-xl border border-border bg-surface p-6">
+        <EditLessonForm
+          lessonId={lesson.id}
+          title={lesson.title}
+          level={lesson.level}
+          content={lesson.content}
+          youtubeId={lesson.youtubeId}
+          order={lesson.order}
+        />
+      </div>
 
-      <div className="max-w-xl space-y-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-        <h2 className="text-sm font-semibold">Bài test</h2>
+      <div className="max-w-xl space-y-3 rounded-xl border border-border bg-surface p-6">
+        <h2 className="text-sm font-semibold text-foreground">Bài test</h2>
         {lesson.quiz ? (
           <Link
             href={`/admin/quizzes/${lesson.quiz.id}`}
-            className="inline-block rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white dark:bg-white dark:text-zinc-900"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
           >
-            Quản lý bài test →
+            <ClipboardList className="h-4 w-4" />
+            Quản lý bài test
           </Link>
         ) : (
           <form action={createQuizForLessonAction.bind(null, lesson.id)}>
             <button
               type="submit"
-              className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white dark:bg-white dark:text-zinc-900"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
             >
               + Tạo bài test
             </button>
@@ -58,8 +61,8 @@ export default async function EditLessonPage({
         )}
       </div>
 
-      <div className="max-w-xl space-y-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-        <h2 className="text-sm font-semibold">Khu vực nguy hiểm</h2>
+      <div className="max-w-xl space-y-3 rounded-xl border border-border bg-surface p-6">
+        <h2 className="text-sm font-semibold text-foreground">Khu vực nguy hiểm</h2>
         <DeleteLessonButton lessonId={lesson.id} lessonTitle={lesson.title} />
       </div>
     </div>

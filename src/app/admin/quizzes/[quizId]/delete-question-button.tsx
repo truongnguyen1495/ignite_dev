@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 import { deleteQuestionAction } from "../actions";
 
 export function DeleteQuestionButton({
@@ -18,6 +19,7 @@ export function DeleteQuestionButton({
     <button
       type="button"
       disabled={pending}
+      title="Xóa"
       onClick={() => {
         if (confirm("Xóa câu hỏi này?")) {
           startTransition(async () => {
@@ -26,9 +28,9 @@ export function DeleteQuestionButton({
           });
         }
       }}
-      className="text-sm text-red-600 disabled:opacity-50"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-danger-bg hover:text-danger disabled:opacity-50"
     >
-      {pending ? "Đang xóa..." : "Xóa"}
+      <Trash2 className="h-4 w-4" />
     </button>
   );
 }

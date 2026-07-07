@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus, Video, ClipboardList } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
 
@@ -11,12 +12,13 @@ export default async function LessonsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Bài học</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Bài học</h1>
         <Link
           href="/admin/lessons/new"
-          className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white dark:bg-white dark:text-zinc-900"
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
         >
-          + Thêm bài học
+          <Plus className="h-4 w-4" />
+          Thêm bài học
         </Link>
       </div>
 
@@ -24,21 +26,24 @@ export default async function LessonsPage() {
         const levelLessons = lessons.filter((l) => l.level === level);
         return (
           <div key={level} className="space-y-2">
-            <h2 className="text-sm font-semibold text-zinc-500">{LEVEL_LABELS[level]}</h2>
+            <h2 className="text-sm font-semibold text-muted">{LEVEL_LABELS[level]}</h2>
             {levelLessons.length === 0 ? (
-              <p className="text-sm text-zinc-400">Chưa có bài học.</p>
+              <p className="text-sm text-muted">Chưa có bài học.</p>
             ) : (
               <ul className="space-y-2">
                 {levelLessons.map((lesson) => (
                   <li key={lesson.id}>
                     <Link
                       href={`/admin/lessons/${lesson.id}`}
-                      className="flex items-center justify-between rounded-lg border border-zinc-200 p-3 hover:border-zinc-400 dark:border-zinc-800"
+                      className="flex items-center justify-between rounded-lg border border-border bg-surface p-3 hover:border-primary/50"
                     >
-                      <span>{lesson.title}</span>
-                      <span className="text-xs text-zinc-400">
-                        {lesson.youtubeId ? "🎬 " : ""}
-                        {lesson.quiz ? "📝 có bài test" : "chưa có bài test"}
+                      <span className="text-foreground">{lesson.title}</span>
+                      <span className="flex items-center gap-3 text-xs text-muted">
+                        {lesson.youtubeId && <Video className="h-3.5 w-3.5" />}
+                        <span className="flex items-center gap-1">
+                          <ClipboardList className="h-3.5 w-3.5" />
+                          {lesson.quiz ? "Có bài test" : "Chưa có bài test"}
+                        </span>
                       </span>
                     </Link>
                   </li>

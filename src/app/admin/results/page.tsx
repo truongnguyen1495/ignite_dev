@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Badge } from "@/components/ui/badge";
 
 export default async function ResultsPage() {
   const attempts = await prisma.quizAttempt.findMany({
@@ -11,36 +12,36 @@ export default async function ResultsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Kết quả bài test</h1>
+      <h1 className="text-2xl font-semibold text-foreground">Kết quả bài test</h1>
 
       {attempts.length === 0 ? (
-        <p className="text-sm text-zinc-500">Chưa có lượt làm bài test nào.</p>
+        <p className="text-sm text-muted">Chưa có lượt làm bài test nào.</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
+        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="w-full text-sm">
-            <thead className="border-b border-zinc-200 bg-zinc-50 text-left dark:border-zinc-800 dark:bg-zinc-900">
+            <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted">
               <tr>
-                <th className="px-4 py-2 font-medium">Học viên</th>
-                <th className="px-4 py-2 font-medium">Bài học</th>
-                <th className="px-4 py-2 font-medium">Điểm</th>
-                <th className="px-4 py-2 font-medium">Kết quả</th>
-                <th className="px-4 py-2 font-medium">Thời gian</th>
+                <th className="px-6 py-3 font-medium">Học viên</th>
+                <th className="px-6 py-3 font-medium">Bài học</th>
+                <th className="px-6 py-3 font-medium">Điểm</th>
+                <th className="px-6 py-3 font-medium">Kết quả</th>
+                <th className="px-6 py-3 font-medium">Thời gian</th>
               </tr>
             </thead>
             <tbody>
               {attempts.map((attempt) => (
-                <tr key={attempt.id} className="border-b border-zinc-100 last:border-0 dark:border-zinc-900">
-                  <td className="px-4 py-2">{attempt.student.name}</td>
-                  <td className="px-4 py-2 text-zinc-500">{attempt.quiz.lesson.title}</td>
-                  <td className="px-4 py-2">{attempt.scorePercent}%</td>
-                  <td className="px-4 py-2">
+                <tr key={attempt.id} className="border-b border-border last:border-0 hover:bg-surface-hover">
+                  <td className="px-6 py-4 font-medium text-foreground">{attempt.student.name}</td>
+                  <td className="px-6 py-4 text-muted">{attempt.quiz.lesson.title}</td>
+                  <td className="px-6 py-4 text-foreground">{attempt.scorePercent}%</td>
+                  <td className="px-6 py-4">
                     {attempt.passed ? (
-                      <span className="text-green-700 dark:text-green-400">Đạt</span>
+                      <Badge color="success">Đạt</Badge>
                     ) : (
-                      <span className="text-red-700 dark:text-red-400">Chưa đạt</span>
+                      <Badge color="danger">Chưa đạt</Badge>
                     )}
                   </td>
-                  <td className="px-4 py-2 text-zinc-500">
+                  <td className="px-6 py-4 text-muted">
                     {attempt.attemptedAt.toLocaleString("vi-VN")}
                   </td>
                 </tr>

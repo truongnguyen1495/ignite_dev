@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Plus, CheckCircle2, Circle, Pencil } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { BackLink } from "@/components/ui/back-link";
 import { QuizTitleForm } from "./quiz-title-form";
 import { DeleteQuestionButton } from "./delete-question-button";
 import { DeleteQuizButton } from "./delete-quiz-button";
@@ -28,50 +30,56 @@ export default async function QuizManagementPage({
   return (
     <div className="space-y-8">
       <div>
-        <Link href={`/admin/lessons/${quiz.lessonId}`} className="text-sm text-zinc-500 hover:underline">
-          ← {quiz.lesson.title}
-        </Link>
-        <h1 className="mt-1 text-xl font-semibold">{quiz.title}</h1>
+        <BackLink href={`/admin/lessons/${quiz.lessonId}`}>{quiz.lesson.title}</BackLink>
+        <h1 className="mt-2 text-2xl font-semibold text-foreground">{quiz.title}</h1>
       </div>
 
-      <QuizTitleForm quizId={quiz.id} title={quiz.title} />
+      <div className="max-w-xl rounded-xl border border-border bg-surface p-6">
+        <QuizTitleForm quizId={quiz.id} title={quiz.title} />
+      </div>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-zinc-500">Câu hỏi ({quiz.questions.length})</h2>
+          <h2 className="text-sm font-semibold text-muted">Câu hỏi ({quiz.questions.length})</h2>
           <Link
             href={`/admin/quizzes/${quiz.id}/questions/new`}
-            className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white dark:bg-white dark:text-zinc-900"
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
           >
-            + Thêm câu hỏi
+            <Plus className="h-4 w-4" />
+            Thêm câu hỏi
           </Link>
         </div>
 
         {quiz.questions.length === 0 ? (
-          <p className="text-sm text-zinc-500">Chưa có câu hỏi nào.</p>
+          <p className="text-sm text-muted">Chưa có câu hỏi nào.</p>
         ) : (
           <ul className="space-y-3">
             {quiz.questions.map((question, index) => (
-              <li key={question.id} className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+              <li key={question.id} className="rounded-xl border border-border bg-surface p-6">
                 <div className="flex items-start justify-between gap-4">
-                  <p className="font-medium">
+                  <p className="font-medium text-foreground">
                     {index + 1}. {question.text}
                   </p>
-                  <div className="flex shrink-0 items-center gap-3">
+                  <div className="flex shrink-0 items-center gap-1">
                     <Link
                       href={`/admin/quizzes/${quiz.id}/questions/${question.id}`}
-                      className="text-sm text-zinc-500 hover:underline"
+                      title="Sửa"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
                     >
-                      Sửa
+                      <Pencil className="h-4 w-4" />
                     </Link>
                     <DeleteQuestionButton questionId={question.id} quizId={quiz.id} />
                   </div>
                 </div>
-                <ul className="mt-2 space-y-1 text-sm">
+                <ul className="mt-3 space-y-1.5 text-sm">
                   {question.options.map((option) => (
                     <li key={option.id} className="flex items-center gap-2">
-                      <span aria-hidden>{option.isCorrect ? "✅" : "⬜"}</span>
-                      <span className={option.isCorrect ? "font-medium" : "text-zinc-500"}>
+                      {option.isCorrect ? (
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
+                      ) : (
+                        <Circle className="h-4 w-4 shrink-0 text-muted" />
+                      )}
+                      <span className={option.isCorrect ? "font-medium text-foreground" : "text-muted"}>
                         {option.text}
                       </span>
                     </li>
@@ -83,8 +91,8 @@ export default async function QuizManagementPage({
         )}
       </div>
 
-      <div className="max-w-xl space-y-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-        <h2 className="text-sm font-semibold">Khu vực nguy hiểm</h2>
+      <div className="max-w-xl space-y-3 rounded-xl border border-border bg-surface p-6">
+        <h2 className="text-sm font-semibold text-foreground">Khu vực nguy hiểm</h2>
         <DeleteQuizButton quizId={quiz.id} lessonId={quiz.lessonId} />
       </div>
     </div>

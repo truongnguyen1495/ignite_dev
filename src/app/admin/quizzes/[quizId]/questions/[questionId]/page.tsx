@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { BackLink } from "@/components/ui/back-link";
 import { QuestionForm } from "../../question-form";
 import { updateQuestionAction } from "../../../actions";
 
@@ -21,16 +21,16 @@ export default async function EditQuestionPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href={`/admin/quizzes/${quizId}`} className="text-sm text-zinc-500 hover:underline">
-          ← Quay lại
-        </Link>
-        <h1 className="mt-1 text-xl font-semibold">Sửa câu hỏi</h1>
+        <BackLink href={`/admin/quizzes/${quizId}`}>Quay lại</BackLink>
+        <h1 className="mt-2 text-2xl font-semibold text-foreground">Sửa câu hỏi</h1>
       </div>
-      <QuestionForm
-        action={updateQuestionAction.bind(null, questionId)}
-        initialText={question.text}
-        initialOptions={question.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect }))}
-      />
+      <div className="max-w-xl rounded-xl border border-border bg-surface p-6">
+        <QuestionForm
+          action={updateQuestionAction.bind(null, questionId)}
+          initialText={question.text}
+          initialOptions={question.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect }))}
+        />
+      </div>
     </div>
   );
 }

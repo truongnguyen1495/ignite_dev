@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CheckCircle2, XCircle, RotateCcw } from "lucide-react";
 import { requireQuizAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
+import { BackLink } from "@/components/ui/back-link";
 
 type AttemptAnswers = Record<string, { selected: string[]; correct: boolean }>;
 
@@ -28,21 +30,18 @@ export default async function QuizResultPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href={`/dashboard/lessons/${quiz.lessonId}`} className="text-sm text-zinc-500 hover:underline">
-          ← Quay lại bài học
-        </Link>
-        <h1 className="mt-1 text-xl font-semibold">{quiz.title} — Kết quả</h1>
+        <BackLink href={`/dashboard/lessons/${quiz.lessonId}`}>Quay lại bài học</BackLink>
+        <h1 className="mt-2 text-2xl font-semibold text-foreground">{quiz.title} — Kết quả</h1>
       </div>
 
       <div
-        className={`rounded-lg border p-4 ${
-          attempt.passed
-            ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950"
-            : "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950"
+        className={`rounded-xl border p-6 ${
+          attempt.passed ? "border-success/30 bg-success-bg" : "border-danger/30 bg-danger-bg"
         }`}
       >
-        <p className="text-2xl font-semibold">{attempt.scorePercent}%</p>
-        <p className={attempt.passed ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"}>
+        <p className="text-3xl font-semibold text-foreground">{attempt.scorePercent}%</p>
+        <p className={`mt-1 flex items-center gap-1.5 ${attempt.passed ? "text-success" : "text-danger"}`}>
+          {attempt.passed ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
           {attempt.passed ? "Đạt" : "Chưa đạt"} (ngưỡng đạt: {attempt.passThreshold}%)
         </p>
       </div>
@@ -53,10 +52,14 @@ export default async function QuizResultPage({
           return (
             <li
               key={question.id}
-              className="flex items-start gap-2 rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-800"
+              className="flex items-start gap-2 rounded-lg border border-border bg-surface p-3 text-sm"
             >
-              <span aria-hidden>{result?.correct ? "✅" : "❌"}</span>
-              <span>
+              {result?.correct ? (
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
+              ) : (
+                <XCircle className="h-4 w-4 shrink-0 text-danger" />
+              )}
+              <span className="text-foreground">
                 {index + 1}. {question.text}
               </span>
             </li>
@@ -66,8 +69,9 @@ export default async function QuizResultPage({
 
       <Link
         href={`/dashboard/quizzes/${quizId}`}
-        className="inline-block rounded-md border border-zinc-300 px-4 py-2 text-sm dark:border-zinc-700"
+        className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-hover"
       >
+        <RotateCcw className="h-4 w-4" />
         Làm lại bài test
       </Link>
     </div>
