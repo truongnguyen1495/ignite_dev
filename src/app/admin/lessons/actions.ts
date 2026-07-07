@@ -47,7 +47,7 @@ export async function createLessonAction(
     return "Link YouTube không hợp lệ.";
   }
 
-  const lesson = await prisma.lesson.create({
+  await prisma.lesson.create({
     data: {
       title: parsed.data.title,
       level: parsed.data.level,
@@ -58,7 +58,7 @@ export async function createLessonAction(
   });
 
   revalidatePath("/admin/lessons");
-  redirect(`/admin/lessons/${lesson.id}`);
+  redirect("/admin/lessons");
 }
 
 const updateSchema = lessonSchema.extend({
