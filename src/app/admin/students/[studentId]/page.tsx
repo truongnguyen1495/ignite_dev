@@ -67,10 +67,10 @@ export default async function EditStudentPage({
             {attempts.map((attempt) => (
               <li
                 key={attempt.id}
-                className="flex items-center justify-between rounded-lg border border-border bg-surface p-3 text-sm"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-surface p-3 text-sm"
               >
                 <span className="text-foreground">{attempt.quiz.lesson.title}</span>
-                <span className="flex items-center gap-3">
+                <span className="flex flex-wrap items-center gap-3">
                   <span className="text-foreground">{attempt.scorePercent}%</span>
                   {attempt.passed ? (
                     <Badge color="success">Đạt</Badge>
@@ -93,7 +93,7 @@ export default async function EditStudentPage({
           <ul className="space-y-2">
             {levelUpRequests.map((req) => (
               <li key={req.id} className="rounded-lg border border-border bg-surface p-3 text-sm">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="flex items-center gap-2 text-foreground">
                     {LEVEL_LABELS[req.fromLevel]}
                     <ArrowLeft className="h-3.5 w-3.5 rotate-180 text-muted" />

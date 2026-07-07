@@ -39,7 +39,7 @@ export default async function QuizManagementPage({
       </div>
 
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold text-muted">Câu hỏi ({quiz.questions.length})</h2>
           <Link
             href={`/admin/quizzes/${quiz.id}/questions/new`}

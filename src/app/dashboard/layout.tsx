@@ -1,7 +1,7 @@
 import { LayoutDashboard, ArrowUpCircle, GraduationCap } from "lucide-react";
 import { requireActiveStudent } from "@/lib/access";
 import { LEVEL_LABELS } from "@/lib/levels";
-import { Sidebar, type NavItem } from "@/components/ui/sidebar";
+import { Sidebar, SidebarProvider, SidebarToggle, type NavItem } from "@/components/ui/sidebar";
 import { BrandLogo } from "@/components/brand-logo";
 import { LogoutButton } from "@/components/logout-button";
 
@@ -20,18 +20,26 @@ export default async function DashboardLayout({
   const student = await requireActiveStudent();
 
   return (
-    <div className="flex min-h-screen">
+    <SidebarProvider>
       <Sidebar items={NAV_ITEMS} brand={<BrandLogo subtitle="Học viên" />} />
-      <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-end gap-4 border-b border-border px-8 py-4">
-          <span className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs text-muted">
-            <GraduationCap className="h-3.5 w-3.5 text-primary" />
-            {student.name} <span className="text-foreground">({LEVEL_LABELS[student.grantedLevel]})</span>
-          </span>
-          <LogoutButton />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-8 sm:py-4">
+          <SidebarToggle />
+          <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
+            <span className="flex min-w-0 items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs text-muted">
+              <GraduationCap className="h-3.5 w-3.5 shrink-0 text-primary" />
+              <span className="truncate">{student.name}</span>
+              <span className="hidden shrink-0 text-foreground sm:inline">
+                ({LEVEL_LABELS[student.grantedLevel]})
+              </span>
+            </span>
+            <LogoutButton />
+          </div>
         </header>
-        <main className="flex-1 px-8 py-8">{children}</main>
+        <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">
+          <div className="mx-auto w-full max-w-7xl">{children}</div>
+        </main>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }

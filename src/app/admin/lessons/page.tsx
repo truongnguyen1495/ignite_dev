@@ -11,7 +11,7 @@ export default async function LessonsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-foreground">Bài học</h1>
         <Link
           href="/admin/lessons/new"
@@ -35,7 +35,7 @@ export default async function LessonsPage() {
                   <li key={lesson.id}>
                     <Link
                       href={`/admin/lessons/${lesson.id}`}
-                      className="flex items-center justify-between rounded-lg border border-border bg-surface p-3 hover:border-primary/50"
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-surface p-3 hover:border-primary/50"
                     >
                       <span className="text-foreground">{lesson.title}</span>
                       <span className="flex items-center gap-3 text-xs text-muted">
