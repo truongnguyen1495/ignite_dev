@@ -1,0 +1,142 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  STUDENT
+}
+
+enum AccountStatus {
+  ACTIVE
+  LOCKED
+}
+
+enum Level {
+  CUSTOMER
+  NEW_STARTER
+  JUNIOR
+  SENIOR
+  CORE_LEADER
+}
+
+enum LevelUpStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  name         String
+  role         Role
+  status       AccountStatus @default(ACTIVE)
+  grantedLevel Level         @default(CUSTOMER)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  quizAttempts     QuizAttempt[]
+  levelUpRequests  LevelUpRequest[] @relation("StudentRequests")
+  reviewedRequests LevelUpRequest[] @relation("ReviewerActions")
+
+  @@index([role])
+}
+
+model Lesson {
+  id        String   @id @default(cuid())
+  level     Level
+  title     String
+  content   String   @db.Text
+  youtubeId String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quiz Quiz?
+
+  @@index([level, order])
+}
+
+model Quiz {
+  id        String   @id @default(cuid())
+  lessonId  String   @unique
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  title     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  questions Question[]
+  attempts  QuizAttempt[]
+}
+
+model Question {
+  id     String @id @default(cuid())
+  quizId String
+  quiz   Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  text   String
+  order  Int    @default(0)
+
+  options AnswerOption[]
+
+  @@index([quizId, order])
+}
+
+model AnswerOption {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String
+  isCorrect  Boolean  @default(false)
+  order      Int      @default(0)
+
+  @@index([questionId])
+}
+
+model QuizAttempt {
+  id            String   @id @default(cuid())
+  studentId     String
+  student       User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  quizId        String
+  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  answers       Json
+  scorePercent  Int
+  passed        Boolean
+  passThreshold Int
+  attemptedAt   DateTime @default(now())
+
+  @@index([studentId])
+  @@index([quizId])
+}
+
+model LevelUpRequest {
+  id           String        @id @default(cuid())
+  studentId    String
+  student      User          @relation("StudentRequests", fields: [studentId], references: [id], onDelete: Cascade)
+  fromLevel    Level
+  toLevel      Level
+  status       LevelUpStatus @default(PENDING)
+  requestedAt  DateTime      @default(now())
+  reviewedAt   DateTime?
+  reviewerId   String?
+  reviewer     User?         @relation("ReviewerActions", fields: [reviewerId], references: [id])
+  reviewerNote String?
+
+  @@index([studentId, status])
+}
+
+model Settings {
+  id             Int      @id @default(1)
+  passPercentage Int      @default(80)
+  updatedAt      DateTime @updatedAt
+}
