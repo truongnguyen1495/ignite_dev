@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import type { Level, Role, User } from "@prisma/client";
 import { auth } from "@/lib/auth";
@@ -16,15 +17,22 @@ export class AccessDeniedError extends Error {
 // Every function below re-fetches status/role/grantedLevel fresh from the
 // DB before making an authorization decision — the JWT is never trusted for
 // that, only for the user id.
-export async function requireSession() {
+//
+// Both requireSession and requireRole are wrapped in React's cache() so that
+// a layout and its page (which each independently call these, since a page
+// can't assume its own layout already checked) share one DB round trip per
+// request instead of two — this matters a lot on Vercel, where every extra
+// round trip to the DB adds real cross-region latency. cache() is scoped to
+// a single request, so the "always fresh from DB" guarantee is unaffected.
+export const requireSession = cache(async () => {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
   }
   return session;
-}
+});
 
-export async function requireRole(role: Role): Promise<User> {
+export const requireRole = cache(async (role: Role): Promise<User> => {
   const session = await requireSession();
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
 
@@ -41,7 +49,7 @@ export async function requireRole(role: Role): Promise<User> {
   }
 
   return user;
-}
+});
 
 export async function requireActiveStudent(): Promise<User> {
   return requireRole("STUDENT");
