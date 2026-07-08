@@ -2,6 +2,7 @@ import { requireQuizAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { submitQuizAttemptAction } from "../actions";
 import { BackLink } from "@/components/ui/back-link";
+import { SubmitQuizButton } from "./submit-quiz-button";
 
 export default async function TakeQuizPage({
   params,
@@ -55,12 +56,7 @@ export default async function TakeQuizPage({
               </div>
             </fieldset>
           ))}
-          <button
-            type="submit"
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
-          >
-            Nộp bài
-          </button>
+          <SubmitQuizButton />
         </form>
       )}
     </div>
