@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { Badge } from "@/components/ui/badge";
+import { ResultRow } from "./result-row";
 
 export default async function ResultsPage() {
   const attempts = await prisma.quizAttempt.findMany({
@@ -9,6 +9,24 @@ export default async function ResultsPage() {
       quiz: { include: { lesson: true } },
     },
   });
+
+  // A student can retake the same quiz many times; grouping by
+  // student+quiz collapses those into one row (the latest attempt) with
+  // the rest tucked behind the row's expand toggle. Iterating attempts in
+  // their already-desc-sorted order means the first attempt seen per key
+  // is the latest, and Map insertion order keeps the most recently active
+  // groups at the top.
+  const groups = new Map<string, { latest: (typeof attempts)[number]; history: (typeof attempts)[number][] }>();
+  for (const attempt of attempts) {
+    const key = `${attempt.studentId}-${attempt.quizId}`;
+    const group = groups.get(key);
+    if (group) {
+      group.history.push(attempt);
+    } else {
+      groups.set(key, { latest: attempt, history: [] });
+    }
+  }
+  const groupedResults = Array.from(groups.values());
 
   return (
     <div className="space-y-6">
@@ -29,22 +47,14 @@ export default async function ResultsPage() {
               </tr>
             </thead>
             <tbody>
-              {attempts.map((attempt) => (
-                <tr key={attempt.id} className="border-b border-border last:border-0 hover:bg-surface-hover">
-                  <td className="px-4 py-4 sm:px-6 font-medium text-foreground">{attempt.student.name}</td>
-                  <td className="px-4 py-4 sm:px-6 text-muted">{attempt.quiz.lesson.title}</td>
-                  <td className="px-4 py-4 sm:px-6 text-foreground">{attempt.scorePercent}%</td>
-                  <td className="px-4 py-4 sm:px-6">
-                    {attempt.passed ? (
-                      <Badge color="success">Đạt</Badge>
-                    ) : (
-                      <Badge color="danger">Chưa đạt</Badge>
-                    )}
-                  </td>
-                  <td className="px-4 py-4 sm:px-6 text-muted">
-                    {attempt.attemptedAt.toLocaleString("vi-VN")}
-                  </td>
-                </tr>
+              {groupedResults.map(({ latest, history }) => (
+                <ResultRow
+                  key={latest.id}
+                  studentName={latest.student.name}
+                  lessonTitle={latest.quiz.lesson.title}
+                  latest={latest}
+                  history={history}
+                />
               ))}
             </tbody>
           </table>
