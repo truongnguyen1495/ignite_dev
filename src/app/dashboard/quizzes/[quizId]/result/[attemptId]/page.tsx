@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle2, XCircle, RotateCcw } from "lucide-react";
+import { CheckCircle2, XCircle, RotateCcw, Send } from "lucide-react";
 import { requireQuizAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { BackLink } from "@/components/ui/back-link";
@@ -33,6 +33,11 @@ export default async function QuizResultPage({
         <BackLink href={`/dashboard/lessons/${quiz.lessonId}`}>Quay lại bài học</BackLink>
         <h1 className="mt-2 text-2xl font-semibold text-foreground">{quiz.title} — Kết quả</h1>
       </div>
+
+      <p className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-primary">
+        <Send className="h-4 w-4 shrink-0" />
+        Bài test của bạn đã được nộp, kết quả sẽ có trong ít phút nữa.
+      </p>
 
       <div
         className={`rounded-xl border p-6 ${
