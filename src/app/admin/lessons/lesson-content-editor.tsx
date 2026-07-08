@@ -212,256 +212,258 @@ export function LessonContentEditor({
       )}
       <div className={fullscreen ? "mx-auto flex w-full max-w-[1000px] flex-1 flex-col" : ""}>
         <div className="rounded-lg border border-border bg-background">
-          <div className="sticky top-0 z-10 flex flex-wrap items-center gap-0.5 rounded-t-lg border-b border-border bg-background p-1.5">
-            <button
-              type="button"
-              title="Heading 1"
-              onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
-              className={btnClass(!!editor?.isActive("heading", { level: 1 }))}
-            >
-              <Heading1 className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              title="Heading 2"
-              onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
-              className={btnClass(!!editor?.isActive("heading", { level: 2 }))}
-            >
-              <Heading2 className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              title="Heading 3"
-              onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
-              className={btnClass(!!editor?.isActive("heading", { level: 3 }))}
-            >
-              <Heading3 className="h-4 w-4" />
-            </button>
-            <span className="mx-1 h-5 w-px bg-border" />
-            <button
-              type="button"
-              title="In đậm"
-              onClick={() => editor?.chain().focus().toggleBold().run()}
-              className={btnClass(!!editor?.isActive("bold"))}
-            >
-              <Bold className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              title="In nghiêng"
-              onClick={() => editor?.chain().focus().toggleItalic().run()}
-              className={btnClass(!!editor?.isActive("italic"))}
-            >
-              <Italic className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              title="Gạch chân"
-              onClick={() => editor?.chain().focus().toggleUnderline().run()}
-              className={btnClass(!!editor?.isActive("underline"))}
-            >
-              <Underline className="h-4 w-4" />
-            </button>
-            <span className="mx-1 h-5 w-px bg-border" />
-            <button
-              type="button"
-              title="Danh sách"
-              onClick={() => editor?.chain().focus().toggleBulletList().run()}
-              className={btnClass(!!editor?.isActive("bulletList"))}
-            >
-              <List className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              title="Danh sách đánh số"
-              onClick={() => editor?.chain().focus().toggleOrderedList().run()}
-              className={btnClass(!!editor?.isActive("orderedList"))}
-            >
-              <ListOrdered className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              title="Trích dẫn"
-              onClick={() => editor?.chain().focus().toggleBlockquote().run()}
-              className={btnClass(!!editor?.isActive("blockquote"))}
-            >
-              <Quote className="h-4 w-4" />
-            </button>
-            <span className="mx-1 h-5 w-px bg-border" />
-            <button
-              type="button"
-              title="Chèn link"
-              onClick={openLinkPopover}
-              className={btnClass(popover?.type === "link")}
-            >
-              <Link2 className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              title="Chèn ảnh"
-              onClick={openImagePopover}
-              className={btnClass(popover?.type === "image")}
-            >
-              <ImageIcon className="h-4 w-4" />
-            </button>
-            <span className="mx-1 h-5 w-px bg-border" />
-            <button
-              type="button"
-              title="Hoàn tác"
-              onClick={() => editor?.chain().focus().undo().run()}
-              className={toolbarButtonClass}
-            >
-              <Undo2 className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              title="Làm lại"
-              onClick={() => editor?.chain().focus().redo().run()}
-              className={toolbarButtonClass}
-            >
-              <Redo2 className="h-4 w-4" />
-            </button>
-
-            <span className="ml-auto flex items-center gap-1">
+          <div className="sticky top-0 z-10 rounded-t-lg bg-background">
+            <div className="flex flex-wrap items-center gap-0.5 border-b border-border p-1.5">
               <button
                 type="button"
-                onClick={() => setMode(mode === "write" ? "preview" : "write")}
-                className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+                title="Heading 1"
+                onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
+                className={btnClass(!!editor?.isActive("heading", { level: 1 }))}
               >
-                {mode === "write" ? <Eye className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
-                {mode === "write" ? "Xem trước" : "Soạn thảo"}
+                <Heading1 className="h-4 w-4" />
               </button>
               <button
                 type="button"
-                title={fullscreen ? "Thu nhỏ" : "Mở rộng toàn màn hình"}
-                onClick={() => setFullscreen(!fullscreen)}
+                title="Heading 2"
+                onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+                className={btnClass(!!editor?.isActive("heading", { level: 2 }))}
+              >
+                <Heading2 className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                title="Heading 3"
+                onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
+                className={btnClass(!!editor?.isActive("heading", { level: 3 }))}
+              >
+                <Heading3 className="h-4 w-4" />
+              </button>
+              <span className="mx-1 h-5 w-px bg-border" />
+              <button
+                type="button"
+                title="In đậm"
+                onClick={() => editor?.chain().focus().toggleBold().run()}
+                className={btnClass(!!editor?.isActive("bold"))}
+              >
+                <Bold className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                title="In nghiêng"
+                onClick={() => editor?.chain().focus().toggleItalic().run()}
+                className={btnClass(!!editor?.isActive("italic"))}
+              >
+                <Italic className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                title="Gạch chân"
+                onClick={() => editor?.chain().focus().toggleUnderline().run()}
+                className={btnClass(!!editor?.isActive("underline"))}
+              >
+                <Underline className="h-4 w-4" />
+              </button>
+              <span className="mx-1 h-5 w-px bg-border" />
+              <button
+                type="button"
+                title="Danh sách"
+                onClick={() => editor?.chain().focus().toggleBulletList().run()}
+                className={btnClass(!!editor?.isActive("bulletList"))}
+              >
+                <List className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                title="Danh sách đánh số"
+                onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+                className={btnClass(!!editor?.isActive("orderedList"))}
+              >
+                <ListOrdered className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                title="Trích dẫn"
+                onClick={() => editor?.chain().focus().toggleBlockquote().run()}
+                className={btnClass(!!editor?.isActive("blockquote"))}
+              >
+                <Quote className="h-4 w-4" />
+              </button>
+              <span className="mx-1 h-5 w-px bg-border" />
+              <button
+                type="button"
+                title="Chèn link"
+                onClick={openLinkPopover}
+                className={btnClass(popover?.type === "link")}
+              >
+                <Link2 className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                title="Chèn ảnh"
+                onClick={openImagePopover}
+                className={btnClass(popover?.type === "image")}
+              >
+                <ImageIcon className="h-4 w-4" />
+              </button>
+              <span className="mx-1 h-5 w-px bg-border" />
+              <button
+                type="button"
+                title="Hoàn tác"
+                onClick={() => editor?.chain().focus().undo().run()}
                 className={toolbarButtonClass}
               >
-                {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                <Undo2 className="h-4 w-4" />
               </button>
-            </span>
-          </div>
+              <button
+                type="button"
+                title="Làm lại"
+                onClick={() => editor?.chain().focus().redo().run()}
+                className={toolbarButtonClass}
+              >
+                <Redo2 className="h-4 w-4" />
+              </button>
 
-          {popover && (
-            <div className="border-b border-border bg-surface-hover p-3">
-              {popover.type === "link" ? (
-                <div className="flex flex-wrap items-end gap-2">
-                  <div className="min-w-[180px] flex-1">
-                    <label className="mb-1 block text-xs font-medium text-muted">URL</label>
-                    <input
-                      autoFocus
-                      value={linkFields.url}
-                      onChange={(e) => setLinkFields((f) => ({ ...f, url: e.target.value }))}
-                      onKeyDown={handleLinkKeyDown}
-                      placeholder="https://..."
-                      className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
-                    />
-                  </div>
-                  {!linkHasSelection && (
-                    <div className="min-w-[140px] flex-1">
-                      <label className="mb-1 block text-xs font-medium text-muted">Chữ hiển thị</label>
+              <span className="ml-auto flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setMode(mode === "write" ? "preview" : "write")}
+                  className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+                >
+                  {mode === "write" ? <Eye className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
+                  {mode === "write" ? "Xem trước" : "Soạn thảo"}
+                </button>
+                <button
+                  type="button"
+                  title={fullscreen ? "Thu nhỏ" : "Mở rộng toàn màn hình"}
+                  onClick={() => setFullscreen(!fullscreen)}
+                  className={toolbarButtonClass}
+                >
+                  {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                </button>
+              </span>
+            </div>
+
+            {popover && (
+              <div className="border-b border-border bg-surface-hover p-3">
+                {popover.type === "link" ? (
+                  <div className="flex flex-wrap items-end gap-2">
+                    <div className="min-w-[180px] flex-1">
+                      <label className="mb-1 block text-xs font-medium text-muted">URL</label>
                       <input
-                        value={linkFields.text}
-                        onChange={(e) => setLinkFields((f) => ({ ...f, text: e.target.value }))}
+                        autoFocus
+                        value={linkFields.url}
+                        onChange={(e) => setLinkFields((f) => ({ ...f, url: e.target.value }))}
                         onKeyDown={handleLinkKeyDown}
+                        placeholder="https://..."
+                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                      />
+                    </div>
+                    {!linkHasSelection && (
+                      <div className="min-w-[140px] flex-1">
+                        <label className="mb-1 block text-xs font-medium text-muted">Chữ hiển thị</label>
+                        <input
+                          value={linkFields.text}
+                          onChange={(e) => setLinkFields((f) => ({ ...f, text: e.target.value }))}
+                          onKeyDown={handleLinkKeyDown}
+                          placeholder="(tùy chọn)"
+                          className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                        />
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={confirmLink}
+                      className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
+                    >
+                      Chèn
+                    </button>
+                    <button type="button" onClick={() => setPopover(null)} className={toolbarButtonClass}>
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-end gap-2">
+                    <div className="min-w-[200px] flex-1">
+                      <label className="mb-1 block text-xs font-medium text-muted">URL hình ảnh</label>
+                      <input
+                        autoFocus
+                        value={imageFields.url}
+                        onChange={(e) => setImageFields((f) => ({ ...f, url: e.target.value }))}
+                        onKeyDown={handleImageKeyDown}
+                        placeholder="https://... hoặc tải ảnh lên từ máy"
+                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                      />
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif"
+                      onChange={handleFileSelected}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      disabled={uploading}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm font-medium text-foreground hover:bg-surface-hover disabled:opacity-60"
+                    >
+                      {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                      {uploading ? "Đang tải..." : "Tải ảnh lên"}
+                    </button>
+                    <div className="min-w-[140px] flex-1">
+                      <label className="mb-1 block text-xs font-medium text-muted">Mô tả ảnh (alt)</label>
+                      <input
+                        value={imageFields.alt}
+                        onChange={(e) => setImageFields((f) => ({ ...f, alt: e.target.value }))}
+                        onKeyDown={handleImageKeyDown}
                         placeholder="(tùy chọn)"
                         className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
                       />
                     </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={confirmLink}
-                    className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
-                  >
-                    Chèn
-                  </button>
-                  <button type="button" onClick={() => setPopover(null)} className={toolbarButtonClass}>
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-wrap items-end gap-2">
-                  <div className="min-w-[200px] flex-1">
-                    <label className="mb-1 block text-xs font-medium text-muted">URL hình ảnh</label>
-                    <input
-                      autoFocus
-                      value={imageFields.url}
-                      onChange={(e) => setImageFields((f) => ({ ...f, url: e.target.value }))}
-                      onKeyDown={handleImageKeyDown}
-                      placeholder="https://... hoặc tải ảnh lên từ máy"
-                      className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
-                    />
-                  </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/gif"
-                    onChange={handleFileSelected}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    disabled={uploading}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm font-medium text-foreground hover:bg-surface-hover disabled:opacity-60"
-                  >
-                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                    {uploading ? "Đang tải..." : "Tải ảnh lên"}
-                  </button>
-                  <div className="min-w-[140px] flex-1">
-                    <label className="mb-1 block text-xs font-medium text-muted">Mô tả ảnh (alt)</label>
-                    <input
-                      value={imageFields.alt}
-                      onChange={(e) => setImageFields((f) => ({ ...f, alt: e.target.value }))}
-                      onKeyDown={handleImageKeyDown}
-                      placeholder="(tùy chọn)"
-                      className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-muted">Kích thước</label>
-                    <select
-                      value={imageFields.size}
-                      onChange={(e) =>
-                        setImageFields((f) => ({ ...f, size: e.target.value as LessonImageSize }))
-                      }
-                      className="rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-muted">Kích thước</label>
+                      <select
+                        value={imageFields.size}
+                        onChange={(e) =>
+                          setImageFields((f) => ({ ...f, size: e.target.value as LessonImageSize }))
+                        }
+                        className="rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                      >
+                        <option value="sm">Nhỏ</option>
+                        <option value="md">Vừa</option>
+                        <option value="lg">Lớn</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-muted">Căn ảnh</label>
+                      <select
+                        value={imageFields.align}
+                        onChange={(e) =>
+                          setImageFields((f) => ({ ...f, align: e.target.value as LessonImageAlign }))
+                        }
+                        className="rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                      >
+                        <option value="left">Trái</option>
+                        <option value="center">Giữa</option>
+                        <option value="right">Phải</option>
+                      </select>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={confirmImage}
+                      className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
                     >
-                      <option value="sm">Nhỏ</option>
-                      <option value="md">Vừa</option>
-                      <option value="lg">Lớn</option>
-                    </select>
+                      Chèn
+                    </button>
+                    <button type="button" onClick={() => setPopover(null)} className={toolbarButtonClass}>
+                      <X className="h-4 w-4" />
+                    </button>
+                    {uploadError && <p className="w-full text-xs text-red-600">{uploadError}</p>}
                   </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-muted">Căn ảnh</label>
-                    <select
-                      value={imageFields.align}
-                      onChange={(e) =>
-                        setImageFields((f) => ({ ...f, align: e.target.value as LessonImageAlign }))
-                      }
-                      className="rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
-                    >
-                      <option value="left">Trái</option>
-                      <option value="center">Giữa</option>
-                      <option value="right">Phải</option>
-                    </select>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={confirmImage}
-                    className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
-                  >
-                    Chèn
-                  </button>
-                  <button type="button" onClick={() => setPopover(null)} className={toolbarButtonClass}>
-                    <X className="h-4 w-4" />
-                  </button>
-                  {uploadError && <p className="w-full text-xs text-red-600">{uploadError}</p>}
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
+          </div>
 
           {editor && (
             <BubbleMenu editor={editor} shouldShow={({ editor }) => editor.isActive("lessonImage")}>
