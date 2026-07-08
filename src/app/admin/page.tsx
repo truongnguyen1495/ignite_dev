@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Users, ClipboardList, BookOpen, ArrowUpCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
@@ -10,10 +11,10 @@ export default async function AdminOverviewPage() {
   ]);
 
   const stats = [
-    { label: "Học viên", value: studentCount, icon: Users },
-    { label: "Yêu cầu lên cấp đang chờ", value: pendingRequests, icon: ArrowUpCircle },
-    { label: "Bài học", value: lessonCount, icon: BookOpen },
-    { label: "Lượt làm bài test", value: attemptCount, icon: ClipboardList },
+    { label: "Học viên", value: studentCount, icon: Users, href: "/admin/students" },
+    { label: "Yêu cầu lên cấp đang chờ", value: pendingRequests, icon: ArrowUpCircle, href: "/admin/level-up-requests" },
+    { label: "Bài học", value: lessonCount, icon: BookOpen, href: "/admin/lessons" },
+    { label: "Lượt làm bài test", value: attemptCount, icon: ClipboardList, href: "/admin/results" },
   ];
 
   return (
@@ -23,7 +24,11 @@ export default async function AdminOverviewPage() {
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.label} className="rounded-xl border border-border bg-surface p-5">
+            <Link
+              key={stat.label}
+              href={stat.href}
+              className="rounded-xl border border-border bg-surface p-5 transition-colors hover:border-primary/50"
+            >
               <div className="flex items-center justify-between">
                 <p className="text-2xl font-semibold text-foreground">{stat.value}</p>
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -31,7 +36,7 @@ export default async function AdminOverviewPage() {
                 </span>
               </div>
               <p className="mt-1 text-sm text-muted">{stat.label}</p>
-            </div>
+            </Link>
           );
         })}
       </div>
