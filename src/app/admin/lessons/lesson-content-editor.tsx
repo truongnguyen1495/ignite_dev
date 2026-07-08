@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 import {
   Heading1,
   Heading2,
@@ -89,11 +89,31 @@ export function LessonContentEditor({
     if (!el) return;
     const start = el.selectionStart;
     const end = el.selectionEnd;
-    const selected = value.slice(start, end) || placeholder;
-    const newValue = value.slice(0, start) + before + selected + after + value.slice(end);
+    const selected = value.slice(start, end);
+
+    // Re-clicking a format button on already-wrapped text should unwrap it,
+    // mirroring the toggle behavior of the heading/list/quote buttons.
+    if (selected.startsWith(before) && selected.endsWith(after) && selected.length >= before.length + after.length) {
+      const inner = selected.slice(before.length, selected.length - after.length);
+      const newValue = value.slice(0, start) + inner + value.slice(end);
+      setValue(newValue);
+      setSelectionAsync(start, start + inner.length);
+      return;
+    }
+    const outerBefore = value.slice(Math.max(0, start - before.length), start);
+    const outerAfter = value.slice(end, end + after.length);
+    if (selected && outerBefore === before && outerAfter === after) {
+      const newValue = value.slice(0, start - before.length) + selected + value.slice(end + after.length);
+      setValue(newValue);
+      setSelectionAsync(start - before.length, start - before.length + selected.length);
+      return;
+    }
+
+    const text = selected || placeholder;
+    const newValue = value.slice(0, start) + before + text + after + value.slice(end);
     setValue(newValue);
     const selStart = start + before.length;
-    const selEnd = selStart + selected.length;
+    const selEnd = selStart + text.length;
     setSelectionAsync(selStart, selEnd);
   }
 
@@ -125,25 +145,37 @@ export function LessonContentEditor({
     setSelectionAsync(blockStart, blockStart + newBlock.length);
   }
 
+  // Strips whichever line-prefix (bullet, numbered, quote) is currently
+  // applied, so switching between them replaces rather than stacks markers.
+  function stripLinePrefix(line: string) {
+    return line.replace(/^(-|\d+\.|>)\s+/, "");
+  }
+
   function toggleBulletList() {
-    applyToLines((line) =>
-      line.trim() === "" ? line : line.startsWith("- ") ? line.slice(2) : `- ${line}`
-    );
+    applyToLines((line) => {
+      if (line.trim() === "") return line;
+      const stripped = stripLinePrefix(line);
+      return line.startsWith("- ") ? stripped : `- ${stripped}`;
+    });
   }
 
   function toggleNumberedList() {
     let n = 0;
     applyToLines((line) => {
       if (line.trim() === "") return line;
+      const stripped = stripLinePrefix(line);
+      if (/^\d+\.\s+/.test(line)) return stripped;
       n += 1;
-      return `${n}. ${line.replace(/^\d+\.\s+/, "")}`;
+      return `${n}. ${stripped}`;
     });
   }
 
   function toggleQuote() {
-    applyToLines((line) =>
-      line.trim() === "" ? line : line.startsWith("> ") ? line.slice(2) : `> ${line}`
-    );
+    applyToLines((line) => {
+      if (line.trim() === "") return line;
+      const stripped = stripLinePrefix(line);
+      return line.startsWith("> ") ? stripped : `> ${stripped}`;
+    });
   }
 
   function undo() {
@@ -154,6 +186,16 @@ export function LessonContentEditor({
   function redo() {
     textareaRef.current?.focus();
     document.execCommand("redo");
+  }
+
+  // Popover inputs sit inside the lesson form; without this, Enter would
+  // bubble up and submit that outer form instead of confirming the popover.
+  function onPopoverEnter(confirm: () => void) {
+    return (e: KeyboardEvent) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      confirm();
+    };
   }
 
   function confirmLink() {
@@ -302,6 +344,7 @@ export function LessonContentEditor({
                       autoFocus
                       value={linkFields.url}
                       onChange={(e) => setLinkFields((f) => ({ ...f, url: e.target.value }))}
+                      onKeyDown={onPopoverEnter(confirmLink)}
                       placeholder="https://..."
                       className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
                     />
@@ -311,6 +354,7 @@ export function LessonContentEditor({
                     <input
                       value={linkFields.text}
                       onChange={(e) => setLinkFields((f) => ({ ...f, text: e.target.value }))}
+                      onKeyDown={onPopoverEnter(confirmLink)}
                       placeholder="(tùy chọn)"
                       className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
                     />
@@ -338,6 +382,7 @@ export function LessonContentEditor({
                       autoFocus
                       value={imageFields.url}
                       onChange={(e) => setImageFields((f) => ({ ...f, url: e.target.value }))}
+                      onKeyDown={onPopoverEnter(confirmImage)}
                       placeholder="https://..."
                       className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
                     />
@@ -347,6 +392,7 @@ export function LessonContentEditor({
                     <input
                       value={imageFields.alt}
                       onChange={(e) => setImageFields((f) => ({ ...f, alt: e.target.value }))}
+                      onKeyDown={onPopoverEnter(confirmImage)}
                       placeholder="(tùy chọn)"
                       className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
                     />
