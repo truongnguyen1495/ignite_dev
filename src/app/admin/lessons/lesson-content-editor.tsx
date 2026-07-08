@@ -19,15 +19,12 @@ import {
   Image as ImageIcon,
   Undo2,
   Redo2,
-  Eye,
-  Pencil,
   Maximize2,
   Minimize2,
   X,
   Upload,
   Loader2,
 } from "lucide-react";
-import { LessonMarkdown } from "@/components/lesson-markdown";
 import { LessonImage, type LessonImageAlign, type LessonImageSize } from "./lesson-image-extension";
 
 type Popover = { type: "link" | "image" } | null;
@@ -52,7 +49,6 @@ export function LessonContentEditor({
   id?: string;
   defaultValue?: string;
 }) {
-  const [mode, setMode] = useState<"write" | "preview">("write");
   const [fullscreen, setFullscreen] = useState(false);
   const [popover, setPopover] = useState<Popover>(null);
   const [linkFields, setLinkFields] = useState({ url: "", text: "" });
@@ -326,14 +322,6 @@ export function LessonContentEditor({
               <span className="ml-auto flex items-center gap-1">
                 <button
                   type="button"
-                  onClick={() => setMode(mode === "write" ? "preview" : "write")}
-                  className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
-                >
-                  {mode === "write" ? <Eye className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
-                  {mode === "write" ? "Xem trước" : "Soạn thảo"}
-                </button>
-                <button
-                  type="button"
                   title={fullscreen ? "Thu nhỏ" : "Mở rộng toàn màn hình"}
                   onClick={() => setFullscreen(!fullscreen)}
                   className={toolbarButtonClass}
@@ -502,25 +490,12 @@ export function LessonContentEditor({
           )}
 
           <div
-            className={`overflow-y-auto rounded-b-lg ${mode === "write" ? "block" : "hidden"} ${
-              fullscreen ? "min-h-[70vh] flex-1" : "min-h-[420px]"
-            }`}
+            className={`overflow-y-auto rounded-b-lg ${fullscreen ? "min-h-[70vh] flex-1" : "min-h-[420px]"}`}
           >
             {editor ? (
               <EditorContent editor={editor} />
             ) : (
               <p className="px-4 py-3 text-sm text-muted">Đang tải trình soạn thảo...</p>
-            )}
-          </div>
-          <div
-            className={`overflow-y-auto rounded-b-lg px-4 py-3 ${mode === "preview" ? "block" : "hidden"} ${
-              fullscreen ? "min-h-[70vh] flex-1" : "min-h-[420px]"
-            }`}
-          >
-            {markdown.trim() ? (
-              <LessonMarkdown content={markdown} />
-            ) : (
-              <p className="text-sm text-muted">Chưa có nội dung để xem trước.</p>
             )}
           </div>
         </div>
