@@ -1,6 +1,7 @@
 import Image from "@tiptap/extension-image";
 import { mergeAttributes } from "@tiptap/core";
 import type { MarkdownNodeSpec } from "tiptap-markdown";
+import { insertAtomAndContinue } from "./insert-atom-and-continue";
 
 export type LessonImageSize = "sm" | "md" | "lg";
 export type LessonImageAlign = "left" | "center" | "right";
@@ -68,10 +69,7 @@ export const LessonImage = Image.extend({
 
   addCommands() {
     return {
-      setLessonImage:
-        (options) =>
-        ({ commands }) =>
-          commands.insertContent({ type: this.name, attrs: options }),
+      setLessonImage: (options) => insertAtomAndContinue({ type: this.name, attrs: options }),
     };
   },
 

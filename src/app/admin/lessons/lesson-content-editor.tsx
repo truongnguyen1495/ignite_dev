@@ -17,6 +17,7 @@ import {
   Quote,
   Link2,
   Image as ImageIcon,
+  SquarePlay,
   Undo2,
   Redo2,
   Maximize2,
@@ -26,8 +27,10 @@ import {
   Loader2,
 } from "lucide-react";
 import { LessonImage, type LessonImageAlign, type LessonImageSize } from "./lesson-image-extension";
+import { LessonYoutube } from "./lesson-youtube-extension";
+import { parseYoutubeId } from "@/lib/youtube";
 
-type Popover = { type: "link" | "image" } | null;
+type Popover = { type: "link" | "image" | "youtube" } | null;
 
 const toolbarButtonClass =
   "flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground";
@@ -61,6 +64,8 @@ export function LessonContentEditor({
   });
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [youtubeError, setYoutubeError] = useState<string | null>(null);
   const [markdown, setMarkdown] = useState(defaultValue);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -72,6 +77,7 @@ export function LessonContentEditor({
         link: { openOnClick: false },
       }),
       LessonImage,
+      LessonYoutube,
       Markdown.configure({ html: true, bulletListMarker: "-", linkify: false }),
     ],
     content: defaultValue,
@@ -104,6 +110,12 @@ export function LessonContentEditor({
   function openImagePopover() {
     setUploadError(null);
     setPopover(popover?.type === "image" ? null : { type: "image" });
+  }
+
+  function openYoutubePopover() {
+    setYoutubeError(null);
+    setYoutubeUrl("");
+    setPopover(popover?.type === "youtube" ? null : { type: "youtube" });
   }
 
   function confirmLink() {
@@ -139,6 +151,19 @@ export function LessonContentEditor({
     setPopover(null);
   }
 
+  function confirmYoutube() {
+    if (!editor || !youtubeUrl.trim()) return;
+    const videoId = parseYoutubeId(youtubeUrl.trim());
+    if (!videoId) {
+      setYoutubeError("Không nhận ra link YouTube này. Kiểm tra lại đường dẫn.");
+      return;
+    }
+    editor.chain().focus().setLessonYoutube({ videoId }).run();
+    setYoutubeUrl("");
+    setYoutubeError(null);
+    setPopover(null);
+  }
+
   // Popover inputs sit inside the lesson form; without this, Enter would
   // bubble up and submit that outer form instead of confirming the popover.
   function handleLinkKeyDown(e: KeyboardEvent) {
@@ -151,6 +176,12 @@ export function LessonContentEditor({
     if (e.key !== "Enter") return;
     e.preventDefault();
     confirmImage();
+  }
+
+  function handleYoutubeKeyDown(e: KeyboardEvent) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    confirmYoutube();
   }
 
   async function handleFileSelected(e: ChangeEvent<HTMLInputElement>) {
@@ -301,6 +332,14 @@ export function LessonContentEditor({
               >
                 <ImageIcon className="h-4 w-4" />
               </button>
+              <button
+                type="button"
+                title="Chèn video YouTube"
+                onClick={openYoutubePopover}
+                className={btnClass(popover?.type === "youtube")}
+              >
+                <SquarePlay className="h-4 w-4" />
+              </button>
               <span className="mx-1 h-5 w-px bg-border" />
               <button
                 type="button"
@@ -369,7 +408,7 @@ export function LessonContentEditor({
                       <X className="h-4 w-4" />
                     </button>
                   </div>
-                ) : (
+                ) : popover.type === "image" ? (
                   <div className="flex flex-wrap items-end gap-2">
                     <div className="min-w-[200px] flex-1">
                       <label className="mb-1 block text-xs font-medium text-muted">URL hình ảnh</label>
@@ -447,6 +486,31 @@ export function LessonContentEditor({
                       <X className="h-4 w-4" />
                     </button>
                     {uploadError && <p className="w-full text-xs text-red-600">{uploadError}</p>}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-end gap-2">
+                    <div className="min-w-[240px] flex-1">
+                      <label className="mb-1 block text-xs font-medium text-muted">Link video YouTube</label>
+                      <input
+                        autoFocus
+                        value={youtubeUrl}
+                        onChange={(e) => setYoutubeUrl(e.target.value)}
+                        onKeyDown={handleYoutubeKeyDown}
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={confirmYoutube}
+                      className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
+                    >
+                      Chèn
+                    </button>
+                    <button type="button" onClick={() => setPopover(null)} className={toolbarButtonClass}>
+                      <X className="h-4 w-4" />
+                    </button>
+                    {youtubeError && <p className="w-full text-xs text-red-600">{youtubeError}</p>}
                   </div>
                 )}
               </div>
