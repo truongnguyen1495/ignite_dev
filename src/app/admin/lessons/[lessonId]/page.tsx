@@ -22,13 +22,13 @@ export default async function EditLessonPage({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="mx-auto max-w-[1000px] space-y-6">
       <div>
         <BackLink href="/admin/lessons">Quay lại</BackLink>
         <h1 className="mt-2 text-2xl font-semibold text-foreground">{lesson.title}</h1>
       </div>
 
-      <div className="max-w-xl rounded-xl border border-border bg-surface p-6">
+      <div className="rounded-2xl border border-border bg-surface p-8">
         <EditLessonForm
           lessonId={lesson.id}
           title={lesson.title}
@@ -39,7 +39,7 @@ export default async function EditLessonPage({
         />
       </div>
 
-      <div className="max-w-xl space-y-3 rounded-xl border border-border bg-surface p-6">
+      <div className="space-y-3 rounded-2xl border border-border bg-surface p-8">
         <h2 className="text-sm font-semibold text-foreground">Bài test</h2>
         {lesson.quiz ? (
           <Link
@@ -61,7 +61,7 @@ export default async function EditLessonPage({
         )}
       </div>
 
-      <div className="max-w-xl space-y-3 rounded-xl border border-border bg-surface p-6">
+      <div className="space-y-3 rounded-2xl border border-border bg-surface p-8">
         <h2 className="text-sm font-semibold text-foreground">Khu vực nguy hiểm</h2>
         <DeleteLessonButton lessonId={lesson.id} lessonTitle={lesson.title} />
       </div>

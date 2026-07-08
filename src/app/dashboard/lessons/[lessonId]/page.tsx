@@ -1,10 +1,10 @@
 import Link from "next/link";
-import Markdown from "react-markdown";
 import { ClipboardList } from "lucide-react";
 import { requireLessonAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { YoutubeEmbed } from "@/components/youtube-embed";
+import { LessonMarkdown } from "@/components/lesson-markdown";
 import { BackLink } from "@/components/ui/back-link";
 
 export default async function StudentLessonPage({
@@ -30,8 +30,8 @@ export default async function StudentLessonPage({
 
       {lesson.youtubeId && <YoutubeEmbed videoId={lesson.youtubeId} />}
 
-      <article className="prose prose-invert max-w-none rounded-xl border border-border bg-surface p-6">
-        <Markdown>{lesson.content}</Markdown>
+      <article className="rounded-xl border border-border bg-surface p-6">
+        <LessonMarkdown content={lesson.content} />
       </article>
 
       {quiz && (

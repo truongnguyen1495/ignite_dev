@@ -93,3 +93,35 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+
+/* Lesson content editor/preview/student-view all share this class (see
+   src/components/lesson-markdown.tsx). Images always stay responsive; the
+   size/align classes are inserted by the admin's image-insert toolbar as
+   raw HTML (allowed through rehype-sanitize's extended schema). */
+.lesson-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+.lesson-content .lesson-img-sm {
+  max-width: min(100%, 240px);
+}
+.lesson-content .lesson-img-md {
+  max-width: min(100%, 480px);
+}
+.lesson-content .lesson-img-lg {
+  max-width: 100%;
+}
+.lesson-content .lesson-align-left {
+  display: block;
+  margin-right: auto;
+}
+.lesson-content .lesson-align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+.lesson-content .lesson-align-right {
+  display: block;
+  margin-left: auto;
+}
