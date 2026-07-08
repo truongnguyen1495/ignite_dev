@@ -93,3 +93,36 @@ export async function requireQuizAccess(quizId: string) {
   }
   return { student, quiz };
 }
+
+// Exclusive courses aren't gated by grantedLevel at all — access is a plain
+// per-student grant row, checked fresh from the DB same as everything else
+// in this file. No grant means no access, regardless of nav visibility.
+export async function requireCourseAccess(courseId: string) {
+  const student = await requireActiveStudent();
+  const course = await prisma.course.findUnique({ where: { id: courseId } });
+  if (!course) {
+    redirect("/dashboard?denied=1");
+  }
+  const grant = await prisma.courseAccessGrant.findUnique({
+    where: { studentId_courseId: { studentId: student.id, courseId } },
+  });
+  if (!grant) {
+    redirect("/dashboard?denied=1");
+  }
+  return { student, course };
+}
+
+export async function requireCourseLessonAccess(lessonId: string) {
+  const student = await requireActiveStudent();
+  const lesson = await prisma.courseLesson.findUnique({ where: { id: lessonId } });
+  if (!lesson) {
+    redirect("/dashboard?denied=1");
+  }
+  const grant = await prisma.courseAccessGrant.findUnique({
+    where: { studentId_courseId: { studentId: student.id, courseId: lesson.courseId } },
+  });
+  if (!grant) {
+    redirect("/dashboard?denied=1");
+  }
+  return { student, lesson };
+}

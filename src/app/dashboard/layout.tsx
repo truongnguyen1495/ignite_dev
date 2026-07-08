@@ -1,4 +1,4 @@
-import { LayoutDashboard, ArrowUpCircle, GraduationCap } from "lucide-react";
+import { LayoutDashboard, ArrowUpCircle, GraduationCap, Video } from "lucide-react";
 import { requireActiveStudent } from "@/lib/access";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { Sidebar, SidebarProvider, SidebarToggle, type NavItem } from "@/components/ui/sidebar";
@@ -9,6 +9,7 @@ const iconClass = "h-4 w-4";
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "5 Cấp đào tạo", icon: <LayoutDashboard className={iconClass} />, exact: true },
+  { href: "/dashboard/courses", label: "Khóa học", icon: <Video className={iconClass} /> },
   { href: "/dashboard/level-up", label: "Xin lên cấp", icon: <ArrowUpCircle className={iconClass} /> },
 ];
 
