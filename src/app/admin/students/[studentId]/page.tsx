@@ -53,17 +53,12 @@ export default async function EditStudentPage({
         </h1>
       </div>
 
-      {(student.username || student.displayName || student.dateOfBirth) && (
+      {(student.username || student.dateOfBirth) && (
         <div className="max-w-xl space-y-1 rounded-xl border border-border bg-surface p-6 text-sm">
           <h2 className="mb-2 text-sm font-semibold text-muted">Thông tin đăng ký</h2>
           {student.username && (
             <p className="text-foreground">
               <span className="text-muted">Username:</span> @{student.username}
-            </p>
-          )}
-          {student.displayName && (
-            <p className="text-foreground">
-              <span className="text-muted">Tên hiển thị:</span> {student.displayName}
             </p>
           )}
           {student.dateOfBirth && (

@@ -15,7 +15,6 @@ const registerSchema = z
       .trim()
       .min(3, "Username phải có ít nhất 3 ký tự.")
       .regex(/^[a-zA-Z0-9_.]+$/, "Username chỉ được chứa chữ, số, dấu chấm và gạch dưới."),
-    displayName: z.string().trim().min(1, "Tên hiển thị không được để trống."),
     dateOfBirth: z.coerce
       .date()
       .refine((date) => !Number.isNaN(date.getTime()), "Ngày sinh không hợp lệ.")
@@ -36,7 +35,6 @@ export async function registerAction(
     name: formData.get("name"),
     email: formData.get("email"),
     username: formData.get("username"),
-    displayName: formData.get("displayName"),
     dateOfBirth: formData.get("dateOfBirth"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
@@ -53,7 +51,6 @@ export async function registerAction(
         name: parsed.data.name,
         email: parsed.data.email,
         username: parsed.data.username,
-        displayName: parsed.data.displayName,
         dateOfBirth: parsed.data.dateOfBirth,
         passwordHash,
         role: "STUDENT",

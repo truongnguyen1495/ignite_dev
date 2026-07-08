@@ -1,12 +1,55 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { registerAction } from "./actions";
 
 const inputClass =
-  "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none";
+  "w-full rounded-lg border border-border bg-background px-3 py-2 pr-10 text-sm text-foreground focus:border-primary focus:outline-none";
 const labelClass = "mb-1.5 block text-sm font-medium text-foreground";
+
+function PasswordField({
+  id,
+  name,
+  label,
+  autoComplete,
+}: {
+  id: string;
+  name: string;
+  label: string;
+  autoComplete: string;
+}) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div>
+      <label htmlFor={id} className={labelClass}>
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          id={id}
+          name={name}
+          type={visible ? "text" : "password"}
+          required
+          minLength={8}
+          autoComplete={autoComplete}
+          className={inputClass}
+        />
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          tabIndex={-1}
+          aria-label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+          className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted hover:text-foreground"
+        >
+          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function RegisterForm() {
   const [error, formAction, pending] = useActionState(registerAction, undefined);
@@ -17,60 +60,52 @@ export function RegisterForm() {
         <label htmlFor="name" className={labelClass}>
           Họ và tên
         </label>
-        <input id="name" name="name" required className={inputClass} />
+        <input id="name" name="name" required className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none" />
       </div>
       <div>
         <label htmlFor="email" className={labelClass}>
           Email
         </label>
-        <input id="email" name="email" type="email" required autoComplete="email" className={inputClass} />
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+        />
       </div>
       <div>
         <label htmlFor="username" className={labelClass}>
           Username
         </label>
-        <input id="username" name="username" required minLength={3} className={inputClass} />
-      </div>
-      <div>
-        <label htmlFor="displayName" className={labelClass}>
-          Tên hiển thị
-        </label>
-        <input id="displayName" name="displayName" required className={inputClass} />
+        <input
+          id="username"
+          name="username"
+          required
+          minLength={3}
+          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+        />
       </div>
       <div>
         <label htmlFor="dateOfBirth" className={labelClass}>
           Ngày tháng năm sinh
         </label>
-        <input id="dateOfBirth" name="dateOfBirth" type="date" required className={inputClass} />
-      </div>
-      <div>
-        <label htmlFor="password" className={labelClass}>
-          Mật khẩu
-        </label>
         <input
-          id="password"
-          name="password"
-          type="password"
+          id="dateOfBirth"
+          name="dateOfBirth"
+          type="date"
           required
-          minLength={8}
-          autoComplete="new-password"
-          className={inputClass}
+          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
         />
       </div>
-      <div>
-        <label htmlFor="confirmPassword" className={labelClass}>
-          Xác nhận mật khẩu
-        </label>
-        <input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          required
-          minLength={8}
-          autoComplete="new-password"
-          className={inputClass}
-        />
-      </div>
+      <PasswordField id="password" name="password" label="Mật khẩu" autoComplete="new-password" />
+      <PasswordField
+        id="confirmPassword"
+        name="confirmPassword"
+        label="Xác nhận mật khẩu"
+        autoComplete="new-password"
+      />
       {error && <p className="text-sm text-danger">{error}</p>}
       <button
         type="submit"
