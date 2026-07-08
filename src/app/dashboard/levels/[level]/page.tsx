@@ -5,6 +5,7 @@ import { requireLevelAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { LEVEL_LABELS, parseLevel } from "@/lib/levels";
 import { BackLink } from "@/components/ui/back-link";
+import { Badge } from "@/components/ui/badge";
 
 export default async function LevelPage({
   params,
@@ -19,11 +20,18 @@ export default async function LevelPage({
 
   // requireLevelAccess re-checks grantedLevel fresh from the DB — this is
   // what blocks a student from viewing a level's lesson list via direct URL.
-  await requireLevelAccess(level);
+  const student = await requireLevelAccess(level);
 
   const lessons = await prisma.lesson.findMany({
     where: { level },
     orderBy: { order: "asc" },
+    include: {
+      quiz: {
+        include: {
+          attempts: { where: { studentId: student.id, passed: true }, take: 1 },
+        },
+      },
+    },
   });
 
   return (
@@ -36,17 +44,27 @@ export default async function LevelPage({
         <p className="text-sm text-muted">Chưa có bài học nào ở cấp này.</p>
       ) : (
         <ul className="space-y-2">
-          {lessons.map((lesson) => (
-            <li key={lesson.id}>
-              <Link
-                href={`/dashboard/lessons/${lesson.id}`}
-                className="flex items-center gap-3 rounded-xl border border-border bg-surface p-4 hover:border-primary/50"
-              >
-                <BookOpen className="h-4 w-4 text-primary" />
-                <span className="text-foreground">{lesson.title}</span>
-              </Link>
-            </li>
-          ))}
+          {lessons.map((lesson) => {
+            const completed = Boolean(lesson.quiz && lesson.quiz.attempts.length > 0);
+            return (
+              <li key={lesson.id}>
+                <Link
+                  href={`/dashboard/lessons/${lesson.id}`}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 hover:border-primary/50"
+                >
+                  <span className="flex items-center gap-3">
+                    <BookOpen className="h-4 w-4 text-primary" />
+                    <span className="text-foreground">{lesson.title}</span>
+                  </span>
+                  {completed ? (
+                    <Badge color="success">Đã hoàn thành</Badge>
+                  ) : (
+                    <Badge color="faint">Chưa hoàn thành</Badge>
+                  )}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
