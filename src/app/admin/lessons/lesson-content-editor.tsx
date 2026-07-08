@@ -1,6 +1,10 @@
 "use client";
 
 import { useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import { BubbleMenu } from "@tiptap/react/menus";
+import StarterKit from "@tiptap/starter-kit";
+import { Markdown } from "tiptap-markdown";
 import {
   Heading1,
   Heading2,
@@ -24,25 +28,20 @@ import {
   Loader2,
 } from "lucide-react";
 import { LessonMarkdown } from "@/components/lesson-markdown";
+import { LessonImage, type LessonImageAlign, type LessonImageSize } from "./lesson-image-extension";
 
 type Popover = { type: "link" | "image" } | null;
 
-function getLineBounds(text: string, pos: number) {
-  const lineStart = text.lastIndexOf("\n", pos - 1) + 1;
-  let lineEnd = text.indexOf("\n", pos);
-  if (lineEnd === -1) lineEnd = text.length;
-  return { lineStart, lineEnd };
-}
-
-function escapeAttr(value: string) {
-  return value.replace(/"/g, "&quot;");
-}
-
 const toolbarButtonClass =
   "flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground";
+const activeToolbarButtonClass =
+  "flex h-8 w-8 items-center justify-center rounded-md bg-surface-hover text-foreground";
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 const ALLOWED_UPLOAD_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+
+const bubbleButtonClass = "rounded px-2 py-1 text-xs font-medium text-muted hover:bg-surface-hover hover:text-foreground";
+const activeBubbleButtonClass = "rounded px-2 py-1 text-xs font-medium bg-primary text-primary-foreground";
 
 export function LessonContentEditor({
   name = "content",
@@ -53,154 +52,99 @@ export function LessonContentEditor({
   id?: string;
   defaultValue?: string;
 }) {
-  const [value, setValue] = useState(defaultValue);
   const [mode, setMode] = useState<"write" | "preview">("write");
   const [fullscreen, setFullscreen] = useState(false);
   const [popover, setPopover] = useState<Popover>(null);
   const [linkFields, setLinkFields] = useState({ url: "", text: "" });
+  const [linkHasSelection, setLinkHasSelection] = useState(false);
   const [imageFields, setImageFields] = useState({
     url: "",
     alt: "",
-    size: "md" as "sm" | "md" | "lg",
-    align: "left" as "left" | "center" | "right",
+    size: "md" as LessonImageSize,
+    align: "left" as LessonImageAlign,
   });
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [markdown, setMarkdown] = useState(defaultValue);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function setSelectionAsync(start: number, end: number) {
-    requestAnimationFrame(() => {
-      const el = textareaRef.current;
-      if (!el) return;
-      el.focus();
-      el.setSelectionRange(start, end);
-    });
+  const editor = useEditor({
+    immediatelyRender: false,
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3] },
+        link: { openOnClick: false },
+      }),
+      LessonImage,
+      Markdown.configure({ html: true, bulletListMarker: "-", linkify: false }),
+    ],
+    content: defaultValue,
+    editorProps: {
+      attributes: {
+        class: "lesson-content prose max-w-none focus:outline-none px-4 py-3",
+      },
+    },
+    onUpdate: ({ editor }) => {
+      const markdownStorage = editor.storage as unknown as { markdown: { getMarkdown(): string } };
+      setMarkdown(markdownStorage.markdown.getMarkdown());
+    },
+  });
+
+  function btnClass(active: boolean) {
+    return active ? activeToolbarButtonClass : toolbarButtonClass;
   }
 
-  // Used by the link/image popovers, which can fire well after a prior
-  // formatting action (e.g. Bold) has left its result selected for visual
-  // feedback — inserting at selectionEnd rather than replacing [start, end]
-  // means confirming a link/image never silently deletes that selection.
-  function insertAtCursor(text: string) {
-    const el = textareaRef.current;
-    if (!el) return;
-    const pos = el.selectionEnd;
-    const newValue = value.slice(0, pos) + text + value.slice(pos);
-    setValue(newValue);
-    const newPos = pos + text.length;
-    setSelectionAsync(newPos, newPos);
-  }
-
-  function wrapSelection(before: string, after: string = before, placeholder = "") {
-    const el = textareaRef.current;
-    if (!el) return;
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    const selected = value.slice(start, end);
-
-    // Re-clicking a format button on already-wrapped text should unwrap it,
-    // mirroring the toggle behavior of the heading/list/quote buttons.
-    if (selected.startsWith(before) && selected.endsWith(after) && selected.length >= before.length + after.length) {
-      const inner = selected.slice(before.length, selected.length - after.length);
-      const newValue = value.slice(0, start) + inner + value.slice(end);
-      setValue(newValue);
-      setSelectionAsync(start, start + inner.length);
+  function openLinkPopover() {
+    if (!editor) return;
+    if (popover?.type === "link") {
+      setPopover(null);
       return;
     }
-    const outerBefore = value.slice(Math.max(0, start - before.length), start);
-    const outerAfter = value.slice(end, end + after.length);
-    if (selected && outerBefore === before && outerAfter === after) {
-      const newValue = value.slice(0, start - before.length) + selected + value.slice(end + after.length);
-      setValue(newValue);
-      setSelectionAsync(start - before.length, start - before.length + selected.length);
-      return;
+    setLinkHasSelection(!editor.state.selection.empty);
+    setLinkFields({ url: "", text: "" });
+    setPopover({ type: "link" });
+  }
+
+  function openImagePopover() {
+    setUploadError(null);
+    setPopover(popover?.type === "image" ? null : { type: "image" });
+  }
+
+  function confirmLink() {
+    if (!editor || !linkFields.url.trim()) return;
+    const url = linkFields.url.trim();
+    if (linkHasSelection) {
+      editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+    } else {
+      const label = linkFields.text.trim() || url;
+      editor
+        .chain()
+        .focus()
+        .insertContent({ type: "text", text: label, marks: [{ type: "link", attrs: { href: url } }] })
+        .run();
     }
-
-    const text = selected || placeholder;
-    const newValue = value.slice(0, start) + before + text + after + value.slice(end);
-    setValue(newValue);
-    const selStart = start + before.length;
-    const selEnd = selStart + text.length;
-    setSelectionAsync(selStart, selEnd);
+    setLinkFields({ url: "", text: "" });
+    setPopover(null);
   }
 
-  function toggleHeading(level: 1 | 2 | 3) {
-    const el = textareaRef.current;
-    if (!el) return;
-    const { lineStart, lineEnd } = getLineBounds(value, el.selectionStart);
-    const line = value.slice(lineStart, lineEnd);
-    const stripped = line.replace(/^#{1,6}\s+/, "");
-    const prefix = "#".repeat(level) + " ";
-    const newLine = line === prefix + stripped ? stripped : prefix + stripped;
-    const newValue = value.slice(0, lineStart) + newLine + value.slice(lineEnd);
-    setValue(newValue);
-    setSelectionAsync(lineStart + newLine.length, lineStart + newLine.length);
-  }
-
-  function applyToLines(mapLine: (line: string, index: number) => string) {
-    const el = textareaRef.current;
-    if (!el) return;
-    const selStart = el.selectionStart;
-    const selEnd = el.selectionEnd;
-    const blockStart = value.lastIndexOf("\n", selStart - 1) + 1;
-    let blockEnd = value.indexOf("\n", selEnd);
-    if (blockEnd === -1) blockEnd = value.length;
-    const block = value.slice(blockStart, blockEnd);
-    const newBlock = block.split("\n").map(mapLine).join("\n");
-    const newValue = value.slice(0, blockStart) + newBlock + value.slice(blockEnd);
-    setValue(newValue);
-    setSelectionAsync(blockStart, blockStart + newBlock.length);
-  }
-
-  // Strips whichever line-prefix (bullet, numbered, quote) is currently
-  // applied, so switching between them replaces rather than stacks markers.
-  function stripLinePrefix(line: string) {
-    return line.replace(/^(-|\d+\.|>)\s+/, "");
-  }
-
-  function toggleBulletList() {
-    applyToLines((line) => {
-      if (line.trim() === "") return line;
-      const stripped = stripLinePrefix(line);
-      return line.startsWith("- ") ? stripped : `- ${stripped}`;
-    });
-  }
-
-  function toggleNumberedList() {
-    let n = 0;
-    applyToLines((line) => {
-      if (line.trim() === "") return line;
-      const stripped = stripLinePrefix(line);
-      if (/^\d+\.\s+/.test(line)) return stripped;
-      n += 1;
-      return `${n}. ${stripped}`;
-    });
-  }
-
-  function toggleQuote() {
-    applyToLines((line) => {
-      if (line.trim() === "") return line;
-      const stripped = stripLinePrefix(line);
-      return line.startsWith("> ") ? stripped : `> ${stripped}`;
-    });
-  }
-
-  function undo() {
-    textareaRef.current?.focus();
-    document.execCommand("undo");
-  }
-
-  function redo() {
-    textareaRef.current?.focus();
-    document.execCommand("redo");
+  function confirmImage() {
+    if (!editor || !imageFields.url.trim()) return;
+    editor
+      .chain()
+      .focus()
+      .setLessonImage({
+        src: imageFields.url.trim(),
+        alt: imageFields.alt.trim(),
+        size: imageFields.size,
+        align: imageFields.align,
+      })
+      .run();
+    setImageFields({ url: "", alt: "", size: "md", align: "left" });
+    setPopover(null);
   }
 
   // Popover inputs sit inside the lesson form; without this, Enter would
   // bubble up and submit that outer form instead of confirming the popover.
-  // Written as plain handlers (rather than a curried helper invoked inline
-  // in JSX) so the ref access inside confirmLink/confirmImage only happens
-  // from the event handler itself, never during render.
   function handleLinkKeyDown(e: KeyboardEvent) {
     if (e.key !== "Enter") return;
     e.preventDefault();
@@ -211,24 +155,6 @@ export function LessonContentEditor({
     if (e.key !== "Enter") return;
     e.preventDefault();
     confirmImage();
-  }
-
-  function confirmLink() {
-    if (!linkFields.url.trim()) return;
-    const label = linkFields.text.trim() || linkFields.url.trim();
-    insertAtCursor(`[${label}](${linkFields.url.trim()})`);
-    setLinkFields({ url: "", text: "" });
-    setPopover(null);
-  }
-
-  function confirmImage() {
-    if (!imageFields.url.trim()) return;
-    const classes = `lesson-img-${imageFields.size} lesson-align-${imageFields.align}`;
-    insertAtCursor(
-      `\n<img src="${escapeAttr(imageFields.url.trim())}" alt="${escapeAttr(imageFields.alt.trim())}" class="${classes}" />\n`
-    );
-    setImageFields({ url: "", alt: "", size: "md", align: "left" });
-    setPopover(null);
   }
 
   async function handleFileSelected(e: ChangeEvent<HTMLInputElement>) {
@@ -287,80 +213,112 @@ export function LessonContentEditor({
       <div className={fullscreen ? "mx-auto flex w-full max-w-[1000px] flex-1 flex-col" : ""}>
         <div className="rounded-lg border border-border bg-background">
           <div className="flex flex-wrap items-center gap-0.5 border-b border-border p-1.5">
-            <button type="button" title="Heading 1" onClick={() => toggleHeading(1)} className={toolbarButtonClass}>
+            <button
+              type="button"
+              title="Heading 1"
+              onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
+              className={btnClass(!!editor?.isActive("heading", { level: 1 }))}
+            >
               <Heading1 className="h-4 w-4" />
             </button>
-            <button type="button" title="Heading 2" onClick={() => toggleHeading(2)} className={toolbarButtonClass}>
+            <button
+              type="button"
+              title="Heading 2"
+              onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+              className={btnClass(!!editor?.isActive("heading", { level: 2 }))}
+            >
               <Heading2 className="h-4 w-4" />
             </button>
-            <button type="button" title="Heading 3" onClick={() => toggleHeading(3)} className={toolbarButtonClass}>
+            <button
+              type="button"
+              title="Heading 3"
+              onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
+              className={btnClass(!!editor?.isActive("heading", { level: 3 }))}
+            >
               <Heading3 className="h-4 w-4" />
             </button>
             <span className="mx-1 h-5 w-px bg-border" />
             <button
               type="button"
               title="In đậm"
-              onClick={() => wrapSelection("**", "**", "chữ đậm")}
-              className={toolbarButtonClass}
+              onClick={() => editor?.chain().focus().toggleBold().run()}
+              className={btnClass(!!editor?.isActive("bold"))}
             >
               <Bold className="h-4 w-4" />
             </button>
             <button
               type="button"
               title="In nghiêng"
-              onClick={() => wrapSelection("_", "_", "chữ nghiêng")}
-              className={toolbarButtonClass}
+              onClick={() => editor?.chain().focus().toggleItalic().run()}
+              className={btnClass(!!editor?.isActive("italic"))}
             >
               <Italic className="h-4 w-4" />
             </button>
             <button
               type="button"
               title="Gạch chân"
-              onClick={() => wrapSelection("<u>", "</u>", "chữ gạch chân")}
-              className={toolbarButtonClass}
+              onClick={() => editor?.chain().focus().toggleUnderline().run()}
+              className={btnClass(!!editor?.isActive("underline"))}
             >
               <Underline className="h-4 w-4" />
             </button>
             <span className="mx-1 h-5 w-px bg-border" />
-            <button type="button" title="Danh sách" onClick={toggleBulletList} className={toolbarButtonClass}>
+            <button
+              type="button"
+              title="Danh sách"
+              onClick={() => editor?.chain().focus().toggleBulletList().run()}
+              className={btnClass(!!editor?.isActive("bulletList"))}
+            >
               <List className="h-4 w-4" />
             </button>
             <button
               type="button"
               title="Danh sách đánh số"
-              onClick={toggleNumberedList}
-              className={toolbarButtonClass}
+              onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+              className={btnClass(!!editor?.isActive("orderedList"))}
             >
               <ListOrdered className="h-4 w-4" />
             </button>
-            <button type="button" title="Trích dẫn" onClick={toggleQuote} className={toolbarButtonClass}>
+            <button
+              type="button"
+              title="Trích dẫn"
+              onClick={() => editor?.chain().focus().toggleBlockquote().run()}
+              className={btnClass(!!editor?.isActive("blockquote"))}
+            >
               <Quote className="h-4 w-4" />
             </button>
             <span className="mx-1 h-5 w-px bg-border" />
             <button
               type="button"
               title="Chèn link"
-              onClick={() => setPopover(popover?.type === "link" ? null : { type: "link" })}
-              className={toolbarButtonClass}
+              onClick={openLinkPopover}
+              className={btnClass(popover?.type === "link")}
             >
               <Link2 className="h-4 w-4" />
             </button>
             <button
               type="button"
               title="Chèn ảnh"
-              onClick={() => {
-                setUploadError(null);
-                setPopover(popover?.type === "image" ? null : { type: "image" });
-              }}
-              className={toolbarButtonClass}
+              onClick={openImagePopover}
+              className={btnClass(popover?.type === "image")}
             >
               <ImageIcon className="h-4 w-4" />
             </button>
             <span className="mx-1 h-5 w-px bg-border" />
-            <button type="button" title="Hoàn tác" onClick={undo} className={toolbarButtonClass}>
+            <button
+              type="button"
+              title="Hoàn tác"
+              onClick={() => editor?.chain().focus().undo().run()}
+              className={toolbarButtonClass}
+            >
               <Undo2 className="h-4 w-4" />
             </button>
-            <button type="button" title="Làm lại" onClick={redo} className={toolbarButtonClass}>
+            <button
+              type="button"
+              title="Làm lại"
+              onClick={() => editor?.chain().focus().redo().run()}
+              className={toolbarButtonClass}
+            >
               <Redo2 className="h-4 w-4" />
             </button>
 
@@ -399,16 +357,18 @@ export function LessonContentEditor({
                       className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
                     />
                   </div>
-                  <div className="min-w-[140px] flex-1">
-                    <label className="mb-1 block text-xs font-medium text-muted">Chữ hiển thị</label>
-                    <input
-                      value={linkFields.text}
-                      onChange={(e) => setLinkFields((f) => ({ ...f, text: e.target.value }))}
-                      onKeyDown={handleLinkKeyDown}
-                      placeholder="(tùy chọn)"
-                      className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
-                    />
-                  </div>
+                  {!linkHasSelection && (
+                    <div className="min-w-[140px] flex-1">
+                      <label className="mb-1 block text-xs font-medium text-muted">Chữ hiển thị</label>
+                      <input
+                        value={linkFields.text}
+                        onChange={(e) => setLinkFields((f) => ({ ...f, text: e.target.value }))}
+                        onKeyDown={handleLinkKeyDown}
+                        placeholder="(tùy chọn)"
+                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                      />
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={confirmLink}
@@ -416,11 +376,7 @@ export function LessonContentEditor({
                   >
                     Chèn
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setPopover(null)}
-                    className={toolbarButtonClass}
-                  >
+                  <button type="button" onClick={() => setPopover(null)} className={toolbarButtonClass}>
                     <X className="h-4 w-4" />
                   </button>
                 </div>
@@ -468,7 +424,7 @@ export function LessonContentEditor({
                     <select
                       value={imageFields.size}
                       onChange={(e) =>
-                        setImageFields((f) => ({ ...f, size: e.target.value as typeof f.size }))
+                        setImageFields((f) => ({ ...f, size: e.target.value as LessonImageSize }))
                       }
                       className="rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
                     >
@@ -482,7 +438,7 @@ export function LessonContentEditor({
                     <select
                       value={imageFields.align}
                       onChange={(e) =>
-                        setImageFields((f) => ({ ...f, align: e.target.value as typeof f.align }))
+                        setImageFields((f) => ({ ...f, align: e.target.value as LessonImageAlign }))
                       }
                       className="rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
                     >
@@ -498,45 +454,76 @@ export function LessonContentEditor({
                   >
                     Chèn
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setPopover(null)}
-                    className={toolbarButtonClass}
-                  >
+                  <button type="button" onClick={() => setPopover(null)} className={toolbarButtonClass}>
                     <X className="h-4 w-4" />
                   </button>
-                  {uploadError && (
-                    <p className="w-full text-xs text-red-600">{uploadError}</p>
-                  )}
+                  {uploadError && <p className="w-full text-xs text-red-600">{uploadError}</p>}
                 </div>
               )}
             </div>
           )}
 
-          <textarea
-            ref={textareaRef}
-            id={id}
-            name={name}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            required
-            className={`w-full resize-y rounded-b-lg bg-background px-4 py-3 font-mono text-sm text-foreground focus:outline-none ${
-              mode === "write" ? "block" : "hidden"
-            } ${fullscreen ? "min-h-[70vh] flex-1" : "min-h-[420px]"}`}
-          />
+          {editor && (
+            <BubbleMenu editor={editor} shouldShow={({ editor }) => editor.isActive("lessonImage")}>
+              <div className="flex items-center gap-1 rounded-lg border border-border bg-background p-1 shadow-lg">
+                {(["sm", "md", "lg"] as const).map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => editor.chain().focus().updateAttributes("lessonImage", { size }).run()}
+                    className={
+                      editor.getAttributes("lessonImage").size === size
+                        ? activeBubbleButtonClass
+                        : bubbleButtonClass
+                    }
+                  >
+                    {size === "sm" ? "Nhỏ" : size === "md" ? "Vừa" : "Lớn"}
+                  </button>
+                ))}
+                <span className="mx-1 h-5 w-px bg-border" />
+                {(["left", "center", "right"] as const).map((align) => (
+                  <button
+                    key={align}
+                    type="button"
+                    onClick={() => editor.chain().focus().updateAttributes("lessonImage", { align }).run()}
+                    className={
+                      editor.getAttributes("lessonImage").align === align
+                        ? activeBubbleButtonClass
+                        : bubbleButtonClass
+                    }
+                  >
+                    {align === "left" ? "Trái" : align === "center" ? "Giữa" : "Phải"}
+                  </button>
+                ))}
+              </div>
+            </BubbleMenu>
+          )}
+
+          <div
+            className={`overflow-y-auto rounded-b-lg ${mode === "write" ? "block" : "hidden"} ${
+              fullscreen ? "min-h-[70vh] flex-1" : "min-h-[420px]"
+            }`}
+          >
+            {editor ? (
+              <EditorContent editor={editor} />
+            ) : (
+              <p className="px-4 py-3 text-sm text-muted">Đang tải trình soạn thảo...</p>
+            )}
+          </div>
           <div
             className={`overflow-y-auto rounded-b-lg px-4 py-3 ${mode === "preview" ? "block" : "hidden"} ${
               fullscreen ? "min-h-[70vh] flex-1" : "min-h-[420px]"
             }`}
           >
-            {value.trim() ? (
-              <LessonMarkdown content={value} />
+            {markdown.trim() ? (
+              <LessonMarkdown content={markdown} />
             ) : (
               <p className="text-sm text-muted">Chưa có nội dung để xem trước.</p>
             )}
           </div>
         </div>
       </div>
+      <input type="hidden" name={name} id={id} value={markdown} />
     </div>
   );
 }
