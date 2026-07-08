@@ -8,12 +8,14 @@ import {
   DeleteStudentButton,
   ApproveStudentButton,
 } from "./[studentId]/danger-actions";
+import { PendingRegistrations } from "./pending-registrations";
 
 export default async function StudentsPage() {
   const students = await prisma.user.findMany({
     where: { role: "STUDENT" },
     orderBy: { createdAt: "desc" },
   });
+  const pending = students.filter((student) => student.status === "PENDING");
 
   return (
     <div className="space-y-6">
@@ -27,6 +29,8 @@ export default async function StudentsPage() {
           Thêm Học viên Mới
         </Link>
       </div>
+
+      <PendingRegistrations students={pending} />
 
       {students.length === 0 ? (
         <p className="text-sm text-muted">Chưa có học viên nào.</p>
