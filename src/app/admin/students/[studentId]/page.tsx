@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { EditStudentForm } from "./edit-student-form";
 import { DeleteStudentButton, ToggleStudentStatusButton, ApproveStudentButton } from "./danger-actions";
@@ -37,8 +37,11 @@ export default async function EditStudentPage({
     }),
   ]);
 
+  const isPending = student.status === "PENDING";
+  const hasRegistrationInfo = Boolean(student.username || student.dateOfBirth);
+
   return (
-    <div className="space-y-8">
+    <div className="mx-auto w-full max-w-2xl space-y-8">
       <div>
         <Link
           href="/admin/students"
@@ -53,8 +56,48 @@ export default async function EditStudentPage({
         </h1>
       </div>
 
-      {(student.username || student.dateOfBirth) && (
-        <div className="max-w-xl space-y-1 rounded-xl border border-border bg-surface p-6 text-sm">
+      {isPending && (
+        <div className="space-y-4 rounded-xl border border-warning/30 bg-warning-bg p-6">
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+            <Clock className="h-4 w-4 text-warning" />
+            Đăng ký đang chờ duyệt
+          </h2>
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
+            <div>
+              <dt className="text-xs text-muted">Email</dt>
+              <dd className="text-foreground">{student.email}</dd>
+            </div>
+            {student.username && (
+              <div>
+                <dt className="text-xs text-muted">Username</dt>
+                <dd className="text-foreground">@{student.username}</dd>
+              </div>
+            )}
+            {student.dateOfBirth && (
+              <div>
+                <dt className="text-xs text-muted">Ngày sinh</dt>
+                <dd className="text-foreground">{student.dateOfBirth.toLocaleDateString("vi-VN")}</dd>
+              </div>
+            )}
+            <div>
+              <dt className="text-xs text-muted">Ngày đăng ký</dt>
+              <dd className="text-foreground">{student.createdAt.toLocaleDateString("vi-VN")}</dd>
+            </div>
+          </dl>
+          <div className="flex flex-wrap items-center gap-3 border-t border-warning/30 pt-4">
+            <ApproveStudentButton studentId={student.id} />
+            <DeleteStudentButton
+              studentId={student.id}
+              studentName={student.name}
+              pendingRegistration
+              redirectAfter
+            />
+          </div>
+        </div>
+      )}
+
+      {!isPending && hasRegistrationInfo && (
+        <div className="space-y-1 rounded-xl border border-border bg-surface p-6 text-sm">
           <h2 className="mb-2 text-sm font-semibold text-muted">Thông tin đăng ký</h2>
           {student.username && (
             <p className="text-foreground">
@@ -70,7 +113,8 @@ export default async function EditStudentPage({
         </div>
       )}
 
-      <div className="max-w-xl rounded-xl border border-border bg-surface p-6">
+      <div className="rounded-xl border border-border bg-surface p-6">
+        <h2 className="mb-4 text-sm font-semibold text-foreground">Thông tin tài khoản</h2>
         <EditStudentForm
           studentId={student.id}
           name={student.name}
@@ -79,7 +123,7 @@ export default async function EditStudentPage({
         />
       </div>
 
-      <div className="max-w-xl space-y-3">
+      <div className="space-y-3">
         <h2 className="text-sm font-semibold text-muted">Lịch sử làm bài test ({attempts.length})</h2>
         {attempts.length === 0 ? (
           <p className="text-sm text-muted">Học viên chưa làm bài test nào.</p>
@@ -106,7 +150,7 @@ export default async function EditStudentPage({
         )}
       </div>
 
-      <div className="max-w-xl space-y-3">
+      <div className="space-y-3">
         <h2 className="text-sm font-semibold text-muted">Lịch sử xin lên cấp ({levelUpRequests.length})</h2>
         {levelUpRequests.length === 0 ? (
           <p className="text-sm text-muted">Học viên chưa gửi yêu cầu lên cấp nào.</p>
@@ -142,24 +186,15 @@ export default async function EditStudentPage({
         )}
       </div>
 
-      <div className="max-w-xl space-y-3 rounded-xl border border-border bg-surface p-6">
-        <h2 className="text-sm font-semibold text-foreground">
-          {student.status === "PENDING" ? "Duyệt đăng ký" : "Khu vực nguy hiểm"}
-        </h2>
-        <div className="flex items-center gap-3">
-          {student.status === "PENDING" ? (
-            <ApproveStudentButton studentId={student.id} />
-          ) : (
+      {!isPending && (
+        <div className="space-y-3 rounded-xl border border-border bg-surface p-6">
+          <h2 className="text-sm font-semibold text-foreground">Khu vực nguy hiểm</h2>
+          <div className="flex items-center gap-3">
             <ToggleStudentStatusButton studentId={student.id} locked={student.status === "LOCKED"} />
-          )}
-          <DeleteStudentButton
-            studentId={student.id}
-            studentName={student.name}
-            pendingRegistration={student.status === "PENDING"}
-            redirectAfter
-          />
+            <DeleteStudentButton studentId={student.id} studentName={student.name} redirectAfter />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
