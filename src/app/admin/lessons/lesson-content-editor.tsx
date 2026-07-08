@@ -212,7 +212,7 @@ export function LessonContentEditor({
       )}
       <div className={fullscreen ? "mx-auto flex w-full max-w-[1000px] flex-1 flex-col" : ""}>
         <div className="rounded-lg border border-border bg-background">
-          <div className="flex flex-wrap items-center gap-0.5 border-b border-border p-1.5">
+          <div className="sticky top-0 z-10 flex flex-wrap items-center gap-0.5 rounded-t-lg border-b border-border bg-background p-1.5">
             <button
               type="button"
               title="Heading 1"
