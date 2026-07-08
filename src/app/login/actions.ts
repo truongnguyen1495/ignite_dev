@@ -1,7 +1,8 @@
 "use server";
 
 import { AuthError } from "next-auth";
-import { signIn } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { signIn, AccountLockedError } from "@/lib/auth";
 
 export async function loginAction(
   _prevState: string | undefined,
@@ -17,8 +18,11 @@ export async function loginAction(
       redirectTo: "/",
     });
   } catch (error) {
+    if (error instanceof AccountLockedError) {
+      redirect("/login/locked");
+    }
     if (error instanceof AuthError) {
-      return "Email hoặc mật khẩu không đúng, hoặc tài khoản đã bị khóa.";
+      return "Email hoặc mật khẩu không đúng.";
     }
     throw error;
   }
