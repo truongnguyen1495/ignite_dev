@@ -1,6 +1,14 @@
 import Link from "next/link";
-import { Plus, BookOpen, Users } from "lucide-react";
+import { Plus, BookOpen, Users, Video } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+
+const BANNER_GRADIENTS = [
+  "from-[var(--primary)] to-[var(--info)]",
+  "from-[var(--level-3)] to-[var(--primary)]",
+  "from-[var(--level-4)] to-[var(--warning)]",
+  "from-[var(--info)] to-[var(--level-3)]",
+  "from-[var(--level-5)] to-[var(--level-4)]",
+];
 
 export default async function CoursesPage() {
   const courses = await prisma.course.findMany({
@@ -24,28 +32,38 @@ export default async function CoursesPage() {
       {courses.length === 0 ? (
         <p className="text-sm text-muted">Chưa có khóa học nào.</p>
       ) : (
-        <ul className="space-y-2">
-          {courses.map((course) => (
-            <li key={course.id}>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {courses.map((course, index) => {
+            const gradient = BANNER_GRADIENTS[index % BANNER_GRADIENTS.length];
+            return (
               <Link
+                key={course.id}
                 href={`/admin/courses/${course.id}`}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-surface p-4 hover:border-primary/50"
+                className="overflow-hidden rounded-xl border border-border bg-surface transition-colors hover:border-primary/50"
               >
-                <span className="text-foreground">{course.title}</span>
-                <span className="flex items-center gap-4 text-xs text-muted">
-                  <span className="flex items-center gap-1">
-                    <BookOpen className="h-3.5 w-3.5" />
-                    {course._count.lessons} bài học
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5" />
-                    {course._count.grants} học viên
-                  </span>
-                </span>
+                <div className={`flex h-28 items-center justify-center bg-gradient-to-br ${gradient}`}>
+                  <Video className="h-9 w-9 text-white/90" />
+                </div>
+                <div className="p-5">
+                  <p className="font-semibold text-foreground">{course.title}</p>
+                  {course.description && (
+                    <p className="mt-1 line-clamp-2 text-sm text-muted">{course.description}</p>
+                  )}
+                  <div className="mt-4 flex items-center gap-4 text-xs text-muted">
+                    <span className="flex items-center gap-1">
+                      <BookOpen className="h-3.5 w-3.5" />
+                      {course._count.lessons} bài học
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Users className="h-3.5 w-3.5" />
+                      {course._count.grants} học viên
+                    </span>
+                  </div>
+                </div>
               </Link>
-            </li>
-          ))}
-        </ul>
+            );
+          })}
+        </div>
       )}
     </div>
   );
