@@ -28,7 +28,7 @@ export default async function LevelUpRequestsPage() {
         ) : (
           <ul className="space-y-3">
             {pending.map((req) => (
-              <li key={req.id} className="rounded-xl border border-border bg-surface p-6">
+              <li key={req.id} className="rounded-xl border border-border border-l-4 border-l-warning bg-surface p-6">
                 <p className="font-medium text-foreground">{req.student.name}</p>
                 <p className="text-sm text-muted">
                   {req.student.email} · Đang ở {LEVEL_LABELS[req.fromLevel]}, xin lên {LEVEL_LABELS[req.toLevel]}

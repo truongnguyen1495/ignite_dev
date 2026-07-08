@@ -108,7 +108,7 @@ export default async function EditStudentPage({
                       <XCircle className="h-4 w-4" /> {LEVEL_UP_STATUS_LABELS[req.status]}
                     </span>
                   ) : (
-                    <span className="text-muted">{LEVEL_UP_STATUS_LABELS[req.status]}</span>
+                    <span className="text-warning">{LEVEL_UP_STATUS_LABELS[req.status]}</span>
                   )}
                 </div>
                 <div className="mt-1 text-muted">

@@ -32,7 +32,11 @@ export default async function AdminLayout({
 
   return (
     <SidebarProvider>
-      <Sidebar items={NAV_ITEMS} brand={<BrandLogo subtitle="Quản trị viên" />} />
+      <Sidebar
+        items={NAV_ITEMS}
+        variant="navy"
+        brand={<BrandLogo subtitle="Quản trị viên" variant="navy" />}
+      />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-8 sm:py-4">
           <SidebarToggle />

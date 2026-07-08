@@ -2,33 +2,47 @@
 @plugin "@tailwindcss/typography";
 
 :root {
-  --background: #0a0a12;
-  --surface: #13131f;
-  --surface-hover: #1a1a2a;
-  --border: #24243a;
-  --foreground: #f4f4f8;
-  --muted: #8b8ba3;
-  --sidebar: #0d0d18;
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --surface-hover: #f1f5f9;
+  --border: #e5e7eb;
+  --foreground: #111827;
+  --muted: #6b7280;
+  --faint: #9ca3af;
+  --faint-bg: rgba(156, 163, 175, 0.14);
 
-  --primary: #7c3aed;
-  --primary-hover: #8b5cf6;
+  /* Admin sidebar is a fixed navy rail, distinct from the light app shell —
+     its own text tokens exist because text-foreground/text-muted (dark text
+     for a light background) would be unreadable against --sidebar. */
+  --sidebar: #0f172a;
+  --sidebar-hover: #1e293b;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-muted: #94a3b8;
+
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
   --primary-foreground: #ffffff;
 
-  --success: #22c55e;
-  --success-bg: rgba(34, 197, 94, 0.12);
-  --danger: #ef4444;
-  --danger-bg: rgba(239, 68, 68, 0.12);
+  --info: #06b6d4;
+  --info-bg: rgba(6, 182, 212, 0.12);
 
-  --level-1: #94a3b8;
-  --level-1-bg: rgba(148, 163, 184, 0.12);
-  --level-2: #22d3ee;
-  --level-2-bg: rgba(34, 211, 238, 0.12);
-  --level-3: #4ade80;
-  --level-3-bg: rgba(74, 222, 128, 0.12);
-  --level-4: #60a5fa;
-  --level-4-bg: rgba(96, 165, 250, 0.12);
-  --level-5: #fbbf24;
-  --level-5-bg: rgba(251, 191, 36, 0.12);
+  --success: #16a34a;
+  --success-bg: rgba(22, 163, 74, 0.12);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245, 158, 11, 0.14);
+  --danger: #dc2626;
+  --danger-bg: rgba(220, 38, 38, 0.12);
+
+  --level-1: #3b82f6;
+  --level-1-bg: rgba(59, 130, 246, 0.12);
+  --level-2: #06b6d4;
+  --level-2-bg: rgba(6, 182, 212, 0.12);
+  --level-3: #8b5cf6;
+  --level-3-bg: rgba(139, 92, 246, 0.12);
+  --level-4: #f97316;
+  --level-4-bg: rgba(249, 115, 22, 0.12);
+  --level-5: #d97706;
+  --level-5-bg: rgba(217, 119, 6, 0.12);
 }
 
 @theme inline {
@@ -38,14 +52,25 @@
   --color-border: var(--border);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-faint-bg: var(--faint-bg);
+
   --color-sidebar: var(--sidebar);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
 
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
 
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+
   --color-success: var(--success);
   --color-success-bg: var(--success-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
   --color-danger: var(--danger);
   --color-danger-bg: var(--danger-bg);
 

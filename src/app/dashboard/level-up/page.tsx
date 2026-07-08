@@ -48,7 +48,7 @@ export default async function LevelUpPage() {
                 <XCircle className="h-4 w-4" /> {STATUS_LABELS[latestRequest.status]}
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 text-muted">
+              <span className="flex items-center gap-1.5 text-warning">
                 <Clock className="h-4 w-4" /> {STATUS_LABELS[latestRequest.status]}
               </span>
             )}

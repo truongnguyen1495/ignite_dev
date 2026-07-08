@@ -54,12 +54,17 @@ export function SidebarToggle() {
 export function Sidebar({
   items,
   brand,
+  variant = "light",
 }: {
   items: NavItem[];
   brand: React.ReactNode;
+  // Admin uses the navy rail; the student dashboard keeps the light shell —
+  // see globals.css for why the navy variant needs its own text tokens.
+  variant?: "navy" | "light";
 }) {
   const pathname = usePathname();
   const { open, setOpen } = useSidebar();
+  const navy = variant === "navy";
 
   return (
     <>
@@ -71,9 +76,9 @@ export function Sidebar({
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-border bg-sidebar transition-transform duration-200 ease-out md:static md:z-auto md:translate-x-0 ${
-          open ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r transition-transform duration-200 ease-out md:static md:z-auto md:translate-x-0 ${
+          navy ? "border-sidebar-hover bg-sidebar" : "border-border bg-surface"
+        } ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="px-6 py-6">{brand}</div>
         <nav className="flex-1 space-y-1 overflow-y-auto px-3">
@@ -87,7 +92,9 @@ export function Sidebar({
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   active
                     ? "bg-primary text-primary-foreground"
-                    : "text-muted hover:bg-surface-hover hover:text-foreground"
+                    : navy
+                      ? "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"
+                      : "text-muted hover:bg-surface-hover hover:text-foreground"
                 }`}
               >
                 {item.icon}

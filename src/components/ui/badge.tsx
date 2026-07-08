@@ -4,9 +4,13 @@ const COLOR_CLASSES = {
   level3: "bg-level-3-bg text-level-3",
   level4: "bg-level-4-bg text-level-4",
   level5: "bg-level-5-bg text-level-5",
+  primary: "bg-primary/10 text-primary",
+  info: "bg-info-bg text-info",
   success: "bg-success-bg text-success",
+  warning: "bg-warning-bg text-warning",
   danger: "bg-danger-bg text-danger",
   muted: "bg-surface-hover text-muted",
+  faint: "bg-faint-bg text-faint",
 } as const;
 
 export type BadgeColor = keyof typeof COLOR_CLASSES;
