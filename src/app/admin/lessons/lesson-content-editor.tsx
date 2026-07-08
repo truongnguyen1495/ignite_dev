@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
 import {
   Heading1,
   Heading2,
@@ -20,6 +20,8 @@ import {
   Maximize2,
   Minimize2,
   X,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import { LessonMarkdown } from "@/components/lesson-markdown";
 
@@ -38,6 +40,9 @@ function escapeAttr(value: string) {
 
 const toolbarButtonClass =
   "flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground";
+
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const ALLOWED_UPLOAD_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 
 export function LessonContentEditor({
   name = "content",
@@ -59,7 +64,10 @@ export function LessonContentEditor({
     size: "md" as "sm" | "md" | "lg",
     align: "left" as "left" | "center" | "right",
   });
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function setSelectionAsync(start: number, end: number) {
     requestAnimationFrame(() => {
@@ -190,12 +198,19 @@ export function LessonContentEditor({
 
   // Popover inputs sit inside the lesson form; without this, Enter would
   // bubble up and submit that outer form instead of confirming the popover.
-  function onPopoverEnter(confirm: () => void) {
-    return (e: KeyboardEvent) => {
-      if (e.key !== "Enter") return;
-      e.preventDefault();
-      confirm();
-    };
+  // Written as plain handlers (rather than a curried helper invoked inline
+  // in JSX) so the ref access inside confirmLink/confirmImage only happens
+  // from the event handler itself, never during render.
+  function handleLinkKeyDown(e: KeyboardEvent) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    confirmLink();
+  }
+
+  function handleImageKeyDown(e: KeyboardEvent) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    confirmImage();
   }
 
   function confirmLink() {
@@ -214,6 +229,38 @@ export function LessonContentEditor({
     );
     setImageFields({ url: "", alt: "", size: "md", align: "left" });
     setPopover(null);
+  }
+
+  async function handleFileSelected(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    if (!ALLOWED_UPLOAD_TYPES.has(file.type)) {
+      setUploadError("Chỉ hỗ trợ ảnh PNG, JPEG, WEBP hoặc GIF.");
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setUploadError("Ảnh vượt quá giới hạn 5MB.");
+      return;
+    }
+
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/upload-image", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Tải ảnh lên thất bại.");
+      }
+      setImageFields((f) => ({ ...f, url: data.url }));
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Tải ảnh lên thất bại.");
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
@@ -301,7 +348,10 @@ export function LessonContentEditor({
             <button
               type="button"
               title="Chèn ảnh"
-              onClick={() => setPopover(popover?.type === "image" ? null : { type: "image" })}
+              onClick={() => {
+                setUploadError(null);
+                setPopover(popover?.type === "image" ? null : { type: "image" });
+              }}
               className={toolbarButtonClass}
             >
               <ImageIcon className="h-4 w-4" />
@@ -344,7 +394,7 @@ export function LessonContentEditor({
                       autoFocus
                       value={linkFields.url}
                       onChange={(e) => setLinkFields((f) => ({ ...f, url: e.target.value }))}
-                      onKeyDown={onPopoverEnter(confirmLink)}
+                      onKeyDown={handleLinkKeyDown}
                       placeholder="https://..."
                       className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
                     />
@@ -354,7 +404,7 @@ export function LessonContentEditor({
                     <input
                       value={linkFields.text}
                       onChange={(e) => setLinkFields((f) => ({ ...f, text: e.target.value }))}
-                      onKeyDown={onPopoverEnter(confirmLink)}
+                      onKeyDown={handleLinkKeyDown}
                       placeholder="(tùy chọn)"
                       className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
                     />
@@ -382,17 +432,33 @@ export function LessonContentEditor({
                       autoFocus
                       value={imageFields.url}
                       onChange={(e) => setImageFields((f) => ({ ...f, url: e.target.value }))}
-                      onKeyDown={onPopoverEnter(confirmImage)}
-                      placeholder="https://..."
+                      onKeyDown={handleImageKeyDown}
+                      placeholder="https://... hoặc tải ảnh lên từ máy"
                       className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
                     />
                   </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    onChange={handleFileSelected}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    disabled={uploading}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm font-medium text-foreground hover:bg-surface-hover disabled:opacity-60"
+                  >
+                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    {uploading ? "Đang tải..." : "Tải ảnh lên"}
+                  </button>
                   <div className="min-w-[140px] flex-1">
                     <label className="mb-1 block text-xs font-medium text-muted">Mô tả ảnh (alt)</label>
                     <input
                       value={imageFields.alt}
                       onChange={(e) => setImageFields((f) => ({ ...f, alt: e.target.value }))}
-                      onKeyDown={onPopoverEnter(confirmImage)}
+                      onKeyDown={handleImageKeyDown}
                       placeholder="(tùy chọn)"
                       className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
                     />
@@ -439,6 +505,9 @@ export function LessonContentEditor({
                   >
                     <X className="h-4 w-4" />
                   </button>
+                  {uploadError && (
+                    <p className="w-full text-xs text-red-600">{uploadError}</p>
+                  )}
                 </div>
               )}
             </div>
