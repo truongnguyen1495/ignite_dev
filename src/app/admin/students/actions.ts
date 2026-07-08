@@ -114,6 +114,16 @@ export async function setStudentStatusAction(studentId: string, locked: boolean)
   revalidatePath(`/admin/students/${studentId}`);
 }
 
+export async function approveStudentAction(studentId: string) {
+  await requireActiveSuperAdmin();
+  await prisma.user.update({
+    where: { id: studentId, role: "STUDENT", status: "PENDING" },
+    data: { status: "ACTIVE" },
+  });
+  revalidatePath("/admin/students");
+  revalidatePath(`/admin/students/${studentId}`);
+}
+
 export async function deleteStudentAction(studentId: string) {
   await requireActiveSuperAdmin();
   await prisma.user.delete({ where: { id: studentId, role: "STUDENT" } });

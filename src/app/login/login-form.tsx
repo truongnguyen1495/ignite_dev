@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { loginAction } from "./actions";
 
@@ -42,6 +43,12 @@ export function LoginForm() {
       >
         {pending ? "Đang đăng nhập..." : "Đăng nhập"}
       </button>
+      <p className="text-center text-sm text-muted">
+        Chưa có tài khoản?{" "}
+        <Link href="/register" className="font-medium text-primary hover:text-primary-hover">
+          Đăng ký ngay
+        </Link>
+      </p>
     </form>
   );
 }

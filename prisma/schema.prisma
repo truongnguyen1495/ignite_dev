@@ -19,6 +19,7 @@ enum Role {
 enum AccountStatus {
   ACTIVE
   LOCKED
+  PENDING
 }
 
 enum Level {
@@ -40,6 +41,9 @@ model User {
   email        String        @unique
   passwordHash String
   name         String
+  username     String?       @unique
+  displayName  String?
+  dateOfBirth  DateTime?
   role         Role
   status       AccountStatus @default(ACTIVE)
   grantedLevel Level         @default(CUSTOMER)

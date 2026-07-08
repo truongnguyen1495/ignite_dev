@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { EditStudentForm } from "./edit-student-form";
-import { DeleteStudentButton, ToggleStudentStatusButton } from "./danger-actions";
+import { DeleteStudentButton, ToggleStudentStatusButton, ApproveStudentButton } from "./danger-actions";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 const LEVEL_UP_STATUS_LABELS = {
   PENDING: "Đang chờ duyệt",
@@ -46,8 +47,33 @@ export default async function EditStudentPage({
           <ArrowLeft className="h-4 w-4" />
           Quay lại
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold text-foreground">{student.name}</h1>
+        <h1 className="mt-2 flex flex-wrap items-center gap-2 text-2xl font-semibold text-foreground">
+          {student.name}
+          <StatusBadge status={student.status} />
+        </h1>
       </div>
+
+      {(student.username || student.displayName || student.dateOfBirth) && (
+        <div className="max-w-xl space-y-1 rounded-xl border border-border bg-surface p-6 text-sm">
+          <h2 className="mb-2 text-sm font-semibold text-muted">Thông tin đăng ký</h2>
+          {student.username && (
+            <p className="text-foreground">
+              <span className="text-muted">Username:</span> @{student.username}
+            </p>
+          )}
+          {student.displayName && (
+            <p className="text-foreground">
+              <span className="text-muted">Tên hiển thị:</span> {student.displayName}
+            </p>
+          )}
+          {student.dateOfBirth && (
+            <p className="text-foreground">
+              <span className="text-muted">Ngày sinh:</span>{" "}
+              {student.dateOfBirth.toLocaleDateString("vi-VN")}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="max-w-xl rounded-xl border border-border bg-surface p-6">
         <EditStudentForm
@@ -122,10 +148,21 @@ export default async function EditStudentPage({
       </div>
 
       <div className="max-w-xl space-y-3 rounded-xl border border-border bg-surface p-6">
-        <h2 className="text-sm font-semibold text-foreground">Khu vực nguy hiểm</h2>
+        <h2 className="text-sm font-semibold text-foreground">
+          {student.status === "PENDING" ? "Duyệt đăng ký" : "Khu vực nguy hiểm"}
+        </h2>
         <div className="flex items-center gap-3">
-          <ToggleStudentStatusButton studentId={student.id} locked={student.status === "LOCKED"} />
-          <DeleteStudentButton studentId={student.id} studentName={student.name} redirectAfter />
+          {student.status === "PENDING" ? (
+            <ApproveStudentButton studentId={student.id} />
+          ) : (
+            <ToggleStudentStatusButton studentId={student.id} locked={student.status === "LOCKED"} />
+          )}
+          <DeleteStudentButton
+            studentId={student.id}
+            studentName={student.name}
+            pendingRegistration={student.status === "PENDING"}
+            redirectAfter
+          />
         </div>
       </div>
     </div>

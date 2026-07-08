@@ -1,17 +1,20 @@
 import Link from "next/link";
-import { Users, ClipboardList, BookOpen, ArrowUpCircle } from "lucide-react";
+import { Users, ClipboardList, BookOpen, ArrowUpCircle, UserPlus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminOverviewPage() {
-  const [studentCount, pendingRequests, lessonCount, attemptCount] = await Promise.all([
-    prisma.user.count({ where: { role: "STUDENT" } }),
-    prisma.levelUpRequest.count({ where: { status: "PENDING" } }),
-    prisma.lesson.count(),
-    prisma.quizAttempt.count(),
-  ]);
+  const [studentCount, pendingRegistrations, pendingRequests, lessonCount, attemptCount] =
+    await Promise.all([
+      prisma.user.count({ where: { role: "STUDENT" } }),
+      prisma.user.count({ where: { role: "STUDENT", status: "PENDING" } }),
+      prisma.levelUpRequest.count({ where: { status: "PENDING" } }),
+      prisma.lesson.count(),
+      prisma.quizAttempt.count(),
+    ]);
 
   const stats = [
     { label: "Học viên", value: studentCount, icon: Users, href: "/admin/students" },
+    { label: "Đăng ký chờ duyệt", value: pendingRegistrations, icon: UserPlus, href: "/admin/students" },
     { label: "Yêu cầu lên cấp đang chờ", value: pendingRequests, icon: ArrowUpCircle, href: "/admin/level-up-requests" },
     { label: "Bài học", value: lessonCount, icon: BookOpen, href: "/admin/lessons" },
     { label: "Lượt làm bài test", value: attemptCount, icon: ClipboardList, href: "/admin/results" },
@@ -20,7 +23,7 @@ export default async function AdminOverviewPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-foreground">Tổng quan</h1>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (

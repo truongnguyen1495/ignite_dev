@@ -3,7 +3,11 @@ import { Plus, Eye } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { ToggleStudentStatusButton, DeleteStudentButton } from "./[studentId]/danger-actions";
+import {
+  ToggleStudentStatusButton,
+  DeleteStudentButton,
+  ApproveStudentButton,
+} from "./[studentId]/danger-actions";
 
 export default async function StudentsPage() {
   const students = await prisma.user.findMany({
@@ -42,7 +46,12 @@ export default async function StudentsPage() {
               {students.map((student) => (
                 <tr key={student.id} className="border-b border-border last:border-0 hover:bg-surface-hover">
                   <td className="px-4 py-4 sm:px-6 font-medium text-foreground">{student.name}</td>
-                  <td className="px-4 py-4 sm:px-6 text-muted">{student.email}</td>
+                  <td className="px-4 py-4 sm:px-6 text-muted">
+                    {student.email}
+                    {student.username && (
+                      <span className="block text-xs text-faint">@{student.username}</span>
+                    )}
+                  </td>
                   <td className="px-4 py-4 sm:px-6">
                     <LevelBadge level={student.grantedLevel} />
                   </td>
@@ -58,14 +67,19 @@ export default async function StudentsPage() {
                       >
                         <Eye className="h-4 w-4" />
                       </Link>
-                      <ToggleStudentStatusButton
-                        studentId={student.id}
-                        locked={student.status === "LOCKED"}
-                        iconOnly
-                      />
+                      {student.status === "PENDING" ? (
+                        <ApproveStudentButton studentId={student.id} iconOnly />
+                      ) : (
+                        <ToggleStudentStatusButton
+                          studentId={student.id}
+                          locked={student.status === "LOCKED"}
+                          iconOnly
+                        />
+                      )}
                       <DeleteStudentButton
                         studentId={student.id}
                         studentName={student.name}
+                        pendingRegistration={student.status === "PENDING"}
                         iconOnly
                       />
                     </div>
