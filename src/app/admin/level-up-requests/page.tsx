@@ -5,6 +5,7 @@ import { getLevelCompletionStatus } from "@/lib/level-completion";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { approveLevelUpRequestAction } from "./actions";
 import { RejectForm } from "./reject-form";
+import { CompletionDetails } from "./completion-details";
 
 export default async function LevelUpRequestsPage() {
   const [pending, history] = await Promise.all([
@@ -78,6 +79,8 @@ export default async function LevelUpRequestsPage() {
                       </span>
                     )}
                   </div>
+
+                  <CompletionDetails details={completion.details} />
 
                   <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-border pt-4">
                     <form action={approveLevelUpRequestAction} className="flex items-center gap-2">
