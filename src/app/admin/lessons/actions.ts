@@ -106,9 +106,11 @@ export async function updateLessonAction(
   redirect("/admin/lessons");
 }
 
+// No redirect here — callers differ on where they want to end up afterward
+// (the edit page navigates away since its lesson is now gone, the list page
+// just refreshes in place), so navigation is left to the client component.
 export async function deleteLessonAction(lessonId: string) {
   await requireActiveSuperAdmin();
   await prisma.lesson.delete({ where: { id: lessonId } });
   revalidatePath("/admin/lessons");
-  redirect("/admin/lessons");
 }

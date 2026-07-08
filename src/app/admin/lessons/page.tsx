@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus, Video, ClipboardList } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
+import { DeleteLessonInlineButton } from "./delete-lesson-inline-button";
 
 export default async function LessonsPage() {
   const lessons = await prisma.lesson.findMany({
@@ -32,10 +33,13 @@ export default async function LessonsPage() {
             ) : (
               <ul className="space-y-2">
                 {levelLessons.map((lesson) => (
-                  <li key={lesson.id}>
+                  <li
+                    key={lesson.id}
+                    className="flex items-center gap-2 rounded-lg border border-border bg-surface p-3 hover:border-primary/50"
+                  >
                     <Link
                       href={`/admin/lessons/${lesson.id}`}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-surface p-3 hover:border-primary/50"
+                      className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2"
                     >
                       <span className="text-foreground">{lesson.title}</span>
                       <span className="flex items-center gap-3 text-xs text-muted">
@@ -46,6 +50,7 @@ export default async function LessonsPage() {
                         </span>
                       </span>
                     </Link>
+                    <DeleteLessonInlineButton lessonId={lesson.id} lessonTitle={lesson.title} />
                   </li>
                 ))}
               </ul>

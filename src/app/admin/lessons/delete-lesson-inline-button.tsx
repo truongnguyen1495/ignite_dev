@@ -2,9 +2,10 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { deleteLessonAction } from "../actions";
+import { Trash2, Loader2 } from "lucide-react";
+import { deleteLessonAction } from "./actions";
 
-export function DeleteLessonButton({
+export function DeleteLessonInlineButton({
   lessonId,
   lessonTitle,
 }: {
@@ -17,18 +18,21 @@ export function DeleteLessonButton({
   return (
     <button
       type="button"
+      title="Xóa bài học"
       disabled={pending}
-      onClick={() => {
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (confirm(`Xóa bài học "${lessonTitle}"? Bài test đính kèm (nếu có) cũng sẽ bị xóa.`)) {
           startTransition(async () => {
             await deleteLessonAction(lessonId);
-            router.push("/admin/lessons");
+            router.refresh();
           });
         }
       }}
-      className="rounded-lg border border-danger/30 px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-bg disabled:opacity-50"
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted transition-colors hover:bg-danger-bg hover:text-danger disabled:opacity-50"
     >
-      {pending ? "Đang xóa..." : "Xóa bài học"}
+      {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
     </button>
   );
 }
