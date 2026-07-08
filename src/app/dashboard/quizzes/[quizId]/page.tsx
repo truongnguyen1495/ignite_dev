@@ -26,7 +26,7 @@ export default async function TakeQuizPage({
     <div className="space-y-6">
       <div>
         <BackLink href={`/dashboard/lessons/${quiz.lessonId}`}>Quay lại bài học</BackLink>
-        <h1 className="mt-2 text-2xl font-semibold text-foreground">{quiz.title}</h1>
+        <h1 className="mt-2 text-2xl font-semibold text-foreground">{quiz.lesson.title}</h1>
       </div>
 
       {questions.length === 0 ? (

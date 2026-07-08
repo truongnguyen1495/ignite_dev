@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle2, XCircle, RotateCcw } from "lucide-react";
+import { CheckCircle2, XCircle, RotateCcw, ArrowRight } from "lucide-react";
 import { requireQuizAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { BackLink } from "@/components/ui/back-link";
@@ -27,11 +27,21 @@ export default async function QuizResultPage({
 
   const answers = attempt.answers as AttemptAnswers;
 
+  // Only relevant once the student has passed — used to point "Bài tiếp
+  // theo" at the next lesson in this level, ordered the same way the level's
+  // lesson list is (Lesson.order).
+  const nextLesson = attempt.passed
+    ? await prisma.lesson.findFirst({
+        where: { level: quiz.lesson.level, order: { gt: quiz.lesson.order } },
+        orderBy: { order: "asc" },
+      })
+    : null;
+
   return (
     <div className="space-y-6">
       <div>
         <BackLink href={`/dashboard/lessons/${quiz.lessonId}`}>Quay lại bài học</BackLink>
-        <h1 className="mt-2 text-2xl font-semibold text-foreground">{quiz.title} — Kết quả</h1>
+        <h1 className="mt-2 text-2xl font-semibold text-foreground">{quiz.lesson.title} — Kết quả</h1>
       </div>
 
       <div
@@ -67,13 +77,33 @@ export default async function QuizResultPage({
         })}
       </ul>
 
-      <Link
-        href={`/dashboard/quizzes/${quizId}`}
-        className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-hover"
-      >
-        <RotateCcw className="h-4 w-4" />
-        Làm lại bài test
-      </Link>
+      {attempt.passed ? (
+        nextLesson ? (
+          <Link
+            href={`/dashboard/lessons/${nextLesson.id}`}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
+          >
+            Bài tiếp theo
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        ) : (
+          <Link
+            href={`/dashboard/levels/${quiz.lesson.level}`}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
+          >
+            Về danh sách bài học
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        )
+      ) : (
+        <Link
+          href={`/dashboard/quizzes/${quizId}`}
+          className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-hover"
+        >
+          <RotateCcw className="h-4 w-4" />
+          Làm lại bài test
+        </Link>
+      )}
     </div>
   );
 }
