@@ -7,6 +7,7 @@ import { DeleteStudentButton, ToggleStudentStatusButton, ApproveStudentButton } 
 import { LEVEL_LABELS, hasLevelAccess, levelRank } from "@/lib/levels";
 import { CollapsibleSection } from "./collapsible-section";
 import { AttemptGroup } from "./attempt-group";
+import { Card } from "@/components/ui/card";
 import type { Level } from "@prisma/client";
 
 const LEVEL_UP_STATUS_LABELS = {
@@ -144,7 +145,7 @@ export default async function EditStudentPage({
         )}
       </EditStudentForm>
 
-      <div className="space-y-3 rounded-xl border border-border bg-surface p-6">
+      <Card className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">
           Khóa học độc quyền được cấp quyền ({grantedCourses.length + levelUnlockedCourses.length})
         </h2>
@@ -176,9 +177,9 @@ export default async function EditStudentPage({
             ))}
           </ul>
         )}
-      </div>
+      </Card>
 
-      <div className="rounded-xl border border-border bg-surface p-6">
+      <Card>
         <CollapsibleSection title={`Lịch sử làm bài test (${attempts.length})`}>
           {groupedAttempts.length === 0 ? (
             <p className="text-sm text-muted">Học viên chưa làm bài test nào.</p>
@@ -190,9 +191,9 @@ export default async function EditStudentPage({
             </ul>
           )}
         </CollapsibleSection>
-      </div>
+      </Card>
 
-      <div className="rounded-xl border border-border bg-surface p-6">
+      <Card>
         <CollapsibleSection title={`Lịch sử xin lên cấp (${levelUpRequests.length})`}>
           {levelUpRequests.length === 0 ? (
             <p className="text-sm text-muted">Học viên chưa gửi yêu cầu lên cấp nào.</p>
@@ -227,16 +228,16 @@ export default async function EditStudentPage({
             </ul>
           )}
         </CollapsibleSection>
-      </div>
+      </Card>
 
       {!isPending && (
-        <div className="space-y-3 rounded-xl border border-border bg-surface p-6">
+        <Card className="space-y-3">
           <h2 className="text-sm font-semibold text-foreground">Khu vực nguy hiểm</h2>
           <div className="flex items-center gap-3">
             <ToggleStudentStatusButton studentId={student.id} locked={student.status === "LOCKED"} />
             <DeleteStudentButton studentId={student.id} studentName={student.name} redirectAfter />
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

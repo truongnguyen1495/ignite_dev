@@ -3,12 +3,8 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Unlock, Trash2, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { deleteStudentAction, setStudentStatusAction, approveStudentAction } from "../actions";
-
-const iconButtonClass =
-  "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground disabled:opacity-50";
-const iconButtonDangerClass =
-  "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-danger-bg hover:text-danger disabled:opacity-50";
 
 export function ToggleStudentStatusButton({
   studentId,
@@ -31,27 +27,23 @@ export function ToggleStudentStatusButton({
 
   if (iconOnly) {
     return (
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
         disabled={pending}
         onClick={onClick}
         title={locked ? "Mở khóa tài khoản" : "Khóa tài khoản"}
-        className={iconButtonClass}
       >
         {locked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
-      type="button"
-      disabled={pending}
-      onClick={onClick}
-      className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover disabled:opacity-50"
-    >
+    <Button type="button" variant="secondary" disabled={pending} onClick={onClick}>
       {pending ? "Đang xử lý..." : locked ? "Mở khóa tài khoản" : "Khóa tài khoản"}
-    </button>
+    </Button>
   );
 }
 
@@ -74,27 +66,24 @@ export function ApproveStudentButton({
 
   if (iconOnly) {
     return (
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
         disabled={pending}
         onClick={onClick}
         title="Duyệt đăng ký"
-        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-success-bg hover:text-success disabled:opacity-50"
+        className="hover:bg-success-bg hover:text-success"
       >
         <CheckCircle2 className="h-4 w-4" />
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
-      type="button"
-      disabled={pending}
-      onClick={onClick}
-      className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
-    >
+    <Button type="button" disabled={pending} onClick={onClick}>
       {pending ? "Đang duyệt..." : "Duyệt đăng ký"}
-    </button>
+    </Button>
   );
 }
 
@@ -136,26 +125,23 @@ export function DeleteStudentButton({
 
   if (iconOnly) {
     return (
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
         disabled={pending}
         onClick={onClick}
         title={pendingRegistration ? "Từ chối đăng ký" : "Xóa học viên"}
-        className={iconButtonDangerClass}
+        className="hover:bg-danger-bg hover:text-danger"
       >
         <Trash2 className="h-4 w-4" />
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
-      type="button"
-      disabled={pending}
-      onClick={onClick}
-      className="rounded-lg border border-danger/30 px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-bg disabled:opacity-50"
-    >
+    <Button type="button" variant="danger" disabled={pending} onClick={onClick}>
       {pending ? "Đang xóa..." : pendingRegistration ? "Từ chối đăng ký" : "Xóa học viên"}
-    </button>
+    </Button>
   );
 }

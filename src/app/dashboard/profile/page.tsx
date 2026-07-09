@@ -1,18 +1,20 @@
 import { requireActiveStudent } from "@/lib/access";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { PhoneNumberForm } from "./phone-number-form";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
 
 export default async function ProfilePage() {
   const student = await requireActiveStudent();
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Thông tin cá nhân</h1>
-        <p className="mt-1 text-sm text-muted">Xem thông tin tài khoản và cập nhật số điện thoại của bạn.</p>
-      </div>
+      <PageHeader
+        title="Thông tin cá nhân"
+        description="Xem thông tin tài khoản và cập nhật số điện thoại của bạn."
+      />
 
-      <div className="rounded-xl border border-border bg-surface p-6">
+      <Card>
         <h2 className="mb-4 text-sm font-semibold text-foreground">Thông tin tài khoản</h2>
         <dl className="grid grid-cols-1 gap-x-4 gap-y-3 text-sm sm:grid-cols-2">
           <div>
@@ -40,12 +42,12 @@ export default async function ProfilePage() {
             <dd className="text-foreground">{LEVEL_LABELS[student.grantedLevel]}</dd>
           </div>
         </dl>
-      </div>
+      </Card>
 
-      <div className="rounded-xl border border-border bg-surface p-6">
+      <Card>
         <h2 className="mb-4 text-sm font-semibold text-foreground">Số điện thoại</h2>
         <PhoneNumberForm currentPhoneNumber={student.phoneNumber} />
-      </div>
+      </Card>
     </div>
   );
 }

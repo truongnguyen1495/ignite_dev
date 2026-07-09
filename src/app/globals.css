@@ -19,30 +19,55 @@
   --sidebar-foreground: #f8fafc;
   --sidebar-muted: #94a3b8;
 
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary: #4338ca;
+  --primary-hover: #3730a3;
   --primary-foreground: #ffffff;
 
-  --info: #06b6d4;
-  --info-bg: rgba(6, 182, 212, 0.12);
+  /* Accent is reserved for earned/celebratory moments (streaks, level-up,
+     quiz passed, badges) — never a generic CTA, and never interchangeable
+     with --warning even though both are amber-family. accent-foreground is
+     dark, not white: amber-500 fails AA contrast with white text. */
+  --accent: #f59e0b;
+  --accent-hover: #d97706;
+  --accent-foreground: #1c1917;
+  --accent-bg: rgba(245, 158, 11, 0.14);
+
+  --info: #0891b2;
+  --info-bg: rgba(8, 145, 178, 0.12);
 
   --success: #16a34a;
   --success-bg: rgba(22, 163, 74, 0.12);
-  --warning: #f59e0b;
-  --warning-bg: rgba(245, 158, 11, 0.14);
+  --warning: #d97706;
+  --warning-bg: rgba(217, 119, 6, 0.14);
   --danger: #dc2626;
   --danger-bg: rgba(220, 38, 38, 0.12);
 
-  --level-1: #3b82f6;
-  --level-1-bg: rgba(59, 130, 246, 0.12);
-  --level-2: #06b6d4;
-  --level-2-bg: rgba(6, 182, 212, 0.12);
-  --level-3: #8b5cf6;
-  --level-3-bg: rgba(139, 92, 246, 0.12);
-  --level-4: #f97316;
-  --level-4-bg: rgba(249, 115, 22, 0.12);
-  --level-5: #d97706;
-  --level-5-bg: rgba(217, 119, 6, 0.12);
+  /* Five student tiers read as one progression toward the brand, not five
+     unrelated hues: entry level starts neutral, climbs through the indigo
+     family, tier 4 lands exactly on --primary, and the top tier breaks out
+     into --accent gold as a distinct reward color. */
+  --level-1: #64748b;
+  --level-1-bg: rgba(100, 116, 139, 0.12);
+  --level-2: #6366f1;
+  --level-2-bg: rgba(99, 102, 241, 0.12);
+  --level-3: #4f46e5;
+  --level-3-bg: rgba(79, 70, 229, 0.12);
+  --level-4: #4338ca;
+  --level-4-bg: rgba(67, 56, 202, 0.12);
+  --level-5: #f59e0b;
+  --level-5-bg: rgba(245, 158, 11, 0.14);
+
+  /* Dark content surfaces (lesson "reading mode", dark media cards) — kept
+     separate from --sidebar even though values start identical, since one is
+     structural chrome and the other is inline page content; they may diverge
+     later. Deliberately shares --sidebar's navy family instead of the
+     unrelated neutral-* gray those surfaces used before, so the app has one
+     dark visual language instead of two. */
+  --dark-surface: #0f172a;
+  --dark-surface-raised: #1e293b;
+  --dark-border: #334155;
+  --dark-foreground: #f8fafc;
+  --dark-muted: #94a3b8;
 }
 
 @theme inline {
@@ -64,6 +89,11 @@
   --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
 
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-bg: var(--accent-bg);
+
   --color-info: var(--info);
   --color-info-bg: var(--info-bg);
 
@@ -84,6 +114,12 @@
   --color-level-4-bg: var(--level-4-bg);
   --color-level-5: var(--level-5);
   --color-level-5-bg: var(--level-5-bg);
+
+  --color-dark-surface: var(--dark-surface);
+  --color-dark-surface-raised: var(--dark-surface-raised);
+  --color-dark-border: var(--dark-border);
+  --color-dark-foreground: var(--dark-foreground);
+  --color-dark-muted: var(--dark-muted);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
