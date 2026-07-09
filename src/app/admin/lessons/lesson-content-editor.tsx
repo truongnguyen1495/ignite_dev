@@ -40,7 +40,7 @@ import { LessonYoutube } from "./lesson-youtube-extension";
 import { LinkHoverMenu } from "./link-hover-menu";
 import { parseYoutubeId } from "@/lib/youtube";
 
-type Popover = { type: "link" | "image" | "youtube" | "color" } | null;
+type Popover = { type: "link" | "image" | "youtube" | "color" | "table" } | null;
 
 const toolbarButtonClass =
   "flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground";
@@ -119,6 +119,19 @@ export function LessonContentEditor({
     onUpdate: ({ editor }) => {
       const markdownStorage = editor.storage as unknown as { markdown: { getMarkdown(): string } };
       setMarkdown(markdownStorage.markdown.getMarkdown());
+    },
+    // Keeps the table-editing strip pinned under the toolbar (rather than a
+    // floating bubble) — auto-shows while the cursor is inside a table,
+    // auto-hides on leaving, but never overrides a popover the user opened
+    // manually (link/image/youtube/color), since those only get touched here
+    // when the current popover is empty or already the table one.
+    onSelectionUpdate: ({ editor }) => {
+      setPopover((p) => {
+        if (editor.isActive("table")) {
+          return p === null || p.type === "table" ? { type: "table" } : p;
+        }
+        return p?.type === "table" ? null : p;
+      });
     },
   });
 
@@ -564,7 +577,7 @@ export function LessonContentEditor({
                     </button>
                     {youtubeError && <p className="w-full text-xs text-red-600">{youtubeError}</p>}
                   </div>
-                ) : (
+                ) : popover.type === "color" ? (
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-medium text-muted">Màu chữ</span>
                     {TEXT_COLORS.map((c) => (
@@ -597,6 +610,62 @@ export function LessonContentEditor({
                     </button>
                     <button type="button" onClick={() => setPopover(null)} className={toolbarButtonClass}>
                       <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-medium text-muted">Sửa bảng</span>
+                    <button
+                      type="button"
+                      onClick={() => editor?.chain().focus().addRowBefore().run()}
+                      className="rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-surface-hover"
+                    >
+                      + Dòng trên
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => editor?.chain().focus().addRowAfter().run()}
+                      className="rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-surface-hover"
+                    >
+                      + Dòng dưới
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => editor?.chain().focus().deleteRow().run()}
+                      className="rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-surface-hover"
+                    >
+                      Xóa dòng
+                    </button>
+                    <span className="mx-1 h-5 w-px bg-border" />
+                    <button
+                      type="button"
+                      onClick={() => editor?.chain().focus().addColumnBefore().run()}
+                      className="rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-surface-hover"
+                    >
+                      + Cột trái
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => editor?.chain().focus().addColumnAfter().run()}
+                      className="rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-surface-hover"
+                    >
+                      + Cột phải
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => editor?.chain().focus().deleteColumn().run()}
+                      className="rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-surface-hover"
+                    >
+                      Xóa cột
+                    </button>
+                    <span className="mx-1 h-5 w-px bg-border" />
+                    <button
+                      type="button"
+                      onClick={() => editor?.chain().focus().deleteTable().run()}
+                      className="flex items-center gap-1.5 rounded-md border border-danger/30 bg-background px-2.5 py-1 text-xs font-medium text-danger hover:bg-danger-bg"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Xóa bảng
                     </button>
                   </div>
                 )}
@@ -636,68 +705,6 @@ export function LessonContentEditor({
                     {align === "left" ? "Trái" : align === "center" ? "Giữa" : "Phải"}
                   </button>
                 ))}
-              </div>
-            </BubbleMenu>
-          )}
-
-          {editor && (
-            <BubbleMenu
-              editor={editor}
-              shouldShow={({ editor }) => editor.isActive("table") && !editor.isActive("lessonImage")}
-            >
-              <div className="flex flex-wrap items-center gap-1 rounded-lg border border-border bg-background p-1 shadow-lg">
-                <button
-                  type="button"
-                  onClick={() => editor.chain().focus().addRowBefore().run()}
-                  className={bubbleButtonClass}
-                >
-                  + Dòng trên
-                </button>
-                <button
-                  type="button"
-                  onClick={() => editor.chain().focus().addRowAfter().run()}
-                  className={bubbleButtonClass}
-                >
-                  + Dòng dưới
-                </button>
-                <button
-                  type="button"
-                  onClick={() => editor.chain().focus().deleteRow().run()}
-                  className={bubbleButtonClass}
-                >
-                  Xóa dòng
-                </button>
-                <span className="mx-1 h-5 w-px bg-border" />
-                <button
-                  type="button"
-                  onClick={() => editor.chain().focus().addColumnBefore().run()}
-                  className={bubbleButtonClass}
-                >
-                  + Cột trái
-                </button>
-                <button
-                  type="button"
-                  onClick={() => editor.chain().focus().addColumnAfter().run()}
-                  className={bubbleButtonClass}
-                >
-                  + Cột phải
-                </button>
-                <button
-                  type="button"
-                  onClick={() => editor.chain().focus().deleteColumn().run()}
-                  className={bubbleButtonClass}
-                >
-                  Xóa cột
-                </button>
-                <span className="mx-1 h-5 w-px bg-border" />
-                <button
-                  type="button"
-                  title="Xóa bảng"
-                  onClick={() => editor.chain().focus().deleteTable().run()}
-                  className={bubbleButtonClass}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
               </div>
             </BubbleMenu>
           )}

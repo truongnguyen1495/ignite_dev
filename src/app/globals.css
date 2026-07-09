@@ -169,3 +169,10 @@ body {
 .lesson-content a:hover {
   color: var(--primary-hover);
 }
+.lesson-content table {
+  border-collapse: collapse;
+}
+.lesson-content th,
+.lesson-content td {
+  border: 1px solid var(--border);
+}
