@@ -22,7 +22,7 @@ export default async function AnnouncementDetailPage({
   });
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6">
+    <div className="space-y-6">
       <div>
         <BackLink href="/dashboard/announcements">Bản tin</BackLink>
         <h1 className="mt-2 text-2xl font-semibold text-foreground">{announcement.title}</h1>
