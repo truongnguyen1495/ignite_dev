@@ -6,6 +6,7 @@ import { LEVEL_LABELS } from "@/lib/levels";
 import { YoutubeEmbed } from "@/components/youtube-embed";
 import { LessonMarkdown } from "@/components/lesson-markdown";
 import { BackLink } from "@/components/ui/back-link";
+import { CollapsibleSection } from "@/components/ui/collapsible-section";
 
 export default async function StudentLessonPage({
   params,
@@ -31,7 +32,11 @@ export default async function StudentLessonPage({
       {lesson.youtubeId && <YoutubeEmbed videoId={lesson.youtubeId} />}
 
       <article className="rounded-xl border border-border bg-surface p-6">
-        <LessonMarkdown content={lesson.content} />
+        <CollapsibleSection title="Nội dung bài học">
+          <div className="mt-4">
+            <LessonMarkdown content={lesson.content} />
+          </div>
+        </CollapsibleSection>
       </article>
 
       {quiz && (
