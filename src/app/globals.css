@@ -6,6 +6,7 @@
   --surface: #ffffff;
   --surface-hover: #f1f5f9;
   --border: #e5e7eb;
+  --border-strong: #d1d5db;
   --foreground: #111827;
   --muted: #6b7280;
   --faint: #9ca3af;
@@ -75,6 +76,7 @@
   --color-surface: var(--surface);
   --color-surface-hover: var(--surface-hover);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-faint: var(--faint);
