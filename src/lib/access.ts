@@ -134,3 +134,15 @@ export async function requireCourseLessonAccess(lessonId: string) {
   }
   return { student, lesson };
 }
+
+export async function requireAnnouncementAccess(announcementId: string) {
+  const student = await requireActiveStudent();
+  const announcement = await prisma.announcement.findUnique({ where: { id: announcementId } });
+  if (!announcement) {
+    redirect("/dashboard/announcements?denied=1");
+  }
+  if (announcement.minLevel && !hasLevelAccess(student.grantedLevel, announcement.minLevel)) {
+    redirect("/dashboard/announcements?denied=1");
+  }
+  return { student, announcement };
+}

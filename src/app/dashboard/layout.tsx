@@ -1,19 +1,13 @@
-import { LayoutDashboard, ArrowUpCircle, GraduationCap, Video, UserCircle } from "lucide-react";
+import { LayoutDashboard, ArrowUpCircle, GraduationCap, Video, UserCircle, Megaphone } from "lucide-react";
 import { requireActiveStudent } from "@/lib/access";
-import { LEVEL_LABELS } from "@/lib/levels";
+import { prisma } from "@/lib/prisma";
+import { LEVEL_LABELS, hasLevelAccess } from "@/lib/levels";
 import { Sidebar, SidebarProvider, SidebarToggle, type NavItem } from "@/components/ui/sidebar";
 import { BrandLogo } from "@/components/brand-logo";
 import { LogoutButton } from "@/components/logout-button";
 import { LevelUpWatcher } from "./level-up-watcher";
 
 const iconClass = "h-4 w-4";
-
-const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: "5 Cấp đào tạo", icon: <LayoutDashboard className={iconClass} />, exact: true },
-  { href: "/dashboard/courses", label: "Khóa học độc quyền", icon: <Video className={iconClass} /> },
-  { href: "/dashboard/level-up", label: "Xin lên cấp", icon: <ArrowUpCircle className={iconClass} /> },
-  { href: "/dashboard/profile", label: "Thông tin cá nhân", icon: <UserCircle className={iconClass} /> },
-];
 
 export default async function DashboardLayout({
   children,
@@ -22,9 +16,38 @@ export default async function DashboardLayout({
 }) {
   const student = await requireActiveStudent();
 
+  const [announcements, reads] = await Promise.all([
+    prisma.announcement.findMany({ select: { id: true, minLevel: true } }),
+    prisma.announcementRead.findMany({
+      where: { studentId: student.id },
+      select: { announcementId: true },
+    }),
+  ]);
+  const readIds = new Set(reads.map((r) => r.announcementId));
+  const unreadAnnouncementCount = announcements.filter(
+    (a) => (!a.minLevel || hasLevelAccess(student.grantedLevel, a.minLevel)) && !readIds.has(a.id)
+  ).length;
+
+  const NAV_ITEMS: NavItem[] = [
+    { href: "/dashboard", label: "5 Cấp đào tạo", icon: <LayoutDashboard className={iconClass} />, exact: true },
+    { href: "/dashboard/courses", label: "Khóa học độc quyền", icon: <Video className={iconClass} /> },
+    {
+      href: "/dashboard/announcements",
+      label: "Bản tin",
+      icon: <Megaphone className={iconClass} />,
+      badge: unreadAnnouncementCount,
+    },
+    { href: "/dashboard/level-up", label: "Xin lên cấp", icon: <ArrowUpCircle className={iconClass} /> },
+    { href: "/dashboard/profile", label: "Thông tin cá nhân", icon: <UserCircle className={iconClass} /> },
+  ];
+
   return (
     <SidebarProvider>
-      <LevelUpWatcher level={student.grantedLevel} label={LEVEL_LABELS[student.grantedLevel]} />
+      <LevelUpWatcher
+        studentId={student.id}
+        level={student.grantedLevel}
+        label={LEVEL_LABELS[student.grantedLevel]}
+      />
       <Sidebar items={NAV_ITEMS} brand={<BrandLogo subtitle="Học viên" />} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-8 sm:py-4">

@@ -7,6 +7,7 @@ import {
   Settings,
   ShieldCheck,
   Crown,
+  Megaphone,
 } from "lucide-react";
 import { requireActiveSuperAdmin } from "@/lib/access";
 import { Sidebar, SidebarProvider, SidebarToggle, type NavItem } from "@/components/ui/sidebar";
@@ -20,6 +21,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/students", label: "Học viên", icon: <Users className={iconClass} /> },
   { href: "/admin/lessons", label: "Bài học", icon: <BookOpen className={iconClass} /> },
   { href: "/admin/courses", label: "Khóa học độc quyền", icon: <Crown className={iconClass} /> },
+  { href: "/admin/announcements", label: "Bản tin", icon: <Megaphone className={iconClass} /> },
   { href: "/admin/results", label: "Kết quả", icon: <ClipboardList className={iconClass} /> },
   { href: "/admin/level-up-requests", label: "Yêu cầu lên cấp", icon: <ArrowUpCircle className={iconClass} /> },
   { href: "/admin/settings", label: "Cài đặt", icon: <Settings className={iconClass} /> },

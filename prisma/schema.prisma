@@ -57,6 +57,7 @@ model User {
   courseGrantsGiven       CourseAccessGrant[]      @relation("CourseGrantsGiven")
   courseLessonCompletions CourseLessonCompletion[] @relation("CourseLessonCompletions")
   courseLevelGrantsGiven  CourseLevelGrant[]       @relation("CourseLevelGrantsGiven")
+  announcementReads       AnnouncementRead[]
 
   @@index([role])
 }
@@ -223,4 +224,33 @@ model CourseLevelGrant {
 
   @@unique([courseId, minLevel])
   @@index([courseId])
+}
+
+// In-app announcements (bản tin) — simpler than the Course grant system on
+// purpose: a single optional minLevel threshold per post (null = everyone),
+// no per-student overrides, since nothing has asked for that yet.
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  content     String   @db.Text
+  minLevel    Level?
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reads AnnouncementRead[]
+
+  @@index([publishedAt])
+}
+
+model AnnouncementRead {
+  id             String       @id @default(cuid())
+  studentId      String
+  student        User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  announcementId String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  readAt         DateTime     @default(now())
+
+  @@unique([studentId, announcementId])
+  @@index([studentId])
 }

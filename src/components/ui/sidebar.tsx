@@ -13,6 +13,9 @@ export type NavItem = {
   // types to Client Components as props, only already-rendered JSX.
   icon: React.ReactNode;
   exact?: boolean;
+  // Unread-style count pill shown after the label, e.g. for "Bản tin". Only
+  // rendered when > 0.
+  badge?: number;
 };
 
 const SidebarContext = createContext<{ open: boolean; setOpen: (open: boolean) => void } | null>(
@@ -98,7 +101,12 @@ export function Sidebar({
                 }`}
               >
                 {item.icon}
-                {item.label}
+                <span className="flex-1 truncate">{item.label}</span>
+                {!!item.badge && (
+                  <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-accent-foreground">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             );
           })}
