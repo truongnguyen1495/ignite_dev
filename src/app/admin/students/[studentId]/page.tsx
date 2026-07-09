@@ -7,6 +7,7 @@ import { DeleteStudentButton, ToggleStudentStatusButton, ApproveStudentButton } 
 import { LEVEL_LABELS } from "@/lib/levels";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { CollapsibleSection } from "./collapsible-section";
 
 const LEVEL_UP_STATUS_LABELS = {
   PENDING: "Đang chờ duyệt",
@@ -123,8 +124,7 @@ export default async function EditStudentPage({
         />
       </div>
 
-      <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-muted">Lịch sử làm bài test ({attempts.length})</h2>
+      <CollapsibleSection title={`Lịch sử làm bài test (${attempts.length})`}>
         {attempts.length === 0 ? (
           <p className="text-sm text-muted">Học viên chưa làm bài test nào.</p>
         ) : (
@@ -148,10 +148,9 @@ export default async function EditStudentPage({
             ))}
           </ul>
         )}
-      </div>
+      </CollapsibleSection>
 
-      <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-muted">Lịch sử xin lên cấp ({levelUpRequests.length})</h2>
+      <CollapsibleSection title={`Lịch sử xin lên cấp (${levelUpRequests.length})`}>
         {levelUpRequests.length === 0 ? (
           <p className="text-sm text-muted">Học viên chưa gửi yêu cầu lên cấp nào.</p>
         ) : (
@@ -184,7 +183,7 @@ export default async function EditStudentPage({
             ))}
           </ul>
         )}
-      </div>
+      </CollapsibleSection>
 
       {!isPending && (
         <div className="space-y-3 rounded-xl border border-border bg-surface p-6">
