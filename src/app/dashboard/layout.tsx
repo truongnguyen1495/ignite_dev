@@ -9,7 +9,7 @@ const iconClass = "h-4 w-4";
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "5 Cấp đào tạo", icon: <LayoutDashboard className={iconClass} />, exact: true },
-  { href: "/dashboard/courses", label: "Khóa học", icon: <Video className={iconClass} /> },
+  { href: "/dashboard/courses", label: "Khóa học độc quyền", icon: <Video className={iconClass} /> },
   { href: "/dashboard/level-up", label: "Xin lên cấp", icon: <ArrowUpCircle className={iconClass} /> },
   { href: "/dashboard/profile", label: "Thông tin cá nhân", icon: <UserCircle className={iconClass} /> },
 ];
