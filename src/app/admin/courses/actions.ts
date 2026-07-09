@@ -137,8 +137,10 @@ export async function createCourseLessonAction(
     },
   });
 
+  // No redirect — added inline on the course page, which collapses the form
+  // and refreshes in place on success.
   revalidatePath(`/admin/courses/${courseId}`);
-  redirect(`/admin/courses/${courseId}`);
+  return undefined;
 }
 
 const updateCourseLessonSchema = courseLessonSchema.extend({
@@ -180,8 +182,9 @@ export async function updateCourseLessonAction(
     },
   });
 
+  // No redirect — edited inline on the course page, same as create above.
   revalidatePath(`/admin/courses/${courseId}`);
-  redirect(`/admin/courses/${courseId}`);
+  return undefined;
 }
 
 // No redirect — callers differ on where they want to end up afterward.

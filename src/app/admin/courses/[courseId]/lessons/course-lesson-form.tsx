@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { createCourseLessonAction, updateCourseLessonAction } from "../../actions";
 import { LessonContentEditor } from "@/app/admin/lessons/lesson-content-editor";
 import { Input } from "@/components/ui/form";
@@ -13,6 +13,8 @@ export function CourseLessonForm({
   content = "",
   youtubeId = "",
   order = 0,
+  onSuccess,
+  onCancel,
 }: {
   courseId: string;
   lessonId?: string;
@@ -20,9 +22,20 @@ export function CourseLessonForm({
   content?: string;
   youtubeId?: string | null;
   order?: number;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }) {
   const action = lessonId ? updateCourseLessonAction : createCourseLessonAction;
   const [error, formAction, pending] = useActionState(action, undefined);
+  const wasPending = useRef(false);
+
+  useEffect(() => {
+    if (wasPending.current && !pending && !error) {
+      onSuccess?.();
+    }
+    wasPending.current = pending;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pending, error]);
 
   return (
     <form action={formAction} className="space-y-8">
@@ -64,9 +77,14 @@ export function CourseLessonForm({
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
-      <div className="flex justify-end border-t border-border pt-6">
+      <div className="flex items-center justify-end gap-2 border-t border-border pt-6">
+        {onCancel && (
+          <Button type="button" variant="secondary" onClick={onCancel} disabled={pending}>
+            Hủy
+          </Button>
+        )}
         <Button type="submit" disabled={pending} isLoading={pending}>
-          {pending ? "Đang lưu..." : lessonId ? "Lưu thay đổi" : "Tạo bài học"}
+          {pending ? "Đang lưu..." : "Hoàn tất"}
         </Button>
       </div>
     </form>

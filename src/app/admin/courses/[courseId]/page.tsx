@@ -1,6 +1,4 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Plus, Video } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { EditCourseForm } from "./edit-course-form";
@@ -11,7 +9,7 @@ import {
   GrantLevelAccessForm,
   RevokeLevelAccessButton,
 } from "./access-grants";
-import { DeleteCourseLessonInlineButton } from "./delete-course-lesson-inline-button";
+import { CourseLessonsSection } from "./course-lessons-section";
 import { Card } from "@/components/ui/card";
 
 export default async function EditCoursePage({
@@ -49,48 +47,7 @@ export default async function EditCoursePage({
         order={course.order}
       />
 
-      <Card padding="lg" className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-foreground">Bài học ({course.lessons.length})</h2>
-          <Link
-            href={`/admin/courses/${course.id}/lessons/new`}
-            className="flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
-          >
-            <Plus className="h-4 w-4" />
-            Thêm bài học
-          </Link>
-        </div>
-        {course.lessons.length === 0 ? (
-          <p className="text-sm text-muted">Chưa có bài học nào.</p>
-        ) : (
-          <ul className="space-y-2">
-            {course.lessons.map((lesson) => (
-              <li
-                key={lesson.id}
-                className="flex items-center gap-2 rounded-lg border border-border bg-background p-3 hover:border-primary/50"
-              >
-                <Link
-                  href={`/admin/courses/${course.id}/lessons/${lesson.id}`}
-                  className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2"
-                >
-                  <span className="text-foreground">{lesson.title}</span>
-                  {lesson.youtubeId && (
-                    <span className="flex items-center gap-1 text-xs text-muted">
-                      <Video className="h-3.5 w-3.5" />
-                      Có video
-                    </span>
-                  )}
-                </Link>
-                <DeleteCourseLessonInlineButton
-                  lessonId={lesson.id}
-                  lessonTitle={lesson.title}
-                  courseId={course.id}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      <CourseLessonsSection courseId={course.id} lessons={course.lessons} />
 
       <Card padding="lg" className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">
