@@ -5,6 +5,12 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { Color } from "@tiptap/extension-color";
+import { Table } from "@tiptap/extension-table";
+import { TableRow } from "@tiptap/extension-table-row";
+import { TableHeader } from "@tiptap/extension-table-header";
+import { TableCell } from "@tiptap/extension-table-cell";
 import {
   Heading1,
   Heading2,
@@ -25,13 +31,16 @@ import {
   X,
   Upload,
   Loader2,
+  Baseline,
+  Table as TableIcon,
+  Trash2,
 } from "lucide-react";
 import { LessonImage, type LessonImageAlign, type LessonImageSize } from "./lesson-image-extension";
 import { LessonYoutube } from "./lesson-youtube-extension";
 import { LinkHoverMenu } from "./link-hover-menu";
 import { parseYoutubeId } from "@/lib/youtube";
 
-type Popover = { type: "link" | "image" | "youtube" } | null;
+type Popover = { type: "link" | "image" | "youtube" | "color" } | null;
 
 const toolbarButtonClass =
   "flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground";
@@ -43,6 +52,17 @@ const ALLOWED_UPLOAD_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "
 
 const bubbleButtonClass = "rounded px-2 py-1 text-xs font-medium text-muted hover:bg-surface-hover hover:text-foreground";
 const activeBubbleButtonClass = "rounded px-2 py-1 text-xs font-medium bg-primary text-primary-foreground";
+
+const TEXT_COLORS: { label: string; value: string }[] = [
+  { label: "Đỏ", value: "#ef4444" },
+  { label: "Cam", value: "#f97316" },
+  { label: "Vàng", value: "#eab308" },
+  { label: "Lục", value: "#16a34a" },
+  { label: "Lam", value: "#2563eb" },
+  { label: "Chàm", value: "#4338ca" },
+  { label: "Tím", value: "#9333ea" },
+  { label: "Hồng", value: "#db2777" },
+];
 
 export function LessonContentEditor({
   name = "content",
@@ -82,6 +102,12 @@ export function LessonContentEditor({
       }),
       LessonImage,
       LessonYoutube,
+      TextStyle,
+      Color.configure({ types: ["textStyle"] }),
+      Table.configure({ resizable: false }),
+      TableRow,
+      TableHeader,
+      TableCell,
       Markdown.configure({ html: true, bulletListMarker: "-", linkify: false }),
     ],
     content: defaultValue,
@@ -120,6 +146,10 @@ export function LessonContentEditor({
     setYoutubeError(null);
     setYoutubeUrl("");
     setPopover(popover?.type === "youtube" ? null : { type: "youtube" });
+  }
+
+  function openColorPopover() {
+    setPopover(popover?.type === "color" ? null : { type: "color" });
   }
 
   function confirmLink() {
@@ -294,6 +324,14 @@ export function LessonContentEditor({
               >
                 <Underline className="h-4 w-4" />
               </button>
+              <button
+                type="button"
+                title="Màu chữ"
+                onClick={openColorPopover}
+                className={btnClass(popover?.type === "color")}
+              >
+                <Baseline className="h-4 w-4" />
+              </button>
               <span className="mx-1 h-5 w-px bg-border" />
               <button
                 type="button"
@@ -343,6 +381,16 @@ export function LessonContentEditor({
                 className={btnClass(popover?.type === "youtube")}
               >
                 <SquarePlay className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                title="Chèn bảng"
+                onClick={() =>
+                  editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+                }
+                className={toolbarButtonClass}
+              >
+                <TableIcon className="h-4 w-4" />
               </button>
               <span className="mx-1 h-5 w-px bg-border" />
               <button
@@ -491,7 +539,7 @@ export function LessonContentEditor({
                     </button>
                     {uploadError && <p className="w-full text-xs text-red-600">{uploadError}</p>}
                   </div>
-                ) : (
+                ) : popover.type === "youtube" ? (
                   <div className="flex flex-wrap items-end gap-2">
                     <div className="min-w-[240px] flex-1">
                       <label className="mb-1 block text-xs font-medium text-muted">Link video YouTube</label>
@@ -515,6 +563,41 @@ export function LessonContentEditor({
                       <X className="h-4 w-4" />
                     </button>
                     {youtubeError && <p className="w-full text-xs text-red-600">{youtubeError}</p>}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-medium text-muted">Màu chữ</span>
+                    {TEXT_COLORS.map((c) => (
+                      <button
+                        key={c.value}
+                        type="button"
+                        title={c.label}
+                        onClick={() => {
+                          editor?.chain().focus().setColor(c.value).run();
+                          setPopover(null);
+                        }}
+                        style={{ backgroundColor: c.value }}
+                        className={`h-6 w-6 rounded-full border-2 ${
+                          editor?.isActive("textStyle", { color: c.value })
+                            ? "border-foreground"
+                            : "border-border"
+                        }`}
+                      />
+                    ))}
+                    <span className="mx-1 h-5 w-px bg-border" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        editor?.chain().focus().unsetColor().run();
+                        setPopover(null);
+                      }}
+                      className="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-surface-hover"
+                    >
+                      Mặc định
+                    </button>
+                    <button type="button" onClick={() => setPopover(null)} className={toolbarButtonClass}>
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
                 )}
               </div>
@@ -553,6 +636,68 @@ export function LessonContentEditor({
                     {align === "left" ? "Trái" : align === "center" ? "Giữa" : "Phải"}
                   </button>
                 ))}
+              </div>
+            </BubbleMenu>
+          )}
+
+          {editor && (
+            <BubbleMenu
+              editor={editor}
+              shouldShow={({ editor }) => editor.isActive("table") && !editor.isActive("lessonImage")}
+            >
+              <div className="flex flex-wrap items-center gap-1 rounded-lg border border-border bg-background p-1 shadow-lg">
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().addRowBefore().run()}
+                  className={bubbleButtonClass}
+                >
+                  + Dòng trên
+                </button>
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().addRowAfter().run()}
+                  className={bubbleButtonClass}
+                >
+                  + Dòng dưới
+                </button>
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().deleteRow().run()}
+                  className={bubbleButtonClass}
+                >
+                  Xóa dòng
+                </button>
+                <span className="mx-1 h-5 w-px bg-border" />
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().addColumnBefore().run()}
+                  className={bubbleButtonClass}
+                >
+                  + Cột trái
+                </button>
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().addColumnAfter().run()}
+                  className={bubbleButtonClass}
+                >
+                  + Cột phải
+                </button>
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().deleteColumn().run()}
+                  className={bubbleButtonClass}
+                >
+                  Xóa cột
+                </button>
+                <span className="mx-1 h-5 w-px bg-border" />
+                <button
+                  type="button"
+                  title="Xóa bảng"
+                  onClick={() => editor.chain().focus().deleteTable().run()}
+                  className={bubbleButtonClass}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             </BubbleMenu>
           )}

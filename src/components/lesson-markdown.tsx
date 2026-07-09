@@ -17,6 +17,12 @@ const lessonContentSchema = {
     ...defaultSchema.attributes,
     img: [...(defaultSchema.attributes?.img ?? []), "alt", "className", "width", "height"],
     div: [...(defaultSchema.attributes?.div ?? []), "className"],
+    // Text color has no Markdown syntax, so the editor emits inline
+    // `style="color:..."` spans — safe to allow unrestricted here since this
+    // content is only ever written by SUPER_ADMIN (requireActiveSuperAdmin()
+    // gates every lesson/course/announcement action), same trust boundary
+    // already extended to iframe's src below.
+    span: [...(defaultSchema.attributes?.span ?? []), "style"],
     iframe: ["src", "title", "allow", "allowFullScreen", "className", "frameBorder"],
   },
 };
