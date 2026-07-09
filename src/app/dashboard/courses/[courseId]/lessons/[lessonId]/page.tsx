@@ -4,6 +4,7 @@ import { requireCourseLessonAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { YoutubeEmbed } from "@/components/youtube-embed";
 import { LessonMarkdown } from "@/components/lesson-markdown";
+import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { MarkCompleteButton } from "./mark-complete-button";
 
 export default async function StudentCourseLessonPage({
@@ -56,9 +57,11 @@ export default async function StudentCourseLessonPage({
           </div>
 
           {lesson.content && (
-            <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-6">
-              <LessonMarkdown content={lesson.content} variant="dark" />
-            </div>
+            <CollapsibleSection title="Nội dung bài học" variant="dark">
+              <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-6">
+                <LessonMarkdown content={lesson.content} variant="dark" />
+              </div>
+            </CollapsibleSection>
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-neutral-800 pt-4">
