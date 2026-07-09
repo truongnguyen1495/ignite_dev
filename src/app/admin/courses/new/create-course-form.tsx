@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { createCourseAction } from "../actions";
+import { CoverImageInput } from "../cover-image-input";
 
 export function CreateCourseForm() {
   const [error, formAction, pending] = useActionState(createCourseAction, undefined);
@@ -30,6 +31,7 @@ export function CreateCourseForm() {
           className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
         />
       </div>
+      <CoverImageInput />
       <div>
         <label htmlFor="order" className="mb-1.5 block text-sm font-medium text-foreground">
           Thứ tự hiển thị

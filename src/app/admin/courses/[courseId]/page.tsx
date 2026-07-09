@@ -44,6 +44,7 @@ export default async function EditCoursePage({
           courseId={course.id}
           title={course.title}
           description={course.description}
+          coverImageUrl={course.coverImageUrl}
           order={course.order}
         />
       </div>

@@ -1,9 +1,13 @@
-import Link from "next/link";
-import { Video } from "lucide-react";
+import { redirect } from "next/navigation";
 import { requireCourseAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { BackLink } from "@/components/ui/back-link";
 
+// The lesson-viewing page now has a sidebar listing every lesson in the
+// course, so this index page no longer needs its own flat lesson list — it
+// just forwards straight to the first lesson. Kept as a route (rather than
+// removed) so old links/bookmarks to /dashboard/courses/[courseId] still go
+// somewhere sensible.
 export default async function StudentCoursePage({
   params,
 }: {
@@ -12,10 +16,15 @@ export default async function StudentCoursePage({
   const { courseId } = await params;
   const { course } = await requireCourseAccess(courseId);
 
-  const lessons = await prisma.courseLesson.findMany({
+  const firstLesson = await prisma.courseLesson.findFirst({
     where: { courseId },
-    orderBy: { order: "asc" },
+    orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+    select: { id: true },
   });
+
+  if (firstLesson) {
+    redirect(`/dashboard/courses/${courseId}/lessons/${firstLesson.id}`);
+  }
 
   return (
     <div className="space-y-6">
@@ -24,24 +33,7 @@ export default async function StudentCoursePage({
         <h1 className="mt-2 text-2xl font-semibold text-foreground">{course.title}</h1>
         {course.description && <p className="mt-1 text-sm text-muted">{course.description}</p>}
       </div>
-
-      {lessons.length === 0 ? (
-        <p className="text-sm text-muted">Khóa học này chưa có bài học nào.</p>
-      ) : (
-        <ul className="space-y-2">
-          {lessons.map((lesson) => (
-            <li key={lesson.id}>
-              <Link
-                href={`/dashboard/courses/${courseId}/lessons/${lesson.id}`}
-                className="flex items-center gap-3 rounded-xl border border-border bg-surface p-4 hover:border-primary/50"
-              >
-                <Video className="h-4 w-4 text-primary" />
-                <span className="text-foreground">{lesson.title}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      <p className="text-sm text-muted">Khóa học này chưa có bài học nào.</p>
     </div>
   );
 }

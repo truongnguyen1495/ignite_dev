@@ -2,16 +2,19 @@
 
 import { useActionState } from "react";
 import { updateCourseAction } from "../actions";
+import { CoverImageInput } from "../cover-image-input";
 
 export function EditCourseForm({
   courseId,
   title,
   description,
+  coverImageUrl,
   order,
 }: {
   courseId: string;
   title: string;
   description: string | null;
+  coverImageUrl: string | null;
   order: number;
 }) {
   const [error, formAction, pending] = useActionState(updateCourseAction, undefined);
@@ -43,6 +46,7 @@ export function EditCourseForm({
           className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
         />
       </div>
+      <CoverImageInput defaultValue={coverImageUrl ?? ""} />
       <div>
         <label htmlFor="order" className="mb-1.5 block text-sm font-medium text-foreground">
           Thứ tự hiển thị

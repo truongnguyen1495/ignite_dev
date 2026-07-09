@@ -50,11 +50,12 @@ model User {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
-  quizAttempts      QuizAttempt[]
-  levelUpRequests   LevelUpRequest[]    @relation("StudentRequests")
-  reviewedRequests  LevelUpRequest[]    @relation("ReviewerActions")
-  courseGrants      CourseAccessGrant[] @relation("CourseGrants")
-  courseGrantsGiven CourseAccessGrant[] @relation("CourseGrantsGiven")
+  quizAttempts            QuizAttempt[]
+  levelUpRequests         LevelUpRequest[]         @relation("StudentRequests")
+  reviewedRequests        LevelUpRequest[]         @relation("ReviewerActions")
+  courseGrants            CourseAccessGrant[]      @relation("CourseGrants")
+  courseGrantsGiven       CourseAccessGrant[]      @relation("CourseGrantsGiven")
+  courseLessonCompletions CourseLessonCompletion[] @relation("CourseLessonCompletions")
 
   @@index([role])
 }
@@ -151,12 +152,13 @@ model Settings {
 // level-up gating) — a sequence of video lessons only visible to students
 // the Super Admin explicitly grants access to via CourseAccessGrant.
 model Course {
-  id          String   @id @default(cuid())
-  title       String
-  description String?  @db.Text
-  order       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  title         String
+  description   String?  @db.Text
+  coverImageUrl String?
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   lessons CourseLesson[]
   grants  CourseAccessGrant[]
@@ -173,7 +175,21 @@ model CourseLesson {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  completions CourseLessonCompletion[]
+
   @@index([courseId, order])
+}
+
+model CourseLessonCompletion {
+  id             String       @id @default(cuid())
+  studentId      String
+  student        User         @relation("CourseLessonCompletions", fields: [studentId], references: [id], onDelete: Cascade)
+  courseLessonId String
+  courseLesson   CourseLesson @relation(fields: [courseLessonId], references: [id], onDelete: Cascade)
+  completedAt    DateTime     @default(now())
+
+  @@unique([studentId, courseLessonId])
+  @@index([studentId])
 }
 
 model CourseAccessGrant {

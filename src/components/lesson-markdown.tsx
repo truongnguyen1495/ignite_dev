@@ -46,9 +46,15 @@ function restrictIframeSources() {
   };
 }
 
-export function LessonMarkdown({ content }: { content: string }) {
+export function LessonMarkdown({
+  content,
+  variant = "light",
+}: {
+  content: string;
+  variant?: "light" | "dark";
+}) {
   return (
-    <div className="lesson-content prose max-w-none">
+    <div className={`lesson-content prose max-w-none ${variant === "dark" ? "prose-invert" : ""}`}>
       <Markdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw, restrictIframeSources, [rehypeSanitize, lessonContentSchema]]}

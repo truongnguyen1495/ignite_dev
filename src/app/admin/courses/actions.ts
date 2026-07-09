@@ -10,6 +10,7 @@ import { parseYoutubeId } from "@/lib/youtube";
 const courseSchema = z.object({
   title: z.string().trim().min(1, "Tiêu đề không được để trống."),
   description: z.string().trim().optional(),
+  coverImageUrl: z.string().trim().optional(),
   order: z.coerce.number().int().default(0),
 });
 
@@ -22,6 +23,7 @@ export async function createCourseAction(
   const parsed = courseSchema.safeParse({
     title: formData.get("title"),
     description: formData.get("description") || undefined,
+    coverImageUrl: formData.get("coverImageUrl") || undefined,
     order: formData.get("order") || 0,
   });
   if (!parsed.success) {
@@ -32,6 +34,7 @@ export async function createCourseAction(
     data: {
       title: parsed.data.title,
       description: parsed.data.description ?? null,
+      coverImageUrl: parsed.data.coverImageUrl ?? null,
       order: parsed.data.order,
     },
   });
@@ -54,6 +57,7 @@ export async function updateCourseAction(
     courseId: formData.get("courseId"),
     title: formData.get("title"),
     description: formData.get("description") || undefined,
+    coverImageUrl: formData.get("coverImageUrl") || undefined,
     order: formData.get("order") || 0,
   });
   if (!parsed.success) {
@@ -67,6 +71,7 @@ export async function updateCourseAction(
     data: {
       title: parsed.data.title,
       description: parsed.data.description ?? null,
+      coverImageUrl: parsed.data.coverImageUrl ?? null,
       order: parsed.data.order,
     },
   });
