@@ -5,10 +5,10 @@ import { prisma } from "@/lib/prisma";
 import { EditStudentForm } from "./edit-student-form";
 import { DeleteStudentButton, ToggleStudentStatusButton, ApproveStudentButton } from "./danger-actions";
 import { LEVEL_LABELS } from "@/lib/levels";
-import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { CollapsibleSection } from "./collapsible-section";
+import { AttemptGroup } from "./attempt-group";
 
 const LEVEL_UP_STATUS_LABELS = {
   PENDING: "Đang chờ duyệt",
@@ -41,6 +41,27 @@ export default async function EditStudentPage({
 
   const isPending = student.status === "PENDING";
   const hasRegistrationInfo = Boolean(student.username || student.dateOfBirth);
+
+  // A student can retake the same quiz many times; grouping by quiz collapses
+  // those into one row (the latest attempt) with the rest tucked behind an
+  // expand toggle, same pattern as the admin results page.
+  const attemptGroups = new Map<
+    string,
+    { lessonTitle: string; latest: (typeof attempts)[number]; history: (typeof attempts)[number][] }
+  >();
+  for (const attempt of attempts) {
+    const group = attemptGroups.get(attempt.quizId);
+    if (group) {
+      group.history.push(attempt);
+    } else {
+      attemptGroups.set(attempt.quizId, {
+        lessonTitle: attempt.quiz.lesson.title,
+        latest: attempt,
+        history: [],
+      });
+    }
+  }
+  const groupedAttempts = Array.from(attemptGroups.values());
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-8">
@@ -134,26 +155,12 @@ export default async function EditStudentPage({
 
       <div className="rounded-xl border border-border bg-surface p-6">
         <CollapsibleSection title={`Lịch sử làm bài test (${attempts.length})`}>
-          {attempts.length === 0 ? (
+          {groupedAttempts.length === 0 ? (
             <p className="text-sm text-muted">Học viên chưa làm bài test nào.</p>
           ) : (
             <ul className="space-y-2">
-              {attempts.map((attempt) => (
-                <li
-                  key={attempt.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-background p-3 text-sm"
-                >
-                  <span className="text-foreground">{attempt.quiz.lesson.title}</span>
-                  <span className="flex flex-wrap items-center gap-3">
-                    <span className="text-foreground">{attempt.scorePercent}%</span>
-                    {attempt.passed ? (
-                      <Badge color="success">Đạt</Badge>
-                    ) : (
-                      <Badge color="danger">Chưa đạt</Badge>
-                    )}
-                    <span className="text-muted">{attempt.attemptedAt.toLocaleString("vi-VN")}</span>
-                  </span>
-                </li>
+              {groupedAttempts.map(({ lessonTitle, latest, history }) => (
+                <AttemptGroup key={latest.id} lessonTitle={lessonTitle} latest={latest} history={history} />
               ))}
             </ul>
           )}
