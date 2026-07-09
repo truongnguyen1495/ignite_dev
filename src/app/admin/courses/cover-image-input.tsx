@@ -28,7 +28,13 @@ function checkAspectRatio(file: File): Promise<boolean> {
   });
 }
 
-export function CoverImageInput({ defaultValue = "" }: { defaultValue?: string }) {
+export function CoverImageInput({
+  defaultValue = "",
+  onChange,
+}: {
+  defaultValue?: string;
+  onChange?: () => void;
+}) {
   const [url, setUrl] = useState(defaultValue);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +72,7 @@ export function CoverImageInput({ defaultValue = "" }: { defaultValue?: string }
         throw new Error(data.error || "Tải ảnh lên thất bại.");
       }
       setUrl(data.url);
+      onChange?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Tải ảnh lên thất bại.");
     } finally {
@@ -85,7 +92,10 @@ export function CoverImageInput({ defaultValue = "" }: { defaultValue?: string }
             <img src={url} alt="Ảnh bìa khóa học" className="h-full w-full object-cover" />
             <button
               type="button"
-              onClick={() => setUrl("")}
+              onClick={() => {
+                setUrl("");
+                onChange?.();
+              }}
               title="Xóa ảnh"
               className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
             >

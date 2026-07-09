@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Plus, Video } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { BackLink } from "@/components/ui/back-link";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { EditCourseForm } from "./edit-course-form";
 import { DeleteCourseButton } from "./delete-course-button";
@@ -41,20 +40,13 @@ export default async function EditCoursePage({
 
   return (
     <div className="mx-auto max-w-[1000px] space-y-6">
-      <div>
-        <BackLink href="/admin/courses">Quay lại</BackLink>
-        <h1 className="mt-2 text-2xl font-semibold text-foreground">{course.title}</h1>
-      </div>
-
-      <div className="rounded-2xl border border-border bg-surface p-8">
-        <EditCourseForm
-          courseId={course.id}
-          title={course.title}
-          description={course.description}
-          coverImageUrl={course.coverImageUrl}
-          order={course.order}
-        />
-      </div>
+      <EditCourseForm
+        courseId={course.id}
+        title={course.title}
+        description={course.description}
+        coverImageUrl={course.coverImageUrl}
+        order={course.order}
+      />
 
       <div className="space-y-3 rounded-2xl border border-border bg-surface p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
