@@ -4,6 +4,7 @@ import { CheckCircle2, XCircle, RotateCcw, ArrowRight } from "lucide-react";
 import { requireQuizAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { BackLink } from "@/components/ui/back-link";
+import { PassCelebration } from "./pass-celebration";
 
 type AttemptAnswers = Record<string, { selected: string[]; correct: boolean }>;
 
@@ -39,6 +40,7 @@ export default async function QuizResultPage({
 
   return (
     <div className="space-y-6">
+      {attempt.passed && <PassCelebration scorePercent={attempt.scorePercent} />}
       <div>
         <BackLink href={`/dashboard/lessons/${quiz.lessonId}`}>Quay lại bài học</BackLink>
         <h1 className="mt-2 text-2xl font-semibold text-foreground">{quiz.lesson.title} — Kết quả</h1>

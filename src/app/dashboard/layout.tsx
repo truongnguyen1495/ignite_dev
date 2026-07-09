@@ -4,6 +4,7 @@ import { LEVEL_LABELS } from "@/lib/levels";
 import { Sidebar, SidebarProvider, SidebarToggle, type NavItem } from "@/components/ui/sidebar";
 import { BrandLogo } from "@/components/brand-logo";
 import { LogoutButton } from "@/components/logout-button";
+import { LevelUpWatcher } from "./level-up-watcher";
 
 const iconClass = "h-4 w-4";
 
@@ -23,6 +24,7 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
+      <LevelUpWatcher level={student.grantedLevel} label={LEVEL_LABELS[student.grantedLevel]} />
       <Sidebar items={NAV_ITEMS} brand={<BrandLogo subtitle="Học viên" />} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-8 sm:py-4">

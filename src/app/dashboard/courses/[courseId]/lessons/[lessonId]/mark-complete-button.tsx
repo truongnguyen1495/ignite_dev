@@ -4,14 +4,17 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 import { markCourseLessonCompleteAction } from "../../../actions";
+import { useCelebrate } from "@/components/ui/toast";
 
 export function MarkCompleteButton({ lessonId, completed }: { lessonId: string; completed: boolean }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const celebrate = useCelebrate();
 
   function handleClick() {
     startTransition(async () => {
       await markCourseLessonCompleteAction(lessonId);
+      celebrate({ title: "Đã hoàn thành bài học!", description: "Tiếp tục phát huy nhé." });
       router.refresh();
     });
   }
