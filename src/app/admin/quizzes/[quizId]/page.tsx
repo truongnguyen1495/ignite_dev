@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Plus, CheckCircle2, Circle, Pencil } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { BackLink } from "@/components/ui/back-link";
 import { QuizTitleForm } from "./quiz-title-form";
 import { DeleteQuestionButton } from "./delete-question-button";
 import { DeleteQuizButton } from "./delete-quiz-button";
@@ -30,14 +29,12 @@ export default async function QuizManagementPage({
 
   return (
     <div className="space-y-8">
-      <div>
-        <BackLink href={`/admin/lessons/${quiz.lessonId}`}>{quiz.lesson.title}</BackLink>
-        <h1 className="mt-2 text-2xl font-semibold text-foreground">{quiz.title}</h1>
-      </div>
-
-      <Card className="max-w-xl">
-        <QuizTitleForm quizId={quiz.id} title={quiz.title} />
-      </Card>
+      <QuizTitleForm
+        quizId={quiz.id}
+        title={quiz.title}
+        lessonId={quiz.lessonId}
+        lessonTitle={quiz.lesson.title}
+      />
 
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
