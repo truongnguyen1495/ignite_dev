@@ -93,7 +93,7 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                   course.unlocked ? "hover:border-primary/60" : "opacity-60"
                 }`}
               >
-                <div className="relative h-32 w-full overflow-hidden bg-neutral-800">
+                <div className="relative aspect-video w-full overflow-hidden bg-neutral-800">
                   <Thumbnail course={course} className="h-full w-full" />
                   {!course.unlocked && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50">
@@ -149,7 +149,7 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                   course.unlocked ? "hover:border-primary/60" : "opacity-60"
                 }`}
               >
-                <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-800">
+                <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-800">
                   <Thumbnail course={course} className="h-full w-full" />
                   {!course.unlocked && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50">

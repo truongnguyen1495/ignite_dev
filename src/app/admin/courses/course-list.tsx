@@ -64,7 +64,7 @@ export function CourseList({ courses }: { courses: AdminCourseItem[] }) {
               href={`/admin/courses/${course.id}`}
               className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950 transition-colors hover:border-primary/60"
             >
-              <div className="relative h-28 w-full overflow-hidden bg-neutral-800">
+              <div className="relative aspect-video w-full overflow-hidden bg-neutral-800">
                 <Thumbnail course={course} className="h-full w-full" />
               </div>
               <div className="p-5">
@@ -94,7 +94,7 @@ export function CourseList({ courses }: { courses: AdminCourseItem[] }) {
               href={`/admin/courses/${course.id}`}
               className="flex items-center gap-4 rounded-xl border border-neutral-800 bg-neutral-950 p-3 transition-colors hover:border-primary/60"
             >
-              <div className="h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-800">
+              <div className="aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-800">
                 <Thumbnail course={course} className="h-full w-full" />
               </div>
               <div className="min-w-0 flex-1">

@@ -5,11 +5,34 @@ import { Upload, Loader2, X } from "lucide-react";
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 const ALLOWED_UPLOAD_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+const TARGET_RATIO = 16 / 9;
+const RATIO_TOLERANCE = 0.1;
+
+// Doesn't block the upload — just tells the admin their image will get
+// cropped to fit the 16:9 thumbnail (course cards render it via
+// object-cover), since the ratio check itself can't always run (e.g. a
+// corrupt file) and shouldn't be a hard gate either way.
+function checkAspectRatio(file: File): Promise<boolean> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(Math.abs(img.width / img.height - TARGET_RATIO) < RATIO_TOLERANCE);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(true);
+    };
+    img.src = objectUrl;
+  });
+}
 
 export function CoverImageInput({ defaultValue = "" }: { defaultValue?: string }) {
   const [url, setUrl] = useState(defaultValue);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleFileSelected(e: ChangeEvent<HTMLInputElement>) {
@@ -17,6 +40,7 @@ export function CoverImageInput({ defaultValue = "" }: { defaultValue?: string }
     e.target.value = "";
     if (!file) return;
 
+    setWarning(null);
     if (!ALLOWED_UPLOAD_TYPES.has(file.type)) {
       setError("Chỉ hỗ trợ ảnh PNG, JPEG, WEBP hoặc GIF.");
       return;
@@ -28,6 +52,11 @@ export function CoverImageInput({ defaultValue = "" }: { defaultValue?: string }
 
     setUploading(true);
     setError(null);
+    setWarning(null);
+    const isCorrectRatio = await checkAspectRatio(file);
+    if (!isCorrectRatio) {
+      setWarning("Ảnh không đúng tỉ lệ 16:9 — vẫn tải lên được nhưng sẽ bị cắt cho khớp khung hiển thị.");
+    }
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -46,10 +75,12 @@ export function CoverImageInput({ defaultValue = "" }: { defaultValue?: string }
 
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-foreground">Ảnh bìa (tùy chọn)</label>
+      <label className="mb-1.5 block text-sm font-medium text-foreground">
+        Ảnh bìa (tùy chọn, khuyến nghị tỉ lệ 16:9)
+      </label>
       <div className="flex items-start gap-3">
         {url ? (
-          <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-lg border border-border">
+          <div className="relative aspect-video w-32 shrink-0 overflow-hidden rounded-lg border border-border">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={url} alt="Ảnh bìa khóa học" className="h-full w-full object-cover" />
             <button
@@ -62,7 +93,7 @@ export function CoverImageInput({ defaultValue = "" }: { defaultValue?: string }
             </button>
           </div>
         ) : (
-          <div className="flex h-20 w-32 shrink-0 items-center justify-center rounded-lg border border-dashed border-border text-xs text-muted">
+          <div className="flex aspect-video w-32 shrink-0 items-center justify-center rounded-lg border border-dashed border-border text-xs text-muted">
             Chưa có ảnh
           </div>
         )}
@@ -84,6 +115,7 @@ export function CoverImageInput({ defaultValue = "" }: { defaultValue?: string }
             {uploading ? "Đang tải..." : "Tải ảnh lên"}
           </button>
           {error && <p className="text-xs text-danger">{error}</p>}
+          {!error && warning && <p className="text-xs text-warning">{warning}</p>}
         </div>
       </div>
       <input type="hidden" name="coverImageUrl" value={url} />
