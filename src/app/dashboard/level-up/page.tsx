@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, AlertTriangle, ChevronRight, PartyPopper } from "lucide-react";
 import { requireActiveStudent } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { LEVEL_LABELS, isMaxLevel, nextLevel } from "@/lib/levels";
@@ -30,56 +30,73 @@ export default async function LevelUpPage() {
 
   return (
     <div className="max-w-xl space-y-6">
-      <PageHeader title="Xin lên cấp" />
-      <p className="text-sm text-muted">
-        Cấp hiện tại: <span className="font-medium text-foreground">{LEVEL_LABELS[student.grantedLevel]}</span>
-      </p>
+      <PageHeader
+        title="Xin lên cấp"
+        description={`Cấp hiện tại: ${LEVEL_LABELS[student.grantedLevel]}`}
+      />
 
       {latestRequest && (
         <Card className="text-sm">
-          <p className="text-foreground">
-            Yêu cầu gần nhất: lên <span className="font-medium">{LEVEL_LABELS[latestRequest.toLevel]}</span>
-          </p>
-          <p className="mt-2 flex items-center gap-1.5">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-foreground">
+              Yêu cầu gần nhất: lên <span className="font-medium">{LEVEL_LABELS[latestRequest.toLevel]}</span>
+            </p>
             {latestRequest.status === "APPROVED" ? (
-              <span className="flex items-center gap-1.5 text-success">
-                <CheckCircle2 className="h-4 w-4" /> {STATUS_LABELS[latestRequest.status]}
+              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-success-bg px-2.5 py-1 text-xs font-medium text-success">
+                <CheckCircle2 className="h-3.5 w-3.5" /> {STATUS_LABELS[latestRequest.status]}
               </span>
             ) : latestRequest.status === "REJECTED" ? (
-              <span className="flex items-center gap-1.5 text-danger">
-                <XCircle className="h-4 w-4" /> {STATUS_LABELS[latestRequest.status]}
+              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-danger-bg px-2.5 py-1 text-xs font-medium text-danger">
+                <XCircle className="h-3.5 w-3.5" /> {STATUS_LABELS[latestRequest.status]}
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 text-warning">
-                <Clock className="h-4 w-4" /> {STATUS_LABELS[latestRequest.status]}
+              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-warning-bg px-2.5 py-1 text-xs font-medium text-warning">
+                <Clock className="h-3.5 w-3.5" /> {STATUS_LABELS[latestRequest.status]}
               </span>
             )}
-          </p>
+          </div>
           {latestRequest.status === "REJECTED" && latestRequest.reviewerNote && (
-            <p className="mt-1 text-muted">Lý do từ chối: {latestRequest.reviewerNote}</p>
+            <p className="mt-3 border-t border-border pt-3 text-muted">
+              Lý do từ chối: {latestRequest.reviewerNote}
+            </p>
           )}
         </Card>
       )}
 
       {atMaxLevel ? (
-        <p className="text-sm text-muted">Bạn đã ở cấp cao nhất.</p>
+        <Card className="flex items-center gap-3 text-sm">
+          <PartyPopper className="h-5 w-5 shrink-0 text-primary" />
+          <p className="text-foreground">Bạn đã ở cấp cao nhất.</p>
+        </Card>
       ) : hasPending ? (
-        <p className="text-sm text-muted">Yêu cầu của bạn đang chờ Super Admin duyệt.</p>
+        <Card className="flex items-center gap-3 text-sm">
+          <Clock className="h-5 w-5 shrink-0 text-warning" />
+          <p className="text-foreground">Yêu cầu của bạn đang chờ Super Admin duyệt.</p>
+        </Card>
       ) : incompleteQuizzes.length > 0 ? (
-        <div className="space-y-2">
-          <p className="text-sm text-muted">
-            Bạn cần đạt tất cả bài test ở {LEVEL_LABELS[student.grantedLevel]} trước khi xin lên cấp. Còn thiếu:
-          </p>
-          <ul className="space-y-1 text-sm">
+        <Card className="space-y-4">
+          <div className="flex items-start gap-2 text-sm text-muted">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+            <p>
+              Bạn cần đạt tất cả bài test ở{" "}
+              <span className="font-medium text-foreground">{LEVEL_LABELS[student.grantedLevel]}</span> trước khi
+              xin lên cấp. Còn thiếu {incompleteQuizzes.length} bài:
+            </p>
+          </div>
+          <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
             {incompleteQuizzes.map((quiz) => (
               <li key={quiz.id}>
-                <Link href={`/dashboard/lessons/${quiz.lessonId}`} className="text-foreground hover:text-primary">
-                  {quiz.lesson.title}
+                <Link
+                  href={`/dashboard/lessons/${quiz.lessonId}`}
+                  className="flex items-center justify-between gap-3 px-4 py-3 text-sm text-foreground transition-colors hover:bg-surface-hover"
+                >
+                  <span>{quiz.lesson.title}</span>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-faint" />
                 </Link>
               </li>
             ))}
           </ul>
-        </div>
+        </Card>
       ) : (
         <RequestLevelUpButton label={`Xin lên ${upcoming ? LEVEL_LABELS[upcoming] : ""}`} />
       )}
