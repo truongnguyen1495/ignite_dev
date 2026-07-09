@@ -9,7 +9,7 @@ export const ORDERED_ANNOUNCEMENT_CATEGORIES: AnnouncementCategory[] = [
 export const ANNOUNCEMENT_CATEGORY_LABELS: Record<AnnouncementCategory, string> = {
   IMPORTANT: "Quan trọng",
   UPDATE: "Cập nhật",
-  GENERAL: "Tin văn",
+  GENERAL: "Tin tức",
 };
 
 export const ANNOUNCEMENT_CATEGORY_BADGE_COLOR: Record<AnnouncementCategory, "danger" | "info" | "muted"> = {
