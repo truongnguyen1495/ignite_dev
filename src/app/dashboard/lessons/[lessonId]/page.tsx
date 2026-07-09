@@ -28,6 +28,7 @@ export default async function StudentLessonPage({
       <div>
         <BackLink href={`/dashboard/levels/${lesson.level}`}>{LEVEL_LABELS[lesson.level]}</BackLink>
         <h1 className="mt-2 text-2xl font-semibold text-foreground">{lesson.title}</h1>
+        {lesson.description && <p className="mt-1 text-sm text-muted">{lesson.description}</p>}
       </div>
 
       {lesson.youtubeId && <YoutubeEmbed videoId={lesson.youtubeId} />}

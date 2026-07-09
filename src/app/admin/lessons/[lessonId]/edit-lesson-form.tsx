@@ -5,13 +5,14 @@ import { updateLessonAction } from "../actions";
 import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
 import { LessonContentEditor } from "../lesson-content-editor";
 import type { Level } from "@prisma/client";
-import { Input, Select } from "@/components/ui/form";
+import { Input, Select, Textarea } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 
 export function EditLessonForm({
   lessonId,
   title,
   level,
+  description,
   content,
   youtubeId,
   order,
@@ -19,6 +20,7 @@ export function EditLessonForm({
   lessonId: string;
   title: string;
   level: Level;
+  description: string | null;
   content: string;
   youtubeId: string | null;
   order: number;
@@ -32,6 +34,14 @@ export function EditLessonForm({
       <section className="space-y-4">
         <h2 className="text-sm font-semibold text-foreground">Thông tin bài học</h2>
         <Input id="title" name="title" defaultValue={title} required label="Tiêu đề" />
+        <Textarea
+          id="description"
+          name="description"
+          rows={2}
+          defaultValue={description ?? ""}
+          label="Mô tả (tùy chọn)"
+          hint="Giới thiệu ngắn hiển thị cho học viên phía trên nội dung bài học."
+        />
         <div className="grid gap-4 sm:grid-cols-2">
           <Select id="level" name="level" defaultValue={level} label="Cấp">
             {ORDERED_LEVELS.map((l) => (

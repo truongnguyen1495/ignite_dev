@@ -69,14 +69,15 @@ model User {
 }
 
 model Lesson {
-  id        String   @id @default(cuid())
-  level     Level
-  title     String
-  content   String   @db.Text
-  youtubeId String?
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  level       Level
+  title       String
+  description String?  @db.Text
+  content     String   @db.Text
+  youtubeId   String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   quiz Quiz?
 

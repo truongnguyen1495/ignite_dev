@@ -14,6 +14,7 @@ const levelEnum = z.enum(ORDERED_LEVELS as [Level, ...Level[]]);
 const lessonSchema = z.object({
   title: z.string().trim().min(1, "Tiêu đề không được để trống."),
   level: levelEnum,
+  description: z.string().trim().optional(),
   content: z.string().trim().min(1, "Nội dung không được để trống."),
   youtube: z.string().trim().optional(),
   order: z.coerce.number().int().default(0),
@@ -34,6 +35,7 @@ export async function createLessonAction(
   const parsed = lessonSchema.safeParse({
     title: formData.get("title"),
     level: formData.get("level"),
+    description: formData.get("description") || undefined,
     content: formData.get("content"),
     youtube: formData.get("youtube") || undefined,
     order: formData.get("order") || 0,
@@ -51,6 +53,7 @@ export async function createLessonAction(
     data: {
       title: parsed.data.title,
       level: parsed.data.level,
+      description: parsed.data.description || null,
       content: parsed.data.content,
       youtubeId,
       order: parsed.data.order,
@@ -75,6 +78,7 @@ export async function updateLessonAction(
     lessonId: formData.get("lessonId"),
     title: formData.get("title"),
     level: formData.get("level"),
+    description: formData.get("description") || undefined,
     content: formData.get("content"),
     youtube: formData.get("youtube") || undefined,
     order: formData.get("order") || 0,
@@ -95,6 +99,7 @@ export async function updateLessonAction(
     data: {
       title: parsed.data.title,
       level: parsed.data.level,
+      description: parsed.data.description || null,
       content: parsed.data.content,
       youtubeId,
       order: parsed.data.order,

@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { createLessonAction } from "../actions";
 import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
 import { LessonContentEditor } from "../lesson-content-editor";
-import { Input, Select } from "@/components/ui/form";
+import { Input, Select, Textarea } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 
 export function CreateLessonForm() {
@@ -15,6 +15,13 @@ export function CreateLessonForm() {
       <section className="space-y-4">
         <h2 className="text-sm font-semibold text-foreground">Thông tin bài học</h2>
         <Input id="title" name="title" required label="Tiêu đề" />
+        <Textarea
+          id="description"
+          name="description"
+          rows={2}
+          label="Mô tả (tùy chọn)"
+          hint="Giới thiệu ngắn hiển thị cho học viên phía trên nội dung bài học."
+        />
         <div className="grid gap-4 sm:grid-cols-2">
           <Select id="level" name="level" defaultValue={ORDERED_LEVELS[0]} label="Cấp">
             {ORDERED_LEVELS.map((level) => (

@@ -35,6 +35,7 @@ export default async function EditLessonPage({
           lessonId={lesson.id}
           title={lesson.title}
           level={lesson.level}
+          description={lesson.description}
           content={lesson.content}
           youtubeId={lesson.youtubeId}
           order={lesson.order}
