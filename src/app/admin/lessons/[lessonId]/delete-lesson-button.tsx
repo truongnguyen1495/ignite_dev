@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteLessonAction } from "../actions";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export function DeleteLessonButton({
   lessonId,
@@ -14,6 +15,7 @@ export function DeleteLessonButton({
 }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const confirm = useConfirm();
 
   return (
     <Button
@@ -21,13 +23,18 @@ export function DeleteLessonButton({
       variant="danger"
       disabled={pending}
       isLoading={pending}
-      onClick={() => {
-        if (confirm(`Xóa bài học "${lessonTitle}"? Bài test đính kèm (nếu có) cũng sẽ bị xóa.`)) {
-          startTransition(async () => {
-            await deleteLessonAction(lessonId);
-            router.push("/admin/lessons");
-          });
-        }
+      onClick={async () => {
+        const ok = await confirm({
+          title: `Xóa bài học "${lessonTitle}"?`,
+          description: "Bài test đính kèm (nếu có) cũng sẽ bị xóa.",
+          confirmLabel: "Xóa bài học",
+          tone: "danger",
+        });
+        if (!ok) return;
+        startTransition(async () => {
+          await deleteLessonAction(lessonId);
+          router.push("/admin/lessons");
+        });
       }}
     >
       {pending ? "Đang xóa..." : "Xóa bài học"}

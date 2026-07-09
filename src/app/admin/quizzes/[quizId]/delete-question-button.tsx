@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { deleteQuestionAction } from "../actions";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export function DeleteQuestionButton({
   questionId,
@@ -15,6 +16,7 @@ export function DeleteQuestionButton({
 }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const confirm = useConfirm();
 
   return (
     <Button
@@ -23,13 +25,13 @@ export function DeleteQuestionButton({
       size="icon"
       disabled={pending}
       title="Xóa"
-      onClick={() => {
-        if (confirm("Xóa câu hỏi này?")) {
-          startTransition(async () => {
-            await deleteQuestionAction(questionId, quizId);
-            router.refresh();
-          });
-        }
+      onClick={async () => {
+        const ok = await confirm({ title: "Xóa câu hỏi này?", confirmLabel: "Xóa", tone: "danger" });
+        if (!ok) return;
+        startTransition(async () => {
+          await deleteQuestionAction(questionId, quizId);
+          router.refresh();
+        });
       }}
       className="hover:bg-danger-bg hover:text-danger"
     >

@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Unlock, Trash2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { deleteStudentAction, setStudentStatusAction, approveStudentAction } from "../actions";
 
 export function ToggleStudentStatusButton({
@@ -104,15 +105,26 @@ export function DeleteStudentButton({
 }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const confirm = useConfirm();
 
-  const confirmMessage = pendingRegistration
-    ? `Từ chối đăng ký của "${studentName}"? Tài khoản này sẽ bị xóa vĩnh viễn và không thể khôi phục.`
-    : `Xóa hẳn học viên "${studentName}"? Toàn bộ điểm test và lịch sử xin lên cấp của học viên này sẽ bị xóa vĩnh viễn và không thể khôi phục.`;
-
-  const onClick = () => {
-    if (!confirm(confirmMessage)) {
-      return;
-    }
+  const onClick = async () => {
+    const ok = await confirm(
+      pendingRegistration
+        ? {
+            title: `Từ chối đăng ký của "${studentName}"?`,
+            description: "Tài khoản này sẽ bị xóa vĩnh viễn và không thể khôi phục.",
+            confirmLabel: "Từ chối đăng ký",
+            tone: "danger",
+          }
+        : {
+            title: `Xóa hẳn học viên "${studentName}"?`,
+            description:
+              "Toàn bộ điểm test và lịch sử xin lên cấp của học viên này sẽ bị xóa vĩnh viễn và không thể khôi phục.",
+            confirmLabel: "Xóa học viên",
+            tone: "danger",
+          }
+    );
+    if (!ok) return;
     startTransition(async () => {
       await deleteStudentAction(studentId);
       if (redirectAfter) {
