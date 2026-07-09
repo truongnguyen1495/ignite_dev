@@ -1,10 +1,10 @@
 "use server";
 
-import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireActiveSuperAdmin } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
+import type { Question, AnswerOption } from "@prisma/client";
 
 export async function createQuizForLessonAction(lessonId: string) {
   await requireActiveSuperAdmin();
@@ -16,32 +16,6 @@ export async function createQuizForLessonAction(lessonId: string) {
   redirect(`/admin/quizzes/${quiz.id}`);
 }
 
-const titleSchema = z.object({
-  quizId: z.string().min(1),
-  title: z.string().trim().min(1, "Tiêu đề không được để trống."),
-});
-
-export async function updateQuizTitleAction(
-  _prevState: string | undefined,
-  formData: FormData
-): Promise<string | undefined> {
-  await requireActiveSuperAdmin();
-  const parsed = titleSchema.safeParse({
-    quizId: formData.get("quizId"),
-    title: formData.get("title"),
-  });
-  if (!parsed.success) {
-    return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
-  }
-  await prisma.quiz.update({
-    where: { id: parsed.data.quizId },
-    data: { title: parsed.data.title },
-  });
-  revalidatePath(`/admin/quizzes/${parsed.data.quizId}`);
-  revalidatePath("/admin/lessons");
-  return undefined;
-}
-
 export async function deleteQuizAction(quizId: string, lessonId: string) {
   await requireActiveSuperAdmin();
   await prisma.quiz.delete({ where: { id: quizId } });
@@ -49,102 +23,82 @@ export async function deleteQuizAction(quizId: string, lessonId: string) {
   redirect(`/admin/lessons/${lessonId}`);
 }
 
-const questionSchema = z.object({
-  text: z.string().trim().min(1, "Nội dung câu hỏi không được để trống."),
-  optionText: z
-    .array(z.string().trim().min(1, "Đáp án không được để trống."))
-    .min(2, "Cần ít nhất 2 đáp án."),
-  optionCorrect: z.array(z.string()),
-});
+export type QuestionInput = {
+  id: string | null;
+  text: string;
+  options: { text: string; isCorrect: boolean }[];
+};
 
-export async function createQuestionAction(
+export type SavedQuestion = Question & { options: AnswerOption[] };
+
+// Saves the quiz title and every question (new + edited) in one transaction —
+// the editor keeps all of this as in-memory drafts and only calls this once,
+// on "Lưu bài viết". Deleting a question is intentionally NOT part of this
+// (see deleteQuestionAction below) — it stays an immediate, separate action
+// since it's destructive and already confirmed via a dialog before the
+// editor ever calls it.
+export async function saveQuizAction(
   quizId: string,
-  _prevState: string | undefined,
-  formData: FormData
-): Promise<string | undefined> {
+  title: string,
+  questions: QuestionInput[]
+): Promise<{ error?: string; title?: string; questions?: SavedQuestion[] }> {
   await requireActiveSuperAdmin();
 
-  const parsed = questionSchema.safeParse({
-    text: formData.get("text"),
-    optionText: formData.getAll("optionText"),
-    optionCorrect: formData.getAll("optionCorrect"),
-  });
-  if (!parsed.success) {
-    return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
+  const trimmedTitle = title.trim();
+  if (!trimmedTitle) {
+    return { error: "Tiêu đề không được để trống." };
   }
 
-  const correctIndexes = new Set(parsed.data.optionCorrect.map(Number));
-  if (correctIndexes.size === 0) {
-    return "Phải chọn ít nhất một đáp án đúng.";
+  for (let i = 0; i < questions.length; i++) {
+    const q = questions[i];
+    if (!q.text.trim()) {
+      return { error: `Câu hỏi ${i + 1}: nội dung không được để trống.` };
+    }
+    if (q.options.length < 2) {
+      return { error: `Câu hỏi ${i + 1}: cần ít nhất 2 đáp án.` };
+    }
+    if (q.options.some((o) => !o.text.trim())) {
+      return { error: `Câu hỏi ${i + 1}: đáp án không được để trống.` };
+    }
+    if (!q.options.some((o) => o.isCorrect)) {
+      return { error: `Câu hỏi ${i + 1}: phải chọn ít nhất một đáp án đúng.` };
+    }
   }
 
-  const lastQuestion = await prisma.question.findFirst({
-    where: { quizId },
-    orderBy: { order: "desc" },
-  });
-  const nextOrder = (lastQuestion?.order ?? -1) + 1;
+  const savedQuestions = await prisma.$transaction(async (tx) => {
+    await tx.quiz.update({ where: { id: quizId }, data: { title: trimmedTitle } });
 
-  await prisma.question.create({
-    data: {
-      quizId,
-      text: parsed.data.text,
-      order: nextOrder,
-      options: {
-        create: parsed.data.optionText.map((text, i) => ({
-          text,
-          isCorrect: correctIndexes.has(i),
-          order: i,
-        })),
-      },
-    },
+    const results: SavedQuestion[] = [];
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      const optionsData = q.options.map((o, j) => ({
+        text: o.text.trim(),
+        isCorrect: o.isCorrect,
+        order: j,
+      }));
+
+      if (q.id) {
+        await tx.answerOption.deleteMany({ where: { questionId: q.id } });
+        const updated = await tx.question.update({
+          where: { id: q.id },
+          data: { text: q.text.trim(), order: i, options: { create: optionsData } },
+          include: { options: { orderBy: { order: "asc" } } },
+        });
+        results.push(updated);
+      } else {
+        const created = await tx.question.create({
+          data: { quizId, text: q.text.trim(), order: i, options: { create: optionsData } },
+          include: { options: { orderBy: { order: "asc" } } },
+        });
+        results.push(created);
+      }
+    }
+    return results;
   });
 
   revalidatePath(`/admin/quizzes/${quizId}`);
-  redirect(`/admin/quizzes/${quizId}`);
-}
-
-export async function updateQuestionAction(
-  questionId: string,
-  _prevState: string | undefined,
-  formData: FormData
-): Promise<string | undefined> {
-  await requireActiveSuperAdmin();
-
-  const parsed = questionSchema.safeParse({
-    text: formData.get("text"),
-    optionText: formData.getAll("optionText"),
-    optionCorrect: formData.getAll("optionCorrect"),
-  });
-  if (!parsed.success) {
-    return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
-  }
-
-  const correctIndexes = new Set(parsed.data.optionCorrect.map(Number));
-  if (correctIndexes.size === 0) {
-    return "Phải chọn ít nhất một đáp án đúng.";
-  }
-
-  const question = await prisma.question.findUniqueOrThrow({ where: { id: questionId } });
-
-  await prisma.$transaction([
-    prisma.answerOption.deleteMany({ where: { questionId } }),
-    prisma.question.update({
-      where: { id: questionId },
-      data: {
-        text: parsed.data.text,
-        options: {
-          create: parsed.data.optionText.map((text, i) => ({
-            text,
-            isCorrect: correctIndexes.has(i),
-            order: i,
-          })),
-        },
-      },
-    }),
-  ]);
-
-  revalidatePath(`/admin/quizzes/${question.quizId}`);
-  redirect(`/admin/quizzes/${question.quizId}`);
+  revalidatePath("/admin/lessons");
+  return { title: trimmedTitle, questions: savedQuestions };
 }
 
 export async function deleteQuestionAction(questionId: string, quizId: string) {
