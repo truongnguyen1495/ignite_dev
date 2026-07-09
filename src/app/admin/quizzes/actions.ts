@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireActiveSuperAdmin } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
-import type { Question, AnswerOption } from "@prisma/client";
+import type { Question, AnswerOption, Prisma } from "@prisma/client";
 
 export async function createQuizForLessonAction(lessonId: string) {
   await requireActiveSuperAdmin();
@@ -65,35 +65,46 @@ export async function saveQuizAction(
     }
   }
 
-  const savedQuestions = await prisma.$transaction(async (tx) => {
-    await tx.quiz.update({ where: { id: quizId }, data: { title: trimmedTitle } });
+  // Array-form $transaction (a single batched multi-statement transaction),
+  // NOT the async-callback ("interactive transaction") form — the latter
+  // needs the same DB connection held open across several round trips,
+  // which doesn't work through Supabase's pooled connection (PgBouncer in
+  // transaction-pooling mode, DATABASE_URL) even with ?pgbouncer=true; it
+  // only papers over prepared-statement issues, not this. Array-form is
+  // sent as one wrapped transaction and works fine through the pooler.
+  const operations: Prisma.PrismaPromise<unknown>[] = [
+    prisma.quiz.update({ where: { id: quizId }, data: { title: trimmedTitle } }),
+  ];
+  for (let i = 0; i < questions.length; i++) {
+    const q = questions[i];
+    const optionsData = q.options.map((o, j) => ({
+      text: o.text.trim(),
+      isCorrect: o.isCorrect,
+      order: j,
+    }));
 
-    const results: SavedQuestion[] = [];
-    for (let i = 0; i < questions.length; i++) {
-      const q = questions[i];
-      const optionsData = q.options.map((o, j) => ({
-        text: o.text.trim(),
-        isCorrect: o.isCorrect,
-        order: j,
-      }));
-
-      if (q.id) {
-        await tx.answerOption.deleteMany({ where: { questionId: q.id } });
-        const updated = await tx.question.update({
+    if (q.id) {
+      operations.push(prisma.answerOption.deleteMany({ where: { questionId: q.id } }));
+      operations.push(
+        prisma.question.update({
           where: { id: q.id },
           data: { text: q.text.trim(), order: i, options: { create: optionsData } },
-          include: { options: { orderBy: { order: "asc" } } },
-        });
-        results.push(updated);
-      } else {
-        const created = await tx.question.create({
+        })
+      );
+    } else {
+      operations.push(
+        prisma.question.create({
           data: { quizId, text: q.text.trim(), order: i, options: { create: optionsData } },
-          include: { options: { orderBy: { order: "asc" } } },
-        });
-        results.push(created);
-      }
+        })
+      );
     }
-    return results;
+  }
+  await prisma.$transaction(operations);
+
+  const savedQuestions = await prisma.question.findMany({
+    where: { quizId },
+    orderBy: { order: "asc" },
+    include: { options: { orderBy: { order: "asc" } } },
   });
 
   revalidatePath(`/admin/quizzes/${quizId}`);
