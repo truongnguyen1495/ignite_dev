@@ -3,9 +3,15 @@ import { notFound } from "next/navigation";
 import { Plus, Video } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { BackLink } from "@/components/ui/back-link";
+import { LEVEL_LABELS } from "@/lib/levels";
 import { EditCourseForm } from "./edit-course-form";
 import { DeleteCourseButton } from "./delete-course-button";
-import { RevokeAccessButton, GrantAccessForm } from "./access-grants";
+import {
+  RevokeAccessButton,
+  GrantAccessForm,
+  GrantLevelAccessForm,
+  RevokeLevelAccessButton,
+} from "./access-grants";
 import { DeleteCourseLessonInlineButton } from "./delete-course-lesson-inline-button";
 
 export default async function EditCoursePage({
@@ -20,6 +26,7 @@ export default async function EditCoursePage({
     include: {
       lessons: { orderBy: { order: "asc" } },
       grants: { include: { student: true }, orderBy: { grantedAt: "desc" } },
+      levelGrants: { orderBy: { minLevel: "asc" } },
     },
   });
   if (!course) {
@@ -118,6 +125,29 @@ export default async function EditCoursePage({
         {ungrantedStudents.length > 0 && (
           <GrantAccessForm courseId={course.id} students={ungrantedStudents} />
         )}
+      </div>
+
+      <div className="space-y-3 rounded-2xl border border-border bg-surface p-8">
+        <h2 className="text-sm font-semibold text-foreground">Cấp quyền theo cấp</h2>
+        <p className="text-xs text-muted">
+          Học viên đủ cấp — kể cả lên cấp sau này — sẽ tự động xem được khóa học này, không cần cấp lại thủ công.
+        </p>
+        {course.levelGrants.length === 0 ? (
+          <p className="text-sm text-muted">Chưa có luật cấp nào.</p>
+        ) : (
+          <ul className="flex flex-wrap gap-2">
+            {course.levelGrants.map((levelGrant) => (
+              <li
+                key={levelGrant.id}
+                className="flex items-center gap-1.5 rounded-full bg-primary/10 py-1 pl-3 pr-1.5 text-sm text-primary"
+              >
+                {LEVEL_LABELS[levelGrant.minLevel]} trở lên
+                <RevokeLevelAccessButton grantId={levelGrant.id} courseId={course.id} />
+              </li>
+            ))}
+          </ul>
+        )}
+        <GrantLevelAccessForm courseId={course.id} />
       </div>
 
       <div className="space-y-3 rounded-2xl border border-border bg-surface p-8">

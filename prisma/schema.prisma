@@ -56,6 +56,7 @@ model User {
   courseGrants            CourseAccessGrant[]      @relation("CourseGrants")
   courseGrantsGiven       CourseAccessGrant[]      @relation("CourseGrantsGiven")
   courseLessonCompletions CourseLessonCompletion[] @relation("CourseLessonCompletions")
+  courseLevelGrantsGiven  CourseLevelGrant[]       @relation("CourseLevelGrantsGiven")
 
   @@index([role])
 }
@@ -160,8 +161,9 @@ model Course {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  lessons CourseLesson[]
-  grants  CourseAccessGrant[]
+  lessons     CourseLesson[]
+  grants      CourseAccessGrant[]
+  levelGrants CourseLevelGrant[]
 }
 
 model CourseLesson {
@@ -204,4 +206,21 @@ model CourseAccessGrant {
 
   @@unique([studentId, courseId])
   @@index([studentId])
+}
+
+// A continuous rule ("this course is open to Level >= minLevel"), separate
+// from CourseAccessGrant's per-student rows — checked fresh alongside it in
+// studentHasCourseAccess (src/lib/access.ts), so a student who levels up
+// later automatically gains access with no backfill needed.
+model CourseLevelGrant {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  minLevel    Level
+  grantedAt   DateTime @default(now())
+  grantedById String?
+  grantedBy   User?    @relation("CourseLevelGrantsGiven", fields: [grantedById], references: [id])
+
+  @@unique([courseId, minLevel])
+  @@index([courseId])
 }

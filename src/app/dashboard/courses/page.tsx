@@ -1,5 +1,6 @@
 import { requireActiveStudent } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
+import { hasLevelAccess } from "@/lib/levels";
 import { CourseList, type StudentCourseItem } from "./course-list";
 
 const BANNER_GRADIENTS = [
@@ -13,7 +14,7 @@ const BANNER_GRADIENTS = [
 export default async function StudentCoursesPage() {
   const student = await requireActiveStudent();
 
-  const [courses, grants, completions] = await Promise.all([
+  const [courses, grants, levelGrants, completions] = await Promise.all([
     prisma.course.findMany({
       orderBy: { order: "asc" },
       include: {
@@ -22,6 +23,7 @@ export default async function StudentCoursesPage() {
       },
     }),
     prisma.courseAccessGrant.findMany({ where: { studentId: student.id } }),
+    prisma.courseLevelGrant.findMany(),
     prisma.courseLessonCompletion.findMany({
       where: { studentId: student.id },
       select: { courseLesson: { select: { courseId: true } } },
@@ -29,6 +31,11 @@ export default async function StudentCoursesPage() {
   ]);
 
   const grantedCourseIds = new Set(grants.map((g) => g.courseId));
+  const levelUnlockedCourseIds = new Set(
+    levelGrants
+      .filter((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel))
+      .map((lg) => lg.courseId)
+  );
 
   const completedCountByCourse = new Map<string, number>();
   for (const completion of completions) {
@@ -37,7 +44,7 @@ export default async function StudentCoursesPage() {
   }
 
   const items: StudentCourseItem[] = courses.map((course, index) => {
-    const unlocked = grantedCourseIds.has(course.id);
+    const unlocked = grantedCourseIds.has(course.id) || levelUnlockedCourseIds.has(course.id);
     const totalLessons = course._count.lessons;
     const completedCount = completedCountByCourse.get(course.id) ?? 0;
     const progressPercent = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;

@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import type { Level } from "@prisma/client";
 import { requireActiveSuperAdmin } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { parseYoutubeId } from "@/lib/youtube";
@@ -207,5 +208,21 @@ export async function grantCourseAccessAction(courseId: string, studentId: strin
 export async function revokeCourseAccessAction(grantId: string, courseId: string) {
   await requireActiveSuperAdmin();
   await prisma.courseAccessGrant.delete({ where: { id: grantId } });
+  revalidatePath(`/admin/courses/${courseId}`);
+}
+
+export async function grantCourseLevelAccessAction(courseId: string, minLevel: Level) {
+  const admin = await requireActiveSuperAdmin();
+  await prisma.courseLevelGrant.upsert({
+    where: { courseId_minLevel: { courseId, minLevel } },
+    create: { courseId, minLevel, grantedById: admin.id },
+    update: {},
+  });
+  revalidatePath(`/admin/courses/${courseId}`);
+}
+
+export async function revokeCourseLevelAccessAction(grantId: string, courseId: string) {
+  await requireActiveSuperAdmin();
+  await prisma.courseLevelGrant.delete({ where: { id: grantId } });
   revalidatePath(`/admin/courses/${courseId}`);
 }

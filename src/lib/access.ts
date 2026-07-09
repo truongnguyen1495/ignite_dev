@@ -94,19 +94,30 @@ export async function requireQuizAccess(quizId: string) {
   return { student, quiz };
 }
 
-// Exclusive courses aren't gated by grantedLevel at all — access is a plain
-// per-student grant row, checked fresh from the DB same as everything else
-// in this file. No grant means no access, regardless of nav visibility.
+// Exclusive courses aren't gated by grantedLevel by default — access is
+// either a per-student grant row (CourseAccessGrant) or a continuous
+// "Level >= minLevel" rule (CourseLevelGrant), checked fresh from the DB
+// same as everything else in this file. Either one is sufficient; a student
+// who levels up into a rule's threshold gains access immediately, with no
+// backfill, since this is re-evaluated on every visit.
+async function studentHasCourseAccess(student: User, courseId: string): Promise<boolean> {
+  const [grant, levelGrants] = await Promise.all([
+    prisma.courseAccessGrant.findUnique({
+      where: { studentId_courseId: { studentId: student.id, courseId } },
+    }),
+    prisma.courseLevelGrant.findMany({ where: { courseId } }),
+  ]);
+  if (grant) return true;
+  return levelGrants.some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel));
+}
+
 export async function requireCourseAccess(courseId: string) {
   const student = await requireActiveStudent();
   const course = await prisma.course.findUnique({ where: { id: courseId } });
   if (!course) {
     redirect("/dashboard?denied=1");
   }
-  const grant = await prisma.courseAccessGrant.findUnique({
-    where: { studentId_courseId: { studentId: student.id, courseId } },
-  });
-  if (!grant) {
+  if (!(await studentHasCourseAccess(student, courseId))) {
     redirect("/dashboard?denied=1");
   }
   return { student, course };
@@ -118,10 +129,7 @@ export async function requireCourseLessonAccess(lessonId: string) {
   if (!lesson) {
     redirect("/dashboard?denied=1");
   }
-  const grant = await prisma.courseAccessGrant.findUnique({
-    where: { studentId_courseId: { studentId: student.id, courseId: lesson.courseId } },
-  });
-  if (!grant) {
+  if (!(await studentHasCourseAccess(student, lesson.courseId))) {
     redirect("/dashboard?denied=1");
   }
   return { student, lesson };
