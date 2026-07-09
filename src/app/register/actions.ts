@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { phoneNumberSchema } from "@/lib/validation";
 
 const registerSchema = z
   .object({
@@ -15,6 +16,7 @@ const registerSchema = z
       .trim()
       .min(3, "Username phải có ít nhất 3 ký tự.")
       .regex(/^[a-zA-Z0-9_.]+$/, "Username chỉ được chứa chữ, số, dấu chấm và gạch dưới."),
+    phoneNumber: phoneNumberSchema,
     dateOfBirth: z.coerce
       .date()
       .refine((date) => !Number.isNaN(date.getTime()), "Ngày sinh không hợp lệ.")
@@ -35,6 +37,7 @@ export async function registerAction(
     name: formData.get("name"),
     email: formData.get("email"),
     username: formData.get("username"),
+    phoneNumber: formData.get("phoneNumber"),
     dateOfBirth: formData.get("dateOfBirth"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
@@ -51,6 +54,7 @@ export async function registerAction(
         name: parsed.data.name,
         email: parsed.data.email,
         username: parsed.data.username,
+        phoneNumber: parsed.data.phoneNumber,
         dateOfBirth: parsed.data.dateOfBirth,
         passwordHash,
         role: "STUDENT",
@@ -63,6 +67,9 @@ export async function registerAction(
       const fields = Array.isArray(target) ? target : [];
       if (fields.includes("username")) {
         return "Username này đã được sử dụng.";
+      }
+      if (fields.includes("phoneNumber")) {
+        return "Số điện thoại này đã được sử dụng.";
       }
       return "Email này đã được sử dụng.";
     }

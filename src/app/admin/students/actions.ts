@@ -8,12 +8,26 @@ import { Prisma, type Level } from "@prisma/client";
 import { requireActiveSuperAdmin } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { ORDERED_LEVELS } from "@/lib/levels";
+import { optionalPhoneNumberSchema } from "@/lib/validation";
 
 const levelEnum = z.enum(ORDERED_LEVELS as [Level, ...Level[]]);
+
+function phoneNumberErrorFromP2002(e: unknown): string | undefined {
+  if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+    const target = e.meta?.target;
+    const fields = Array.isArray(target) ? target : [];
+    if (fields.includes("phoneNumber")) {
+      return "Số điện thoại này đã được sử dụng.";
+    }
+    return "Email này đã được sử dụng.";
+  }
+  return undefined;
+}
 
 const createSchema = z.object({
   name: z.string().trim().min(1, "Tên không được để trống."),
   email: z.string().trim().email("Email không hợp lệ."),
+  phoneNumber: optionalPhoneNumberSchema,
   password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự."),
   grantedLevel: levelEnum,
 });
@@ -27,6 +41,7 @@ export async function createStudentAction(
   const parsed = createSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
+    phoneNumber: formData.get("phoneNumber") ?? "",
     password: formData.get("password"),
     grantedLevel: formData.get("grantedLevel"),
   });
@@ -41,6 +56,7 @@ export async function createStudentAction(
       data: {
         name: parsed.data.name,
         email: parsed.data.email,
+        phoneNumber: parsed.data.phoneNumber,
         passwordHash,
         role: "STUDENT",
         status: "ACTIVE",
@@ -48,8 +64,9 @@ export async function createStudentAction(
       },
     });
   } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      return "Email này đã được sử dụng.";
+    const message = phoneNumberErrorFromP2002(e);
+    if (message) {
+      return message;
     }
     throw e;
   }
@@ -62,6 +79,7 @@ const updateSchema = z.object({
   studentId: z.string().min(1),
   name: z.string().trim().min(1, "Tên không được để trống."),
   email: z.string().trim().email("Email không hợp lệ."),
+  phoneNumber: optionalPhoneNumberSchema,
   grantedLevel: levelEnum,
   password: z.union([z.string().min(8), z.literal("")]),
 });
@@ -76,6 +94,7 @@ export async function updateStudentAction(
     studentId: formData.get("studentId"),
     name: formData.get("name"),
     email: formData.get("email"),
+    phoneNumber: formData.get("phoneNumber") ?? "",
     grantedLevel: formData.get("grantedLevel"),
     password: formData.get("password") ?? "",
   });
@@ -83,9 +102,9 @@ export async function updateStudentAction(
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
   }
 
-  const { studentId, name, email, grantedLevel, password } = parsed.data;
+  const { studentId, name, email, phoneNumber, grantedLevel, password } = parsed.data;
 
-  const data: Prisma.UserUpdateInput = { name, email, grantedLevel };
+  const data: Prisma.UserUpdateInput = { name, email, phoneNumber, grantedLevel };
   if (password) {
     data.passwordHash = await bcrypt.hash(password, 10);
   }
@@ -93,8 +112,9 @@ export async function updateStudentAction(
   try {
     await prisma.user.update({ where: { id: studentId, role: "STUDENT" }, data });
   } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      return "Email này đã được sử dụng.";
+    const message = phoneNumberErrorFromP2002(e);
+    if (message) {
+      return message;
     }
     throw e;
   }

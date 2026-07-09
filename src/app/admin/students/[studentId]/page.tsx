@@ -40,7 +40,7 @@ export default async function EditStudentPage({
   ]);
 
   const isPending = student.status === "PENDING";
-  const hasRegistrationInfo = Boolean(student.username || student.dateOfBirth);
+  const hasRegistrationInfo = Boolean(student.username || student.dateOfBirth || student.phoneNumber);
 
   // A student can retake the same quiz many times; grouping by quiz collapses
   // those into one row (the latest attempt) with the rest tucked behind an
@@ -111,6 +111,12 @@ export default async function EditStudentPage({
                 <dd className="text-foreground">{student.dateOfBirth.toLocaleDateString("vi-VN")}</dd>
               </div>
             )}
+            {student.phoneNumber && (
+              <div className="min-w-0">
+                <dt className="text-xs text-muted">Số điện thoại</dt>
+                <dd className="break-words text-foreground">{student.phoneNumber}</dd>
+              </div>
+            )}
             <div className="min-w-0">
               <dt className="text-xs text-muted">Ngày đăng ký</dt>
               <dd className="text-foreground">{student.createdAt.toLocaleDateString("vi-VN")}</dd>
@@ -143,12 +149,18 @@ export default async function EditStudentPage({
                 <span className="text-foreground">{student.dateOfBirth.toLocaleDateString("vi-VN")}</span>
               </span>
             )}
+            {student.phoneNumber && (
+              <span className="text-muted">
+                Số điện thoại: <span className="text-foreground">{student.phoneNumber}</span>
+              </span>
+            )}
           </div>
         )}
         <EditStudentForm
           studentId={student.id}
           name={student.name}
           email={student.email}
+          phoneNumber={student.phoneNumber}
           grantedLevel={student.grantedLevel}
         />
       </div>

@@ -43,6 +43,7 @@ model User {
   name         String
   username     String?       @unique
   dateOfBirth  DateTime?
+  phoneNumber  String?       @unique
   role         Role
   status       AccountStatus @default(ACTIVE)
   grantedLevel Level         @default(CUSTOMER)

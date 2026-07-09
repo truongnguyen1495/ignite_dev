@@ -33,6 +33,18 @@ export function CreateStudentForm() {
         />
       </div>
       <div>
+        <label htmlFor="phoneNumber" className="mb-1.5 block text-sm font-medium text-foreground">
+          Số điện thoại (tùy chọn)
+        </label>
+        <input
+          id="phoneNumber"
+          name="phoneNumber"
+          type="tel"
+          placeholder="0xxxxxxxxx hoặc +84xxxxxxxxx"
+          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+        />
+      </div>
+      <div>
         <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-foreground">
           Mật khẩu
         </label>

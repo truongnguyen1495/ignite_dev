@@ -67,6 +67,12 @@ export function PendingRegistrations({ students }: { students: User[] }) {
                       </dd>
                     </div>
                   )}
+                  {student.phoneNumber && (
+                    <div>
+                      <dt className="text-xs text-muted">Số điện thoại</dt>
+                      <dd className="text-foreground">{student.phoneNumber}</dd>
+                    </div>
+                  )}
                   <div>
                     <dt className="text-xs text-muted">Ngày đăng ký</dt>
                     <dd className="text-foreground">{student.createdAt.toLocaleDateString("vi-VN")}</dd>
