@@ -54,6 +54,23 @@ const ALLOWED_UPLOAD_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "
 const bubbleButtonClass = "rounded px-2 py-1 text-xs font-medium text-muted hover:bg-surface-hover hover:text-foreground";
 const activeBubbleButtonClass = "rounded px-2 py-1 text-xs font-medium bg-primary text-primary-foreground";
 
+// Pasted content (Word/Google Docs/websites) often carries its own inline
+// text/background color — harmless-looking on the light admin editor, but
+// it overrides the student page's dark theme and can render invisible
+// (e.g. near-black pasted text on a dark background). Only paste goes
+// through this; colors applied via the toolbar swatches below (setColor)
+// and the read side's dark-mode prose styling are untouched.
+function stripPastedColor(html: string): string {
+  return html.replace(/style="([^"]*)"/gi, (match, styleContent: string) => {
+    const cleaned = styleContent
+      .split(";")
+      .filter((decl) => !/^\s*(color|background-color)\s*:/i.test(decl))
+      .join(";")
+      .trim();
+    return cleaned ? `style="${cleaned}"` : "";
+  });
+}
+
 const TEXT_COLORS: { label: string; value: string }[] = [
   { label: "Đỏ", value: "#ef4444" },
   { label: "Cam", value: "#f97316" },
@@ -116,6 +133,7 @@ export function LessonContentEditor({
       attributes: {
         class: "lesson-content prose max-w-none focus:outline-none px-4 py-3",
       },
+      transformPastedHTML: stripPastedColor,
     },
     onUpdate: ({ editor }) => {
       const markdownStorage = editor.storage as unknown as { markdown: { getMarkdown(): string } };
