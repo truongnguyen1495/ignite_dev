@@ -3,8 +3,9 @@
 import { useActionState } from "react";
 import { updateAnnouncementAction } from "../actions";
 import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
+import { ORDERED_ANNOUNCEMENT_CATEGORIES, ANNOUNCEMENT_CATEGORY_LABELS } from "@/lib/announcements";
 import { LessonContentEditor } from "@/app/admin/lessons/lesson-content-editor";
-import type { Level } from "@prisma/client";
+import type { Level, AnnouncementCategory } from "@prisma/client";
 import { Input, Select } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 
@@ -12,11 +13,13 @@ export function EditAnnouncementForm({
   announcementId,
   title,
   content,
+  category,
   minLevel,
 }: {
   announcementId: string;
   title: string;
   content: string;
+  category: AnnouncementCategory;
   minLevel: Level | null;
 }) {
   const [error, formAction, pending] = useActionState(updateAnnouncementAction, undefined);
@@ -27,6 +30,13 @@ export function EditAnnouncementForm({
 
       <section className="space-y-4">
         <Input id="title" name="title" defaultValue={title} required label="Tiêu đề" />
+        <Select id="category" name="category" defaultValue={category} required label="Chuyên mục" hint="Chọn tab sẽ hiển thị bản tin này cho học viên.">
+          {ORDERED_ANNOUNCEMENT_CATEGORIES.map((c) => (
+            <option key={c} value={c}>
+              {ANNOUNCEMENT_CATEGORY_LABELS[c]}
+            </option>
+          ))}
+        </Select>
         <Select
           id="minLevel"
           name="minLevel"

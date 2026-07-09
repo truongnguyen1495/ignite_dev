@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { createAnnouncementAction } from "../actions";
 import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
+import { ORDERED_ANNOUNCEMENT_CATEGORIES, ANNOUNCEMENT_CATEGORY_LABELS } from "@/lib/announcements";
 import { LessonContentEditor } from "@/app/admin/lessons/lesson-content-editor";
 import { Input, Select } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,13 @@ export function CreateAnnouncementForm() {
     <form action={formAction} className="space-y-8">
       <section className="space-y-4">
         <Input id="title" name="title" required label="Tiêu đề" />
+        <Select id="category" name="category" defaultValue={ORDERED_ANNOUNCEMENT_CATEGORIES[0]} required label="Chuyên mục" hint="Chọn tab sẽ hiển thị bản tin này cho học viên.">
+          {ORDERED_ANNOUNCEMENT_CATEGORIES.map((category) => (
+            <option key={category} value={category}>
+              {ANNOUNCEMENT_CATEGORY_LABELS[category]}
+            </option>
+          ))}
+        </Select>
         <Select id="minLevel" name="minLevel" defaultValue="" label="Đối tượng xem" hint="Bỏ trống nếu muốn tất cả học viên đều xem được.">
           <option value="">Tất cả học viên</option>
           {ORDERED_LEVELS.map((level) => (

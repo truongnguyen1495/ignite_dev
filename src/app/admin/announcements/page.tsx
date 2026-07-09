@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { LEVEL_LABELS } from "@/lib/levels";
+import { ANNOUNCEMENT_CATEGORY_LABELS, ANNOUNCEMENT_CATEGORY_BADGE_COLOR } from "@/lib/announcements";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { DeleteAnnouncementInlineButton } from "./delete-announcement-inline-button";
@@ -38,6 +39,9 @@ export default async function AnnouncementsPage() {
                 className="flex min-w-0 flex-1 flex-wrap items-center gap-2"
               >
                 <span className="text-foreground">{announcement.title}</span>
+                <Badge color={ANNOUNCEMENT_CATEGORY_BADGE_COLOR[announcement.category]}>
+                  {ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}
+                </Badge>
                 {announcement.minLevel ? (
                   <Badge color="primary">{LEVEL_LABELS[announcement.minLevel]} trở lên</Badge>
                 ) : (

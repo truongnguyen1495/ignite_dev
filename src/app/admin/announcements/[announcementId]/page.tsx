@@ -28,6 +28,7 @@ export default async function EditAnnouncementPage({
           announcementId={announcement.id}
           title={announcement.title}
           content={announcement.content}
+          category={announcement.category}
           minLevel={announcement.minLevel}
         />
       </Card>
