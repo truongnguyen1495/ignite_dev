@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { UserMinus, X } from "lucide-react";
 import type { Level } from "@prisma/client";
 import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
+import { Button } from "@/components/ui/button";
 import {
   grantCourseAccessAction,
   revokeCourseAccessAction,
@@ -39,9 +40,10 @@ export function GrantAccessForm({
           </option>
         ))}
       </select>
-      <button
+      <Button
         type="button"
         disabled={pending || !studentId}
+        isLoading={pending}
         onClick={() => {
           startTransition(async () => {
             await grantCourseAccessAction(courseId, studentId);
@@ -49,10 +51,9 @@ export function GrantAccessForm({
             router.refresh();
           });
         }}
-        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
       >
         {pending ? "Đang cấp..." : "Cấp quyền"}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -62,8 +63,10 @@ export function RevokeAccessButton({ grantId, courseId }: { grantId: string; cou
   const router = useRouter();
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="icon"
       disabled={pending}
       title="Thu hồi quyền truy cập"
       onClick={() => {
@@ -72,10 +75,10 @@ export function RevokeAccessButton({ grantId, courseId }: { grantId: string; cou
           router.refresh();
         });
       }}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-danger-bg hover:text-danger disabled:opacity-50"
+      className="hover:bg-danger-bg hover:text-danger"
     >
       <UserMinus className="h-4 w-4" />
-    </button>
+    </Button>
   );
 }
 
@@ -100,9 +103,10 @@ export function GrantLevelAccessForm({ courseId }: { courseId: string }) {
           </option>
         ))}
       </select>
-      <button
+      <Button
         type="button"
         disabled={pending || !minLevel}
+        isLoading={pending}
         onClick={() => {
           if (!minLevel) return;
           startTransition(async () => {
@@ -111,10 +115,9 @@ export function GrantLevelAccessForm({ courseId }: { courseId: string }) {
             router.refresh();
           });
         }}
-        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
       >
         {pending ? "Đang cấp..." : "Cấp quyền theo cấp"}
-      </button>
+      </Button>
     </div>
   );
 }

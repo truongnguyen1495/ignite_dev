@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { BackLink } from "@/components/ui/back-link";
+import { Card } from "@/components/ui/card";
 import { CourseLessonForm } from "../course-lesson-form";
 
 export default async function NewCourseLessonPage({
@@ -22,9 +23,9 @@ export default async function NewCourseLessonPage({
           Thêm bài học — {course.title}
         </h1>
       </div>
-      <div className="rounded-2xl border border-border bg-surface p-8">
+      <Card padding="lg">
         <CourseLessonForm courseId={courseId} />
-      </div>
+      </Card>
     </div>
   );
 }

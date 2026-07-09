@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { deleteQuestionAction } from "../actions";
+import { Button } from "@/components/ui/button";
 
 export function DeleteQuestionButton({
   questionId,
@@ -16,8 +17,10 @@ export function DeleteQuestionButton({
   const router = useRouter();
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="icon"
       disabled={pending}
       title="Xóa"
       onClick={() => {
@@ -28,9 +31,9 @@ export function DeleteQuestionButton({
           });
         }
       }}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-danger-bg hover:text-danger disabled:opacity-50"
+      className="hover:bg-danger-bg hover:text-danger"
     >
       <Trash2 className="h-4 w-4" />
-    </button>
+    </Button>
   );
 }

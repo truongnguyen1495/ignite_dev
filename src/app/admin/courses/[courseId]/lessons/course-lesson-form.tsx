@@ -3,6 +3,8 @@
 import { useActionState } from "react";
 import { createCourseLessonAction, updateCourseLessonAction } from "../../actions";
 import { LessonContentEditor } from "@/app/admin/lessons/lesson-content-editor";
+import { Input } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
 
 export function CourseLessonForm({
   courseId,
@@ -29,48 +31,28 @@ export function CourseLessonForm({
 
       <section className="space-y-4">
         <h2 className="text-sm font-semibold text-foreground">Thông tin bài học</h2>
-        <div>
-          <label htmlFor="title" className="mb-1.5 block text-sm font-medium text-foreground">
-            Tiêu đề
-          </label>
-          <input
-            id="title"
-            name="title"
-            defaultValue={title}
-            required
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-          />
-        </div>
-        <div>
-          <label htmlFor="order" className="mb-1.5 block text-sm font-medium text-foreground">
-            Thứ tự hiển thị
-          </label>
-          <input
-            id="order"
-            name="order"
-            type="number"
-            defaultValue={order}
-            className="w-full max-w-[200px] rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-          />
-        </div>
+        <Input id="title" name="title" defaultValue={title} required label="Tiêu đề" />
+        <Input
+          id="order"
+          name="order"
+          type="number"
+          defaultValue={order}
+          className="max-w-[200px]"
+          label="Thứ tự hiển thị"
+        />
       </section>
 
       <hr className="border-border" />
 
       <section className="space-y-4">
         <h2 className="text-sm font-semibold text-foreground">Video YouTube</h2>
-        <div>
-          <label htmlFor="youtube" className="mb-1.5 block text-sm font-medium text-foreground">
-            Link video YouTube
-          </label>
-          <input
-            id="youtube"
-            name="youtube"
-            defaultValue={youtubeId ?? ""}
-            placeholder="https://www.youtube.com/watch?v=..."
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-          />
-        </div>
+        <Input
+          id="youtube"
+          name="youtube"
+          defaultValue={youtubeId ?? ""}
+          placeholder="https://www.youtube.com/watch?v=..."
+          label="Link video YouTube"
+        />
       </section>
 
       <hr className="border-border" />
@@ -83,13 +65,9 @@ export function CourseLessonForm({
       {error && <p className="text-sm text-danger">{error}</p>}
 
       <div className="flex justify-end border-t border-border pt-6">
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
-        >
+        <Button type="submit" disabled={pending} isLoading={pending}>
           {pending ? "Đang lưu..." : lessonId ? "Lưu thay đổi" : "Tạo bài học"}
-        </button>
+        </Button>
       </div>
     </form>
   );

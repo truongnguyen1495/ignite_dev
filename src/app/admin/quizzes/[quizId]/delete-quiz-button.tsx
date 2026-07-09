@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { deleteQuizAction } from "../actions";
+import { Button } from "@/components/ui/button";
 
 export function DeleteQuizButton({
   quizId,
@@ -13,9 +14,11 @@ export function DeleteQuizButton({
   const [pending, startTransition] = useTransition();
 
   return (
-    <button
+    <Button
       type="button"
+      variant="danger"
       disabled={pending}
+      isLoading={pending}
       onClick={() => {
         if (confirm("Xóa bài test này? Toàn bộ câu hỏi và điểm test của học viên sẽ bị xóa.")) {
           startTransition(() => {
@@ -23,9 +26,8 @@ export function DeleteQuizButton({
           });
         }
       }}
-      className="rounded-lg border border-danger/30 px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-bg disabled:opacity-50"
     >
       {pending ? "Đang xóa..." : "Xóa bài test"}
-    </button>
+    </Button>
   );
 }

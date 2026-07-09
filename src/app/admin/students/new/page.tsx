@@ -1,4 +1,5 @@
 import { BackLink } from "@/components/ui/back-link";
+import { Card } from "@/components/ui/card";
 import { CreateStudentForm } from "./create-student-form";
 
 export default function NewStudentPage() {
@@ -8,9 +9,9 @@ export default function NewStudentPage() {
         <BackLink href="/admin/students">Quay lại</BackLink>
         <h1 className="mt-2 text-2xl font-semibold text-foreground">Thêm học viên</h1>
       </div>
-      <div className="max-w-xl rounded-xl border border-border bg-surface p-6">
+      <Card className="max-w-xl">
         <CreateStudentForm />
-      </div>
+      </Card>
     </div>
   );
 }

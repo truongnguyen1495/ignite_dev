@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { SettingsForm } from "./settings-form";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
 
 export default async function SettingsPage() {
   const settings = await prisma.settings.upsert({
@@ -10,10 +12,10 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-foreground">Cài đặt</h1>
-      <div className="max-w-sm rounded-xl border border-border bg-surface p-6">
+      <PageHeader title="Cài đặt" />
+      <Card className="max-w-sm">
         <SettingsForm passPercentage={settings.passPercentage} />
-      </div>
+      </Card>
     </div>
   );
 }

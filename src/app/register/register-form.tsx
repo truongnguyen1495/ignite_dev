@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { registerAction } from "./actions";
+import { Input } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
 
 const inputClass =
   "w-full rounded-lg border border-border bg-background px-3 py-2 pr-10 text-sm text-foreground focus:border-primary focus:outline-none";
@@ -56,62 +58,18 @@ export function RegisterForm() {
 
   return (
     <form action={formAction} className="w-full space-y-4">
-      <div>
-        <label htmlFor="name" className={labelClass}>
-          Họ và tên
-        </label>
-        <input id="name" name="name" required className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none" />
-      </div>
-      <div>
-        <label htmlFor="email" className={labelClass}>
-          Email
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          required
-          autoComplete="email"
-          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-        />
-      </div>
-      <div>
-        <label htmlFor="username" className={labelClass}>
-          Username
-        </label>
-        <input
-          id="username"
-          name="username"
-          required
-          minLength={3}
-          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-        />
-      </div>
-      <div>
-        <label htmlFor="phoneNumber" className={labelClass}>
-          Số điện thoại
-        </label>
-        <input
-          id="phoneNumber"
-          name="phoneNumber"
-          type="tel"
-          required
-          placeholder="0xxxxxxxxx hoặc +84xxxxxxxxx"
-          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-        />
-      </div>
-      <div>
-        <label htmlFor="dateOfBirth" className={labelClass}>
-          Ngày tháng năm sinh
-        </label>
-        <input
-          id="dateOfBirth"
-          name="dateOfBirth"
-          type="date"
-          required
-          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-        />
-      </div>
+      <Input id="name" name="name" label="Họ và tên" required />
+      <Input id="email" name="email" type="email" label="Email" required autoComplete="email" />
+      <Input id="username" name="username" label="Username" required minLength={3} />
+      <Input
+        id="phoneNumber"
+        name="phoneNumber"
+        type="tel"
+        label="Số điện thoại"
+        required
+        placeholder="0xxxxxxxxx hoặc +84xxxxxxxxx"
+      />
+      <Input id="dateOfBirth" name="dateOfBirth" type="date" label="Ngày tháng năm sinh" required />
       <PasswordField id="password" name="password" label="Mật khẩu" autoComplete="new-password" />
       <PasswordField
         id="confirmPassword"
@@ -120,13 +78,9 @@ export function RegisterForm() {
         autoComplete="new-password"
       />
       {error && <p className="text-sm text-danger">{error}</p>}
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
-      >
+      <Button type="submit" className="w-full" isLoading={pending}>
         {pending ? "Đang đăng ký..." : "Đăng ký"}
-      </button>
+      </Button>
       <p className="text-center text-sm text-muted">
         Đã có tài khoản?{" "}
         <Link href="/login" className="font-medium text-primary hover:text-primary-hover">

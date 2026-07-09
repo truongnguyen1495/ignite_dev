@@ -2,6 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function SubmitQuizButton() {
   const { pending } = useFormStatus();
@@ -14,13 +15,9 @@ export function SubmitQuizButton() {
           Bài test của bạn đã được nộp, hệ thống đang chấm điểm, vui lòng đợi trong giây lát...
         </p>
       )}
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
-      >
+      <Button type="submit" isLoading={pending}>
         {pending ? "Đang nộp bài..." : "Nộp bài"}
-      </button>
+      </Button>
     </div>
   );
 }

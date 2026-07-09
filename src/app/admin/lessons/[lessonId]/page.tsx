@@ -6,6 +6,8 @@ import { EditLessonForm } from "./edit-lesson-form";
 import { DeleteLessonButton } from "./delete-lesson-button";
 import { createQuizForLessonAction } from "../../quizzes/actions";
 import Link from "next/link";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default async function EditLessonPage({
   params,
@@ -28,7 +30,7 @@ export default async function EditLessonPage({
         <h1 className="mt-2 text-2xl font-semibold text-foreground">{lesson.title}</h1>
       </div>
 
-      <div className="rounded-2xl border border-border bg-surface p-8">
+      <Card padding="lg">
         <EditLessonForm
           lessonId={lesson.id}
           title={lesson.title}
@@ -37,9 +39,9 @@ export default async function EditLessonPage({
           youtubeId={lesson.youtubeId}
           order={lesson.order}
         />
-      </div>
+      </Card>
 
-      <div className="space-y-3 rounded-2xl border border-border bg-surface p-8">
+      <Card padding="lg" className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">Bài test</h2>
         {lesson.quiz ? (
           <Link
@@ -51,20 +53,15 @@ export default async function EditLessonPage({
           </Link>
         ) : (
           <form action={createQuizForLessonAction.bind(null, lesson.id)}>
-            <button
-              type="submit"
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
-            >
-              + Tạo bài test
-            </button>
+            <Button type="submit">+ Tạo bài test</Button>
           </form>
         )}
-      </div>
+      </Card>
 
-      <div className="space-y-3 rounded-2xl border border-border bg-surface p-8">
+      <Card padding="lg" className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">Khu vực nguy hiểm</h2>
         <DeleteLessonButton lessonId={lesson.id} lessonTitle={lesson.title} />
-      </div>
+      </Card>
     </div>
   );
 }

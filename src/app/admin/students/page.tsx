@@ -5,6 +5,7 @@ import { LevelBadge } from "@/components/ui/level-badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ToggleStudentStatusButton, DeleteStudentButton } from "./[studentId]/danger-actions";
 import { PendingRegistrations } from "./pending-registrations";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function StudentsPage() {
   const allStudents = await prisma.user.findMany({
@@ -18,16 +19,18 @@ export default async function StudentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-foreground">Danh sách Học viên ({students.length})</h1>
-        <Link
-          href="/admin/students/new"
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
-        >
-          <Plus className="h-4 w-4" />
-          Thêm Học viên Mới
-        </Link>
-      </div>
+      <PageHeader
+        title={`Danh sách Học viên (${students.length})`}
+        actions={
+          <Link
+            href="/admin/students/new"
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+          >
+            <Plus className="h-4 w-4" />
+            Thêm Học viên Mới
+          </Link>
+        }
+      />
 
       <PendingRegistrations students={pending} />
 

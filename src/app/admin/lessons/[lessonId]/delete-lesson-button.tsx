@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteLessonAction } from "../actions";
+import { Button } from "@/components/ui/button";
 
 export function DeleteLessonButton({
   lessonId,
@@ -15,9 +16,11 @@ export function DeleteLessonButton({
   const router = useRouter();
 
   return (
-    <button
+    <Button
       type="button"
+      variant="danger"
       disabled={pending}
+      isLoading={pending}
       onClick={() => {
         if (confirm(`Xóa bài học "${lessonTitle}"? Bài test đính kèm (nếu có) cũng sẽ bị xóa.`)) {
           startTransition(async () => {
@@ -26,9 +29,8 @@ export function DeleteLessonButton({
           });
         }
       }}
-      className="rounded-lg border border-danger/30 px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-bg disabled:opacity-50"
     >
       {pending ? "Đang xóa..." : "Xóa bài học"}
-    </button>
+    </Button>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Users, ClipboardList, BookOpen, ArrowUpCircle, UserPlus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function AdminOverviewPage() {
   const [studentCount, pendingRegistrations, pendingRequests, lessonCount, attemptCount] =
@@ -22,7 +23,7 @@ export default async function AdminOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-foreground">Tổng quan</h1>
+      <PageHeader title="Tổng quan" />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {stats.map((stat) => {
           const Icon = stat.icon;

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { ResultRow } from "./result-row";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function ResultsPage() {
   const attempts = await prisma.quizAttempt.findMany({
@@ -30,7 +31,7 @@ export default async function ResultsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-foreground">Kết quả bài test</h1>
+      <PageHeader title="Kết quả bài test" />
 
       {attempts.length === 0 ? (
         <p className="text-sm text-muted">Chưa có lượt làm bài test nào.</p>

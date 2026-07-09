@@ -4,6 +4,9 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { updateCourseAction } from "../actions";
 import { CoverImageInput } from "../cover-image-input";
 import { BackLink } from "@/components/ui/back-link";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input, Textarea } from "@/components/ui/form";
 
 export function EditCourseForm({
   courseId,
@@ -36,21 +39,18 @@ export function EditCourseForm({
           <BackLink href="/admin/courses">Quay lại</BackLink>
           <h1 className="mt-1 text-2xl font-semibold text-foreground">{title}</h1>
         </div>
-        <button
+        <Button
           type="submit"
           form="edit-course-form"
+          variant={isDirty ? "primary" : "secondary"}
           disabled={pending || !isDirty}
-          className={
-            pending || !isDirty
-              ? "rounded-lg bg-border px-4 py-2 text-sm font-medium text-muted"
-              : "rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
-          }
+          isLoading={pending}
         >
           {pending ? "Đang lưu..." : isDirty ? "Lưu thay đổi" : "Đã lưu"}
-        </button>
+        </Button>
       </div>
 
-      <div className="rounded-2xl border border-border bg-surface p-8">
+      <Card padding="lg">
         <form
           id="edit-course-form"
           action={formAction}
@@ -58,46 +58,19 @@ export function EditCourseForm({
           className="space-y-4"
         >
           <input type="hidden" name="courseId" value={courseId} />
-          <div>
-            <label htmlFor="title" className="mb-1.5 block text-sm font-medium text-foreground">
-              Tên khóa học
-            </label>
-            <input
-              id="title"
-              name="title"
-              defaultValue={title}
-              required
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-            />
-          </div>
-          <div>
-            <label htmlFor="description" className="mb-1.5 block text-sm font-medium text-foreground">
-              Mô tả (tùy chọn)
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              rows={3}
-              defaultValue={description ?? ""}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-            />
-          </div>
+          <Input id="title" name="title" defaultValue={title} required label="Tên khóa học" />
+          <Textarea
+            id="description"
+            name="description"
+            rows={3}
+            defaultValue={description ?? ""}
+            label="Mô tả (tùy chọn)"
+          />
           <CoverImageInput defaultValue={coverImageUrl ?? ""} onChange={() => setIsDirty(true)} />
-          <div>
-            <label htmlFor="order" className="mb-1.5 block text-sm font-medium text-foreground">
-              Thứ tự hiển thị
-            </label>
-            <input
-              id="order"
-              name="order"
-              type="number"
-              defaultValue={order}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-            />
-          </div>
+          <Input id="order" name="order" type="number" defaultValue={order} label="Thứ tự hiển thị" />
           {error && <p className="text-sm text-danger">{error}</p>}
         </form>
-      </div>
+      </Card>
     </>
   );
 }

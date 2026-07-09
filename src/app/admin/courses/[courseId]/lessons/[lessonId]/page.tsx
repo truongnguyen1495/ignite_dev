@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { BackLink } from "@/components/ui/back-link";
+import { Card } from "@/components/ui/card";
 import { CourseLessonForm } from "../course-lesson-form";
 
 export default async function EditCourseLessonPage({
@@ -20,7 +21,7 @@ export default async function EditCourseLessonPage({
         <BackLink href={`/admin/courses/${courseId}`}>Quay lại</BackLink>
         <h1 className="mt-2 text-2xl font-semibold text-foreground">{lesson.title}</h1>
       </div>
-      <div className="rounded-2xl border border-border bg-surface p-8">
+      <Card padding="lg">
         <CourseLessonForm
           courseId={courseId}
           lessonId={lesson.id}
@@ -29,7 +30,7 @@ export default async function EditCourseLessonPage({
           youtubeId={lesson.youtubeId}
           order={lesson.order}
         />
-      </div>
+      </Card>
     </div>
   );
 }

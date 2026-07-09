@@ -3,24 +3,24 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { requestLevelUpAction } from "./actions";
+import { Button } from "@/components/ui/button";
 
 export function RequestLevelUpButton({ label }: { label: string }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
   return (
-    <button
+    <Button
       type="button"
-      disabled={pending}
+      isLoading={pending}
       onClick={() => {
         startTransition(async () => {
           await requestLevelUpAction();
           router.refresh();
         });
       }}
-      className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
     >
       {pending ? "Đang gửi..." : label}
-    </button>
+    </Button>
   );
 }

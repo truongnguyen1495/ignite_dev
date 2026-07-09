@@ -3,15 +3,18 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteCourseAction } from "../actions";
+import { Button } from "@/components/ui/button";
 
 export function DeleteCourseButton({ courseId, courseTitle }: { courseId: string; courseTitle: string }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
   return (
-    <button
+    <Button
       type="button"
+      variant="danger"
       disabled={pending}
+      isLoading={pending}
       onClick={() => {
         if (
           confirm(
@@ -24,9 +27,8 @@ export function DeleteCourseButton({ courseId, courseTitle }: { courseId: string
           });
         }
       }}
-      className="rounded-lg border border-danger/30 px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-bg disabled:opacity-50"
     >
       {pending ? "Đang xóa..." : "Xóa khóa học"}
-    </button>
+    </Button>
   );
 }

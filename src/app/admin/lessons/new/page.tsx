@@ -1,4 +1,5 @@
 import { BackLink } from "@/components/ui/back-link";
+import { Card } from "@/components/ui/card";
 import { CreateLessonForm } from "./create-lesson-form";
 
 export default function NewLessonPage() {
@@ -8,9 +9,9 @@ export default function NewLessonPage() {
         <BackLink href="/admin/lessons">Quay lại</BackLink>
         <h1 className="mt-2 text-2xl font-semibold text-foreground">Thêm bài học</h1>
       </div>
-      <div className="rounded-2xl border border-border bg-surface p-8">
+      <Card padding="lg">
         <CreateLessonForm />
-      </div>
+      </Card>
     </div>
   );
 }

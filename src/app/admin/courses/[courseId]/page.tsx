@@ -12,6 +12,7 @@ import {
   RevokeLevelAccessButton,
 } from "./access-grants";
 import { DeleteCourseLessonInlineButton } from "./delete-course-lesson-inline-button";
+import { Card } from "@/components/ui/card";
 
 export default async function EditCoursePage({
   params,
@@ -48,7 +49,7 @@ export default async function EditCoursePage({
         order={course.order}
       />
 
-      <div className="space-y-3 rounded-2xl border border-border bg-surface p-8">
+      <Card padding="lg" className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold text-foreground">Bài học ({course.lessons.length})</h2>
           <Link
@@ -89,9 +90,9 @@ export default async function EditCoursePage({
             ))}
           </ul>
         )}
-      </div>
+      </Card>
 
-      <div className="space-y-3 rounded-2xl border border-border bg-surface p-8">
+      <Card padding="lg" className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">
           Học viên được cấp quyền ({course.grants.length})
         </h2>
@@ -117,9 +118,9 @@ export default async function EditCoursePage({
         {ungrantedStudents.length > 0 && (
           <GrantAccessForm courseId={course.id} students={ungrantedStudents} />
         )}
-      </div>
+      </Card>
 
-      <div className="space-y-3 rounded-2xl border border-border bg-surface p-8">
+      <Card padding="lg" className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">Cấp quyền theo cấp</h2>
         <p className="text-xs text-muted">
           Học viên đủ cấp — kể cả lên cấp sau này — sẽ tự động xem được khóa học này, không cần cấp lại thủ công.
@@ -140,12 +141,12 @@ export default async function EditCoursePage({
           </ul>
         )}
         <GrantLevelAccessForm courseId={course.id} />
-      </div>
+      </Card>
 
-      <div className="space-y-3 rounded-2xl border border-border bg-surface p-8">
+      <Card padding="lg" className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">Khu vực nguy hiểm</h2>
         <DeleteCourseButton courseId={course.id} courseTitle={course.title} />
-      </div>
+      </Card>
     </div>
   );
 }

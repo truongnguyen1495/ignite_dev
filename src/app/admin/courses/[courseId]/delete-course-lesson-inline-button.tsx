@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Loader2 } from "lucide-react";
 import { deleteCourseLessonAction } from "../actions";
+import { Button } from "@/components/ui/button";
 
 export function DeleteCourseLessonInlineButton({
   lessonId,
@@ -18,8 +19,10 @@ export function DeleteCourseLessonInlineButton({
   const router = useRouter();
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="icon"
       title="Xóa bài học"
       disabled={pending}
       onClick={(e) => {
@@ -32,9 +35,9 @@ export function DeleteCourseLessonInlineButton({
           });
         }
       }}
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted transition-colors hover:bg-danger-bg hover:text-danger disabled:opacity-50"
+      className="shrink-0 hover:bg-danger-bg hover:text-danger"
     >
       {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-    </button>
+    </Button>
   );
 }

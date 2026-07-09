@@ -2,6 +2,7 @@
 
 import { useRef, useState, type ChangeEvent } from "react";
 import { Upload, Loader2, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 const ALLOWED_UPLOAD_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
@@ -115,15 +116,10 @@ export function CoverImageInput({
             onChange={handleFileSelected}
             className="hidden"
           />
-          <button
-            type="button"
-            disabled={uploading}
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm font-medium text-foreground hover:bg-surface-hover disabled:opacity-60"
-          >
+          <Button type="button" variant="outline" size="sm" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
             {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
             {uploading ? "Đang tải..." : "Tải ảnh lên"}
-          </button>
+          </Button>
           {error && <p className="text-xs text-danger">{error}</p>}
           {!error && warning && <p className="text-xs text-warning">{warning}</p>}
         </div>

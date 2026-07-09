@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { LEVEL_LABELS, isMaxLevel, nextLevel } from "@/lib/levels";
 import { getIncompleteQuizzesForLevel } from "@/lib/level-completion";
 import { RequestLevelUpButton } from "./request-button";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
 
 const STATUS_LABELS = {
   PENDING: "Đang chờ duyệt",
@@ -28,13 +30,13 @@ export default async function LevelUpPage() {
 
   return (
     <div className="max-w-xl space-y-6">
-      <h1 className="text-2xl font-semibold text-foreground">Xin lên cấp</h1>
+      <PageHeader title="Xin lên cấp" />
       <p className="text-sm text-muted">
         Cấp hiện tại: <span className="font-medium text-foreground">{LEVEL_LABELS[student.grantedLevel]}</span>
       </p>
 
       {latestRequest && (
-        <div className="rounded-xl border border-border bg-surface p-6 text-sm">
+        <Card className="text-sm">
           <p className="text-foreground">
             Yêu cầu gần nhất: lên <span className="font-medium">{LEVEL_LABELS[latestRequest.toLevel]}</span>
           </p>
@@ -56,7 +58,7 @@ export default async function LevelUpPage() {
           {latestRequest.status === "REJECTED" && latestRequest.reviewerNote && (
             <p className="mt-1 text-muted">Lý do từ chối: {latestRequest.reviewerNote}</p>
           )}
-        </div>
+        </Card>
       )}
 
       {atMaxLevel ? (

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { BackLink } from "@/components/ui/back-link";
+import { Card } from "@/components/ui/card";
 import { QuestionForm } from "../../question-form";
 import { createQuestionAction } from "../../../actions";
 
@@ -21,9 +22,9 @@ export default async function NewQuestionPage({
         <BackLink href={`/admin/quizzes/${quizId}`}>Quay lại</BackLink>
         <h1 className="mt-2 text-2xl font-semibold text-foreground">Thêm câu hỏi</h1>
       </div>
-      <div className="max-w-xl rounded-xl border border-border bg-surface p-6">
+      <Card className="max-w-xl">
         <QuestionForm action={createQuestionAction.bind(null, quizId)} />
-      </div>
+      </Card>
     </div>
   );
 }

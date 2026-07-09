@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useActionState } from "react";
+import { Textarea } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
 
 type Action = (
   prevState: string | undefined,
@@ -29,19 +31,7 @@ export function QuestionForm({
 
   return (
     <form action={formAction} className="space-y-4">
-      <div>
-        <label htmlFor="text" className="mb-1.5 block text-sm font-medium text-foreground">
-          Câu hỏi
-        </label>
-        <textarea
-          id="text"
-          name="text"
-          defaultValue={initialText}
-          required
-          rows={3}
-          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-        />
-      </div>
+      <Textarea id="text" name="text" defaultValue={initialText} required rows={3} label="Câu hỏi" />
 
       <div className="space-y-2">
         <p className="text-sm font-medium text-foreground">
@@ -87,13 +77,9 @@ export function QuestionForm({
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
-      >
+      <Button type="submit" disabled={pending} isLoading={pending}>
         {pending ? "Đang lưu..." : "Lưu câu hỏi"}
-      </button>
+      </Button>
     </form>
   );
 }

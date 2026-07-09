@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
 import { DeleteLessonInlineButton } from "./delete-lesson-inline-button";
 import { createQuizForLessonAction } from "../quizzes/actions";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function LessonsPage() {
   const lessons = await prisma.lesson.findMany({
@@ -13,16 +14,18 @@ export default async function LessonsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-foreground">Bài học</h1>
-        <Link
-          href="/admin/lessons/new"
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
-        >
-          <Plus className="h-4 w-4" />
-          Thêm bài học
-        </Link>
-      </div>
+      <PageHeader
+        title="Bài học"
+        actions={
+          <Link
+            href="/admin/lessons/new"
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+          >
+            <Plus className="h-4 w-4" />
+            Thêm bài học
+          </Link>
+        }
+      />
 
       {ORDERED_LEVELS.map((level) => {
         const levelLessons = lessons.filter((l) => l.level === level);

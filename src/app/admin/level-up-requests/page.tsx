@@ -6,6 +6,9 @@ import { LevelBadge } from "@/components/ui/level-badge";
 import { approveLevelUpRequestAction } from "./actions";
 import { RejectForm } from "./reject-form";
 import { CompletionDetails } from "./completion-details";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default async function LevelUpRequestsPage() {
   const [pending, history] = await Promise.all([
@@ -33,7 +36,7 @@ export default async function LevelUpRequestsPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-3">
-        <h1 className="text-2xl font-semibold text-foreground">Yêu cầu lên cấp đang chờ</h1>
+        <PageHeader title="Yêu cầu lên cấp đang chờ" />
         {pending.length === 0 ? (
           <p className="text-sm text-muted">Không có yêu cầu nào đang chờ duyệt.</p>
         ) : (
@@ -42,70 +45,66 @@ export default async function LevelUpRequestsPage() {
               const completion = completionByRequest.get(req.id)!;
               const isComplete = completion.incomplete.length === 0;
               return (
-                <li
-                  key={req.id}
-                  className="rounded-xl border border-border border-l-4 border-l-warning bg-surface p-6"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium text-foreground">{req.student.name}</p>
-                      <p className="text-sm text-muted">{req.student.email}</p>
+                <li key={req.id}>
+                  <Card className="border-l-4 border-l-warning">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-foreground">{req.student.name}</p>
+                        <p className="text-sm text-muted">{req.student.email}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <LevelBadge level={req.fromLevel} full />
+                        <ArrowRight className="h-3.5 w-3.5 text-muted" />
+                        <LevelBadge level={req.toLevel} full />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <LevelBadge level={req.fromLevel} full />
-                      <ArrowRight className="h-3.5 w-3.5 text-muted" />
-                      <LevelBadge level={req.toLevel} full />
+
+                    <p className="mt-2 text-xs text-muted">
+                      Yêu cầu lúc {req.requestedAt.toLocaleString("vi-VN")}
+                    </p>
+
+                    <div className="mt-3 flex items-start gap-1.5 text-sm">
+                      <ClipboardCheck
+                        className={`mt-0.5 h-4 w-4 shrink-0 ${isComplete ? "text-success" : "text-warning"}`}
+                      />
+                      {isComplete ? (
+                        <span className="text-success">
+                          Đã hoàn thành {completion.completed}/{completion.total} bài test của{" "}
+                          {LEVEL_LABELS[req.fromLevel]}
+                        </span>
+                      ) : (
+                        <span className="text-warning">
+                          Mới hoàn thành {completion.completed}/{completion.total} bài test của{" "}
+                          {LEVEL_LABELS[req.fromLevel]} — còn thiếu:{" "}
+                          {completion.incomplete.map((quiz) => quiz.lesson.title).join(", ")}
+                        </span>
+                      )}
                     </div>
-                  </div>
 
-                  <p className="mt-2 text-xs text-muted">
-                    Yêu cầu lúc {req.requestedAt.toLocaleString("vi-VN")}
-                  </p>
+                    <CompletionDetails details={completion.details} />
 
-                  <div className="mt-3 flex items-start gap-1.5 text-sm">
-                    <ClipboardCheck
-                      className={`mt-0.5 h-4 w-4 shrink-0 ${isComplete ? "text-success" : "text-warning"}`}
-                    />
-                    {isComplete ? (
-                      <span className="text-success">
-                        Đã hoàn thành {completion.completed}/{completion.total} bài test của{" "}
-                        {LEVEL_LABELS[req.fromLevel]}
-                      </span>
-                    ) : (
-                      <span className="text-warning">
-                        Mới hoàn thành {completion.completed}/{completion.total} bài test của{" "}
-                        {LEVEL_LABELS[req.fromLevel]} — còn thiếu:{" "}
-                        {completion.incomplete.map((quiz) => quiz.lesson.title).join(", ")}
-                      </span>
-                    )}
-                  </div>
-
-                  <CompletionDetails details={completion.details} />
-
-                  <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-border pt-4">
-                    <form action={approveLevelUpRequestAction} className="flex items-center gap-2">
-                      <input type="hidden" name="requestId" value={req.id} />
-                      <select
-                        name="toLevel"
-                        defaultValue={req.toLevel}
-                        className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
-                      >
-                        {ORDERED_LEVELS.map((level) => (
-                          <option key={level} value={level}>
-                            {LEVEL_LABELS[level]}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="submit"
-                        className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
-                      >
-                        <CheckCircle2 className="h-4 w-4" />
-                        Duyệt
-                      </button>
-                    </form>
-                    <RejectForm requestId={req.id} />
-                  </div>
+                    <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-border pt-4">
+                      <form action={approveLevelUpRequestAction} className="flex items-center gap-2">
+                        <input type="hidden" name="requestId" value={req.id} />
+                        <select
+                          name="toLevel"
+                          defaultValue={req.toLevel}
+                          className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                        >
+                          {ORDERED_LEVELS.map((level) => (
+                            <option key={level} value={level}>
+                              {LEVEL_LABELS[level]}
+                            </option>
+                          ))}
+                        </select>
+                        <Button type="submit" size="sm">
+                          <CheckCircle2 className="h-4 w-4" />
+                          Duyệt
+                        </Button>
+                      </form>
+                      <RejectForm requestId={req.id} />
+                    </div>
+                  </Card>
                 </li>
               );
             })}

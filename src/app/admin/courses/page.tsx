@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { CourseList, type AdminCourseItem } from "./course-list";
+import { PageHeader } from "@/components/ui/page-header";
 
 const BANNER_GRADIENTS = [
   "from-[var(--primary)] to-[var(--info)]",
@@ -29,16 +30,18 @@ export default async function CoursesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-foreground">Khóa học độc quyền</h1>
-        <Link
-          href="/admin/courses/new"
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
-        >
-          <Plus className="h-4 w-4" />
-          Thêm khóa học
-        </Link>
-      </div>
+      <PageHeader
+        title="Khóa học độc quyền"
+        actions={
+          <Link
+            href="/admin/courses/new"
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+          >
+            <Plus className="h-4 w-4" />
+            Thêm khóa học
+          </Link>
+        }
+      />
 
       <CourseList courses={items} />
     </div>

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { BackLink } from "@/components/ui/back-link";
+import { Card } from "@/components/ui/card";
 import { QuestionForm } from "../../question-form";
 import { updateQuestionAction } from "../../../actions";
 
@@ -24,13 +25,13 @@ export default async function EditQuestionPage({
         <BackLink href={`/admin/quizzes/${quizId}`}>Quay lại</BackLink>
         <h1 className="mt-2 text-2xl font-semibold text-foreground">Sửa câu hỏi</h1>
       </div>
-      <div className="max-w-xl rounded-xl border border-border bg-surface p-6">
+      <Card className="max-w-xl">
         <QuestionForm
           action={updateQuestionAction.bind(null, questionId)}
           initialText={question.text}
           initialOptions={question.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect }))}
         />
-      </div>
+      </Card>
     </div>
   );
 }
