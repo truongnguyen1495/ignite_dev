@@ -149,6 +149,12 @@ export default async function EditStudentPage({
         <h2 className="text-sm font-semibold text-foreground">
           Khóa học độc quyền được cấp quyền ({grantedCourses.length + levelUnlockedCourses.length})
         </h2>
+        {isPending && (grantedCourses.length > 0 || levelUnlockedCourses.length > 0) && (
+          <p className="flex items-center gap-1.5 rounded-lg border border-warning/30 bg-warning-bg px-3 py-2 text-xs text-warning">
+            <Clock className="h-3.5 w-3.5 shrink-0" />
+            Tài khoản đang chờ duyệt — các quyền dưới đây chỉ có hiệu lực sau khi được duyệt.
+          </p>
+        )}
         {grantedCourses.length === 0 && levelUnlockedCourses.length === 0 ? (
           <p className="text-sm text-muted">Học viên chưa được cấp quyền khóa học độc quyền nào.</p>
         ) : (
