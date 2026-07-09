@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { Plus, Video, ClipboardList } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
+import { ORDERED_LEVELS } from "@/lib/levels";
 import { DeleteLessonInlineButton } from "./delete-lesson-inline-button";
 import { createQuizForLessonAction } from "../quizzes/actions";
 import { PageHeader } from "@/components/ui/page-header";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
+import { LevelBadge } from "@/components/ui/level-badge";
 
 export default async function LessonsPage() {
   const lessons = await prisma.lesson.findMany({
@@ -33,13 +34,21 @@ export default async function LessonsPage() {
         if (levelLessons.length === 0) {
           return (
             <div key={level} className="space-y-2">
-              <h2 className="text-sm font-semibold text-muted">{LEVEL_LABELS[level]}</h2>
+              <LevelBadge level={level} full />
               <p className="text-sm text-muted">Chưa có bài học.</p>
             </div>
           );
         }
         return (
-          <CollapsibleSection key={level} title={`${LEVEL_LABELS[level]} (${levelLessons.length})`}>
+          <CollapsibleSection
+            key={level}
+            title={
+              <span className="flex items-center gap-2">
+                <LevelBadge level={level} full />
+                <span className="text-xs text-muted">({levelLessons.length})</span>
+              </span>
+            }
+          >
             <ul className="mt-2 space-y-2">
               {levelLessons.map((lesson) => (
                 <li

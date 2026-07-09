@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 const VARIANT_STYLES: Record<"light" | "dark", { title: string; icon: string }> = {
@@ -14,7 +14,7 @@ export function CollapsibleSection({
   variant = "light",
   children,
 }: {
-  title: string;
+  title: ReactNode;
   defaultOpen?: boolean;
   variant?: "light" | "dark";
   children: React.ReactNode;
@@ -29,7 +29,11 @@ export function CollapsibleSection({
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between text-left"
       >
-        <h2 className={`text-sm font-semibold ${styles.title}`}>{title}</h2>
+        {typeof title === "string" ? (
+          <h2 className={`text-sm font-semibold ${styles.title}`}>{title}</h2>
+        ) : (
+          title
+        )}
         {open ? (
           <ChevronUp className={`h-4 w-4 ${styles.icon}`} />
         ) : (
