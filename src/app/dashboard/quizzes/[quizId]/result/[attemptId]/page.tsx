@@ -16,15 +16,14 @@ export default async function QuizResultPage({
   const { quizId, attemptId } = await params;
   const { student, quiz } = await requireQuizAccess(quizId);
 
-  const attempt = await prisma.quizAttempt.findUnique({ where: { id: attemptId } });
+  // Independent reads — neither needs the other's result, so fetch together.
+  const [attempt, questions] = await Promise.all([
+    prisma.quizAttempt.findUnique({ where: { id: attemptId } }),
+    prisma.question.findMany({ where: { quizId }, orderBy: { order: "asc" } }),
+  ]);
   if (!attempt || attempt.quizId !== quizId || attempt.studentId !== student.id) {
     notFound();
   }
-
-  const questions = await prisma.question.findMany({
-    where: { quizId },
-    orderBy: { order: "asc" },
-  });
 
   const answers = attempt.answers as AttemptAnswers;
 

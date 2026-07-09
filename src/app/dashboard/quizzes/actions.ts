@@ -11,11 +11,16 @@ export async function submitQuizAttemptAction(quizId: string, formData: FormData
   // even if they crafted the request directly, bypassing the UI entirely.
   const { student } = await requireQuizAccess(quizId);
 
-  const questions = await prisma.question.findMany({
-    where: { quizId },
-    include: { options: true },
-    orderBy: { order: "asc" },
-  });
+  // Independent reads (neither depends on the other's result) — fetched
+  // together instead of one after another.
+  const [questions, settings] = await Promise.all([
+    prisma.question.findMany({
+      where: { quizId },
+      include: { options: true },
+      orderBy: { order: "asc" },
+    }),
+    prisma.settings.findUniqueOrThrow({ where: { id: 1 } }),
+  ]);
 
   const answers: Record<string, { selected: string[]; correct: boolean }> = {};
   let correctCount = 0;
@@ -30,7 +35,6 @@ export async function submitQuizAttemptAction(quizId: string, formData: FormData
     if (isCorrect) correctCount++;
   }
 
-  const settings = await prisma.settings.findUniqueOrThrow({ where: { id: 1 } });
   const scorePercent =
     questions.length === 0 ? 0 : Math.round((correctCount / questions.length) * 100);
   const passed = scorePercent >= settings.passPercentage;
