@@ -125,3 +125,11 @@ body {
   display: block;
   margin-left: auto;
 }
+.lesson-content a {
+  color: var(--primary);
+  text-decoration: underline;
+  font-weight: 500;
+}
+.lesson-content a:hover {
+  color: var(--primary-hover);
+}

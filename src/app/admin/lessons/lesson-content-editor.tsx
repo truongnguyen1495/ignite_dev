@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { LessonImage, type LessonImageAlign, type LessonImageSize } from "./lesson-image-extension";
 import { LessonYoutube } from "./lesson-youtube-extension";
+import { LinkHoverMenu } from "./link-hover-menu";
 import { parseYoutubeId } from "@/lib/youtube";
 
 type Popover = { type: "link" | "image" | "youtube" } | null;
@@ -74,7 +75,10 @@ export function LessonContentEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
-        link: { openOnClick: false },
+        link: {
+          openOnClick: true,
+          HTMLAttributes: { target: "_blank", rel: "noopener noreferrer nofollow" },
+        },
       }),
       LessonImage,
       LessonYoutube,
@@ -554,10 +558,13 @@ export function LessonContentEditor({
           )}
 
           <div
-            className={`overflow-y-auto rounded-b-lg ${fullscreen ? "min-h-[70vh] flex-1" : "min-h-[420px]"}`}
+            className={`relative overflow-y-auto rounded-b-lg ${fullscreen ? "min-h-[70vh] flex-1" : "min-h-[420px]"}`}
           >
             {editor ? (
-              <EditorContent editor={editor} />
+              <>
+                <EditorContent editor={editor} />
+                <LinkHoverMenu editor={editor} />
+              </>
             ) : (
               <p className="px-4 py-3 text-sm text-muted">Đang tải trình soạn thảo...</p>
             )}
