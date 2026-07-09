@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 
 const VARIANT_STYLES: Record<"light" | "dark", { title: string; icon: string }> = {
   light: { title: "text-muted", icon: "text-muted" },
-  dark: { title: "text-neutral-300", icon: "text-neutral-400" },
+  dark: { title: "text-dark-muted", icon: "text-dark-muted" },
 };
 
 export function CollapsibleSection({

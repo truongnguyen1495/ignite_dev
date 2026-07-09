@@ -43,13 +43,13 @@ function ProgressBar({ course }: { course: StudentCourseItem }) {
   if (!course.unlocked || course.totalLessons === 0) return null;
   return (
     <div>
-      <div className="flex items-center justify-between text-xs text-neutral-400">
+      <div className="flex items-center justify-between text-xs text-dark-muted">
         <span>Tiến độ</span>
         <span>
           {course.completedCount}/{course.totalLessons} bài
         </span>
       </div>
-      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-neutral-800">
+      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-dark-surface-raised">
         <div
           className="h-full rounded-full bg-primary transition-all"
           style={{ width: `${course.progressPercent}%` }}
@@ -89,11 +89,11 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
           {courses.map((course) => {
             const card = (
               <div
-                className={`overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950 transition-colors ${
+                className={`overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors ${
                   course.unlocked ? "hover:border-primary/60" : "opacity-60"
                 }`}
               >
-                <div className="relative aspect-video w-full overflow-hidden bg-neutral-800">
+                <div className="relative aspect-video w-full overflow-hidden bg-dark-surface-raised">
                   <Thumbnail course={course} className="h-full w-full" />
                   {!course.unlocked && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50">
@@ -107,16 +107,16 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                   ) : (
                     <Badge color="faint">Chưa mở khóa</Badge>
                   )}
-                  <p className="mt-3 font-semibold text-white">{course.title}</p>
+                  <p className="mt-3 font-semibold text-dark-foreground">{course.title}</p>
                   {course.description && (
-                    <p className="mt-1 line-clamp-2 text-sm text-neutral-400">{course.description}</p>
+                    <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{course.description}</p>
                   )}
                   {course.unlocked && course.totalLessons > 0 && (
                     <div className="mt-4">
                       <ProgressBar course={course} />
                     </div>
                   )}
-                  <div className="mt-4 flex items-center justify-between text-xs text-neutral-400">
+                  <div className="mt-4 flex items-center justify-between text-xs text-dark-muted">
                     <span className="flex items-center gap-1">
                       <BookOpen className="h-3.5 w-3.5" />
                       {course.totalLessons} bài học
@@ -145,11 +145,11 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
           {courses.map((course) => {
             const row = (
               <div
-                className={`flex items-center gap-4 rounded-xl border border-neutral-800 bg-neutral-950 p-3 transition-colors ${
+                className={`flex items-center gap-4 rounded-xl border border-dark-border bg-dark-surface p-3 transition-colors ${
                   course.unlocked ? "hover:border-primary/60" : "opacity-60"
                 }`}
               >
-                <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-800">
+                <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-dark-surface-raised">
                   <Thumbnail course={course} className="h-full w-full" />
                   {!course.unlocked && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50">
@@ -164,21 +164,21 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                     ) : (
                       <Badge color="faint">Chưa mở khóa</Badge>
                     )}
-                    <p className="truncate font-semibold text-white">{course.title}</p>
+                    <p className="truncate font-semibold text-dark-foreground">{course.title}</p>
                   </div>
                   {course.description && (
-                    <p className="line-clamp-1 text-sm text-neutral-400">{course.description}</p>
+                    <p className="line-clamp-1 text-sm text-dark-muted">{course.description}</p>
                   )}
                 </div>
                 <div className="hidden w-40 shrink-0 sm:block">
                   <ProgressBar course={course} />
                 </div>
-                <div className="hidden shrink-0 items-center gap-1 text-xs text-neutral-400 md:flex">
+                <div className="hidden shrink-0 items-center gap-1 text-xs text-dark-muted md:flex">
                   <BookOpen className="h-3.5 w-3.5" />
                   {course.totalLessons} bài học
                 </div>
                 {course.unlocked && (
-                  <ArrowRight className="hidden h-4 w-4 shrink-0 text-primary sm:block" />
+                  <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />
                 )}
               </div>
             );

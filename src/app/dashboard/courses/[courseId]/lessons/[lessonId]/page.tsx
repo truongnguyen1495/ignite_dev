@@ -34,10 +34,10 @@ export default async function StudentCourseLessonPage({
   const nextLesson = currentIndex >= 0 && currentIndex < totalLessons - 1 ? siblingLessons[currentIndex + 1] : null;
 
   return (
-    <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-4 sm:p-6">
+    <div className="rounded-2xl border border-dark-border bg-dark-surface-raised p-4 sm:p-6">
       <Link
         href="/dashboard/courses"
-        className="inline-flex items-center gap-1.5 text-sm text-neutral-400 hover:text-white"
+        className="inline-flex items-center gap-1.5 text-sm text-dark-muted hover:text-dark-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
         Quay lại
@@ -53,18 +53,18 @@ export default async function StudentCourseLessonPage({
                 Bài {currentIndex + 1} / {totalLessons}
               </p>
             )}
-            <h1 className="mt-1 text-xl font-semibold text-white">{lesson.title}</h1>
+            <h1 className="mt-1 text-xl font-semibold text-dark-foreground">{lesson.title}</h1>
           </div>
 
           {lesson.content && (
             <CollapsibleSection title="Nội dung bài học" variant="dark">
-              <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-6">
+              <div className="rounded-xl border border-dark-border bg-dark-surface p-6">
                 <LessonMarkdown content={lesson.content} variant="dark" />
               </div>
             </CollapsibleSection>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-neutral-800 pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-dark-border pt-4">
             <MarkCompleteButton lessonId={lesson.id} completed={completedLessonIds.has(lesson.id)} />
 
             <div className="flex items-center gap-2">
@@ -72,13 +72,13 @@ export default async function StudentCourseLessonPage({
                 <Link
                   href={`/dashboard/courses/${courseId}/lessons/${prevLesson.id}`}
                   prefetch={false}
-                  className="inline-flex items-center gap-1 rounded-lg border border-neutral-700 px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800"
+                  className="inline-flex items-center gap-1 rounded-lg border border-dark-border px-3 py-2 text-sm text-dark-muted hover:bg-dark-surface-raised"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Bài trước
                 </Link>
               ) : (
-                <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-neutral-800 px-3 py-2 text-sm text-neutral-600">
+                <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-dark-border px-3 py-2 text-sm text-dark-muted/50">
                   <ChevronLeft className="h-4 w-4" />
                   Bài trước
                 </span>
@@ -93,7 +93,7 @@ export default async function StudentCourseLessonPage({
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               ) : (
-                <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-neutral-800 px-3 py-2 text-sm text-neutral-600">
+                <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-dark-border px-3 py-2 text-sm text-dark-muted/50">
                   Bài sau
                   <ChevronRight className="h-4 w-4" />
                 </span>
@@ -103,13 +103,13 @@ export default async function StudentCourseLessonPage({
         </div>
 
         <aside className="lg:sticky lg:top-6 lg:self-start">
-          <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-4">
+          <div className="rounded-xl border border-dark-border bg-dark-surface p-4">
             {course && (
-              <p className="truncate text-xs font-medium uppercase tracking-wide text-neutral-500">
+              <p className="truncate text-xs font-medium uppercase tracking-wide text-dark-muted">
                 {course.title}
               </p>
             )}
-            <p className="mt-1 text-sm text-neutral-300">
+            <p className="mt-1 text-sm text-dark-muted">
               {completedLessonIds.size}/{totalLessons} bài đã hoàn thành
             </p>
             <ul className="mt-4 space-y-1">
@@ -122,7 +122,7 @@ export default async function StudentCourseLessonPage({
                       href={`/dashboard/courses/${courseId}/lessons/${l.id}`}
                       prefetch={false}
                       className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                        isCurrent ? "bg-primary/15 text-white" : "text-neutral-300 hover:bg-neutral-900"
+                        isCurrent ? "bg-primary/15 text-dark-foreground" : "text-dark-muted hover:bg-dark-surface-raised"
                       }`}
                     >
                       {isDone ? (
@@ -130,7 +130,7 @@ export default async function StudentCourseLessonPage({
                       ) : (
                         <span
                           className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[10px] ${
-                            isCurrent ? "border-primary text-primary" : "border-neutral-600 text-neutral-500"
+                            isCurrent ? "border-primary text-primary" : "border-dark-border text-dark-muted"
                           }`}
                         >
                           {index + 1}

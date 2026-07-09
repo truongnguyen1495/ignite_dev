@@ -62,17 +62,17 @@ export function CourseList({ courses }: { courses: AdminCourseItem[] }) {
             <Link
               key={course.id}
               href={`/admin/courses/${course.id}`}
-              className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950 transition-colors hover:border-primary/60"
+              className="overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors hover:border-primary/60"
             >
-              <div className="relative aspect-video w-full overflow-hidden bg-neutral-800">
+              <div className="relative aspect-video w-full overflow-hidden bg-dark-surface-raised">
                 <Thumbnail course={course} className="h-full w-full" />
               </div>
               <div className="p-5">
-                <p className="font-semibold text-white">{course.title}</p>
+                <p className="font-semibold text-dark-foreground">{course.title}</p>
                 {course.description && (
-                  <p className="mt-1 line-clamp-2 text-sm text-neutral-400">{course.description}</p>
+                  <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{course.description}</p>
                 )}
-                <div className="mt-4 flex items-center gap-4 text-xs text-neutral-400">
+                <div className="mt-4 flex items-center gap-4 text-xs text-dark-muted">
                   <span className="flex items-center gap-1">
                     <BookOpen className="h-3.5 w-3.5" />
                     {course.lessonsCount} bài học
@@ -92,18 +92,18 @@ export function CourseList({ courses }: { courses: AdminCourseItem[] }) {
             <Link
               key={course.id}
               href={`/admin/courses/${course.id}`}
-              className="flex items-center gap-4 rounded-xl border border-neutral-800 bg-neutral-950 p-3 transition-colors hover:border-primary/60"
+              className="flex items-center gap-4 rounded-xl border border-dark-border bg-dark-surface p-3 transition-colors hover:border-primary/60"
             >
-              <div className="aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-800">
+              <div className="aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-dark-surface-raised">
                 <Thumbnail course={course} className="h-full w-full" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold text-white">{course.title}</p>
+                <p className="truncate font-semibold text-dark-foreground">{course.title}</p>
                 {course.description && (
-                  <p className="line-clamp-1 text-sm text-neutral-400">{course.description}</p>
+                  <p className="line-clamp-1 text-sm text-dark-muted">{course.description}</p>
                 )}
               </div>
-              <div className="hidden shrink-0 items-center gap-4 text-xs text-neutral-400 sm:flex">
+              <div className="hidden shrink-0 items-center gap-4 text-xs text-dark-muted sm:flex">
                 <span className="flex items-center gap-1">
                   <BookOpen className="h-3.5 w-3.5" />
                   {course.lessonsCount} bài học
