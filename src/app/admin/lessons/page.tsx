@@ -3,6 +3,7 @@ import { Plus, Video, ClipboardList } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
 import { DeleteLessonInlineButton } from "./delete-lesson-inline-button";
+import { createQuizForLessonAction } from "../quizzes/actions";
 
 export default async function LessonsPage() {
   const lessons = await prisma.lesson.findMany({
@@ -39,17 +40,32 @@ export default async function LessonsPage() {
                   >
                     <Link
                       href={`/admin/lessons/${lesson.id}`}
-                      className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2"
+                      className="flex min-w-0 flex-1 items-center gap-2"
                     >
                       <span className="text-foreground">{lesson.title}</span>
-                      <span className="flex items-center gap-3 text-xs text-muted">
-                        {lesson.youtubeId && <Video className="h-3.5 w-3.5" />}
-                        <span className="flex items-center gap-1">
-                          <ClipboardList className="h-3.5 w-3.5" />
-                          {lesson.quiz ? "Có bài test" : "Chưa có bài test"}
-                        </span>
-                      </span>
+                      {lesson.youtubeId && <Video className="h-3.5 w-3.5 shrink-0 text-muted" />}
                     </Link>
+                    {lesson.quiz ? (
+                      <Link
+                        href={`/admin/quizzes/${lesson.quiz.id}`}
+                        title="Soạn bài test"
+                        className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs text-muted transition-colors hover:bg-surface-hover hover:text-primary"
+                      >
+                        <ClipboardList className="h-3.5 w-3.5" />
+                        Có bài test
+                      </Link>
+                    ) : (
+                      <form action={createQuizForLessonAction.bind(null, lesson.id)}>
+                        <button
+                          type="submit"
+                          title="Tạo và soạn bài test"
+                          className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs text-muted transition-colors hover:bg-surface-hover hover:text-primary"
+                        >
+                          <ClipboardList className="h-3.5 w-3.5" />
+                          Chưa có bài test
+                        </button>
+                      </form>
+                    )}
                     <DeleteLessonInlineButton lessonId={lesson.id} lessonTitle={lesson.title} />
                   </li>
                 ))}
