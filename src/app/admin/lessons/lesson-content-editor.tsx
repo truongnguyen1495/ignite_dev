@@ -7,10 +7,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
-import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
-import { TableHeader } from "@tiptap/extension-table-header";
-import { TableCell } from "@tiptap/extension-table-cell";
 import {
   Heading1,
   Heading2,
@@ -34,11 +31,15 @@ import {
   Baseline,
   Table as TableIcon,
   Trash2,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
 } from "lucide-react";
 import { LessonImage, type LessonImageAlign, type LessonImageSize } from "./lesson-image-extension";
 import { LessonYoutube } from "./lesson-youtube-extension";
 import { LinkHoverMenu } from "./link-hover-menu";
 import { parseYoutubeId } from "@/lib/youtube";
+import { AlignableTable, AlignableTableCell, AlignableTableHeader, setColumnAlign } from "./lesson-table-align";
 
 type Popover = { type: "link" | "image" | "youtube" | "color" | "table" } | null;
 
@@ -104,10 +105,10 @@ export function LessonContentEditor({
       LessonYoutube,
       TextStyle,
       Color.configure({ types: ["textStyle"] }),
-      Table.configure({ resizable: false }),
+      AlignableTable.configure({ resizable: false }),
       TableRow,
-      TableHeader,
-      TableCell,
+      AlignableTableHeader,
+      AlignableTableCell,
       Markdown.configure({ html: true, bulletListMarker: "-", linkify: false }),
     ],
     content: defaultValue,
@@ -658,6 +659,44 @@ export function LessonContentEditor({
                     >
                       Xóa cột
                     </button>
+                    <span className="mx-1 h-5 w-px bg-border" />
+                    {(() => {
+                      const currentAlign = editor?.isActive("tableCell", { textAlign: "center" }) ||
+                        editor?.isActive("tableHeader", { textAlign: "center" })
+                        ? "center"
+                        : editor?.isActive("tableCell", { textAlign: "right" }) ||
+                            editor?.isActive("tableHeader", { textAlign: "right" })
+                          ? "right"
+                          : "left";
+                      return (
+                        <>
+                          <button
+                            type="button"
+                            title="Canh trái cột"
+                            onClick={() => setColumnAlign(editor, null)}
+                            className={btnClass(currentAlign === "left")}
+                          >
+                            <AlignLeft className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            title="Canh giữa cột"
+                            onClick={() => setColumnAlign(editor, "center")}
+                            className={btnClass(currentAlign === "center")}
+                          >
+                            <AlignCenter className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            title="Canh phải cột"
+                            onClick={() => setColumnAlign(editor, "right")}
+                            className={btnClass(currentAlign === "right")}
+                          >
+                            <AlignRight className="h-4 w-4" />
+                          </button>
+                        </>
+                      );
+                    })()}
                     <span className="mx-1 h-5 w-px bg-border" />
                     <button
                       type="button"

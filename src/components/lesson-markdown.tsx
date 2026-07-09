@@ -23,6 +23,10 @@ const lessonContentSchema = {
     // gates every lesson/course/announcement action), same trust boundary
     // already extended to iframe's src below.
     span: [...(defaultSchema.attributes?.span ?? []), "style"],
+    // GFM table column alignment (:---:/---:) parses to a `style` attribute
+    // on th/td (via remark-gfm), same trust boundary as span above.
+    th: [...(defaultSchema.attributes?.th ?? []), "style"],
+    td: [...(defaultSchema.attributes?.td ?? []), "style"],
     iframe: ["src", "title", "allow", "allowFullScreen", "className", "frameBorder"],
   },
 };
