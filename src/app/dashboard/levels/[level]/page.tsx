@@ -52,9 +52,14 @@ export default async function LevelPage({
                   href={`/dashboard/lessons/${lesson.id}`}
                   className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 hover:border-primary/50"
                 >
-                  <span className="flex items-center gap-3">
-                    <BookOpen className="h-4 w-4 text-primary" />
-                    <span className="text-foreground">{lesson.title}</span>
+                  <span className="flex min-w-0 items-start gap-3">
+                    <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span className="min-w-0">
+                      <span className="block text-foreground">{lesson.title}</span>
+                      {lesson.description && (
+                        <span className="mt-0.5 block truncate text-xs text-muted">{lesson.description}</span>
+                      )}
+                    </span>
                   </span>
                   {completed ? (
                     <Badge color="success">Đã hoàn thành</Badge>

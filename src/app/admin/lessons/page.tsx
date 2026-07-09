@@ -45,8 +45,15 @@ export default async function LessonsPage() {
                       href={`/admin/lessons/${lesson.id}`}
                       className="flex min-w-0 flex-1 items-center gap-2"
                     >
-                      <span className="text-foreground">{lesson.title}</span>
-                      {lesson.youtubeId && <Video className="h-3.5 w-3.5 shrink-0 text-muted" />}
+                      <span className="min-w-0">
+                        <span className="flex items-center gap-2">
+                          <span className="text-foreground">{lesson.title}</span>
+                          {lesson.youtubeId && <Video className="h-3.5 w-3.5 shrink-0 text-muted" />}
+                        </span>
+                        {lesson.description && (
+                          <span className="block truncate text-xs text-muted">{lesson.description}</span>
+                        )}
+                      </span>
                     </Link>
                     {lesson.quiz ? (
                       <Link
