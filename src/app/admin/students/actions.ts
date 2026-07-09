@@ -121,7 +121,7 @@ export async function updateStudentAction(
 
   revalidatePath("/admin/students");
   revalidatePath(`/admin/students/${studentId}`);
-  redirect("/admin/students");
+  return undefined;
 }
 
 export async function setStudentStatusAction(studentId: string, locked: boolean) {
