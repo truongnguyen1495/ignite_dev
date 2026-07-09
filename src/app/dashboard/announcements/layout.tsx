@@ -6,10 +6,9 @@ import { ORDERED_ANNOUNCEMENT_CATEGORIES } from "@/lib/announcements";
 import { PageHeader } from "@/components/ui/page-header";
 import { AnnouncementCategoryTabs } from "./announcement-category-tabs";
 
-// Wraps both the list (page.tsx) and the detail view ([announcementId]/page.tsx)
-// so the title and category tabs stay on screen — as a sticky bar — no matter
-// which announcement a student is reading, instead of disappearing behind a
-// full page navigation like they used to.
+// Wraps the announcement list/reading page so the title and category tabs
+// stay on screen as a sticky bar while a student reads a post, instead of
+// disappearing behind a full page navigation.
 export default async function AnnouncementsLayout({ children }: { children: ReactNode }) {
   const student = await requireActiveStudent();
 
@@ -26,7 +25,7 @@ export default async function AnnouncementsLayout({ children }: { children: Reac
   }));
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
       <div className="sticky top-0 z-20 space-y-4 bg-background pb-4 pt-1">
         <PageHeader title="Bản tin" description="Thông báo mới nhất từ ban quản trị." />
         <AnnouncementCategoryTabs categories={categories} />

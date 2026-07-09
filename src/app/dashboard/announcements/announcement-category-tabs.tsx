@@ -14,9 +14,8 @@ export function AnnouncementCategoryTabs({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Only the list route filters by category — while reading a specific
-  // announcement, no tab reflects that page's category, since it isn't
-  // filtered by one.
+  // This bar only ever renders under /dashboard/announcements, but guard on
+  // pathname anyway so a stray render elsewhere doesn't highlight a tab.
   const onListPage = pathname === "/dashboard/announcements";
   const requestedCategory = searchParams.get("category");
   const active = onListPage
