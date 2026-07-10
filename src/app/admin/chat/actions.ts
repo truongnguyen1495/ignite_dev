@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireActiveSuperAdmin, requireAdminSupportThreadAccess } from "@/lib/access";
-import { sendChatMessage, markThreadRead } from "@/lib/chat";
+import { prisma } from "@/lib/prisma";
+import { sendChatMessage, markThreadRead, getOrCreateSupportThread } from "@/lib/chat";
 
 const messageInputSchema = z
   .object({
@@ -36,4 +38,41 @@ export async function sendSupportReplyAction(
 export async function markSupportThreadReadAction(threadId: string): Promise<void> {
   const admin = await requireActiveSuperAdmin();
   await markThreadRead(threadId, admin.id);
+}
+
+export async function searchStudentsForSupportAction(
+  query: string
+): Promise<{ id: string; name: string; username: string | null }[]> {
+  await requireActiveSuperAdmin();
+  const trimmed = query.trim();
+  if (trimmed.length < 2) return [];
+  return prisma.user.findMany({
+    where: {
+      role: "STUDENT",
+      status: "ACTIVE",
+      OR: [
+        { name: { contains: trimmed, mode: "insensitive" } },
+        { username: { contains: trimmed, mode: "insensitive" } },
+        { email: { contains: trimmed, mode: "insensitive" } },
+      ],
+    },
+    select: { id: true, name: true, username: true },
+    take: 20,
+    orderBy: { name: "asc" },
+  });
+}
+
+// Lets an admin reach out first, unlike sendSupportReplyAction which only
+// ever operates on a thread a student already started — this just opens
+// (or creates, on the very first contact) that student's support thread and
+// jumps straight to it, same lazy-creation idiom as getOrCreateSupportThread
+// everywhere else.
+export async function startSupportThreadAction(studentId: string): Promise<string | undefined> {
+  await requireActiveSuperAdmin();
+  const student = await prisma.user.findUnique({ where: { id: studentId } });
+  if (!student || student.role !== "STUDENT" || student.status !== "ACTIVE") {
+    return "Không tìm thấy học viên này.";
+  }
+  const thread = await getOrCreateSupportThread(student.id);
+  redirect(`/admin/chat/${thread.id}`);
 }

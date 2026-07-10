@@ -11,7 +11,18 @@ export default async function AdminChatPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
-      <PageHeader title="Hỗ trợ học viên" description="Mọi luồng chat hỗ trợ đều mở cho tất cả admin trả lời." />
+      <PageHeader
+        title="Hỗ trợ học viên"
+        description="Mọi luồng chat hỗ trợ đều mở cho tất cả admin trả lời."
+        actions={
+          <Link
+            href="/admin/chat/new"
+            className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary-hover"
+          >
+            + Nhắn tin mới
+          </Link>
+        }
+      />
 
       <Card className="space-y-2">
         {threads.length === 0 ? (
