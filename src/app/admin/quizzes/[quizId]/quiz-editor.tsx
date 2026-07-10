@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CheckCircle2, Circle, Pencil, Check, Trash2, Plus } from "lucide-react";
+import { CheckCircle2, Circle, Pencil, Check, Trash2 } from "lucide-react";
 import { saveQuizAction, deleteQuestionAction, type SavedQuestion } from "../actions";
 import { BackLink } from "@/components/ui/back-link";
 import { Card } from "@/components/ui/card";
@@ -211,10 +211,6 @@ export function QuizEditor({
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold text-muted">Câu hỏi ({questions.length})</h2>
-          <Button type="button" onClick={addQuestion}>
-            <Plus className="h-4 w-4" />
-            Thêm câu hỏi
-          </Button>
         </div>
 
         {error && <p className="text-sm text-danger">{error}</p>}
@@ -317,6 +313,13 @@ export function QuizEditor({
             )
           )
         )}
+        <button
+          type="button"
+          onClick={addQuestion}
+          className="text-sm text-muted hover:text-foreground"
+        >
+          + Thêm câu hỏi
+        </button>
       </div>
     </>
   );
