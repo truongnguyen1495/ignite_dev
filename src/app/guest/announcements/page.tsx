@@ -38,7 +38,7 @@ export default async function GuestAnnouncementsPage({
           Bản tin này không công khai.
         </p>
       )}
-      <PageHeader title="Bản tin" description="Thông báo công khai từ ban quản trị — không cần đăng nhập." />
+      <PageHeader title="Bản tin" />
 
       <GuestAnnouncementList announcements={items} />
     </div>
