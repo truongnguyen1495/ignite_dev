@@ -381,9 +381,10 @@ model AnnouncementRead {
 //              lexicographically smaller User.id first (see orderedPair in
 //              src/lib/chat.ts) so a pair has exactly one canonical row.
 //   GROUP   -> groupLevel only. Membership is never stored — it's the
-//              student's *current* grantedLevel matching exactly (re-checked
-//              live on every access, not hasLevelAccess's >= rule used for
-//              content gating elsewhere).
+//              student's *current* grantedLevel re-checked live on every
+//              access via hasLevelAccess's >= rule (same as content gating
+//              elsewhere), so a student reaches their room plus every room
+//              below it. Admins reach every group room regardless of level.
 // All three kinds' threads are created lazily (upsert on the relevant unique
 // key) the first time a message is sent, mirroring AnnouncementRead's
 // create-on-first-need idiom — no seeding required.

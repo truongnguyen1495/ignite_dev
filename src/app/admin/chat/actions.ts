@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { requireActiveSuperAdmin, requireAdminSupportThreadAccess } from "@/lib/access";
+import { requireActiveSuperAdmin, requireAdminSupportThreadAccess, requireAdminGroupThreadAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
-import { sendChatMessage, markThreadRead, getOrCreateSupportThread } from "@/lib/chat";
+import { parseLevel } from "@/lib/levels";
+import { sendChatMessage, markThreadRead, getOrCreateSupportThread, getOrCreateGroupThread } from "@/lib/chat";
 
 const messageInputSchema = z
   .object({
@@ -35,7 +36,28 @@ export async function sendSupportReplyAction(
   revalidatePath("/admin/chat");
 }
 
-export async function markSupportThreadReadAction(threadId: string): Promise<void> {
+export async function sendAdminGroupMessageAction(
+  levelValue: string,
+  input: MessageInput
+): Promise<string | undefined> {
+  const level = parseLevel(levelValue);
+  if (!level) {
+    return "Cấp độ không hợp lệ.";
+  }
+  const { admin } = await requireAdminGroupThreadAccess(level);
+  const parsed = messageInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
+  }
+  const thread = await getOrCreateGroupThread(level);
+  await sendChatMessage(thread.id, admin.id, parsed.data);
+  revalidatePath(`/admin/chat/group/${level}`);
+  revalidatePath("/admin/chat");
+}
+
+// Generic — used for both support threads and group rooms, hence no kind
+// check (mirrors markThreadRead itself, which just upserts a watermark).
+export async function markThreadReadAction(threadId: string): Promise<void> {
   const admin = await requireActiveSuperAdmin();
   await markThreadRead(threadId, admin.id);
 }

@@ -246,10 +246,13 @@ export function userCanAccessChatThread(user: User, thread: ChatThread): boolean
     case "DIRECT":
       return user.id === thread.directUserAId || user.id === thread.directUserBId;
     case "GROUP":
-      // Exact match, not hasLevelAccess's >= rule used elsewhere for content
-      // gating — a student's group room changes as their grantedLevel
-      // changes, they don't accumulate access to every room below it.
-      return user.role === "STUDENT" && user.grantedLevel === thread.groupLevel;
+      // Same >= rule as hasLevelAccess uses for content gating: a student
+      // sees their own room plus every room below it, not just an exact
+      // match. Admins see every group room regardless of level.
+      return (
+        user.role === "SUPER_ADMIN" ||
+        (user.role === "STUDENT" && !!thread.groupLevel && hasLevelAccess(user.grantedLevel, thread.groupLevel))
+      );
   }
 }
 
@@ -281,8 +284,17 @@ export async function requireDirectThreadAccess(threadId: string) {
 
 export async function requireGroupThreadAccess(level: Level) {
   const student = await requireActiveStudent();
-  if (student.grantedLevel !== level) {
+  if (!hasLevelAccess(student.grantedLevel, level)) {
     redirect("/dashboard/chat?denied=1");
   }
   return { student, level };
+}
+
+// Admins reach group rooms through a separate /admin/chat/group/[level]
+// route (dashboard/layout.tsx's requireActiveStudent() would bounce them out
+// of every /dashboard/* route before they ever got here) — every level is
+// open to every admin, no restriction.
+export async function requireAdminGroupThreadAccess(level: Level) {
+  const admin = await requireActiveSuperAdmin();
+  return { admin, level };
 }

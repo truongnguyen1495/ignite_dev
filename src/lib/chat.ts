@@ -1,6 +1,6 @@
 import type { ChatThread, Level, User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { ORDERED_LEVELS } from "@/lib/levels";
+import { ORDERED_LEVELS, hasLevelAccess } from "@/lib/levels";
 
 const MESSAGE_PREVIEW_LENGTH = 80;
 
@@ -147,11 +147,15 @@ export async function getStudentChatInbox(student: User): Promise<StudentChatInb
   ]);
 
   const groupThreadByLevel = new Map(groupThreadRows.map((t) => [t.groupLevel, t]));
-  const studentGroupThread = groupThreadByLevel.get(student.grantedLevel);
+  // Same >= rule as content gating: a student can reach their own room and
+  // every room below it, not just an exact match.
+  const accessibleGroupThreadIds = ORDERED_LEVELS.filter((level) => hasLevelAccess(student.grantedLevel, level))
+    .map((level) => groupThreadByLevel.get(level)?.id)
+    .filter((id): id is string => !!id);
   const relevantThreadIds = [
     ...(supportThread ? [supportThread.id] : []),
     ...directThreadRows.map((t) => t.id),
-    ...(studentGroupThread ? [studentGroupThread.id] : []),
+    ...accessibleGroupThreadIds,
   ];
   const unreadCounts = await getUnreadCounts(relevantThreadIds, student.id);
 
@@ -171,7 +175,7 @@ export async function getStudentChatInbox(student: User): Promise<StudentChatInb
       };
     }),
     groupRooms: ORDERED_LEVELS.map((level) => {
-      const accessible = level === student.grantedLevel;
+      const accessible = hasLevelAccess(student.grantedLevel, level);
       const thread = groupThreadByLevel.get(level);
       return {
         level,
@@ -207,6 +211,24 @@ export async function getAdminSupportInbox(adminId: string): Promise<AdminSuppor
     lastMessageAt: thread.lastMessageAt,
     unreadCount: unreadCounts.get(thread.id) ?? 0,
   }));
+}
+
+// Every level is open to every admin (see requireAdminGroupThreadAccess), so
+// unlike the student inbox there's no "accessible" filtering — always all 5.
+// A level with no ChatThread row yet (no student has posted there) just
+// shows 0 unread; it's created lazily on first message, same as everywhere
+// else.
+export async function getAdminGroupRooms(adminId: string): Promise<{ level: Level; unreadCount: number }[]> {
+  const threads = await prisma.chatThread.findMany({ where: { kind: "GROUP" } });
+  const byLevel = new Map(threads.map((t) => [t.groupLevel, t]));
+  const unreadCounts = await getUnreadCounts(
+    threads.map((t) => t.id),
+    adminId
+  );
+  return ORDERED_LEVELS.map((level) => {
+    const thread = byLevel.get(level);
+    return { level, unreadCount: thread ? (unreadCounts.get(thread.id) ?? 0) : 0 };
+  });
 }
 
 // Fires a Supabase Realtime broadcast so any open thread view refetches —

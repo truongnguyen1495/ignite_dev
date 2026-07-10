@@ -77,7 +77,7 @@ export default async function ChatInboxPage() {
               <>
                 <Users className="h-5 w-5 shrink-0 text-muted" />
                 <span className="flex-1 text-sm text-foreground">{LEVEL_LABELS[room.level]}</span>
-                {!room.accessible && <Badge color="muted">Không thuộc cấp của bạn</Badge>}
+                {!room.accessible && <Badge color="muted">Cấp cao hơn bạn</Badge>}
                 <UnreadBadge count={room.unreadCount} />
                 {room.accessible && <ChevronRight className="h-4 w-4 shrink-0 text-muted" />}
               </>
