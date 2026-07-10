@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { Lock, Unlock, Trash2, CheckCircle2 } from "lucide-react";
 import type { User } from "@prisma/client";
 import { formatDateOnlyVN } from "@/lib/date";
+import { LEVEL_LABELS } from "@/lib/levels";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { deleteStudentAction, setStudentStatusAction, approveStudentAction } from "../actions";
 
 type PendingStudentInfo = Pick<
   User,
-  "id" | "name" | "email" | "username" | "dateOfBirth" | "phoneNumber" | "createdAt"
+  "id" | "name" | "email" | "username" | "dateOfBirth" | "phoneNumber" | "createdAt" | "grantedLevel"
 >;
 
 export function ToggleStudentStatusButton({
@@ -96,6 +97,10 @@ export function ApproveStudentButton({
           <div className="min-w-0">
             <dt className="text-xs text-muted">Ngày đăng ký</dt>
             <dd className="text-foreground">{student.createdAt.toLocaleDateString("vi-VN")}</dd>
+          </div>
+          <div className="min-w-0">
+            <dt className="text-xs text-muted">Cấp được cấp quyền</dt>
+            <dd className="text-foreground">{LEVEL_LABELS[student.grantedLevel]}</dd>
           </div>
         </dl>
       ),
