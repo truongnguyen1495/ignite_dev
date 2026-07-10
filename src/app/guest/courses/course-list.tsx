@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Video } from "lucide-react";
+import { BookOpen, ChevronRight, Video } from "lucide-react";
 
 export type GuestCourseItem = {
   id: string;
@@ -7,6 +7,7 @@ export type GuestCourseItem = {
   description: string | null;
   coverImageUrl: string | null;
   totalLessons: number;
+  ctaLabel: string;
   href: string;
   gradient: string;
 };
@@ -41,10 +42,16 @@ export function GuestCourseList({ courses }: { courses: GuestCourseItem[] }) {
             {course.description && (
               <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{course.description}</p>
             )}
-            <span className="mt-4 flex items-center gap-1 text-xs text-dark-muted">
-              <BookOpen className="h-3.5 w-3.5" />
-              {course.totalLessons} bài học
-            </span>
+            <div className="mt-4 flex items-center justify-between">
+              <span className="flex items-center gap-1 text-xs text-dark-muted">
+                <BookOpen className="h-3.5 w-3.5" />
+                {course.totalLessons} bài học
+              </span>
+              <span className="flex items-center gap-0.5 text-xs font-medium text-primary">
+                {course.ctaLabel}
+                <ChevronRight className="h-3.5 w-3.5" />
+              </span>
+            </div>
           </div>
         </Link>
       ))}

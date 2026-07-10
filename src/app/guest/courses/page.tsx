@@ -19,28 +19,29 @@ export default async function GuestCoursesPage() {
     where: { visibleToGuest: true },
     orderBy: { order: "asc" },
     include: {
-      _count: { select: { lessons: { where: { visibleToGuest: true } } } },
       lessons: {
-        where: { visibleToGuest: true },
         orderBy: [{ order: "asc" }, { createdAt: "asc" }],
-        select: { id: true },
-        take: 1,
+        select: { id: true, visibleToGuest: true },
       },
     },
   });
 
   const items: GuestCourseItem[] = courses.map((course, index) => {
-    const firstLessonId = course.lessons[0]?.id;
+    const visibleLessons = course.lessons.filter((l) => l.visibleToGuest);
+    const firstLessonId = visibleLessons[0]?.id;
     const href = firstLessonId
       ? `/guest/courses/${course.id}/lessons/${firstLessonId}`
       : `/guest/courses/${course.id}`;
+    // Some lessons still locked behind login → this is a trial, not full access.
+    const hasLockedLessons = visibleLessons.length < course.lessons.length;
 
     return {
       id: course.id,
       title: course.title,
       description: course.description,
       coverImageUrl: course.coverImageUrl,
-      totalLessons: course._count.lessons,
+      totalLessons: course.lessons.length,
+      ctaLabel: hasLockedLessons ? "Vào học thử" : "Vào học",
       href,
       gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
     };
