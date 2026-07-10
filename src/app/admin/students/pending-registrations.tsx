@@ -80,7 +80,7 @@ export function PendingRegistrations({ students }: { students: User[] }) {
                 </dl>
 
                 <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3">
-                  <ApproveStudentButton studentId={student.id} />
+                  <ApproveStudentButton student={student} />
                   <DeleteStudentButton
                     studentId={student.id}
                     studentName={student.name}

@@ -133,7 +133,7 @@ export default async function EditStudentPage({
               </div>
             </dl>
             <div className="flex flex-wrap items-center gap-3 border-t border-warning/30 pt-4">
-              <ApproveStudentButton studentId={student.id} />
+              <ApproveStudentButton student={student} />
               <DeleteStudentButton
                 studentId={student.id}
                 studentName={student.name}

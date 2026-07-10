@@ -5,7 +5,7 @@ import { Button } from "./button";
 
 type ConfirmOptions = {
   title: string;
-  description?: string;
+  description?: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   tone?: "danger" | "primary";
@@ -43,14 +43,14 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="confirm-dialog-title"
-            className="w-full max-w-sm rounded-xl border border-border bg-surface p-6 shadow-lg"
+            className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-lg"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 id="confirm-dialog-title" className="text-base font-semibold text-foreground">
               {state.options.title}
             </h2>
             {state.options.description && (
-              <p className="mt-2 text-sm text-muted">{state.options.description}</p>
+              <div className="mt-2 text-sm text-muted">{state.options.description}</div>
             )}
             <div className="mt-6 flex justify-end gap-2">
               <Button type="button" variant="secondary" onClick={() => close(false)}>

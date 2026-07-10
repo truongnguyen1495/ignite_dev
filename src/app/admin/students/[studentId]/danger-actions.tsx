@@ -3,9 +3,15 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Unlock, Trash2, CheckCircle2 } from "lucide-react";
+import type { User } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { deleteStudentAction, setStudentStatusAction, approveStudentAction } from "../actions";
+
+type PendingStudentInfo = Pick<
+  User,
+  "id" | "name" | "email" | "username" | "dateOfBirth" | "phoneNumber" | "createdAt"
+>;
 
 export function ToggleStudentStatusButton({
   studentId,
@@ -49,18 +55,55 @@ export function ToggleStudentStatusButton({
 }
 
 export function ApproveStudentButton({
-  studentId,
+  student,
   iconOnly = false,
 }: {
-  studentId: string;
+  student: PendingStudentInfo;
   iconOnly?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const confirm = useConfirm();
 
-  const onClick = () => {
+  const onClick = async () => {
+    const ok = await confirm({
+      title: `Duyệt đăng ký của "${student.name}"?`,
+      description: (
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
+          <div className="min-w-0">
+            <dt className="text-xs text-muted">Email</dt>
+            <dd className="break-words text-foreground">{student.email}</dd>
+          </div>
+          {student.username && (
+            <div className="min-w-0">
+              <dt className="text-xs text-muted">Username</dt>
+              <dd className="break-words text-foreground">@{student.username}</dd>
+            </div>
+          )}
+          {student.dateOfBirth && (
+            <div className="min-w-0">
+              <dt className="text-xs text-muted">Ngày sinh</dt>
+              <dd className="text-foreground">{student.dateOfBirth.toLocaleDateString("vi-VN")}</dd>
+            </div>
+          )}
+          {student.phoneNumber && (
+            <div className="min-w-0">
+              <dt className="text-xs text-muted">Số điện thoại</dt>
+              <dd className="break-words text-foreground">{student.phoneNumber}</dd>
+            </div>
+          )}
+          <div className="min-w-0">
+            <dt className="text-xs text-muted">Ngày đăng ký</dt>
+            <dd className="text-foreground">{student.createdAt.toLocaleDateString("vi-VN")}</dd>
+          </div>
+        </dl>
+      ),
+      confirmLabel: "Xác nhận, duyệt đăng ký",
+      tone: "primary",
+    });
+    if (!ok) return;
     startTransition(async () => {
-      await approveStudentAction(studentId);
+      await approveStudentAction(student.id);
       router.refresh();
     });
   };
