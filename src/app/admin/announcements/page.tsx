@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { DeleteAnnouncementInlineButton } from "./delete-announcement-inline-button";
 import { ToggleAnnouncementGuestButton } from "./toggle-announcement-guest-button";
+import { ToggleAnnouncementStudentsVisibilityButton } from "./toggle-announcement-students-visibility-button";
 
 export default async function AnnouncementsPage() {
   const announcements = await prisma.announcement.findMany({ orderBy: { publishedAt: "desc" } });
@@ -48,11 +49,16 @@ export default async function AnnouncementsPage() {
                 ) : (
                   <Badge color="muted">Tất cả học viên</Badge>
                 )}
+                {!announcement.visibleToStudents && <Badge color="warning">Đã ẩn</Badge>}
                 {announcement.visibleToGuest && <Badge color="info">Công khai</Badge>}
                 <span className="text-xs text-muted">
                   {announcement.publishedAt.toLocaleDateString("vi-VN")}
                 </span>
               </Link>
+              <ToggleAnnouncementStudentsVisibilityButton
+                announcementId={announcement.id}
+                visibleToStudents={announcement.visibleToStudents}
+              />
               <ToggleAnnouncementGuestButton
                 announcementId={announcement.id}
                 visibleToGuest={announcement.visibleToGuest}

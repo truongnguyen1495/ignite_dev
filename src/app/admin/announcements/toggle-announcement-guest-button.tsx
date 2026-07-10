@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Globe, Loader2 } from "lucide-react";
+import { Globe, GlobeOff, Loader2 } from "lucide-react";
 import { setAnnouncementGuestVisibilityAction } from "./actions";
 import { Button } from "@/components/ui/button";
 
@@ -33,7 +33,13 @@ export function ToggleAnnouncementGuestButton({
       }}
       className={`shrink-0 ${visibleToGuest ? "text-info hover:bg-info-bg" : "hover:bg-surface-hover"}`}
     >
-      {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
+      {pending ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : visibleToGuest ? (
+        <Globe className="h-4 w-4" />
+      ) : (
+        <GlobeOff className="h-4 w-4" />
+      )}
     </Button>
   );
 }

@@ -17,7 +17,7 @@ export default async function DashboardLayout({
   const student = await requireActiveStudent();
 
   const [announcements, reads] = await Promise.all([
-    prisma.announcement.findMany({ select: { id: true, minLevel: true } }),
+    prisma.announcement.findMany({ select: { id: true, minLevel: true, visibleToStudents: true } }),
     prisma.announcementRead.findMany({
       where: { studentId: student.id },
       select: { announcementId: true },
@@ -25,7 +25,10 @@ export default async function DashboardLayout({
   ]);
   const readIds = new Set(reads.map((r) => r.announcementId));
   const unreadAnnouncementCount = announcements.filter(
-    (a) => (!a.minLevel || hasLevelAccess(student.grantedLevel, a.minLevel)) && !readIds.has(a.id)
+    (a) =>
+      a.visibleToStudents &&
+      (!a.minLevel || hasLevelAccess(student.grantedLevel, a.minLevel)) &&
+      !readIds.has(a.id)
   ).length;
 
   const NAV_ITEMS: NavItem[] = [

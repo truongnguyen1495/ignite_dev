@@ -138,7 +138,7 @@ export async function requireCourseLessonAccess(lessonId: string) {
 export async function requireAnnouncementAccess(announcementId: string) {
   const student = await requireActiveStudent();
   const announcement = await prisma.announcement.findUnique({ where: { id: announcementId } });
-  if (!announcement) {
+  if (!announcement || !announcement.visibleToStudents) {
     redirect("/dashboard/announcements?denied=1");
   }
   if (announcement.minLevel && !hasLevelAccess(student.grantedLevel, announcement.minLevel)) {

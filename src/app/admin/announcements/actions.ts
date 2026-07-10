@@ -48,6 +48,7 @@ export async function createAnnouncementAction(
       category: parsed.data.category,
       minLevel: resolveMinLevel(parsed.data.minLevel),
       visibleToGuest: formData.get("visibleToGuest") === "on",
+      visibleToStudents: formData.get("visibleToStudents") === "on",
     },
   });
 
@@ -86,6 +87,7 @@ export async function updateAnnouncementAction(
       category: parsed.data.category,
       minLevel: resolveMinLevel(parsed.data.minLevel),
       visibleToGuest: formData.get("visibleToGuest") === "on",
+      visibleToStudents: formData.get("visibleToStudents") === "on",
     },
   });
 
@@ -110,5 +112,17 @@ export async function setAnnouncementGuestVisibilityAction(
 ) {
   await requireActiveSuperAdmin();
   await prisma.announcement.update({ where: { id: announcementId }, data: { visibleToGuest } });
+  revalidatePath("/admin/announcements");
+}
+
+// Independent of visibleToGuest — hides the announcement from the
+// student-facing /dashboard/announcements list and detail page (see
+// requireAnnouncementAccess in src/lib/access.ts) without deleting it.
+export async function setAnnouncementVisibleToStudentsAction(
+  announcementId: string,
+  visibleToStudents: boolean
+) {
+  await requireActiveSuperAdmin();
+  await prisma.announcement.update({ where: { id: announcementId }, data: { visibleToStudents } });
   revalidatePath("/admin/announcements");
 }
