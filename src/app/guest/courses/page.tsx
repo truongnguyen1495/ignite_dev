@@ -19,8 +19,13 @@ export default async function GuestCoursesPage() {
     where: { visibleToGuest: true },
     orderBy: { order: "asc" },
     include: {
-      _count: { select: { lessons: true } },
-      lessons: { orderBy: [{ order: "asc" }, { createdAt: "asc" }], select: { id: true }, take: 1 },
+      _count: { select: { lessons: { where: { visibleToGuest: true } } } },
+      lessons: {
+        where: { visibleToGuest: true },
+        orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+        select: { id: true },
+        take: 1,
+      },
     },
   });
 

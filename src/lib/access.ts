@@ -167,12 +167,17 @@ export async function requireGuestCourseAccess(courseId: string) {
   return { course };
 }
 
+// A lesson needs BOTH flags: the parent course opted into guest access, and
+// the lesson itself is opted in too — the course-level flag alone isn't
+// enough. This is how an admin exposes a course to guests while still
+// holding back specific lessons (e.g. ones gated behind payment that
+// doesn't exist yet), independent of any student-facing access rule.
 export async function requireGuestCourseLessonAccess(lessonId: string) {
   const lesson = await prisma.courseLesson.findUnique({
     where: { id: lessonId },
     include: { course: true },
   });
-  if (!lesson || !lesson.course.visibleToGuest) {
+  if (!lesson || !lesson.course.visibleToGuest || !lesson.visibleToGuest) {
     redirect("/guest/courses?denied=1");
   }
   return { lesson };

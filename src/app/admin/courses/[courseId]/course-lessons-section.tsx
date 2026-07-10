@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { Plus, Video, Pencil } from "lucide-react";
 import { CourseLessonForm } from "./lessons/course-lesson-form";
 import { DeleteCourseLessonInlineButton } from "./delete-course-lesson-inline-button";
+import { ToggleCourseLessonGuestButton } from "./toggle-course-lesson-guest-button";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 type CourseLesson = {
   id: string;
@@ -14,6 +16,7 @@ type CourseLesson = {
   content: string;
   youtubeId: string | null;
   order: number;
+  visibleToGuest: boolean;
 };
 
 const iconButtonClass =
@@ -87,13 +90,21 @@ export function CourseLessonsSection({
                     className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2 text-left"
                   >
                     <span className="text-foreground">{lesson.title}</span>
-                    {lesson.youtubeId && (
-                      <span className="flex items-center gap-1 text-xs text-muted">
-                        <Video className="h-3.5 w-3.5" />
-                        Có video
-                      </span>
-                    )}
+                    <span className="flex items-center gap-2">
+                      {lesson.youtubeId && (
+                        <span className="flex items-center gap-1 text-xs text-muted">
+                          <Video className="h-3.5 w-3.5" />
+                          Có video
+                        </span>
+                      )}
+                      {lesson.visibleToGuest && <Badge color="info">Công khai</Badge>}
+                    </span>
                   </button>
+                  <ToggleCourseLessonGuestButton
+                    lessonId={lesson.id}
+                    courseId={courseId}
+                    visibleToGuest={lesson.visibleToGuest}
+                  />
                   <button
                     type="button"
                     title="Sửa"

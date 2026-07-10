@@ -16,7 +16,7 @@ export default async function GuestCoursePage({
   const { course } = await requireGuestCourseAccess(courseId);
 
   const firstLesson = await prisma.courseLesson.findFirst({
-    where: { courseId },
+    where: { courseId, visibleToGuest: true },
     orderBy: [{ order: "asc" }, { createdAt: "asc" }],
     select: { id: true },
   });
@@ -32,7 +32,7 @@ export default async function GuestCoursePage({
         <h1 className="mt-2 text-2xl font-semibold text-foreground">{course.title}</h1>
         {course.description && <p className="mt-1 text-sm text-muted">{course.description}</p>}
       </div>
-      <p className="text-sm text-muted">Khóa học này chưa có bài học nào.</p>
+      <p className="text-sm text-muted">Khóa học này chưa có bài học nào được công khai.</p>
     </div>
   );
 }

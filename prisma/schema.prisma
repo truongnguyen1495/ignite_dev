@@ -179,15 +179,20 @@ model Course {
 }
 
 model CourseLesson {
-  id        String   @id @default(cuid())
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  title     String
-  content   String   @db.Text
-  youtubeId String?
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  courseId       String
+  course         Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title          String
+  content        String   @db.Text
+  youtubeId      String?
+  order          Int      @default(0)
+  // Independent of student access entirely — only gates the /guest/* public
+  // view, and only takes effect when the parent Course is also
+  // visibleToGuest. Lets an admin expose a course to guests while still
+  // holding back specific lessons (e.g. payment-gated ones not built yet).
+  visibleToGuest Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   completions CourseLessonCompletion[]
 

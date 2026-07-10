@@ -196,6 +196,19 @@ export async function deleteCourseLessonAction(lessonId: string, courseId: strin
   revalidatePath(`/admin/courses/${courseId}`);
 }
 
+// Independent of student access — only controls whether this lesson shows
+// up under /guest/*, and only takes effect when the parent Course is also
+// visibleToGuest (see requireGuestCourseLessonAccess in src/lib/access.ts).
+export async function setCourseLessonGuestVisibilityAction(
+  lessonId: string,
+  courseId: string,
+  visibleToGuest: boolean
+) {
+  await requireActiveSuperAdmin();
+  await prisma.courseLesson.update({ where: { id: lessonId }, data: { visibleToGuest } });
+  revalidatePath(`/admin/courses/${courseId}`);
+}
+
 export async function grantCourseAccessAction(courseId: string, studentId: string) {
   const admin = await requireActiveSuperAdmin();
   if (!studentId) {

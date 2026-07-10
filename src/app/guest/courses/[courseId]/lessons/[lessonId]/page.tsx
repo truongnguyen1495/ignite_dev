@@ -18,8 +18,10 @@ export default async function GuestCourseLessonPage({
   const { courseId, lessonId } = await params;
   const { lesson } = await requireGuestCourseLessonAccess(lessonId);
 
+  // Only lists/links to lessons a guest can actually reach — not every
+  // lesson in the course, matching requireGuestCourseLessonAccess's gate.
   const siblingLessons = await prisma.courseLesson.findMany({
-    where: { courseId: lesson.courseId },
+    where: { courseId: lesson.courseId, visibleToGuest: true },
     orderBy: [{ order: "asc" }, { createdAt: "asc" }],
   });
 
