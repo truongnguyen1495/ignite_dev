@@ -28,6 +28,7 @@ export default async function EditAnnouncementPage({
           announcementId={announcement.id}
           title={announcement.title}
           content={announcement.content}
+          coverImageUrl={announcement.coverImageUrl}
           category={announcement.category}
           minLevel={announcement.minLevel}
           visibleToGuest={announcement.visibleToGuest}

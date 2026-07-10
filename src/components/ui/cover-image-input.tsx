@@ -10,9 +10,9 @@ const TARGET_RATIO = 16 / 9;
 const RATIO_TOLERANCE = 0.1;
 
 // Doesn't block the upload — just tells the admin their image will get
-// cropped to fit the 16:9 thumbnail (course cards render it via
-// object-cover), since the ratio check itself can't always run (e.g. a
-// corrupt file) and shouldn't be a hard gate either way.
+// cropped to fit the 16:9 thumbnail (cards render it via object-cover),
+// since the ratio check itself can't always run (e.g. a corrupt file) and
+// shouldn't be a hard gate either way.
 function checkAspectRatio(file: File): Promise<boolean> {
   return new Promise((resolve) => {
     const img = new Image();
@@ -30,9 +30,15 @@ function checkAspectRatio(file: File): Promise<boolean> {
 }
 
 export function CoverImageInput({
+  name = "coverImageUrl",
+  label = "Ảnh bìa (tùy chọn, khuyến nghị tỉ lệ 16:9)",
+  alt = "Ảnh bìa",
   defaultValue = "",
   onChange,
 }: {
+  name?: string;
+  label?: string;
+  alt?: string;
   defaultValue?: string;
   onChange?: () => void;
 }) {
@@ -83,14 +89,12 @@ export function CoverImageInput({
 
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-foreground">
-        Ảnh bìa (tùy chọn, khuyến nghị tỉ lệ 16:9)
-      </label>
+      <label className="mb-1.5 block text-sm font-medium text-foreground">{label}</label>
       <div className="flex items-start gap-3">
         {url ? (
           <div className="relative aspect-video w-32 shrink-0 overflow-hidden rounded-lg border border-border">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={url} alt="Ảnh bìa khóa học" className="h-full w-full object-cover" />
+            <img src={url} alt={alt} className="h-full w-full object-cover" />
             <button
               type="button"
               onClick={() => {
@@ -124,7 +128,7 @@ export function CoverImageInput({
           {!error && warning && <p className="text-xs text-warning">{warning}</p>}
         </div>
       </div>
-      <input type="hidden" name="coverImageUrl" value={url} />
+      <input type="hidden" name={name} value={url} />
     </div>
   );
 }

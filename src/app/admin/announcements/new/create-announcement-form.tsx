@@ -7,6 +7,7 @@ import { ORDERED_ANNOUNCEMENT_CATEGORIES, ANNOUNCEMENT_CATEGORY_LABELS } from "@
 import { LessonContentEditor } from "@/app/admin/lessons/lesson-content-editor";
 import { Input, Select } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { CoverImageInput } from "@/components/ui/cover-image-input";
 
 export function CreateAnnouncementForm() {
   const [error, formAction, pending] = useActionState(createAnnouncementAction, undefined);
@@ -15,6 +16,7 @@ export function CreateAnnouncementForm() {
     <form action={formAction} className="space-y-8">
       <section className="space-y-4">
         <Input id="title" name="title" required label="Tiêu đề" />
+        <CoverImageInput alt="Ảnh bìa bản tin" />
         <Select id="category" name="category" defaultValue={ORDERED_ANNOUNCEMENT_CATEGORIES[0]} required label="Chuyên mục" hint="Chọn tab sẽ hiển thị bản tin này cho học viên.">
           {ORDERED_ANNOUNCEMENT_CATEGORIES.map((category) => (
             <option key={category} value={category}>

@@ -1,8 +1,9 @@
-import { AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, Megaphone } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { ORDERED_ANNOUNCEMENT_CATEGORIES } from "@/lib/announcements";
+import { ANNOUNCEMENT_CATEGORY_LABELS, ANNOUNCEMENT_CATEGORY_BADGE_COLOR } from "@/lib/announcements";
 import { PageHeader } from "@/components/ui/page-header";
-import { GuestAnnouncementTabs } from "./announcement-tabs";
+import { Badge } from "@/components/ui/badge";
 
 // Reading searchParams already forces dynamic rendering, but declare this
 // explicitly so it doesn't silently regress to a stale static snapshot if
@@ -24,17 +25,6 @@ export default async function GuestAnnouncementsPage({
     orderBy: { publishedAt: "desc" },
   });
 
-  const categories = ORDERED_ANNOUNCEMENT_CATEGORIES.map((category) => ({
-    category,
-    items: announcements
-      .filter((a) => a.category === category)
-      .map((a) => ({
-        id: a.id,
-        title: a.title,
-        publishedAt: a.publishedAt.toLocaleDateString("vi-VN"),
-      })),
-  }));
-
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
       {denied && (
@@ -44,7 +34,45 @@ export default async function GuestAnnouncementsPage({
         </p>
       )}
       <PageHeader title="Bản tin" description="Thông báo công khai từ ban quản trị — không cần đăng nhập." />
-      <GuestAnnouncementTabs categories={categories} />
+
+      {announcements.length === 0 ? (
+        <p className="text-sm text-muted">Chưa có bản tin công khai nào.</p>
+      ) : (
+        <ul className="space-y-3">
+          {announcements.map((announcement) => (
+            <li key={announcement.id}>
+              <Link
+                href={`/guest/announcements/${announcement.id}`}
+                className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3 transition-colors hover:border-primary/50"
+              >
+                {announcement.coverImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={announcement.coverImageUrl}
+                    alt=""
+                    className="aspect-video w-20 shrink-0 rounded-md object-cover"
+                  />
+                ) : (
+                  <span className="flex aspect-video w-20 shrink-0 items-center justify-center rounded-md bg-faint-bg">
+                    <Megaphone className="h-4 w-4 text-muted" />
+                  </span>
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-foreground">{announcement.title}</span>
+                  <span className="mt-1 flex items-center gap-2">
+                    <Badge color={ANNOUNCEMENT_CATEGORY_BADGE_COLOR[announcement.category]}>
+                      {ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}
+                    </Badge>
+                    <span className="text-xs text-muted">
+                      {announcement.publishedAt.toLocaleDateString("vi-VN")}
+                    </span>
+                  </span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

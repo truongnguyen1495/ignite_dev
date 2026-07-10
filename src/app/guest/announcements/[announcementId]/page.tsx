@@ -25,6 +25,15 @@ export default async function GuestAnnouncementDetailPage({
         </p>
       </div>
 
+      {announcement.coverImageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={announcement.coverImageUrl}
+          alt=""
+          className="aspect-video w-full rounded-xl border border-border object-cover"
+        />
+      )}
+
       <Card>
         <LessonMarkdown content={announcement.content} />
       </Card>

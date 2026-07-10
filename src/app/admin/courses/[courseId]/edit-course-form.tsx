@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { updateCourseAction } from "../actions";
-import { CoverImageInput } from "../cover-image-input";
+import { CoverImageInput } from "@/components/ui/cover-image-input";
 import { BackLink } from "@/components/ui/back-link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,7 +68,11 @@ export function EditCourseForm({
             defaultValue={description ?? ""}
             label="Mô tả (tùy chọn)"
           />
-          <CoverImageInput defaultValue={coverImageUrl ?? ""} onChange={() => setIsDirty(true)} />
+          <CoverImageInput
+            alt="Ảnh bìa khóa học"
+            defaultValue={coverImageUrl ?? ""}
+            onChange={() => setIsDirty(true)}
+          />
           <Input id="order" name="order" type="number" defaultValue={order} label="Thứ tự hiển thị" />
           <label className="flex items-center gap-2 text-sm text-foreground">
             <input

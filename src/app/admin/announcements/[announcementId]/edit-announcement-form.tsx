@@ -8,11 +8,13 @@ import { LessonContentEditor } from "@/app/admin/lessons/lesson-content-editor";
 import type { Level, AnnouncementCategory } from "@prisma/client";
 import { Input, Select } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { CoverImageInput } from "@/components/ui/cover-image-input";
 
 export function EditAnnouncementForm({
   announcementId,
   title,
   content,
+  coverImageUrl,
   category,
   minLevel,
   visibleToGuest,
@@ -21,6 +23,7 @@ export function EditAnnouncementForm({
   announcementId: string;
   title: string;
   content: string;
+  coverImageUrl: string | null;
   category: AnnouncementCategory;
   minLevel: Level | null;
   visibleToGuest: boolean;
@@ -34,6 +37,7 @@ export function EditAnnouncementForm({
 
       <section className="space-y-4">
         <Input id="title" name="title" defaultValue={title} required label="Tiêu đề" />
+        <CoverImageInput alt="Ảnh bìa bản tin" defaultValue={coverImageUrl ?? ""} />
         <Select id="category" name="category" defaultValue={category} required label="Chuyên mục" hint="Chọn tab sẽ hiển thị bản tin này cho học viên.">
           {ORDERED_ANNOUNCEMENT_CATEGORIES.map((c) => (
             <option key={c} value={c}>

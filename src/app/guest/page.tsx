@@ -67,7 +67,16 @@ export default async function GuestHomePage() {
             href={`/guest/announcements/${latestAnnouncement.id}`}
             className="flex items-center gap-3 rounded-lg border border-border bg-surface p-4 transition-colors hover:border-primary/50"
           >
-            <Megaphone className="h-4 w-4 shrink-0 text-muted" />
+            {latestAnnouncement.coverImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={latestAnnouncement.coverImageUrl}
+                alt=""
+                className="aspect-video w-20 shrink-0 rounded-md object-cover"
+              />
+            ) : (
+              <Megaphone className="h-4 w-4 shrink-0 text-muted" />
+            )}
             <span className="min-w-0 flex-1 truncate text-foreground">{latestAnnouncement.title}</span>
             <Badge color={ANNOUNCEMENT_CATEGORY_BADGE_COLOR[latestAnnouncement.category]}>
               {ANNOUNCEMENT_CATEGORY_LABELS[latestAnnouncement.category]}

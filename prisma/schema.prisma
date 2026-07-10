@@ -249,6 +249,7 @@ model Announcement {
   id             String               @id @default(cuid())
   title          String
   content        String               @db.Text
+  coverImageUrl  String?
   category       AnnouncementCategory @default(GENERAL)
   minLevel       Level?
   visibleToGuest Boolean              @default(false)

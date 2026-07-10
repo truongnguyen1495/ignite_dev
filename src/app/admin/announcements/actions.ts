@@ -17,6 +17,7 @@ const categoryEnum = z.enum(
 const announcementSchema = z.object({
   title: z.string().trim().min(1, "Tiêu đề không được để trống."),
   content: z.string().trim().min(1, "Nội dung không được để trống."),
+  coverImageUrl: z.string().trim().optional(),
   category: categoryEnum,
   minLevel: z.union([levelEnum, z.literal("")]).optional(),
 });
@@ -34,6 +35,7 @@ export async function createAnnouncementAction(
   const parsed = announcementSchema.safeParse({
     title: formData.get("title"),
     content: formData.get("content"),
+    coverImageUrl: formData.get("coverImageUrl") || undefined,
     category: formData.get("category"),
     minLevel: formData.get("minLevel") || "",
   });
@@ -45,6 +47,7 @@ export async function createAnnouncementAction(
     data: {
       title: parsed.data.title,
       content: parsed.data.content,
+      coverImageUrl: parsed.data.coverImageUrl ?? null,
       category: parsed.data.category,
       minLevel: resolveMinLevel(parsed.data.minLevel),
       visibleToGuest: formData.get("visibleToGuest") === "on",
@@ -70,6 +73,7 @@ export async function updateAnnouncementAction(
     announcementId: formData.get("announcementId"),
     title: formData.get("title"),
     content: formData.get("content"),
+    coverImageUrl: formData.get("coverImageUrl") || undefined,
     category: formData.get("category"),
     minLevel: formData.get("minLevel") || "",
   });
@@ -84,6 +88,7 @@ export async function updateAnnouncementAction(
     data: {
       title: parsed.data.title,
       content: parsed.data.content,
+      coverImageUrl: parsed.data.coverImageUrl ?? null,
       category: parsed.data.category,
       minLevel: resolveMinLevel(parsed.data.minLevel),
       visibleToGuest: formData.get("visibleToGuest") === "on",
