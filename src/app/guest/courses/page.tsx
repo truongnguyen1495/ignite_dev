@@ -13,7 +13,6 @@ export default async function GuestCoursesPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Khóa học độc quyền</h1>
-        <p className="mt-1 text-sm text-muted">Các khóa học được công khai cho khách xem — không cần đăng nhập.</p>
       </div>
 
       <GuestCourseList courses={items} />
