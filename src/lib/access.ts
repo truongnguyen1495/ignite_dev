@@ -1,10 +1,11 @@
 import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import type { Level, Role, User } from "@prisma/client";
+import type { ChatThread, Level, Role, User } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hasLevelAccess } from "@/lib/levels";
+import { getOrCreateSupportThread } from "@/lib/chat";
 
 export class AccessDeniedError extends Error {
   constructor(message = "Access denied") {
@@ -232,4 +233,56 @@ export async function requireGuestLibraryItemAccess(libraryItemId: string) {
     redirect("/guest/library?denied=1");
   }
   return { libraryItem };
+}
+
+// Central rule for all three chat kinds — reused by every page-level guard
+// below AND by the attachment-download route handler (same split as
+// studentHasLibraryItemAccess / requireLibraryItemAccess: redirect-based
+// helpers for pages, a plain boolean check for JSON-responding routes).
+export function userCanAccessChatThread(user: User, thread: ChatThread): boolean {
+  switch (thread.kind) {
+    case "SUPPORT":
+      return user.role === "SUPER_ADMIN" || user.id === thread.supportStudentId;
+    case "DIRECT":
+      return user.id === thread.directUserAId || user.id === thread.directUserBId;
+    case "GROUP":
+      // Exact match, not hasLevelAccess's >= rule used elsewhere for content
+      // gating — a student's group room changes as their grantedLevel
+      // changes, they don't accumulate access to every room below it.
+      return user.role === "STUDENT" && user.grantedLevel === thread.groupLevel;
+  }
+}
+
+export async function requireOwnSupportThreadAccess() {
+  const student = await requireActiveStudent();
+  const thread = await getOrCreateSupportThread(student.id);
+  return { student, thread };
+}
+
+export async function requireAdminSupportThreadAccess(threadId: string) {
+  const admin = await requireActiveSuperAdmin();
+  const thread = await prisma.chatThread.findUnique({ where: { id: threadId } });
+  if (!thread || thread.kind !== "SUPPORT") {
+    redirect("/admin/chat?denied=1");
+  }
+  // No ownership check beyond kind — any active admin may view/reply to any
+  // support thread, per the confirmed requirement (no per-admin assignment).
+  return { admin, thread };
+}
+
+export async function requireDirectThreadAccess(threadId: string) {
+  const student = await requireActiveStudent();
+  const thread = await prisma.chatThread.findUnique({ where: { id: threadId } });
+  if (!thread || thread.kind !== "DIRECT" || !userCanAccessChatThread(student, thread)) {
+    redirect("/dashboard/chat?denied=1");
+  }
+  return { student, thread };
+}
+
+export async function requireGroupThreadAccess(level: Level) {
+  const student = await requireActiveStudent();
+  if (student.grantedLevel !== level) {
+    redirect("/dashboard/chat?denied=1");
+  }
+  return { student, level };
 }

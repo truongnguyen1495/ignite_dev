@@ -47,6 +47,12 @@ enum LibraryItemType {
   DOCUMENT
 }
 
+enum ChatThreadKind {
+  SUPPORT
+  DIRECT
+  GROUP
+}
+
 model User {
   id           String        @id @default(cuid())
   email        String        @unique
@@ -72,6 +78,11 @@ model User {
   libraryGrants           LibraryAccessGrant[]     @relation("LibraryGrants")
   libraryGrantsGiven      LibraryAccessGrant[]     @relation("LibraryGrantsGiven")
   libraryLevelGrantsGiven LibraryLevelGrant[]      @relation("LibraryLevelGrantsGiven")
+  chatMessagesSent        ChatMessage[]            @relation("ChatMessagesSent")
+  chatThreadReads         ChatThreadRead[]         @relation("ChatThreadReads")
+  supportThread           ChatThread?              @relation("SupportThreadOfStudent")
+  directThreadsAsUserA    ChatThread[]             @relation("DirectThreadAsUserA")
+  directThreadsAsUserB    ChatThread[]             @relation("DirectThreadAsUserB")
 
   @@index([role])
 }
@@ -325,21 +336,21 @@ model LibraryLevelGrant {
 // purpose: a single optional minLevel threshold per post (null = everyone),
 // no per-student overrides, since nothing has asked for that yet.
 model Announcement {
-  id             String               @id @default(cuid())
-  title          String
-  content        String               @db.Text
-  coverImageUrl  String?
-  category       AnnouncementCategory @default(GENERAL)
-  minLevel       Level?
-  visibleToGuest Boolean              @default(false)
+  id                String               @id @default(cuid())
+  title             String
+  content           String               @db.Text
+  coverImageUrl     String?
+  category          AnnouncementCategory @default(GENERAL)
+  minLevel          Level?
+  visibleToGuest    Boolean              @default(false)
   // Master hide switch: false pulls the announcement from both the
   // student-facing /dashboard/announcements list and the public /guest/*
   // one, overriding visibleToGuest — without deleting it. Defaults true so
   // existing rows keep showing up unchanged.
-  visibleToStudents Boolean           @default(true)
-  publishedAt    DateTime             @default(now())
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  visibleToStudents Boolean              @default(true)
+  publishedAt       DateTime             @default(now())
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
 
   reads AnnouncementRead[]
 
@@ -357,4 +368,89 @@ model AnnouncementRead {
 
   @@unique([studentId, announcementId])
   @@index([studentId])
+}
+
+// One row per conversation regardless of kind — a support message, a DM, and
+// a group message are structurally identical (sender/body/attachment), so a
+// single discriminated model avoids tripling the message/read schema. Exactly
+// one of the three identity fields below is populated, matching `kind`:
+//   SUPPORT -> supportStudentId only. The admin side isn't a stored member —
+//              any active SUPER_ADMIN may access it (see
+//              userCanAccessChatThread in src/lib/access.ts).
+//   DIRECT  -> directUserAId + directUserBId, always stored with the
+//              lexicographically smaller User.id first (see orderedPair in
+//              src/lib/chat.ts) so a pair has exactly one canonical row.
+//   GROUP   -> groupLevel only. Membership is never stored — it's the
+//              student's *current* grantedLevel matching exactly (re-checked
+//              live on every access, not hasLevelAccess's >= rule used for
+//              content gating elsewhere).
+// All three kinds' threads are created lazily (upsert on the relevant unique
+// key) the first time a message is sent, mirroring AnnouncementRead's
+// create-on-first-need idiom — no seeding required.
+model ChatThread {
+  id   String         @id @default(cuid())
+  kind ChatThreadKind
+
+  supportStudentId String? @unique
+  supportStudent   User?   @relation("SupportThreadOfStudent", fields: [supportStudentId], references: [id], onDelete: Cascade)
+
+  directUserAId String?
+  directUserA   User?   @relation("DirectThreadAsUserA", fields: [directUserAId], references: [id], onDelete: Cascade)
+  directUserBId String?
+  directUserB   User?   @relation("DirectThreadAsUserB", fields: [directUserBId], references: [id], onDelete: Cascade)
+
+  groupLevel Level? @unique
+
+  // Denormalized for cheap inbox ordering/preview without an aggregate query
+  // per row — updated in the same transaction as each new ChatMessage.
+  lastMessageAt      DateTime @default(now())
+  lastMessagePreview String?
+  createdAt          DateTime @default(now())
+
+  messages ChatMessage[]
+  reads    ChatThreadRead[]
+
+  @@unique([directUserAId, directUserBId])
+  @@index([kind])
+}
+
+model ChatMessage {
+  id             String     @id @default(cuid())
+  threadId       String
+  thread         ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User       @relation("ChatMessagesSent", fields: [senderId], references: [id], onDelete: Cascade)
+  // Nullable together with the four attachment fields below — a message may
+  // be attachment-only. At least one of body/attachmentPath is required,
+  // enforced by Zod at the server-action boundary (see src/lib/chat.ts),
+  // not a DB constraint, matching how this schema keeps validation at the
+  // Zod layer rather than CHECK constraints throughout.
+  body           String?    @db.Text
+  // Object path in the private `chat-attachments` Supabase bucket, never a
+  // public URL — same convention as LibraryItem.filePath. Served only
+  // through /api/chat/attachments/[messageId], gated by
+  // userCanAccessChatThread.
+  attachmentPath String?
+  attachmentName String?
+  attachmentMime String?
+  attachmentSize Int?
+  createdAt      DateTime   @default(now())
+
+  @@index([threadId, createdAt])
+}
+
+// A per-user watermark, not a per-message row like AnnouncementRead — a
+// thread can have hundreds of messages, so "unread" is computed as
+// messages.createdAt > lastReadAt AND senderId != me, rather than one row
+// per message per reader.
+model ChatThreadRead {
+  id         String     @id @default(cuid())
+  threadId   String
+  thread     ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User       @relation("ChatThreadReads", fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt DateTime   @default(now())
+
+  @@unique([threadId, userId])
+  @@index([userId])
 }
