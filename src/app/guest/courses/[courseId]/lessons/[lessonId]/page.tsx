@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { requireGuestCourseLessonAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { YoutubeEmbed } from "@/components/youtube-embed";
@@ -18,17 +18,22 @@ export default async function GuestCourseLessonPage({
   const { courseId, lessonId } = await params;
   const { lesson } = await requireGuestCourseLessonAccess(lessonId);
 
-  // Only lists/links to lessons a guest can actually reach — not every
-  // lesson in the course, matching requireGuestCourseLessonAccess's gate.
+  // Lists every lesson in the course so guests can see the full curriculum
+  // shape — locked ones (visibleToGuest: false) render with a lock icon and
+  // aren't linked, matching requireGuestCourseLessonAccess's gate.
   const siblingLessons = await prisma.courseLesson.findMany({
-    where: { courseId: lesson.courseId, visibleToGuest: true },
+    where: { courseId: lesson.courseId },
     orderBy: [{ order: "asc" }, { createdAt: "asc" }],
   });
 
   const currentIndex = siblingLessons.findIndex((l) => l.id === lessonId);
   const totalLessons = siblingLessons.length;
-  const prevLesson = currentIndex > 0 ? siblingLessons[currentIndex - 1] : null;
-  const nextLesson = currentIndex >= 0 && currentIndex < totalLessons - 1 ? siblingLessons[currentIndex + 1] : null;
+  const prevCandidate = currentIndex > 0 ? siblingLessons[currentIndex - 1] : null;
+  const nextCandidate =
+    currentIndex >= 0 && currentIndex < totalLessons - 1 ? siblingLessons[currentIndex + 1] : null;
+  // Prev/next navigation only follows lessons a guest can actually open.
+  const prevLesson = prevCandidate?.visibleToGuest ? prevCandidate : null;
+  const nextLesson = nextCandidate?.visibleToGuest ? nextCandidate : null;
 
   return (
     <div className="rounded-2xl border border-dark-border bg-dark-surface-raised p-4 sm:p-6">
@@ -106,6 +111,25 @@ export default async function GuestCourseLessonPage({
             <ul className="mt-4 space-y-1">
               {siblingLessons.map((l, index) => {
                 const isCurrent = l.id === lessonId;
+
+                if (!l.visibleToGuest) {
+                  return (
+                    <li key={l.id}>
+                      <div className="flex items-start gap-3 rounded-lg px-3 py-2.5 text-sm text-dark-muted/50">
+                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-dark-border">
+                          <Lock className="h-2.5 w-2.5" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="line-clamp-2 block">{l.title}</span>
+                          <span className="mt-0.5 block text-xs italic text-dark-muted/40">
+                            Cần đăng nhập để xem
+                          </span>
+                        </span>
+                      </div>
+                    </li>
+                  );
+                }
+
                 return (
                   <li key={l.id}>
                     <Link
