@@ -122,7 +122,7 @@ export function LessonContentEditor({
       LessonYoutube,
       TextStyle,
       Color.configure({ types: ["textStyle"] }),
-      AlignableTable.configure({ resizable: false }),
+      AlignableTable.configure({ resizable: true }),
       TableRow,
       AlignableTableHeader,
       AlignableTableCell,

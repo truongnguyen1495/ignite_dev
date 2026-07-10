@@ -1,5 +1,5 @@
 import { getHTMLFromFragment, type Editor } from "@tiptap/core";
-import { Fragment, type Node as ProseMirrorNode } from "@tiptap/pm/model";
+import { Fragment, type Node as ProseMirrorNode, type Schema } from "@tiptap/pm/model";
 import { TableMap, cellAround, findTable } from "@tiptap/pm/tables";
 import { Table } from "@tiptap/extension-table";
 import { TableCell } from "@tiptap/extension-table-cell";
@@ -57,6 +57,44 @@ function alignDelimiter(cell: ProseMirrorNode) {
   return "---";
 }
 
+// GFM table syntax has no way to record column widths, so a resized table
+// can't round-trip through Markdown — only through raw HTML. Widths are read
+// off the first row only, which is safe because this function is only
+// called once `isPlainCellRow` has confirmed colspan/rowspan are unused
+// (each cell then maps 1:1 to a column).
+function getColumnWidths(firstRow: ProseMirrorNode): (number | null)[] {
+  const widths: (number | null)[] = [];
+  firstRow.forEach((cell) => {
+    const colwidth = cell.attrs.colwidth as number[] | null;
+    widths.push(colwidth?.[0] ?? null);
+  });
+  return widths;
+}
+
+// Tiptap's default HTML export renders a resized cell as `colwidth="140"` —
+// not a real HTML attribute browsers honor for sizing — so it would silently
+// lose the resize on the student-facing read side (plain remark-gfm/rehype,
+// no ProseMirror involved there). Rebuilding a `<colgroup>` with real
+// `width` styles, and stripping the meaningless `colwidth` attributes, makes
+// the exported HTML render the same width everywhere it's shown.
+function tableToWidthPreservingHTML(node: ProseMirrorNode, schema: Schema, widths: (number | null)[]): string {
+  const html = getHTMLFromFragment(Fragment.from(node), schema);
+  const table = new DOMParser().parseFromString(html, "text/html").querySelector("table");
+  if (!table) return html;
+
+  const colgroup = table.ownerDocument.createElement("colgroup");
+  for (const width of widths) {
+    const col = table.ownerDocument.createElement("col");
+    if (width) col.setAttribute("style", `width: ${width}px`);
+    colgroup.appendChild(col);
+  }
+  table.insertBefore(colgroup, table.firstChild);
+  table.setAttribute("style", "table-layout: fixed; width: 100%");
+  table.querySelectorAll("[colwidth]").forEach((cell) => cell.removeAttribute("colwidth"));
+
+  return table.outerHTML;
+}
+
 // Replaces tiptap-markdown's bundled "table" serializer (matched and
 // overridden by node name, see tiptap-markdown's getMarkdownSpec) so the
 // per-column textAlign attribute above can be reflected as real GFM
@@ -78,6 +116,13 @@ export const AlignableTable = Table.extend({
 
           if (!serializable) {
             state.write(getHTMLFromFragment(Fragment.from(node), node.type.schema));
+            state.closeBlock(node);
+            return;
+          }
+
+          const widths = getColumnWidths(firstRow);
+          if (widths.some((width) => width !== null)) {
+            state.write(tableToWidthPreservingHTML(node, node.type.schema, widths));
             state.closeBlock(node);
             return;
           }

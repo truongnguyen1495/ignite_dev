@@ -12,7 +12,7 @@ import type { Element, Root } from "hast";
 // default (GitHub-style) allowlist.
 const lessonContentSchema = {
   ...defaultSchema,
-  tagNames: [...(defaultSchema.tagNames ?? []), "u", "iframe"],
+  tagNames: [...(defaultSchema.tagNames ?? []), "u", "iframe", "colgroup", "col"],
   attributes: {
     ...defaultSchema.attributes,
     img: [...(defaultSchema.attributes?.img ?? []), "alt", "className", "width", "height"],
@@ -24,7 +24,14 @@ const lessonContentSchema = {
     // already extended to iframe's src below.
     span: [...(defaultSchema.attributes?.span ?? []), "style"],
     // GFM table column alignment (:---:/---:) parses to a `style` attribute
-    // on th/td (via remark-gfm), same trust boundary as span above.
+    // on th/td (via remark-gfm), same trust boundary as span above. A
+    // manually resized column (see lesson-table-align.ts) is instead emitted
+    // as raw HTML with a `<colgroup>` of `<col style="width:...">` and a
+    // `table-layout: fixed` style on the table itself — width has no GFM
+    // syntax to round-trip through, so this is the only way it survives a
+    // save + reload.
+    table: [...(defaultSchema.attributes?.table ?? []), "style"],
+    col: ["style"],
     th: [...(defaultSchema.attributes?.th ?? []), "style"],
     td: [...(defaultSchema.attributes?.td ?? []), "style"],
     iframe: ["src", "title", "allow", "allowFullScreen", "className", "frameBorder"],
