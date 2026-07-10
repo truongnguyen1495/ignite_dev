@@ -50,38 +50,27 @@ export function EditStudentForm({
 
   return (
     <>
-      <div className="sticky top-0 z-20 mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border bg-background py-3">
-        <div>
-          <Link
-            href="/admin/students"
-            className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Quay lại
-          </Link>
-          <div className="mt-3 flex items-center gap-4">
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
-              {name.charAt(0).toUpperCase()}
-            </span>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-semibold text-foreground">{name}</h1>
-                <StatusBadge status={status} />
-                <LevelBadge level={grantedLevel} />
-              </div>
-              <p className="mt-0.5 truncate text-sm text-muted">{email}</p>
+      <div className="sticky top-0 z-20 mb-6 border-b border-border bg-background py-3">
+        <Link
+          href="/admin/students"
+          className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Quay lại
+        </Link>
+        <div className="mt-3 flex items-center gap-4">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
+            {name.charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-semibold text-foreground">{name}</h1>
+              <StatusBadge status={status} />
+              <LevelBadge level={grantedLevel} />
             </div>
+            <p className="mt-0.5 truncate text-sm text-muted">{email}</p>
           </div>
         </div>
-        <Button
-          type="submit"
-          form="edit-student-form"
-          variant={isDirty ? "primary" : "secondary"}
-          disabled={pending || !isDirty}
-          isLoading={pending}
-        >
-          {pending ? "Đang lưu..." : isDirty ? "Lưu thay đổi" : "Đã lưu"}
-        </Button>
       </div>
 
       {children}
@@ -139,6 +128,14 @@ export function EditStudentForm({
             ))}
           </Select>
           {error && <p className="text-sm text-danger">{error}</p>}
+          <Button
+            type="submit"
+            variant={isDirty ? "primary" : "secondary"}
+            disabled={pending || !isDirty}
+            isLoading={pending}
+          >
+            {pending ? "Đang lưu..." : isDirty ? "Lưu thay đổi" : "Đã lưu"}
+          </Button>
         </form>
       </Card>
     </>
