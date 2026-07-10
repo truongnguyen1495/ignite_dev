@@ -101,3 +101,14 @@ export async function deleteAnnouncementAction(announcementId: string) {
   await prisma.announcement.delete({ where: { id: announcementId } });
   revalidatePath("/admin/announcements");
 }
+
+// Independent of level gating — only controls whether this announcement
+// shows up under /guest/* (see requireGuestAnnouncementAccess in src/lib/access.ts).
+export async function setAnnouncementGuestVisibilityAction(
+  announcementId: string,
+  visibleToGuest: boolean
+) {
+  await requireActiveSuperAdmin();
+  await prisma.announcement.update({ where: { id: announcementId }, data: { visibleToGuest } });
+  revalidatePath("/admin/announcements");
+}

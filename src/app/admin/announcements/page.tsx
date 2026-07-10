@@ -6,6 +6,7 @@ import { ANNOUNCEMENT_CATEGORY_LABELS, ANNOUNCEMENT_CATEGORY_BADGE_COLOR } from 
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { DeleteAnnouncementInlineButton } from "./delete-announcement-inline-button";
+import { ToggleAnnouncementGuestButton } from "./toggle-announcement-guest-button";
 
 export default async function AnnouncementsPage() {
   const announcements = await prisma.announcement.findMany({ orderBy: { publishedAt: "desc" } });
@@ -52,6 +53,10 @@ export default async function AnnouncementsPage() {
                   {announcement.publishedAt.toLocaleDateString("vi-VN")}
                 </span>
               </Link>
+              <ToggleAnnouncementGuestButton
+                announcementId={announcement.id}
+                visibleToGuest={announcement.visibleToGuest}
+              />
               <DeleteAnnouncementInlineButton
                 announcementId={announcement.id}
                 announcementTitle={announcement.title}
