@@ -46,6 +46,7 @@ export default async function EditCoursePage({
         coverImageUrl={course.coverImageUrl}
         order={course.order}
         visibleToGuest={course.visibleToGuest}
+        featuredOnHome={course.featuredOnHome}
       />
 
       <CourseLessonsSection courseId={course.id} lessons={course.lessons} />

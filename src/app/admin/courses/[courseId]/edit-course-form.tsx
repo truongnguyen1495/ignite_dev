@@ -15,6 +15,7 @@ export function EditCourseForm({
   coverImageUrl,
   order,
   visibleToGuest,
+  featuredOnHome,
 }: {
   courseId: string;
   title: string;
@@ -22,6 +23,7 @@ export function EditCourseForm({
   coverImageUrl: string | null;
   order: number;
   visibleToGuest: boolean;
+  featuredOnHome: boolean;
 }) {
   const [error, formAction, pending] = useActionState(updateCourseAction, undefined);
   const [isDirty, setIsDirty] = useState(false);
@@ -82,6 +84,15 @@ export function EditCourseForm({
               className="h-4 w-4 accent-primary"
             />
             Hiển thị công khai cho khách (không cần đăng nhập)
+          </label>
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <input
+              type="checkbox"
+              name="featuredOnHome"
+              defaultChecked={featuredOnHome}
+              className="h-4 w-4 accent-primary"
+            />
+            Hiện trong mục &quot;Khóa học nổi bật&quot; ở trang chủ khách
           </label>
           {error && <p className="text-sm text-danger">{error}</p>}
         </form>

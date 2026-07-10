@@ -22,6 +22,7 @@ export function EditLibraryItemForm({
   guestPreviewPages,
   order,
   visibleToGuest: initialVisibleToGuest,
+  featuredOnHome,
 }: {
   libraryItemId: string;
   title: string;
@@ -34,6 +35,7 @@ export function EditLibraryItemForm({
   guestPreviewPages: number | null;
   order: number;
   visibleToGuest: boolean;
+  featuredOnHome: boolean;
 }) {
   const [error, formAction, pending] = useActionState(updateLibraryItemAction, undefined);
   const [isDirty, setIsDirty] = useState(false);
@@ -129,6 +131,16 @@ export function EditLibraryItemForm({
               }
             />
           )}
+
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <input
+              type="checkbox"
+              name="featuredOnHome"
+              defaultChecked={featuredOnHome}
+              className="h-4 w-4 accent-primary"
+            />
+            Hiện trong mục &quot;Ebook nổi bật&quot; ở trang chủ khách
+          </label>
 
           {error && <p className="text-sm text-danger">{error}</p>}
         </form>

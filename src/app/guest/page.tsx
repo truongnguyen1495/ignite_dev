@@ -1,26 +1,49 @@
 import Link from "next/link";
-import { ArrowRight, Megaphone, UserPlus, Video } from "lucide-react";
+import { ArrowRight, Megaphone, UserPlus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getGuestCourseItems } from "@/lib/guest-courses";
 import { GuestCourseList } from "./courses/course-list";
+import { GuestLibraryList, type GuestLibraryItem } from "./library/library-list";
 
 // See src/app/guest/courses/page.tsx — forces per-request rendering instead
 // of a build-time static snapshot of the (admin-toggleable) guest flags this
 // page reads.
 export const dynamic = "force-dynamic";
 
+const EBOOK_GRADIENTS = [
+  "from-[var(--primary)] to-[var(--info)]",
+  "from-[var(--level-3)] to-[var(--primary)]",
+  "from-[var(--level-4)] to-[var(--warning)]",
+  "from-[var(--info)] to-[var(--level-3)]",
+  "from-[var(--level-5)] to-[var(--level-4)]",
+];
+
 export default async function GuestHomePage() {
-  const [latestAnnouncements, courses] = await Promise.all([
+  const [latestAnnouncements, featuredCourses, featuredEbooks] = await Promise.all([
     prisma.announcement.findMany({
       where: { visibleToGuest: true, visibleToStudents: true },
       orderBy: { publishedAt: "desc" },
       take: 6,
     }),
-    getGuestCourseItems(),
+    // Admin-curated via Course.featuredOnHome — not just "the first few".
+    getGuestCourseItems({ onlyFeatured: true }),
+    // Admin-curated via LibraryItem.featuredOnHome, same convention as courses.
+    prisma.libraryItem.findMany({
+      where: { visibleToGuest: true, featuredOnHome: true, previewFilePath: { not: null } },
+      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+    }),
   ]);
 
-  const featuredCourses = courses.slice(0, 3);
-  const trialHref = courses[0]?.href ?? "/guest/courses";
+  const featuredEbookItems: GuestLibraryItem[] = featuredEbooks.map((item, index) => ({
+    id: item.id,
+    title: item.title,
+    author: item.author,
+    description: item.description,
+    type: item.type,
+    coverImageUrl: item.coverImageUrl,
+    guestPreviewPages: item.guestPreviewPages,
+    gradient: EBOOK_GRADIENTS[index % EBOOK_GRADIENTS.length],
+  }));
 
   return (
     <div className="space-y-12">
@@ -39,13 +62,6 @@ export default async function GuestHomePage() {
           >
             <UserPlus className="h-4 w-4" />
             Đăng ký ngay
-          </Link>
-          <Link
-            href={trialHref}
-            className="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover"
-          >
-            <Video className="h-4 w-4" />
-            Vào học thử
           </Link>
         </div>
       </section>
@@ -107,6 +123,20 @@ export default async function GuestHomePage() {
           </Link>
         </div>
         <GuestCourseList courses={featuredCourses} />
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">Ebook nổi bật</h2>
+          <Link
+            href="/guest/library"
+            className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+          >
+            Xem tất cả
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+        <GuestLibraryList items={featuredEbookItems} />
       </section>
     </div>
   );

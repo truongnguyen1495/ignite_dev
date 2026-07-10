@@ -178,6 +178,10 @@ model Course {
   coverImageUrl  String?
   order          Int      @default(0)
   visibleToGuest Boolean  @default(false)
+  // Admin-curated, independent of visibleToGuest: only checked by the guest
+  // homepage's "Khóa học nổi bật" section, which shows exactly the courses
+  // opted in here rather than just the first few by `order`.
+  featuredOnHome Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -274,6 +278,9 @@ model LibraryItem {
   // visibleToGuest and any grants) without deleting it or touching grants.
   // Defaults true so existing rows keep showing up unchanged.
   visibleToStudents Boolean         @default(true)
+  // Admin-curated, independent of visibleToGuest: only checked by the guest
+  // homepage's "Ebook nổi bật" section, same convention as Course.featuredOnHome.
+  featuredOnHome    Boolean         @default(false)
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 

@@ -20,9 +20,11 @@ const BANNER_GRADIENTS = [
   "from-[var(--level-5)] to-[var(--level-4)]",
 ];
 
-export async function getGuestCourseItems(): Promise<GuestCourseItem[]> {
+export async function getGuestCourseItems({
+  onlyFeatured = false,
+}: { onlyFeatured?: boolean } = {}): Promise<GuestCourseItem[]> {
   const courses = await prisma.course.findMany({
-    where: { visibleToGuest: true },
+    where: onlyFeatured ? { visibleToGuest: true, featuredOnHome: true } : { visibleToGuest: true },
     orderBy: { order: "asc" },
     include: {
       lessons: {

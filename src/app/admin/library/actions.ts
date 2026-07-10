@@ -74,6 +74,7 @@ export async function createLibraryItemAction(
       guestPreviewPages: parsed.data.guestPreviewPages ?? null,
       order: parsed.data.order,
       visibleToGuest,
+      featuredOnHome: formData.get("featuredOnHome") === "on",
     },
   });
 
@@ -128,6 +129,7 @@ export async function updateLibraryItemAction(
       guestPreviewPages: parsed.data.guestPreviewPages ?? null,
       order: parsed.data.order,
       visibleToGuest,
+      featuredOnHome: formData.get("featuredOnHome") === "on",
     },
   });
 

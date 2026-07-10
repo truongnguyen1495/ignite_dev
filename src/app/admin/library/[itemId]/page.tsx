@@ -49,6 +49,7 @@ export default async function EditLibraryItemPage({
         guestPreviewPages={item.guestPreviewPages}
         order={item.order}
         visibleToGuest={item.visibleToGuest}
+        featuredOnHome={item.featuredOnHome}
       />
 
       <Card padding="lg" className="space-y-3">

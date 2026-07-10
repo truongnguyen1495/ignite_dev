@@ -38,6 +38,7 @@ export async function createCourseAction(
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       order: parsed.data.order,
       visibleToGuest: formData.get("visibleToGuest") === "on",
+      featuredOnHome: formData.get("featuredOnHome") === "on",
     },
   });
 
@@ -76,6 +77,7 @@ export async function updateCourseAction(
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       order: parsed.data.order,
       visibleToGuest: formData.get("visibleToGuest") === "on",
+      featuredOnHome: formData.get("featuredOnHome") === "on",
     },
   });
 

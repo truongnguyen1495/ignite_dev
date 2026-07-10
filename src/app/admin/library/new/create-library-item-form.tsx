@@ -49,6 +49,11 @@ export function CreateLibraryItemForm() {
         />
       )}
 
+      <label className="flex items-center gap-2 text-sm text-foreground">
+        <input type="checkbox" name="featuredOnHome" className="h-4 w-4 accent-primary" />
+        Hiện trong mục &quot;Ebook nổi bật&quot; ở trang chủ khách
+      </label>
+
       {error && <p className="text-sm text-danger">{error}</p>}
 
       <Button type="submit" disabled={pending} isLoading={pending}>
