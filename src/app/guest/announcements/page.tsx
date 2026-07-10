@@ -4,6 +4,12 @@ import { ORDERED_ANNOUNCEMENT_CATEGORIES } from "@/lib/announcements";
 import { PageHeader } from "@/components/ui/page-header";
 import { GuestAnnouncementTabs } from "./announcement-tabs";
 
+// Reading searchParams already forces dynamic rendering, but declare this
+// explicitly so it doesn't silently regress to a stale static snapshot if
+// that usage ever changes — see src/app/guest/courses/page.tsx for what
+// happens when a guest page has no dynamic API to trigger this.
+export const dynamic = "force-dynamic";
+
 export default async function GuestAnnouncementsPage({
   searchParams,
 }: {

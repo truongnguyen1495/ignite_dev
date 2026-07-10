@@ -6,6 +6,10 @@ import { YoutubeEmbed } from "@/components/youtube-embed";
 import { LessonMarkdown } from "@/components/lesson-markdown";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
 
+// See src/app/guest/courses/page.tsx — forces per-request rendering instead
+// of a build-time static snapshot of the (admin-toggleable) guest flag.
+export const dynamic = "force-dynamic";
+
 export default async function GuestCourseLessonPage({
   params,
 }: {

@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { GuestCourseList, type GuestCourseItem } from "./course-list";
 
+// No dynamic API (searchParams/cookies/headers) is read on this page, so
+// without this Next.js treats it as static and prerenders it once at build
+// time — admins toggling visibleToGuest afterward would never show up here.
+export const dynamic = "force-dynamic";
+
 const BANNER_GRADIENTS = [
   "from-[var(--primary)] to-[var(--info)]",
   "from-[var(--level-3)] to-[var(--primary)]",

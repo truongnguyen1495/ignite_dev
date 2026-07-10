@@ -3,6 +3,10 @@ import { requireGuestCourseAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { BackLink } from "@/components/ui/back-link";
 
+// See src/app/guest/courses/page.tsx — forces per-request rendering instead
+// of a build-time static snapshot of the (admin-toggleable) guest flag.
+export const dynamic = "force-dynamic";
+
 export default async function GuestCoursePage({
   params,
 }: {

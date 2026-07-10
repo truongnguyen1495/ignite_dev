@@ -3,6 +3,10 @@ import { LessonMarkdown } from "@/components/lesson-markdown";
 import { BackLink } from "@/components/ui/back-link";
 import { Card } from "@/components/ui/card";
 
+// See src/app/guest/courses/page.tsx — forces per-request rendering instead
+// of a build-time static snapshot of the (admin-toggleable) guest flag.
+export const dynamic = "force-dynamic";
+
 export default async function GuestAnnouncementDetailPage({
   params,
 }: {
