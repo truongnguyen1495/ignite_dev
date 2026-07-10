@@ -15,9 +15,9 @@ export function GuestCourseList({ courses }: { courses: GuestCourseItem[] }) {
         <Link
           key={course.id}
           href={course.href}
-          className="overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors hover:border-primary/60"
+          className="flex h-full flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors hover:border-primary/60"
         >
-          <div className="relative aspect-video w-full overflow-hidden bg-dark-surface-raised">
+          <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-dark-surface-raised">
             {course.coverImageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={course.coverImageUrl} alt={course.title} className="h-full w-full object-cover" />
@@ -29,12 +29,12 @@ export function GuestCourseList({ courses }: { courses: GuestCourseItem[] }) {
               </div>
             )}
           </div>
-          <div className="p-5">
+          <div className="flex flex-1 flex-col p-5">
             <p className="font-semibold text-dark-foreground">{course.title}</p>
             {course.description && (
               <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{course.description}</p>
             )}
-            <div className="mt-4 flex flex-nowrap items-center justify-between gap-2">
+            <div className="mt-auto flex flex-nowrap items-center justify-between gap-2 pt-4">
               <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
                 <BookOpen className="h-3.5 w-3.5" />
                 {course.totalLessons} bài học
