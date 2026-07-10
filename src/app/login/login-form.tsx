@@ -30,6 +30,13 @@ export function LoginForm() {
           Đăng ký ngay
         </Link>
       </p>
+      <p className="text-center text-sm text-muted">
+        Hoặc{" "}
+        <Link href="/guest/announcements" className="font-medium text-primary hover:text-primary-hover">
+          xem bản tin & khóa học công khai
+        </Link>{" "}
+        không cần đăng nhập
+      </p>
     </form>
   );
 }

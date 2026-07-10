@@ -14,12 +14,14 @@ export function EditCourseForm({
   description,
   coverImageUrl,
   order,
+  visibleToGuest,
 }: {
   courseId: string;
   title: string;
   description: string | null;
   coverImageUrl: string | null;
   order: number;
+  visibleToGuest: boolean;
 }) {
   const [error, formAction, pending] = useActionState(updateCourseAction, undefined);
   const [isDirty, setIsDirty] = useState(false);
@@ -68,6 +70,15 @@ export function EditCourseForm({
           />
           <CoverImageInput defaultValue={coverImageUrl ?? ""} onChange={() => setIsDirty(true)} />
           <Input id="order" name="order" type="number" defaultValue={order} label="Thứ tự hiển thị" />
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <input
+              type="checkbox"
+              name="visibleToGuest"
+              defaultChecked={visibleToGuest}
+              className="h-4 w-4 accent-primary"
+            />
+            Hiển thị công khai cho khách (không cần đăng nhập)
+          </label>
           {error && <p className="text-sm text-danger">{error}</p>}
         </form>
       </Card>

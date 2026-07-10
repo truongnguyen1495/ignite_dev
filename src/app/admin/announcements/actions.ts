@@ -47,6 +47,7 @@ export async function createAnnouncementAction(
       content: parsed.data.content,
       category: parsed.data.category,
       minLevel: resolveMinLevel(parsed.data.minLevel),
+      visibleToGuest: formData.get("visibleToGuest") === "on",
     },
   });
 
@@ -84,6 +85,7 @@ export async function updateAnnouncementAction(
       content: parsed.data.content,
       category: parsed.data.category,
       minLevel: resolveMinLevel(parsed.data.minLevel),
+      visibleToGuest: formData.get("visibleToGuest") === "on",
     },
   });
 

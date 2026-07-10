@@ -47,6 +47,7 @@ export default async function AnnouncementsPage() {
                 ) : (
                   <Badge color="muted">Tất cả học viên</Badge>
                 )}
+                {announcement.visibleToGuest && <Badge color="info">Công khai</Badge>}
                 <span className="text-xs text-muted">
                   {announcement.publishedAt.toLocaleDateString("vi-VN")}
                 </span>

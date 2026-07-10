@@ -85,15 +85,15 @@ model Lesson {
 }
 
 model Quiz {
-  id        String   @id @default(cuid())
-  lessonId  String   @unique
-  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  title     String
+  id            String   @id @default(cuid())
+  lessonId      String   @unique
+  lesson        Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  title         String
   // Null means "use the global Settings.passPercentage" — set here to
   // override the pass threshold for this quiz specifically.
   passThreshold Int?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   questions Question[]
   attempts  QuizAttempt[]
@@ -164,13 +164,14 @@ model Settings {
 // level-up gating) — a sequence of video lessons only visible to students
 // the Super Admin explicitly grants access to via CourseAccessGrant.
 model Course {
-  id            String   @id @default(cuid())
-  title         String
-  description   String?  @db.Text
-  coverImageUrl String?
-  order         Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String   @id @default(cuid())
+  title          String
+  description    String?  @db.Text
+  coverImageUrl  String?
+  order          Int      @default(0)
+  visibleToGuest Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   lessons     CourseLesson[]
   grants      CourseAccessGrant[]
@@ -240,14 +241,15 @@ model CourseLevelGrant {
 // purpose: a single optional minLevel threshold per post (null = everyone),
 // no per-student overrides, since nothing has asked for that yet.
 model Announcement {
-  id          String               @id @default(cuid())
-  title       String
-  content     String               @db.Text
-  category    AnnouncementCategory @default(GENERAL)
-  minLevel    Level?
-  publishedAt DateTime             @default(now())
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+  id             String               @id @default(cuid())
+  title          String
+  content        String               @db.Text
+  category       AnnouncementCategory @default(GENERAL)
+  minLevel       Level?
+  visibleToGuest Boolean              @default(false)
+  publishedAt    DateTime             @default(now())
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   reads AnnouncementRead[]
 

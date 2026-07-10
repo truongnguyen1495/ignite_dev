@@ -146,3 +146,34 @@ export async function requireAnnouncementAccess(announcementId: string) {
   }
   return { student, announcement };
 }
+
+// Guest-facing access — deliberately does NOT call requireSession/requireActiveStudent.
+// These back the public /guest/* routes: no login, no grantedLevel, just a single
+// admin-set flag per item. Anything not explicitly opted in (visibleToGuest: false,
+// the default) is invisible here regardless of its minLevel/course grants.
+export async function requireGuestAnnouncementAccess(announcementId: string) {
+  const announcement = await prisma.announcement.findUnique({ where: { id: announcementId } });
+  if (!announcement || !announcement.visibleToGuest) {
+    redirect("/guest/announcements?denied=1");
+  }
+  return { announcement };
+}
+
+export async function requireGuestCourseAccess(courseId: string) {
+  const course = await prisma.course.findUnique({ where: { id: courseId } });
+  if (!course || !course.visibleToGuest) {
+    redirect("/guest/courses?denied=1");
+  }
+  return { course };
+}
+
+export async function requireGuestCourseLessonAccess(lessonId: string) {
+  const lesson = await prisma.courseLesson.findUnique({
+    where: { id: lessonId },
+    include: { course: true },
+  });
+  if (!lesson || !lesson.course.visibleToGuest) {
+    redirect("/guest/courses?denied=1");
+  }
+  return { lesson };
+}

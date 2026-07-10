@@ -25,6 +25,7 @@ export default async function CoursesPage() {
     coverImageUrl: course.coverImageUrl,
     lessonsCount: course._count.lessons,
     grantsCount: course._count.grants,
+    visibleToGuest: course.visibleToGuest,
     gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
   }));
 

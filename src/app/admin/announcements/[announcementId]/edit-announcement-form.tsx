@@ -15,12 +15,14 @@ export function EditAnnouncementForm({
   content,
   category,
   minLevel,
+  visibleToGuest,
 }: {
   announcementId: string;
   title: string;
   content: string;
   category: AnnouncementCategory;
   minLevel: Level | null;
+  visibleToGuest: boolean;
 }) {
   const [error, formAction, pending] = useActionState(updateAnnouncementAction, undefined);
 
@@ -51,6 +53,15 @@ export function EditAnnouncementForm({
             </option>
           ))}
         </Select>
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <input
+            type="checkbox"
+            name="visibleToGuest"
+            defaultChecked={visibleToGuest}
+            className="h-4 w-4 accent-primary"
+          />
+          Hiển thị công khai cho khách (không cần đăng nhập)
+        </label>
       </section>
 
       <hr className="border-border" />

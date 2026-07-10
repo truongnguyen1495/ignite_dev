@@ -37,6 +37,7 @@ export async function createCourseAction(
       description: parsed.data.description ?? null,
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       order: parsed.data.order,
+      visibleToGuest: formData.get("visibleToGuest") === "on",
     },
   });
 
@@ -74,6 +75,7 @@ export async function updateCourseAction(
       description: parsed.data.description ?? null,
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       order: parsed.data.order,
+      visibleToGuest: formData.get("visibleToGuest") === "on",
     },
   });
 

@@ -15,6 +15,10 @@ export function CreateCourseForm() {
       <Textarea id="description" name="description" rows={3} label="Mô tả (tùy chọn)" />
       <CoverImageInput />
       <Input id="order" name="order" type="number" defaultValue={0} label="Thứ tự hiển thị" />
+      <label className="flex items-center gap-2 text-sm text-foreground">
+        <input type="checkbox" name="visibleToGuest" className="h-4 w-4 accent-primary" />
+        Hiển thị công khai cho khách (không cần đăng nhập)
+      </label>
       {error && <p className="text-sm text-danger">{error}</p>}
       <Button type="submit" disabled={pending} isLoading={pending}>
         {pending ? "Đang tạo..." : "Tạo khóa học"}

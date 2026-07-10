@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BookOpen, Users, Video } from "lucide-react";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
+import { Badge } from "@/components/ui/badge";
 
 const STORAGE_KEY = "admin-courses-view";
 
@@ -14,6 +15,7 @@ export type AdminCourseItem = {
   coverImageUrl: string | null;
   lessonsCount: number;
   grantsCount: number;
+  visibleToGuest: boolean;
   gradient: string;
 };
 
@@ -68,7 +70,10 @@ export function CourseList({ courses }: { courses: AdminCourseItem[] }) {
                 <Thumbnail course={course} className="h-full w-full" />
               </div>
               <div className="p-5">
-                <p className="font-semibold text-dark-foreground">{course.title}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold text-dark-foreground">{course.title}</p>
+                  {course.visibleToGuest && <Badge color="info">Công khai</Badge>}
+                </div>
                 {course.description && (
                   <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{course.description}</p>
                 )}
@@ -98,7 +103,10 @@ export function CourseList({ courses }: { courses: AdminCourseItem[] }) {
                 <Thumbnail course={course} className="h-full w-full" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold text-dark-foreground">{course.title}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="truncate font-semibold text-dark-foreground">{course.title}</p>
+                  {course.visibleToGuest && <Badge color="info">Công khai</Badge>}
+                </div>
                 {course.description && (
                   <p className="line-clamp-1 text-sm text-dark-muted">{course.description}</p>
                 )}
