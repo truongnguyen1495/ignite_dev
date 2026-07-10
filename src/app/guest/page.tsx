@@ -2,8 +2,6 @@ import Link from "next/link";
 import { ArrowRight, Megaphone, UserPlus, Video } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getGuestCourseItems } from "@/lib/guest-courses";
-import { ANNOUNCEMENT_CATEGORY_LABELS, ANNOUNCEMENT_CATEGORY_BADGE_COLOR } from "@/lib/announcements";
-import { Badge } from "@/components/ui/badge";
 import { GuestCourseList } from "./courses/course-list";
 
 // See src/app/guest/courses/page.tsx — forces per-request rendering instead
@@ -12,10 +10,11 @@ import { GuestCourseList } from "./courses/course-list";
 export const dynamic = "force-dynamic";
 
 export default async function GuestHomePage() {
-  const [latestAnnouncement, courses] = await Promise.all([
-    prisma.announcement.findFirst({
+  const [latestAnnouncements, courses] = await Promise.all([
+    prisma.announcement.findMany({
       where: { visibleToGuest: true, visibleToStudents: true },
       orderBy: { publishedAt: "desc" },
+      take: 6,
     }),
     getGuestCourseItems(),
   ]);
@@ -62,29 +61,35 @@ export default async function GuestHomePage() {
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
-        {latestAnnouncement ? (
-          <Link
-            href={`/guest/announcements/${latestAnnouncement.id}`}
-            className="flex items-center gap-3 rounded-lg border border-border bg-surface p-4 transition-colors hover:border-primary/50"
-          >
-            {latestAnnouncement.coverImageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={latestAnnouncement.coverImageUrl}
-                alt=""
-                className="aspect-video w-20 shrink-0 rounded-md object-cover"
-              />
-            ) : (
-              <Megaphone className="h-4 w-4 shrink-0 text-muted" />
-            )}
-            <span className="min-w-0 flex-1 truncate text-foreground">{latestAnnouncement.title}</span>
-            <Badge color={ANNOUNCEMENT_CATEGORY_BADGE_COLOR[latestAnnouncement.category]}>
-              {ANNOUNCEMENT_CATEGORY_LABELS[latestAnnouncement.category]}
-            </Badge>
-            <span className="shrink-0 text-xs text-muted">
-              {latestAnnouncement.publishedAt.toLocaleDateString("vi-VN")}
-            </span>
-          </Link>
+        {latestAnnouncements.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {latestAnnouncements.map((announcement) => (
+              <Link
+                key={announcement.id}
+                href={`/guest/announcements/${announcement.id}`}
+                className="overflow-hidden rounded-lg border border-border bg-surface transition-colors hover:border-primary/50"
+              >
+                {announcement.coverImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={announcement.coverImageUrl}
+                    alt=""
+                    className="aspect-video w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex aspect-video w-full items-center justify-center bg-faint-bg">
+                    <Megaphone className="h-6 w-6 text-muted" />
+                  </div>
+                )}
+                <div className="p-3">
+                  <p className="line-clamp-2 text-sm font-medium text-foreground">{announcement.title}</p>
+                  <p className="mt-1 text-xs text-muted">
+                    {announcement.publishedAt.toLocaleDateString("vi-VN")}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
         ) : (
           <p className="text-sm text-muted">Chưa có bản tin công khai nào.</p>
         )}
