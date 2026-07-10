@@ -7,6 +7,7 @@ import { getIncompleteQuizzesForLevel } from "@/lib/level-completion";
 import { RequestLevelUpButton } from "./request-button";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
+import { LevelBadge } from "@/components/ui/level-badge";
 
 const STATUS_LABELS = {
   PENDING: "Đang chờ duyệt",
@@ -77,10 +78,12 @@ export default async function LevelUpPage() {
         <Card className="space-y-4">
           <div className="flex items-start gap-2 text-sm text-muted">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-            <p>
-              Bạn cần đạt tất cả bài test ở{" "}
-              <span className="font-medium text-foreground">{LEVEL_LABELS[student.grantedLevel]}</span> trước khi
-              xin lên cấp. Còn thiếu {incompleteQuizzes.length} bài:
+            <p className="flex flex-wrap items-center gap-1.5">
+              <span>Bạn cần đạt tất cả bài test ở</span>
+              <LevelBadge level={student.grantedLevel} full />
+              <span>
+                trước khi xin lên cấp. Còn thiếu {incompleteQuizzes.length} bài:
+              </span>
             </p>
           </div>
           <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
