@@ -34,12 +34,12 @@ export function GuestCourseList({ courses }: { courses: GuestCourseItem[] }) {
             {course.description && (
               <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{course.description}</p>
             )}
-            <div className="mt-4 flex items-center justify-between">
-              <span className="flex items-center gap-1 text-xs text-dark-muted">
+            <div className="mt-4 flex flex-nowrap items-center justify-between gap-2">
+              <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
                 <BookOpen className="h-3.5 w-3.5" />
                 {course.totalLessons} bài học
               </span>
-              <span className="flex items-center gap-0.5 text-xs font-medium text-primary">
+              <span className="flex shrink-0 items-center gap-0.5 whitespace-nowrap text-xs font-medium text-indigo-400">
                 {course.ctaLabel}
                 <ChevronRight className="h-3.5 w-3.5" />
               </span>
