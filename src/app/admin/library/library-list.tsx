@@ -45,8 +45,8 @@ function Thumbnail({ item, className }: { item: LibraryListItem; className: stri
     );
   }
   return (
-    <div className={`${className} flex items-center justify-center bg-faint-bg`}>
-      <Icon className="h-9 w-9 text-faint" />
+    <div className={`${className} flex items-center justify-center bg-dark-surface-raised`}>
+      <Icon className="h-9 w-9 text-slate-400" />
     </div>
   );
 }
@@ -125,19 +125,19 @@ export function LibraryList({ items }: { items: LibraryListItem[] }) {
             <div key={item.id} className="relative h-full">
               <Link
                 href={`/admin/library/${item.id}`}
-                className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface transition-colors hover:border-primary/50"
+                className="flex h-full flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors hover:border-primary/60"
               >
-                <div className="relative aspect-video w-full shrink-0 overflow-hidden">
+                <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-dark-surface-raised">
                   <Thumbnail item={item} className="h-full w-full" />
                 </div>
-                <div className="flex flex-1 flex-col gap-2 p-4">
+                <div className="flex flex-1 flex-col gap-2 p-5">
                   <div>
-                    <p className="font-semibold text-foreground">{item.title}</p>
-                    {item.author && <p className="text-sm text-muted">{item.author}</p>}
+                    <p className="font-semibold text-dark-foreground">{item.title}</p>
+                    {item.author && <p className="text-sm text-dark-muted">{item.author}</p>}
                   </div>
                   <AccessBadges item={item} />
                   {item.pageCount && (
-                    <span className="mt-auto pt-2 text-xs text-muted">{item.pageCount} trang</span>
+                    <span className="mt-auto pt-2 text-xs text-slate-300">{item.pageCount} trang</span>
                   )}
                 </div>
               </Link>
@@ -157,20 +157,20 @@ export function LibraryList({ items }: { items: LibraryListItem[] }) {
           {filtered.map((item) => (
             <li
               key={item.id}
-              className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3 hover:border-primary/50"
+              className="flex items-center gap-3 rounded-lg border border-dark-border bg-dark-surface p-3 hover:border-primary/60"
             >
               <Link
                 href={`/admin/library/${item.id}`}
                 className="flex min-w-0 flex-1 items-center gap-3"
               >
-                <div className="aspect-video w-16 shrink-0 overflow-hidden rounded-md">
+                <div className="aspect-video w-16 shrink-0 overflow-hidden rounded-md bg-dark-surface-raised">
                   <Thumbnail item={item} className="h-full w-full" />
                 </div>
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-foreground">{item.title}</span>
-                    {item.author && <span className="text-sm text-muted">— {item.author}</span>}
-                    {item.pageCount && <span className="text-xs text-muted">{item.pageCount} trang</span>}
+                    <span className="text-dark-foreground">{item.title}</span>
+                    {item.author && <span className="text-sm text-dark-muted">— {item.author}</span>}
+                    {item.pageCount && <span className="text-xs text-slate-300">{item.pageCount} trang</span>}
                   </div>
                   <AccessBadges item={item} />
                 </div>
