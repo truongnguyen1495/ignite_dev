@@ -252,9 +252,10 @@ model Announcement {
   category       AnnouncementCategory @default(GENERAL)
   minLevel       Level?
   visibleToGuest Boolean              @default(false)
-  // Independent of visibleToGuest — lets an admin hide an announcement from
-  // the student-facing /dashboard/announcements list and detail page without
-  // deleting it. Defaults true so existing rows keep showing up unchanged.
+  // Master hide switch: false pulls the announcement from both the
+  // student-facing /dashboard/announcements list and the public /guest/*
+  // one, overriding visibleToGuest — without deleting it. Defaults true so
+  // existing rows keep showing up unchanged.
   visibleToStudents Boolean           @default(true)
   publishedAt    DateTime             @default(now())
   createdAt      DateTime             @default(now())

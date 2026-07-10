@@ -115,9 +115,10 @@ export async function setAnnouncementGuestVisibilityAction(
   revalidatePath("/admin/announcements");
 }
 
-// Independent of visibleToGuest — hides the announcement from the
-// student-facing /dashboard/announcements list and detail page (see
-// requireAnnouncementAccess in src/lib/access.ts) without deleting it.
+// Master hide switch — pulls the announcement from both the student-facing
+// /dashboard/announcements list/detail page and the public /guest/* one
+// (overriding visibleToGuest; see requireAnnouncementAccess and
+// requireGuestAnnouncementAccess in src/lib/access.ts) without deleting it.
 export async function setAnnouncementVisibleToStudentsAction(
   announcementId: string,
   visibleToStudents: boolean

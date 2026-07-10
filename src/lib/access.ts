@@ -153,7 +153,10 @@ export async function requireAnnouncementAccess(announcementId: string) {
 // the default) is invisible here regardless of its minLevel/course grants.
 export async function requireGuestAnnouncementAccess(announcementId: string) {
   const announcement = await prisma.announcement.findUnique({ where: { id: announcementId } });
-  if (!announcement || !announcement.visibleToGuest) {
+  // visibleToStudents doubles as a master hide switch here: an announcement
+  // hidden from students is hidden from guests too, regardless of
+  // visibleToGuest — guests never see anything a student can't.
+  if (!announcement || !announcement.visibleToGuest || !announcement.visibleToStudents) {
     redirect("/guest/announcements?denied=1");
   }
   return { announcement };

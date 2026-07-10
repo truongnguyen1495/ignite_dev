@@ -18,7 +18,9 @@ export default async function GuestAnnouncementsPage({
   const { denied } = await searchParams;
 
   const announcements = await prisma.announcement.findMany({
-    where: { visibleToGuest: true },
+    // visibleToStudents doubles as a master hide switch: hidden-from-students
+    // announcements never show up for guests either, regardless of visibleToGuest.
+    where: { visibleToGuest: true, visibleToStudents: true },
     orderBy: { publishedAt: "desc" },
   });
 
