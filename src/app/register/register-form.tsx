@@ -18,6 +18,8 @@ function PasswordField({
   autoComplete,
   error,
   hint,
+  value,
+  onChange,
 }: {
   id: string;
   name: string;
@@ -25,6 +27,8 @@ function PasswordField({
   autoComplete: string;
   error?: string;
   hint?: string;
+  value: string;
+  onChange: (value: string) => void;
 }) {
   const [visible, setVisible] = useState(false);
 
@@ -41,6 +45,8 @@ function PasswordField({
           required
           minLength={8}
           autoComplete={autoComplete}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
           className={inputClass}
         />
         <button
@@ -65,9 +71,19 @@ function PasswordField({
 // Digits-only text field formatted as dd/mm/yyyy instead of <input type="date">,
 // since the native date picker on many mobile browsers only supports tapping
 // through a wheel/calendar and blocks typing the date by hand.
-function DateOfBirthField({ id, name, error }: { id: string; name: string; error?: string }) {
-  const [value, setValue] = useState("");
-
+function DateOfBirthField({
+  id,
+  name,
+  error,
+  value,
+  onChange,
+}: {
+  id: string;
+  name: string;
+  error?: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
     let formatted = digits;
@@ -76,7 +92,7 @@ function DateOfBirthField({ id, name, error }: { id: string; name: string; error
     } else if (digits.length > 2) {
       formatted = `${digits.slice(0, 2)}/${digits.slice(2)}`;
     }
-    setValue(formatted);
+    onChange(formatted);
   }
 
   return (
@@ -102,6 +118,18 @@ export function RegisterForm() {
   const [state, formAction, pending] = useActionState<RegisterState, FormData>(registerAction, undefined);
   const fieldErrors = state?.fieldErrors ?? {};
 
+  // Every field is controlled so a failed submission only ever clears the
+  // fields that are actually wrong — React resets uncontrolled inputs after
+  // *any* form action call (success or failure), which would otherwise wipe
+  // fields the user already filled in correctly.
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   return (
     <form action={formAction} className="w-full space-y-4">
       <Input
@@ -111,6 +139,8 @@ export function RegisterForm() {
         required
         hint="Nhập họ và tên đầy đủ như trên giấy tờ tùy thân."
         error={fieldErrors.name}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
       />
       <Input
         id="email"
@@ -121,6 +151,8 @@ export function RegisterForm() {
         autoComplete="email"
         hint="Dùng email bạn đang sử dụng để nhận thông báo tài khoản."
         error={fieldErrors.email}
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
       />
       <Input
         id="username"
@@ -130,6 +162,8 @@ export function RegisterForm() {
         minLength={3}
         hint="Ít nhất 3 ký tự, chỉ gồm chữ, số, dấu chấm và gạch dưới."
         error={fieldErrors.username}
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
       />
       <Input
         id="phoneNumber"
@@ -140,8 +174,16 @@ export function RegisterForm() {
         placeholder="0xxxxxxxxx hoặc +84xxxxxxxxx"
         hint="Định dạng: 0xxxxxxxxx hoặc +84xxxxxxxxx."
         error={fieldErrors.phoneNumber}
+        value={phoneNumber}
+        onChange={(e) => setPhoneNumber(e.target.value)}
       />
-      <DateOfBirthField id="dateOfBirth" name="dateOfBirth" error={fieldErrors.dateOfBirth} />
+      <DateOfBirthField
+        id="dateOfBirth"
+        name="dateOfBirth"
+        error={fieldErrors.dateOfBirth}
+        value={dateOfBirth}
+        onChange={setDateOfBirth}
+      />
       <PasswordField
         id="password"
         name="password"
@@ -149,6 +191,8 @@ export function RegisterForm() {
         autoComplete="new-password"
         hint="Ít nhất 8 ký tự."
         error={fieldErrors.password}
+        value={password}
+        onChange={setPassword}
       />
       <PasswordField
         id="confirmPassword"
@@ -157,6 +201,8 @@ export function RegisterForm() {
         autoComplete="new-password"
         hint="Nhập lại đúng mật khẩu ở trên."
         error={fieldErrors.confirmPassword}
+        value={confirmPassword}
+        onChange={setConfirmPassword}
       />
       <Button type="submit" className="w-full" isLoading={pending}>
         {pending ? "Đang đăng ký..." : "Đăng ký"}
