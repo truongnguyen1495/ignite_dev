@@ -242,19 +242,21 @@ export function AnnouncementsList({ announcements }: { announcements: Announceme
                     <Megaphone className="h-4 w-4 text-muted" />
                   </span>
                 )}
-                <span className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-                  <span className="text-foreground">{announcement.title}</span>
-                  <Badge color={ANNOUNCEMENT_CATEGORY_BADGE_COLOR[announcement.category]}>
-                    {ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}
-                  </Badge>
-                  {announcement.minLevel ? (
-                    <Badge color="primary">{LEVEL_LABELS[announcement.minLevel]} trở lên</Badge>
-                  ) : (
-                    <Badge color="muted">Tất cả học viên</Badge>
-                  )}
-                  {!announcement.visibleToStudents && <Badge color="warning">Đã ẩn</Badge>}
-                  {announcement.visibleToGuest && <Badge color="info">Công khai</Badge>}
-                  <span className="text-xs text-muted">{announcement.publishedAtLabel}</span>
+                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="truncate text-foreground">{announcement.title}</span>
+                  <span className="flex flex-wrap items-center gap-2">
+                    <Badge color={ANNOUNCEMENT_CATEGORY_BADGE_COLOR[announcement.category]}>
+                      {ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}
+                    </Badge>
+                    {announcement.minLevel ? (
+                      <Badge color="primary">{LEVEL_LABELS[announcement.minLevel]} trở lên</Badge>
+                    ) : (
+                      <Badge color="muted">Tất cả học viên</Badge>
+                    )}
+                    {!announcement.visibleToStudents && <Badge color="warning">Đã ẩn</Badge>}
+                    {announcement.visibleToGuest && <Badge color="info">Công khai</Badge>}
+                    <span className="text-xs text-muted">{announcement.publishedAtLabel}</span>
+                  </span>
                 </span>
               </Link>
               <ToggleAnnouncementStudentsVisibilityButton
