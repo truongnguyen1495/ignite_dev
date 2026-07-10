@@ -18,8 +18,8 @@ export function SettingsForm({ passPercentage }: { passPercentage: number }) {
         max={100}
         defaultValue={passPercentage}
         required
-        label="Ngưỡng điểm đạt (%)"
-        hint="Học viên đạt khi điểm bài test ≥ ngưỡng này. Áp dụng cho các lượt làm bài mới; lượt đã làm trước đó giữ nguyên kết quả."
+        label="Ngưỡng điểm đạt (%) mặc định"
+        hint="Học viên đạt khi điểm bài test ≥ ngưỡng này. Áp dụng cho các lượt làm bài mới của mọi bài test chưa đặt ngưỡng riêng; lượt đã làm trước đó giữ nguyên kết quả."
       />
       {error && <p className="text-sm text-danger">{error}</p>}
       <Button type="submit" disabled={pending} isLoading={pending}>

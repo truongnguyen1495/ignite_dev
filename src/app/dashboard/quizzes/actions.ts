@@ -13,14 +13,16 @@ export async function submitQuizAttemptAction(quizId: string, formData: FormData
 
   // Independent reads (neither depends on the other's result) — fetched
   // together instead of one after another.
-  const [questions, settings] = await Promise.all([
+  const [questions, quiz, settings] = await Promise.all([
     prisma.question.findMany({
       where: { quizId },
       include: { options: true },
       orderBy: { order: "asc" },
     }),
+    prisma.quiz.findUniqueOrThrow({ where: { id: quizId }, select: { passThreshold: true } }),
     prisma.settings.findUniqueOrThrow({ where: { id: 1 } }),
   ]);
+  const passThreshold = quiz.passThreshold ?? settings.passPercentage;
 
   const answers: Record<string, { selected: string[]; correct: boolean }> = {};
   let correctCount = 0;
@@ -37,7 +39,7 @@ export async function submitQuizAttemptAction(quizId: string, formData: FormData
 
   const scorePercent =
     questions.length === 0 ? 0 : Math.round((correctCount / questions.length) * 100);
-  const passed = scorePercent >= settings.passPercentage;
+  const passed = scorePercent >= passThreshold;
 
   const attempt = await prisma.quizAttempt.create({
     data: {
@@ -46,7 +48,7 @@ export async function submitQuizAttemptAction(quizId: string, formData: FormData
       answers: answers as unknown as Prisma.InputJsonValue,
       scorePercent,
       passed,
-      passThreshold: settings.passPercentage,
+      passThreshold,
     },
   });
 

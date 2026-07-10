@@ -10,16 +10,19 @@ export default async function QuizManagementPage({
   params: Promise<{ quizId: string }>;
 }) {
   const { quizId } = await params;
-  const quiz = await prisma.quiz.findUnique({
-    where: { id: quizId },
-    include: {
-      lesson: true,
-      questions: {
-        orderBy: { order: "asc" },
-        include: { options: { orderBy: { order: "asc" } } },
+  const [quiz, settings] = await Promise.all([
+    prisma.quiz.findUnique({
+      where: { id: quizId },
+      include: {
+        lesson: true,
+        questions: {
+          orderBy: { order: "asc" },
+          include: { options: { orderBy: { order: "asc" } } },
+        },
       },
-    },
-  });
+    }),
+    prisma.settings.upsert({ where: { id: 1 }, update: {}, create: { id: 1, passPercentage: 80 } }),
+  ]);
   if (!quiz) {
     notFound();
   }
@@ -32,6 +35,8 @@ export default async function QuizManagementPage({
         lessonId={quiz.lessonId}
         lessonTitle={quiz.lesson.title}
         questions={quiz.questions}
+        passThreshold={quiz.passThreshold}
+        defaultPassPercentage={settings.passPercentage}
       />
 
       <Card className="max-w-xl space-y-3">

@@ -39,15 +39,20 @@ export function QuizEditor({
   lessonId,
   lessonTitle,
   questions: initialQuestions,
+  passThreshold: initialPassThreshold,
+  defaultPassPercentage,
 }: {
   quizId: string;
   title: string;
   lessonId: string;
   lessonTitle: string;
   questions: SavedQuestion[];
+  passThreshold: number | null;
+  defaultPassPercentage: number;
 }) {
   const [displayTitle, setDisplayTitle] = useState(initialTitle);
   const [title, setTitle] = useState(initialTitle);
+  const [passThreshold, setPassThreshold] = useState<number | null>(initialPassThreshold);
   const [questions, setQuestions] = useState<QuestionDraft[]>(() => toDrafts(initialQuestions));
   const [isDirty, setIsDirty] = useState(false);
   const [error, setError] = useState<string | undefined>();
@@ -144,7 +149,8 @@ export function QuizEditor({
           id: q.id,
           text: q.text,
           options: q.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect })),
-        }))
+        })),
+        passThreshold
       );
       if (result.error) {
         setError(result.error);
@@ -153,6 +159,7 @@ export function QuizEditor({
       setDisplayTitle(result.title!);
       setTitle(result.title!);
       setQuestions(toDrafts(result.questions!));
+      setPassThreshold(result.passThreshold ?? null);
       setIsDirty(false);
     });
   }
@@ -176,13 +183,27 @@ export function QuizEditor({
           </Button>
         </div>
 
-        <Card className="max-w-xl">
+        <Card className="max-w-xl space-y-4">
           <Input
             id="quiz-title"
             label="Tiêu đề bài test"
             value={title}
             onChange={(e) => {
               setTitle(e.target.value);
+              markDirty();
+            }}
+          />
+          <Input
+            id="quiz-pass-threshold"
+            type="number"
+            min={1}
+            max={100}
+            label="Ngưỡng điểm đạt (%)"
+            placeholder={`Mặc định: ${defaultPassPercentage}`}
+            value={passThreshold === null ? "" : passThreshold}
+            hint="Để trống để dùng ngưỡng mặc định trong Cài đặt. Đặt riêng nếu bài test này cần ngưỡng khác."
+            onChange={(e) => {
+              setPassThreshold(e.target.value === "" ? null : Number(e.target.value));
               markDirty();
             }}
           />

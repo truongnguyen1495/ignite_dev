@@ -40,13 +40,17 @@ export type SavedQuestion = Question & { options: AnswerOption[] };
 export async function saveQuizAction(
   quizId: string,
   title: string,
-  questions: QuestionInput[]
-): Promise<{ error?: string; title?: string; questions?: SavedQuestion[] }> {
+  questions: QuestionInput[],
+  passThreshold: number | null
+): Promise<{ error?: string; title?: string; questions?: SavedQuestion[]; passThreshold?: number | null }> {
   await requireActiveSuperAdmin();
 
   const trimmedTitle = title.trim();
   if (!trimmedTitle) {
     return { error: "Tiêu đề không được để trống." };
+  }
+  if (passThreshold !== null && (!Number.isInteger(passThreshold) || passThreshold < 1 || passThreshold > 100)) {
+    return { error: "Ngưỡng điểm đạt phải từ 1 đến 100." };
   }
 
   for (let i = 0; i < questions.length; i++) {
@@ -73,7 +77,7 @@ export async function saveQuizAction(
   // only papers over prepared-statement issues, not this. Array-form is
   // sent as one wrapped transaction and works fine through the pooler.
   const operations: Prisma.PrismaPromise<unknown>[] = [
-    prisma.quiz.update({ where: { id: quizId }, data: { title: trimmedTitle } }),
+    prisma.quiz.update({ where: { id: quizId }, data: { title: trimmedTitle, passThreshold } }),
   ];
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i];
@@ -109,7 +113,7 @@ export async function saveQuizAction(
 
   revalidatePath(`/admin/quizzes/${quizId}`);
   revalidatePath("/admin/lessons");
-  return { title: trimmedTitle, questions: savedQuestions };
+  return { title: trimmedTitle, questions: savedQuestions, passThreshold };
 }
 
 export async function deleteQuestionAction(questionId: string, quizId: string) {

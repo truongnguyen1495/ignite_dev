@@ -89,6 +89,9 @@ model Quiz {
   lessonId  String   @unique
   lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   title     String
+  // Null means "use the global Settings.passPercentage" — set here to
+  // override the pass threshold for this quiz specifically.
+  passThreshold Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
