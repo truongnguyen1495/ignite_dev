@@ -1,4 +1,5 @@
 import { requireActiveStudent } from "@/lib/access";
+import { toDateOnlyISOString } from "@/lib/date";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { ProfileForm } from "./profile-form";
 import { PageHeader } from "@/components/ui/page-header";
@@ -20,7 +21,7 @@ export default async function ProfilePage() {
           name={student.name}
           email={student.email}
           username={student.username}
-          dateOfBirth={student.dateOfBirth ? student.dateOfBirth.toISOString().slice(0, 10) : null}
+          dateOfBirth={student.dateOfBirth ? toDateOnlyISOString(student.dateOfBirth) : null}
           phoneNumber={student.phoneNumber}
           grantedLevelLabel={LEVEL_LABELS[student.grantedLevel]}
         />

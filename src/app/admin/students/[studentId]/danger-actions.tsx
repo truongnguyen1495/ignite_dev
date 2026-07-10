@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Unlock, Trash2, CheckCircle2 } from "lucide-react";
 import type { User } from "@prisma/client";
+import { formatDateOnlyVN } from "@/lib/date";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { deleteStudentAction, setStudentStatusAction, approveStudentAction } from "../actions";
@@ -83,7 +84,7 @@ export function ApproveStudentButton({
           {student.dateOfBirth && (
             <div className="min-w-0">
               <dt className="text-xs text-muted">Ngày sinh</dt>
-              <dd className="text-foreground">{student.dateOfBirth.toLocaleDateString("vi-VN")}</dd>
+              <dd className="text-foreground">{formatDateOnlyVN(student.dateOfBirth)}</dd>
             </div>
           )}
           {student.phoneNumber && (

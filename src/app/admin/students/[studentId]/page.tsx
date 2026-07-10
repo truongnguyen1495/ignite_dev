@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { formatDateOnlyVN } from "@/lib/date";
 import { EditStudentForm } from "./edit-student-form";
 import { DeleteStudentButton, ToggleStudentStatusButton, ApproveStudentButton } from "./danger-actions";
 import { LEVEL_LABELS, hasLevelAccess, levelRank } from "@/lib/levels";
@@ -96,7 +97,7 @@ export default async function EditStudentPage({
         isPending={isPending}
         hasRegistrationInfo={hasRegistrationInfo}
         username={student.username}
-        dateOfBirthLabel={student.dateOfBirth ? student.dateOfBirth.toLocaleDateString("vi-VN") : null}
+        dateOfBirthLabel={student.dateOfBirth ? formatDateOnlyVN(student.dateOfBirth) : null}
       >
         {isPending && (
           <div className="space-y-4 rounded-xl border border-warning/30 bg-warning-bg p-6">
@@ -118,7 +119,7 @@ export default async function EditStudentPage({
               {student.dateOfBirth && (
                 <div className="min-w-0">
                   <dt className="text-xs text-muted">Ngày sinh</dt>
-                  <dd className="text-foreground">{student.dateOfBirth.toLocaleDateString("vi-VN")}</dd>
+                  <dd className="text-foreground">{formatDateOnlyVN(student.dateOfBirth)}</dd>
                 </div>
               )}
               {student.phoneNumber && (

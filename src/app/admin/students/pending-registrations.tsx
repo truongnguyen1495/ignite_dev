@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { User } from "@prisma/client";
+import { formatDateOnlyVN } from "@/lib/date";
 import { ApproveStudentButton, DeleteStudentButton } from "./[studentId]/danger-actions";
 
 export function PendingRegistrations({ students }: { students: User[] }) {
@@ -62,9 +63,7 @@ export function PendingRegistrations({ students }: { students: User[] }) {
                   {student.dateOfBirth && (
                     <div>
                       <dt className="text-xs text-muted">Ngày sinh</dt>
-                      <dd className="text-foreground">
-                        {student.dateOfBirth.toLocaleDateString("vi-VN")}
-                      </dd>
+                      <dd className="text-foreground">{formatDateOnlyVN(student.dateOfBirth)}</dd>
                     </div>
                   )}
                   {student.phoneNumber && (

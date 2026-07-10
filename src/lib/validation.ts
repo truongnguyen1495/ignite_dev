@@ -31,3 +31,25 @@ export const optionalPhoneNumberSchema = z
   .union([phoneNumberSchema, z.literal("")])
   .transform((v) => (v === "" ? null : v))
   .optional();
+
+// dd/mm/yyyy text entry — used instead of <input type="date"> so mobile
+// browsers that don't support typing into the native date picker still let
+// the user enter a birth date by hand.
+export const DATE_OF_BIRTH_REGEX = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+
+export const DATE_OF_BIRTH_ERROR = "Ngày sinh không hợp lệ. Định dạng: dd/mm/yyyy.";
+
+export const dateOfBirthSchema = z
+  .string()
+  .trim()
+  .regex(DATE_OF_BIRTH_REGEX, DATE_OF_BIRTH_ERROR)
+  .transform((value) => {
+    const [, dd, mm, yyyy] = value.match(DATE_OF_BIRTH_REGEX)!;
+    return { day: Number(dd), month: Number(mm), year: Number(yyyy) };
+  })
+  .refine(({ day, month, year }) => {
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+  }, DATE_OF_BIRTH_ERROR)
+  .transform(({ day, month, year }) => new Date(Date.UTC(year, month - 1, day)))
+  .refine((date) => date.getTime() <= Date.now(), "Ngày sinh không được ở tương lai.");

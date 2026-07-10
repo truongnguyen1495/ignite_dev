@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { phoneNumberSchema } from "@/lib/validation";
+import { phoneNumberSchema, dateOfBirthSchema } from "@/lib/validation";
 
 const registerSchema = z
   .object({
@@ -17,10 +17,7 @@ const registerSchema = z
       .min(3, "Username phải có ít nhất 3 ký tự.")
       .regex(/^[a-zA-Z0-9_.]+$/, "Username chỉ được chứa chữ, số, dấu chấm và gạch dưới."),
     phoneNumber: phoneNumberSchema,
-    dateOfBirth: z.coerce
-      .date()
-      .refine((date) => !Number.isNaN(date.getTime()), "Ngày sinh không hợp lệ.")
-      .refine((date) => date.getTime() <= Date.now(), "Ngày sinh không được ở tương lai."),
+    dateOfBirth: dateOfBirthSchema,
     password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự."),
     confirmPassword: z.string(),
   })
@@ -29,10 +26,13 @@ const registerSchema = z
     path: ["confirmPassword"],
   });
 
-export async function registerAction(
-  _prevState: string | undefined,
-  formData: FormData
-): Promise<string | undefined> {
+export type RegisterFieldErrors = Partial<
+  Record<"name" | "email" | "username" | "phoneNumber" | "dateOfBirth" | "password" | "confirmPassword", string>
+>;
+
+export type RegisterState = { fieldErrors: RegisterFieldErrors } | undefined;
+
+export async function registerAction(_prevState: RegisterState, formData: FormData): Promise<RegisterState> {
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -43,7 +43,14 @@ export async function registerAction(
     confirmPassword: formData.get("confirmPassword"),
   });
   if (!parsed.success) {
-    return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
+    const fieldErrors: RegisterFieldErrors = {};
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0];
+      if (typeof key === "string" && !(key in fieldErrors)) {
+        (fieldErrors as Record<string, string>)[key] = issue.message;
+      }
+    }
+    return { fieldErrors };
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
@@ -66,12 +73,12 @@ export async function registerAction(
       const target = e.meta?.target;
       const fields = Array.isArray(target) ? target : [];
       if (fields.includes("username")) {
-        return "Username này đã được sử dụng.";
+        return { fieldErrors: { username: "Username này đã được sử dụng." } };
       }
       if (fields.includes("phoneNumber")) {
-        return "Số điện thoại này đã được sử dụng.";
+        return { fieldErrors: { phoneNumber: "Số điện thoại này đã được sử dụng." } };
       }
-      return "Email này đã được sử dụng.";
+      return { fieldErrors: { email: "Email này đã được sử dụng." } };
     }
     throw e;
   }
