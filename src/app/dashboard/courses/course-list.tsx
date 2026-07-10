@@ -89,11 +89,11 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
           {courses.map((course) => {
             const card = (
               <div
-                className={`overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors ${
+                className={`flex h-full flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors ${
                   course.unlocked ? "hover:border-primary/60" : "opacity-60"
                 }`}
               >
-                <div className="relative aspect-video w-full overflow-hidden bg-dark-surface-raised">
+                <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-dark-surface-raised">
                   <Thumbnail course={course} className="h-full w-full" />
                   {!course.unlocked && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50">
@@ -101,7 +101,7 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                     </div>
                   )}
                 </div>
-                <div className="p-5">
+                <div className="flex flex-1 flex-col p-5">
                   {course.unlocked ? (
                     <Badge color="success">Đã mở khóa</Badge>
                   ) : (
@@ -116,13 +116,13 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                       <ProgressBar course={course} />
                     </div>
                   )}
-                  <div className="mt-4 flex items-center justify-between text-xs text-dark-muted">
-                    <span className="flex items-center gap-1">
+                  <div className="mt-auto flex flex-nowrap items-center justify-between gap-2 pt-4">
+                    <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
                       <BookOpen className="h-3.5 w-3.5" />
                       {course.totalLessons} bài học
                     </span>
                     {course.unlocked && (
-                      <span className="flex items-center gap-1 font-medium text-primary">
+                      <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
                         Vào học
                         <ArrowRight className="h-3.5 w-3.5" />
                       </span>
@@ -132,11 +132,13 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
               </div>
             );
             return course.unlocked ? (
-              <Link key={course.id} href={course.href}>
+              <Link key={course.id} href={course.href} className="block h-full">
                 {card}
               </Link>
             ) : (
-              <div key={course.id}>{card}</div>
+              <div key={course.id} className="h-full">
+                {card}
+              </div>
             );
           })}
         </div>
@@ -173,7 +175,7 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                 <div className="hidden w-40 shrink-0 sm:block">
                   <ProgressBar course={course} />
                 </div>
-                <div className="hidden shrink-0 items-center gap-1 text-xs text-dark-muted md:flex">
+                <div className="hidden shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300 md:flex">
                   <BookOpen className="h-3.5 w-3.5" />
                   {course.totalLessons} bài học
                 </div>
