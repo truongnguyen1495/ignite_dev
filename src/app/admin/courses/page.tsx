@@ -15,7 +15,10 @@ const BANNER_GRADIENTS = [
 export default async function CoursesPage() {
   const courses = await prisma.course.findMany({
     orderBy: { order: "asc" },
-    include: { _count: { select: { lessons: true, grants: true } } },
+    include: {
+      _count: { select: { lessons: true, grants: true } },
+      levelGrants: { select: { minLevel: true }, orderBy: { minLevel: "asc" } },
+    },
   });
 
   const items: AdminCourseItem[] = courses.map((course, index) => ({
@@ -25,6 +28,7 @@ export default async function CoursesPage() {
     coverImageUrl: course.coverImageUrl,
     lessonsCount: course._count.lessons,
     grantsCount: course._count.grants,
+    levelGrants: course.levelGrants.map((lg) => lg.minLevel),
     visibleToGuest: course.visibleToGuest,
     gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
   }));

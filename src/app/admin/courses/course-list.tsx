@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BookOpen, Users, Video } from "lucide-react";
+import type { Level } from "@prisma/client";
+import { LEVEL_LABELS } from "@/lib/levels";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
 import { Badge } from "@/components/ui/badge";
 
@@ -15,6 +17,7 @@ export type AdminCourseItem = {
   coverImageUrl: string | null;
   lessonsCount: number;
   grantsCount: number;
+  levelGrants: Level[];
   visibleToGuest: boolean;
   gradient: string;
 };
@@ -29,6 +32,28 @@ function Thumbnail({ course, className }: { course: AdminCourseItem; className: 
   return (
     <div className={`${className} flex items-center justify-center bg-gradient-to-br ${course.gradient}`}>
       <Video className="h-9 w-9 text-white/90" />
+    </div>
+  );
+}
+
+// Always rendered right under the title (its own row, never wrapping inline
+// with a long title) so admins can see at a glance who can reach this
+// course: which levels are auto-granted, and whether any students were
+// granted individually as an exception on top of that.
+function AccessBadges({ course }: { course: AdminCourseItem }) {
+  const hasAnyGrant = course.visibleToGuest || course.levelGrants.length > 0 || course.grantsCount > 0;
+  return (
+    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+      {course.visibleToGuest && <Badge color="info">Công khai</Badge>}
+      {course.levelGrants.map((level) => (
+        <Badge key={level} color="primary">
+          {LEVEL_LABELS[level]} trở lên
+        </Badge>
+      ))}
+      {course.grantsCount > 0 && (
+        <Badge color="warning">{course.grantsCount} học viên ngoại lệ</Badge>
+      )}
+      {!hasAnyGrant && <Badge color="muted">Chưa cấp quyền</Badge>}
     </div>
   );
 }
@@ -64,25 +89,23 @@ export function CourseList({ courses }: { courses: AdminCourseItem[] }) {
             <Link
               key={course.id}
               href={`/admin/courses/${course.id}`}
-              className="overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors hover:border-primary/60"
+              className="flex h-full flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors hover:border-primary/60"
             >
-              <div className="relative aspect-video w-full overflow-hidden bg-dark-surface-raised">
+              <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-dark-surface-raised">
                 <Thumbnail course={course} className="h-full w-full" />
               </div>
-              <div className="p-5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-semibold text-dark-foreground">{course.title}</p>
-                  {course.visibleToGuest && <Badge color="info">Công khai</Badge>}
-                </div>
+              <div className="flex flex-1 flex-col p-5">
+                <p className="font-semibold text-dark-foreground">{course.title}</p>
+                <AccessBadges course={course} />
                 {course.description && (
-                  <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{course.description}</p>
+                  <p className="mt-2 line-clamp-2 text-sm text-dark-muted">{course.description}</p>
                 )}
-                <div className="mt-4 flex items-center gap-4 text-xs text-dark-muted">
-                  <span className="flex items-center gap-1">
+                <div className="mt-auto flex flex-nowrap items-center gap-4 pt-4">
+                  <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
                     <BookOpen className="h-3.5 w-3.5" />
                     {course.lessonsCount} bài học
                   </span>
-                  <span className="flex items-center gap-1">
+                  <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
                     <Users className="h-3.5 w-3.5" />
                     {course.grantsCount} học viên
                   </span>
@@ -103,20 +126,18 @@ export function CourseList({ courses }: { courses: AdminCourseItem[] }) {
                 <Thumbnail course={course} className="h-full w-full" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="truncate font-semibold text-dark-foreground">{course.title}</p>
-                  {course.visibleToGuest && <Badge color="info">Công khai</Badge>}
-                </div>
+                <p className="truncate font-semibold text-dark-foreground">{course.title}</p>
+                <AccessBadges course={course} />
                 {course.description && (
-                  <p className="line-clamp-1 text-sm text-dark-muted">{course.description}</p>
+                  <p className="mt-1 line-clamp-1 text-sm text-dark-muted">{course.description}</p>
                 )}
               </div>
-              <div className="hidden shrink-0 items-center gap-4 text-xs text-dark-muted sm:flex">
-                <span className="flex items-center gap-1">
+              <div className="hidden shrink-0 flex-col items-end gap-1 text-xs text-slate-300 sm:flex">
+                <span className="flex items-center gap-1 whitespace-nowrap">
                   <BookOpen className="h-3.5 w-3.5" />
                   {course.lessonsCount} bài học
                 </span>
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1 whitespace-nowrap">
                   <Users className="h-3.5 w-3.5" />
                   {course.grantsCount} học viên
                 </span>
