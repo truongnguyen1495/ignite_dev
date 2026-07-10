@@ -15,8 +15,9 @@ const BANNER_GRADIENTS = [
 
 export default async function GuestLibraryPage() {
   // Guests only ever see items with a generated preview to actually read.
+  // visibleToStudents doubles as a master hide switch, same as announcements.
   const items = await prisma.libraryItem.findMany({
-    where: { visibleToGuest: true, previewFilePath: { not: null } },
+    where: { visibleToGuest: true, previewFilePath: { not: null }, visibleToStudents: true },
     orderBy: [{ order: "asc" }, { createdAt: "desc" }],
   });
 

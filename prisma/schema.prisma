@@ -269,6 +269,11 @@ model LibraryItem {
   guestPreviewPages Int?
   order             Int             @default(0)
   visibleToGuest    Boolean         @default(false)
+  // Master hide switch, same convention as Announcement.visibleToStudents:
+  // false pulls the item from student and guest access alike (overriding
+  // visibleToGuest and any grants) without deleting it or touching grants.
+  // Defaults true so existing rows keep showing up unchanged.
+  visibleToStudents Boolean         @default(true)
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 

@@ -21,7 +21,11 @@ export default async function StudentLibraryPage({
   const { denied } = await searchParams;
 
   const [items, grants, levelGrants] = await Promise.all([
-    prisma.libraryItem.findMany({ orderBy: [{ order: "asc" }, { createdAt: "desc" }] }),
+    // visibleToStudents doubles as a master hide switch, same as announcements.
+    prisma.libraryItem.findMany({
+      where: { visibleToStudents: true },
+      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+    }),
     prisma.libraryAccessGrant.findMany({ where: { studentId: student.id } }),
     prisma.libraryLevelGrant.findMany(),
   ]);

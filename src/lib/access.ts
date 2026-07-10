@@ -155,7 +155,7 @@ export async function studentHasLibraryItemAccess(student: User, libraryItemId: 
 export async function requireLibraryItemAccess(libraryItemId: string) {
   const student = await requireActiveStudent();
   const libraryItem = await prisma.libraryItem.findUnique({ where: { id: libraryItemId } });
-  if (!libraryItem) {
+  if (!libraryItem || !libraryItem.visibleToStudents) {
     redirect("/dashboard/library?denied=1");
   }
   if (!(await studentHasLibraryItemAccess(student, libraryItemId))) {
@@ -220,7 +220,15 @@ export async function requireGuestCourseLessonAccess(lessonId: string) {
 // all, so it also requires a previewFilePath to actually exist.
 export async function requireGuestLibraryItemAccess(libraryItemId: string) {
   const libraryItem = await prisma.libraryItem.findUnique({ where: { id: libraryItemId } });
-  if (!libraryItem || !libraryItem.visibleToGuest || !libraryItem.previewFilePath) {
+  // visibleToStudents doubles as a master hide switch here too: an item
+  // hidden from students is hidden from guests too, regardless of
+  // visibleToGuest — same convention as requireGuestAnnouncementAccess.
+  if (
+    !libraryItem ||
+    !libraryItem.visibleToGuest ||
+    !libraryItem.previewFilePath ||
+    !libraryItem.visibleToStudents
+  ) {
     redirect("/guest/library?denied=1");
   }
   return { libraryItem };

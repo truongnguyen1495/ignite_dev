@@ -8,7 +8,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ ite
   const { itemId } = await params;
 
   const libraryItem = await prisma.libraryItem.findUnique({ where: { id: itemId } });
-  if (!libraryItem || !libraryItem.visibleToGuest || !libraryItem.previewFilePath) {
+  if (
+    !libraryItem ||
+    !libraryItem.visibleToGuest ||
+    !libraryItem.previewFilePath ||
+    !libraryItem.visibleToStudents
+  ) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 

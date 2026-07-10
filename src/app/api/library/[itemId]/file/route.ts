@@ -26,9 +26,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ item
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Super admins manage every item; students need an explicit grant/level rule.
-  if (user.role === "STUDENT" && !(await studentHasLibraryItemAccess(user, itemId))) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  // Super admins manage every item, including hidden ones; students need
+  // both the item to be visible and an explicit grant/level rule.
+  if (user.role === "STUDENT") {
+    if (!libraryItem.visibleToStudents) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    if (!(await studentHasLibraryItemAccess(user, itemId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
   }
 
   const bytes = await downloadLibraryFile(libraryItem.filePath);

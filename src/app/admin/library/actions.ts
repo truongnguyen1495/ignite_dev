@@ -155,6 +155,28 @@ export async function deleteLibraryItemAction(libraryItemId: string) {
   revalidatePath("/admin/library");
 }
 
+// Independent of level gating — only controls whether this item shows up
+// under /guest/* (see requireGuestLibraryItemAccess in src/lib/access.ts).
+export async function setLibraryItemGuestVisibilityAction(libraryItemId: string, visibleToGuest: boolean) {
+  await requireActiveSuperAdmin();
+  await prisma.libraryItem.update({ where: { id: libraryItemId }, data: { visibleToGuest } });
+  revalidatePath("/admin/library");
+}
+
+// Master hide switch — pulls the item from both the student-facing
+// /dashboard/library list/reader and the public /guest/library one
+// (overriding visibleToGuest; see requireLibraryItemAccess and
+// requireGuestLibraryItemAccess in src/lib/access.ts) without deleting it
+// or touching any grants.
+export async function setLibraryItemVisibleToStudentsAction(
+  libraryItemId: string,
+  visibleToStudents: boolean
+) {
+  await requireActiveSuperAdmin();
+  await prisma.libraryItem.update({ where: { id: libraryItemId }, data: { visibleToStudents } });
+  revalidatePath("/admin/library");
+}
+
 export async function grantLibraryAccessAction(libraryItemId: string, studentId: string) {
   const admin = await requireActiveSuperAdmin();
   if (!studentId) {

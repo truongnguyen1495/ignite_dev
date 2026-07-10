@@ -23,6 +23,7 @@ export default async function LibraryPage() {
     grantsCount: item._count.grants,
     levelGrants: item.levelGrants.map((lg) => lg.minLevel),
     visibleToGuest: item.visibleToGuest,
+    visibleToStudents: item.visibleToStudents,
   }));
 
   return (

@@ -8,6 +8,8 @@ import { LEVEL_LABELS } from "@/lib/levels";
 import { Badge } from "@/components/ui/badge";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
 import { DeleteLibraryItemInlineButton } from "./delete-library-item-inline-button";
+import { ToggleLibraryItemGuestButton } from "./toggle-library-item-guest-button";
+import { ToggleLibraryItemVisibilityButton } from "./toggle-library-item-visibility-button";
 
 const STORAGE_KEY = "admin-library-view";
 
@@ -21,6 +23,7 @@ export type LibraryListItem = {
   grantsCount: number;
   levelGrants: Level[];
   visibleToGuest: boolean;
+  visibleToStudents: boolean;
 };
 
 const TYPE_LABELS: Record<LibraryItemType, string> = {
@@ -56,6 +59,7 @@ function AccessBadges({ item }: { item: LibraryListItem }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       <Badge color={item.type === "BOOK" ? "primary" : "info"}>{TYPE_LABELS[item.type]}</Badge>
+      {!item.visibleToStudents && <Badge color="warning">Đã ẩn</Badge>}
       {item.visibleToGuest && <Badge color="info">Công khai</Badge>}
       {item.levelGrants.map((level) => (
         <Badge key={level} color="primary">
@@ -137,7 +141,12 @@ export function LibraryList({ items }: { items: LibraryListItem[] }) {
                   )}
                 </div>
               </Link>
-              <div className="absolute right-2 top-2">
+              <div className="absolute right-2 top-2 flex items-center gap-1 rounded-lg bg-surface/90 p-0.5 shadow-sm">
+                <ToggleLibraryItemVisibilityButton
+                  libraryItemId={item.id}
+                  visibleToStudents={item.visibleToStudents}
+                />
+                <ToggleLibraryItemGuestButton libraryItemId={item.id} visibleToGuest={item.visibleToGuest} />
                 <DeleteLibraryItemInlineButton libraryItemId={item.id} libraryItemTitle={item.title} />
               </div>
             </div>
@@ -166,6 +175,11 @@ export function LibraryList({ items }: { items: LibraryListItem[] }) {
                   <AccessBadges item={item} />
                 </div>
               </Link>
+              <ToggleLibraryItemVisibilityButton
+                libraryItemId={item.id}
+                visibleToStudents={item.visibleToStudents}
+              />
+              <ToggleLibraryItemGuestButton libraryItemId={item.id} visibleToGuest={item.visibleToGuest} />
               <DeleteLibraryItemInlineButton libraryItemId={item.id} libraryItemTitle={item.title} />
             </li>
           ))}
