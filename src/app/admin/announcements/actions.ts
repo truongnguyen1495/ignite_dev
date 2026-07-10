@@ -51,7 +51,10 @@ export async function createAnnouncementAction(
       category: parsed.data.category,
       minLevel: resolveMinLevel(parsed.data.minLevel),
       visibleToGuest: formData.get("visibleToGuest") === "on",
-      visibleToStudents: formData.get("visibleToStudents") === "on",
+      // New announcements always start visible to students — hiding one is
+      // a separate, deliberate action via the eye-icon toggle on the list
+      // (setAnnouncementVisibleToStudentsAction), not part of authoring it.
+      visibleToStudents: true,
     },
   });
 
@@ -92,7 +95,9 @@ export async function updateAnnouncementAction(
       category: parsed.data.category,
       minLevel: resolveMinLevel(parsed.data.minLevel),
       visibleToGuest: formData.get("visibleToGuest") === "on",
-      visibleToStudents: formData.get("visibleToStudents") === "on",
+      // visibleToStudents is intentionally left untouched here — it's owned
+      // solely by the eye-icon toggle (setAnnouncementVisibleToStudentsAction)
+      // so editing title/content etc. can never silently hide an announcement.
     },
   });
 

@@ -32,7 +32,6 @@ export default async function EditAnnouncementPage({
           category={announcement.category}
           minLevel={announcement.minLevel}
           visibleToGuest={announcement.visibleToGuest}
-          visibleToStudents={announcement.visibleToStudents}
         />
       </Card>
 

@@ -18,7 +18,6 @@ export function EditAnnouncementForm({
   category,
   minLevel,
   visibleToGuest,
-  visibleToStudents,
 }: {
   announcementId: string;
   title: string;
@@ -27,7 +26,6 @@ export function EditAnnouncementForm({
   category: AnnouncementCategory;
   minLevel: Level | null;
   visibleToGuest: boolean;
-  visibleToStudents: boolean;
 }) {
   const [error, formAction, pending] = useActionState(updateAnnouncementAction, undefined);
 
@@ -59,15 +57,6 @@ export function EditAnnouncementForm({
             </option>
           ))}
         </Select>
-        <label className="flex items-center gap-2 text-sm text-foreground">
-          <input
-            type="checkbox"
-            name="visibleToStudents"
-            defaultChecked={visibleToStudents}
-            className="h-4 w-4 accent-primary"
-          />
-          Hiển thị cho học viên
-        </label>
         <label className="flex items-center gap-2 text-sm text-foreground">
           <input
             type="checkbox"
