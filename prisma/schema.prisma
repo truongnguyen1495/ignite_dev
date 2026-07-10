@@ -42,6 +42,11 @@ enum AnnouncementCategory {
   GENERAL
 }
 
+enum LibraryItemType {
+  BOOK
+  DOCUMENT
+}
+
 model User {
   id           String        @id @default(cuid())
   email        String        @unique
@@ -64,6 +69,9 @@ model User {
   courseLessonCompletions CourseLessonCompletion[] @relation("CourseLessonCompletions")
   courseLevelGrantsGiven  CourseLevelGrant[]       @relation("CourseLevelGrantsGiven")
   announcementReads       AnnouncementRead[]
+  libraryGrants           LibraryAccessGrant[]     @relation("LibraryGrants")
+  libraryGrantsGiven      LibraryAccessGrant[]     @relation("LibraryGrantsGiven")
+  libraryLevelGrantsGiven LibraryLevelGrant[]      @relation("LibraryLevelGrantsGiven")
 
   @@index([role])
 }
@@ -240,6 +248,65 @@ model CourseLevelGrant {
 
   @@unique([courseId, minLevel])
   @@index([courseId])
+}
+
+// Library of books/documents (PDFs) — access control mirrors Course exactly
+// (CourseAccessGrant/CourseLevelGrant), except guests never get the full
+// file: visibleToGuest only unlocks previewFilePath, a server-generated
+// truncated copy (first guestPreviewPages pages) built from filePath. Both
+// paths point at objects in a private Supabase bucket, never a public URL —
+// everything is served through our own authenticated route handlers.
+model LibraryItem {
+  id                String          @id @default(cuid())
+  title             String
+  author            String?
+  description       String?         @db.Text
+  type              LibraryItemType @default(BOOK)
+  coverImageUrl     String?
+  filePath          String
+  pageCount         Int?
+  previewFilePath   String?
+  guestPreviewPages Int?
+  order             Int             @default(0)
+  visibleToGuest    Boolean         @default(false)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  grants      LibraryAccessGrant[]
+  levelGrants LibraryLevelGrant[]
+
+  @@index([type, order])
+}
+
+model LibraryAccessGrant {
+  id            String      @id @default(cuid())
+  studentId     String
+  student       User        @relation("LibraryGrants", fields: [studentId], references: [id], onDelete: Cascade)
+  libraryItemId String
+  libraryItem   LibraryItem @relation(fields: [libraryItemId], references: [id], onDelete: Cascade)
+  grantedAt     DateTime    @default(now())
+  grantedById   String?
+  grantedBy     User?       @relation("LibraryGrantsGiven", fields: [grantedById], references: [id])
+
+  @@unique([studentId, libraryItemId])
+  @@index([studentId])
+}
+
+// A continuous rule ("this item is open to Level >= minLevel"), separate
+// from LibraryAccessGrant's per-student rows — checked fresh alongside it in
+// studentHasLibraryItemAccess (src/lib/access.ts), same pattern as
+// CourseLevelGrant.
+model LibraryLevelGrant {
+  id            String      @id @default(cuid())
+  libraryItemId String
+  libraryItem   LibraryItem @relation(fields: [libraryItemId], references: [id], onDelete: Cascade)
+  minLevel      Level
+  grantedAt     DateTime    @default(now())
+  grantedById   String?
+  grantedBy     User?       @relation("LibraryLevelGrantsGiven", fields: [grantedById], references: [id])
+
+  @@unique([libraryItemId, minLevel])
+  @@index([libraryItemId])
 }
 
 // In-app announcements (bản tin) — simpler than the Course grant system on

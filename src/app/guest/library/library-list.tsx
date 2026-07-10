@@ -1,0 +1,69 @@
+import Link from "next/link";
+import { BookOpen, ChevronRight, FileText } from "lucide-react";
+import type { LibraryItemType } from "@prisma/client";
+
+export type GuestLibraryItem = {
+  id: string;
+  title: string;
+  author: string | null;
+  description: string | null;
+  type: LibraryItemType;
+  coverImageUrl: string | null;
+  guestPreviewPages: number | null;
+  gradient: string;
+};
+
+const TYPE_ICON: Record<LibraryItemType, typeof BookOpen> = {
+  BOOK: BookOpen,
+  DOCUMENT: FileText,
+};
+
+export function GuestLibraryList({ items }: { items: GuestLibraryItem[] }) {
+  if (items.length === 0) {
+    return <p className="text-sm text-muted">Hiện chưa có sách hay tài liệu công khai nào.</p>;
+  }
+
+  return (
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {items.map((item) => {
+        const Icon = TYPE_ICON[item.type];
+        return (
+          <Link
+            key={item.id}
+            href={`/guest/library/${item.id}`}
+            className="flex h-full flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors hover:border-primary/60"
+          >
+            <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-dark-surface-raised">
+              {item.coverImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={item.coverImageUrl} alt={item.title} className="h-full w-full object-cover" />
+              ) : (
+                <div
+                  className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${item.gradient}`}
+                >
+                  <Icon className="h-9 w-9 text-white/90" />
+                </div>
+              )}
+            </div>
+            <div className="flex flex-1 flex-col p-5">
+              <p className="font-semibold text-dark-foreground">{item.title}</p>
+              {item.author && <p className="mt-0.5 text-sm text-dark-muted">{item.author}</p>}
+              {item.description && (
+                <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{item.description}</p>
+              )}
+              <div className="mt-auto flex flex-nowrap items-center justify-between gap-2 pt-4">
+                <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
+                  {item.guestPreviewPages ? `Xem thử ${item.guestPreviewPages} trang` : "Xem thử"}
+                </span>
+                <span className="flex shrink-0 items-center gap-0.5 whitespace-nowrap text-xs font-medium text-indigo-400">
+                  Đọc thử
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </span>
+              </div>
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}

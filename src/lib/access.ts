@@ -135,6 +135,35 @@ export async function requireCourseLessonAccess(lessonId: string) {
   return { student, lesson };
 }
 
+// Library items (books/documents) use the exact same grant model as
+// courses — a direct per-student grant OR a "Level >= minLevel" rule.
+// Exported (unlike studentHasCourseAccess) because /api/library/[itemId]/file
+// needs this same check outside of the redirect-based helpers below — it
+// serves raw PDF bytes to an <iframe>, so it needs a JSON/plain error
+// response instead of a redirect on failure.
+export async function studentHasLibraryItemAccess(student: User, libraryItemId: string): Promise<boolean> {
+  const [grant, levelGrants] = await Promise.all([
+    prisma.libraryAccessGrant.findUnique({
+      where: { studentId_libraryItemId: { studentId: student.id, libraryItemId } },
+    }),
+    prisma.libraryLevelGrant.findMany({ where: { libraryItemId } }),
+  ]);
+  if (grant) return true;
+  return levelGrants.some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel));
+}
+
+export async function requireLibraryItemAccess(libraryItemId: string) {
+  const student = await requireActiveStudent();
+  const libraryItem = await prisma.libraryItem.findUnique({ where: { id: libraryItemId } });
+  if (!libraryItem) {
+    redirect("/dashboard/library?denied=1");
+  }
+  if (!(await studentHasLibraryItemAccess(student, libraryItemId))) {
+    redirect("/dashboard/library?denied=1");
+  }
+  return { student, libraryItem };
+}
+
 export async function requireAnnouncementAccess(announcementId: string) {
   const student = await requireActiveStudent();
   const announcement = await prisma.announcement.findUnique({ where: { id: announcementId } });
@@ -184,4 +213,15 @@ export async function requireGuestCourseLessonAccess(lessonId: string) {
     redirect("/guest/courses?denied=1");
   }
   return { lesson };
+}
+
+// Guests only ever get the truncated preview, never libraryItem.filePath —
+// this gate exists purely to decide whether that preview can be shown at
+// all, so it also requires a previewFilePath to actually exist.
+export async function requireGuestLibraryItemAccess(libraryItemId: string) {
+  const libraryItem = await prisma.libraryItem.findUnique({ where: { id: libraryItemId } });
+  if (!libraryItem || !libraryItem.visibleToGuest || !libraryItem.previewFilePath) {
+    redirect("/guest/library?denied=1");
+  }
+  return { libraryItem };
 }

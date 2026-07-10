@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Home, Megaphone, Video, LogIn, UserPlus } from "lucide-react";
+import { Home, Megaphone, Video, LogIn, UserPlus, Library } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 
 // Public shell for the /guest/* tree — deliberately outside SidebarProvider
@@ -50,6 +50,13 @@ export default function GuestLayout({ children }: { children: React.ReactNode })
           >
             <Video className="h-4 w-4" />
             Khóa học độc quyền
+          </Link>
+          <Link
+            href="/guest/library"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+          >
+            <Library className="h-4 w-4" />
+            Thư viện
           </Link>
         </nav>
       </header>

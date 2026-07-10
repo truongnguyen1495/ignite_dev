@@ -1,4 +1,4 @@
-import { LayoutDashboard, ArrowUpCircle, GraduationCap, Video, UserCircle, Megaphone } from "lucide-react";
+import { LayoutDashboard, ArrowUpCircle, GraduationCap, Video, UserCircle, Megaphone, Library } from "lucide-react";
 import { requireActiveStudent } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { LEVEL_LABELS, hasLevelAccess } from "@/lib/levels";
@@ -34,6 +34,7 @@ export default async function DashboardLayout({
   const NAV_ITEMS: NavItem[] = [
     { href: "/dashboard", label: "5 Cấp đào tạo", icon: <LayoutDashboard className={iconClass} />, exact: true },
     { href: "/dashboard/courses", label: "Khóa học độc quyền", icon: <Video className={iconClass} /> },
+    { href: "/dashboard/library", label: "Thư viện", icon: <Library className={iconClass} /> },
     {
       href: "/dashboard/announcements",
       label: "Bản tin",
