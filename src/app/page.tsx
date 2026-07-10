@@ -5,7 +5,7 @@ export default async function Home() {
   const session = await auth();
 
   if (!session?.user) {
-    redirect("/guest/announcements");
+    redirect("/guest");
   }
 
   redirect(session.user.role === "SUPER_ADMIN" ? "/admin" : "/dashboard");

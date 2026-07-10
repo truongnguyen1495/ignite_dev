@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Megaphone, Video, LogIn, UserPlus } from "lucide-react";
+import { Home, Megaphone, Video, LogIn, UserPlus } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 
 // Public shell for the /guest/* tree — deliberately outside SidebarProvider
@@ -30,6 +30,13 @@ export default function GuestLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
         <nav className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-2 px-4 py-3 text-sm sm:px-8">
+          <Link
+            href="/guest"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+          >
+            <Home className="h-4 w-4" />
+            Trang chủ
+          </Link>
           <Link
             href="/guest/announcements"
             className="flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium text-muted transition-colors hover:bg-surface-hover hover:text-foreground"

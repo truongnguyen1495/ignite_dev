@@ -1,16 +1,8 @@
 import Link from "next/link";
 import { BookOpen, ChevronRight, Video } from "lucide-react";
+import type { GuestCourseItem } from "@/lib/guest-courses";
 
-export type GuestCourseItem = {
-  id: string;
-  title: string;
-  description: string | null;
-  coverImageUrl: string | null;
-  totalLessons: number;
-  ctaLabel: string;
-  href: string;
-  gradient: string;
-};
+export type { GuestCourseItem };
 
 export function GuestCourseList({ courses }: { courses: GuestCourseItem[] }) {
   if (courses.length === 0) {
