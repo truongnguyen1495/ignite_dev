@@ -31,6 +31,7 @@ export default async function AnnouncementsPage({
       .map((a) => ({
         id: a.id,
         title: a.title,
+        coverImageUrl: a.coverImageUrl,
         publishedAt: a.publishedAt.toLocaleDateString("vi-VN"),
         isUnread: !readIds.has(a.id),
       })),

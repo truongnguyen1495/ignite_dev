@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Filter } from "lucide-react";
+import { Filter, Megaphone } from "lucide-react";
 import type { AnnouncementCategory, Level } from "@prisma/client";
 import {
   ORDERED_ANNOUNCEMENT_CATEGORIES,
@@ -18,6 +18,7 @@ import { ToggleAnnouncementStudentsVisibilityButton } from "./toggle-announcemen
 export type AnnouncementListItem = {
   id: string;
   title: string;
+  coverImageUrl: string | null;
   category: AnnouncementCategory;
   minLevel: Level | null;
   visibleToGuest: boolean;
@@ -227,20 +228,34 @@ export function AnnouncementsList({ announcements }: { announcements: Announceme
             >
               <Link
                 href={`/admin/announcements/${announcement.id}`}
-                className="flex min-w-0 flex-1 flex-wrap items-center gap-2"
+                className="flex min-w-0 flex-1 flex-wrap items-center gap-3"
               >
-                <span className="text-foreground">{announcement.title}</span>
-                <Badge color={ANNOUNCEMENT_CATEGORY_BADGE_COLOR[announcement.category]}>
-                  {ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}
-                </Badge>
-                {announcement.minLevel ? (
-                  <Badge color="primary">{LEVEL_LABELS[announcement.minLevel]} trở lên</Badge>
+                {announcement.coverImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={announcement.coverImageUrl}
+                    alt=""
+                    className="aspect-video w-16 shrink-0 rounded-md object-cover"
+                  />
                 ) : (
-                  <Badge color="muted">Tất cả học viên</Badge>
+                  <span className="flex aspect-video w-16 shrink-0 items-center justify-center rounded-md bg-faint-bg">
+                    <Megaphone className="h-4 w-4 text-muted" />
+                  </span>
                 )}
-                {!announcement.visibleToStudents && <Badge color="warning">Đã ẩn</Badge>}
-                {announcement.visibleToGuest && <Badge color="info">Công khai</Badge>}
-                <span className="text-xs text-muted">{announcement.publishedAtLabel}</span>
+                <span className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                  <span className="text-foreground">{announcement.title}</span>
+                  <Badge color={ANNOUNCEMENT_CATEGORY_BADGE_COLOR[announcement.category]}>
+                    {ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}
+                  </Badge>
+                  {announcement.minLevel ? (
+                    <Badge color="primary">{LEVEL_LABELS[announcement.minLevel]} trở lên</Badge>
+                  ) : (
+                    <Badge color="muted">Tất cả học viên</Badge>
+                  )}
+                  {!announcement.visibleToStudents && <Badge color="warning">Đã ẩn</Badge>}
+                  {announcement.visibleToGuest && <Badge color="info">Công khai</Badge>}
+                  <span className="text-xs text-muted">{announcement.publishedAtLabel}</span>
+                </span>
               </Link>
               <ToggleAnnouncementStudentsVisibilityButton
                 announcementId={announcement.id}

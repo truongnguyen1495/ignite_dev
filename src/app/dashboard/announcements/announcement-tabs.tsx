@@ -10,6 +10,7 @@ import type { AnnouncementCategory } from "@prisma/client";
 export type AnnouncementListItem = {
   id: string;
   title: string;
+  coverImageUrl: string | null;
   publishedAt: string;
   isUnread: boolean;
 };
@@ -58,9 +59,18 @@ export function AnnouncementTabs({
                   announcement.isUnread ? "border-primary/30 bg-primary/5" : "border-border bg-surface"
                 }`}
               >
-                <Megaphone
-                  className={`h-4 w-4 shrink-0 ${announcement.isUnread ? "text-primary" : "text-muted"}`}
-                />
+                {announcement.coverImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={announcement.coverImageUrl}
+                    alt=""
+                    className="aspect-video w-16 shrink-0 rounded-md object-cover"
+                  />
+                ) : (
+                  <Megaphone
+                    className={`h-4 w-4 shrink-0 ${announcement.isUnread ? "text-primary" : "text-muted"}`}
+                  />
+                )}
                 <span className="min-w-0 flex-1 truncate text-foreground">{announcement.title}</span>
                 {announcement.isUnread && <Badge color="primary">Mới</Badge>}
                 <span className="shrink-0 text-xs text-muted">{announcement.publishedAt}</span>

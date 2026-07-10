@@ -10,6 +10,7 @@ export default async function AnnouncementsPage() {
   const items = announcements.map((a) => ({
     id: a.id,
     title: a.title,
+    coverImageUrl: a.coverImageUrl,
     category: a.category,
     minLevel: a.minLevel,
     visibleToGuest: a.visibleToGuest,
