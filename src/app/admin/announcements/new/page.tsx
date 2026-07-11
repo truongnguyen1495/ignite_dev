@@ -1,8 +1,10 @@
+import { requireAdminPermission } from "@/lib/access";
 import { BackLink } from "@/components/ui/back-link";
 import { Card } from "@/components/ui/card";
 import { CreateAnnouncementForm } from "./create-announcement-form";
 
-export default function NewAnnouncementPage() {
+export default async function NewAnnouncementPage() {
+  await requireAdminPermission("MANAGE_ANNOUNCEMENTS");
   return (
     <div className="mx-auto max-w-[1000px] space-y-6">
       <div>

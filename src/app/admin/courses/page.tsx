@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPermission } from "@/lib/access";
 import { CourseList, type AdminCourseItem } from "./course-list";
 import { PageHeader } from "@/components/ui/page-header";
 
@@ -13,6 +14,7 @@ const BANNER_GRADIENTS = [
 ];
 
 export default async function CoursesPage() {
+  await requireAdminPermission("MANAGE_COURSES");
   const courses = await prisma.course.findMany({
     orderBy: { order: "asc" },
     include: {

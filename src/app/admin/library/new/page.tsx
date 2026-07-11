@@ -1,8 +1,10 @@
+import { requireAdminPermission } from "@/lib/access";
 import { BackLink } from "@/components/ui/back-link";
 import { Card } from "@/components/ui/card";
 import { CreateLibraryItemForm } from "./create-library-item-form";
 
-export default function NewLibraryItemPage() {
+export default async function NewLibraryItemPage() {
+  await requireAdminPermission("MANAGE_LIBRARY");
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <div>

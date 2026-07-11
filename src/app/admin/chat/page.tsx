@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronRight, LifeBuoy, Users } from "lucide-react";
-import { requireActiveSuperAdmin, requireChatEnabled } from "@/lib/access";
+import { requireAdminPermission, requireChatEnabled } from "@/lib/access";
 import { getAdminSupportInbox, getAdminGroupRooms } from "@/lib/chat";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { PageHeader } from "@/components/ui/page-header";
@@ -16,7 +16,7 @@ function UnreadBadge({ count }: { count: number }) {
 }
 
 export default async function AdminChatPage() {
-  const admin = await requireActiveSuperAdmin();
+  const admin = await requireAdminPermission("MANAGE_CHAT");
   await requireChatEnabled("/admin");
   const [threads, groupRooms] = await Promise.all([
     getAdminSupportInbox(admin.id),

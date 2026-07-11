@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Megaphone } from "lucide-react";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
@@ -15,14 +15,11 @@ export type GuestAnnouncementItem = {
 };
 
 export function GuestAnnouncementList({ announcements }: { announcements: GuestAnnouncementItem[] }) {
-  const [mode, setMode] = useState<ViewMode>("list");
-
-  useEffect(() => {
+  const [mode, setMode] = useState<ViewMode>(() => {
+    if (typeof window === "undefined") return "list";
     const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (saved === "grid" || saved === "list") {
-      setMode(saved);
-    }
-  }, []);
+    return saved === "grid" || saved === "list" ? saved : "list";
+  });
 
   function handleChange(next: ViewMode) {
     setMode(next);

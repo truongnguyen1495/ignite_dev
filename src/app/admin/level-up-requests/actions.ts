@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireActiveSuperAdmin } from "@/lib/access";
+import { requireAdminPermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { ORDERED_LEVELS } from "@/lib/levels";
 import type { Level } from "@prisma/client";
@@ -11,7 +11,7 @@ import type { Level } from "@prisma/client";
 const levelEnum = z.enum(ORDERED_LEVELS as [Level, ...Level[]]);
 
 export async function approveLevelUpRequestAction(formData: FormData) {
-  const admin = await requireActiveSuperAdmin();
+  const admin = await requireAdminPermission("MANAGE_LEVEL_UP_REQUESTS");
 
   const requestId = String(formData.get("requestId") ?? "");
   const parsedLevel = levelEnum.safeParse(formData.get("toLevel"));
@@ -53,7 +53,7 @@ export async function rejectLevelUpRequestAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  const admin = await requireActiveSuperAdmin();
+  const admin = await requireAdminPermission("MANAGE_LEVEL_UP_REQUESTS");
 
   const parsed = rejectSchema.safeParse({
     requestId: formData.get("requestId"),

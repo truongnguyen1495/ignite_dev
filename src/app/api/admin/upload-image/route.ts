@@ -1,10 +1,22 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getAdminPermissions } from "@/lib/access";
 import { uploadLessonImage } from "@/lib/supabase-storage";
+import type { AdminPermissionKind } from "@prisma/client";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+
+// Every content area whose form embeds <CoverImageInput> or the lesson
+// content editor — this endpoint is shared across all of them, so any one
+// of these permissions is enough (not just MANAGE_LESSONS_QUIZZES).
+const ALLOWED_PERMISSIONS: AdminPermissionKind[] = [
+  "MANAGE_LESSONS_QUIZZES",
+  "MANAGE_COURSES",
+  "MANAGE_LIBRARY",
+  "MANAGE_ANNOUNCEMENTS",
+];
 
 // Plain auth() + role check instead of requireActiveSuperAdmin(): that
 // helper redirects to /login on failure, which a fetch()-driven upload
@@ -16,8 +28,14 @@ export async function POST(request: Request) {
   }
 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-  if (!user || user.status !== "ACTIVE" || user.role !== "SUPER_ADMIN") {
+  if (!user || user.status !== "ACTIVE") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  if (user.role !== "SUPER_ADMIN") {
+    const permissions = await getAdminPermissions(user.id);
+    if (!ALLOWED_PERMISSIONS.some((p) => permissions.has(p))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
   }
 
   const formData = await request.formData();

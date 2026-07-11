@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   LayoutDashboard,
   ArrowUpCircle,
@@ -7,8 +8,9 @@ import {
   Megaphone,
   Library,
   MessageCircle,
+  ShieldCheck,
 } from "lucide-react";
-import { requireActiveStudent, isChatEnabled } from "@/lib/access";
+import { requireActiveStudent, isChatEnabled, getAdminPermissions } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { getStudentChatInbox } from "@/lib/chat";
 import { LEVEL_LABELS, hasLevelAccess } from "@/lib/levels";
@@ -26,14 +28,16 @@ export default async function DashboardLayout({
 }) {
   const student = await requireActiveStudent();
 
-  const [announcements, reads, chatEnabled] = await Promise.all([
+  const [announcements, reads, chatEnabled, adminPermissions] = await Promise.all([
     prisma.announcement.findMany({ select: { id: true, minLevel: true, visibleToStudents: true } }),
     prisma.announcementRead.findMany({
       where: { studentId: student.id },
       select: { announcementId: true },
     }),
     isChatEnabled(),
+    getAdminPermissions(student.id),
   ]);
+  const hasAdminAccess = adminPermissions.size > 0;
   const chatInbox = chatEnabled ? await getStudentChatInbox(student) : null;
   const readIds = new Set(reads.map((r) => r.announcementId));
   const unreadAnnouncementCount = announcements.filter(
@@ -84,6 +88,15 @@ export default async function DashboardLayout({
         <header className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-8 sm:py-4">
           <SidebarToggle />
           <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
+            {hasAdminAccess && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-primary/50 hover:text-foreground"
+              >
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Vào trang Admin
+              </Link>
+            )}
             <span className="flex min-w-0 items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs text-muted">
               <GraduationCap className="h-3.5 w-3.5 shrink-0 text-primary" />
               <span className="truncate">{student.name}</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { Editor } from "@tiptap/react";
 import { Pencil, X } from "lucide-react";
 
@@ -27,20 +27,20 @@ export function LinkHoverMenu({ editor }: { editor: Editor | null }) {
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  function cancelHide() {
+  const cancelHide = useCallback(() => {
     if (hideTimeoutRef.current) {
       clearTimeout(hideTimeoutRef.current);
       hideTimeoutRef.current = null;
     }
-  }
+  }, []);
 
-  function scheduleHide() {
+  const scheduleHide = useCallback(() => {
     cancelHide();
     hideTimeoutRef.current = setTimeout(() => {
       setHovered(null);
       setEditing(false);
     }, HIDE_DELAY_MS);
-  }
+  }, [cancelHide]);
 
   useEffect(() => {
     if (!editor) return;
@@ -76,7 +76,7 @@ export function LinkHoverMenu({ editor }: { editor: Editor | null }) {
       dom.removeEventListener("mouseout", handleMouseOut);
       cancelHide();
     };
-  }, [editor]);
+  }, [editor, scheduleHide, cancelHide]);
 
   useEffect(() => {
     if (editing) {

@@ -2,12 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireActiveSuperAdmin } from "@/lib/access";
+import { requireAdminPermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import type { Question, AnswerOption, Prisma } from "@prisma/client";
 
 export async function createQuizForLessonAction(lessonId: string) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_LESSONS_QUIZZES");
   const lesson = await prisma.lesson.findUniqueOrThrow({ where: { id: lessonId } });
   const quiz = await prisma.quiz.create({
     data: { lessonId, title: `Bài test: ${lesson.title}` },
@@ -17,7 +17,7 @@ export async function createQuizForLessonAction(lessonId: string) {
 }
 
 export async function deleteQuizAction(quizId: string, lessonId: string) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_LESSONS_QUIZZES");
   await prisma.quiz.delete({ where: { id: quizId } });
   revalidatePath(`/admin/lessons/${lessonId}`);
   redirect(`/admin/lessons/${lessonId}`);
@@ -43,7 +43,7 @@ export async function saveQuizAction(
   questions: QuestionInput[],
   passThreshold: number | null
 ): Promise<{ error?: string; title?: string; questions?: SavedQuestion[]; passThreshold?: number | null }> {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_LESSONS_QUIZZES");
 
   const trimmedTitle = title.trim();
   if (!trimmedTitle) {
@@ -117,7 +117,7 @@ export async function saveQuizAction(
 }
 
 export async function deleteQuestionAction(questionId: string, quizId: string) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_LESSONS_QUIZZES");
   await prisma.question.delete({ where: { id: questionId } });
   revalidatePath(`/admin/quizzes/${quizId}`);
 }

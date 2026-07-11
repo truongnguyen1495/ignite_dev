@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { BookOpen, Lock, Video, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -60,14 +60,11 @@ function ProgressBar({ course }: { course: StudentCourseItem }) {
 }
 
 export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
-  const [mode, setMode] = useState<ViewMode>("grid");
-
-  useEffect(() => {
+  const [mode, setMode] = useState<ViewMode>(() => {
+    if (typeof window === "undefined") return "grid";
     const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (saved === "grid" || saved === "list") {
-      setMode(saved);
-    }
-  }, []);
+    return saved === "grid" || saved === "list" ? saved : "grid";
+  });
 
   function handleChange(next: ViewMode) {
     setMode(next);

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPermission } from "@/lib/access";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { EditLibraryItemForm } from "./edit-library-item-form";
 import { DeleteLibraryItemButton } from "./delete-library-item-button";
@@ -16,6 +17,7 @@ export default async function EditLibraryItemPage({
 }: {
   params: Promise<{ itemId: string }>;
 }) {
+  await requireAdminPermission("MANAGE_LIBRARY");
   const { itemId } = await params;
 
   const item = await prisma.libraryItem.findUnique({

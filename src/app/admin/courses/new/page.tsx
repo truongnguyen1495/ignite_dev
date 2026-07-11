@@ -1,8 +1,10 @@
+import { requireAdminPermission } from "@/lib/access";
 import { BackLink } from "@/components/ui/back-link";
 import { Card } from "@/components/ui/card";
 import { CreateCourseForm } from "./create-course-form";
 
-export default function NewCoursePage() {
+export default async function NewCoursePage() {
+  await requireAdminPermission("MANAGE_COURSES");
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <div>

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPermission } from "@/lib/access";
 import { BackLink } from "@/components/ui/back-link";
 import { Card } from "@/components/ui/card";
 import { EditAnnouncementForm } from "./edit-announcement-form";
@@ -10,6 +11,7 @@ export default async function EditAnnouncementPage({
 }: {
   params: Promise<{ announcementId: string }>;
 }) {
+  await requireAdminPermission("MANAGE_ANNOUNCEMENTS");
   const { announcementId } = await params;
   const announcement = await prisma.announcement.findUnique({ where: { id: announcementId } });
   if (!announcement) {

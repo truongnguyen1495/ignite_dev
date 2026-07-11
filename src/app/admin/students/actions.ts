@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Prisma, type Level } from "@prisma/client";
-import { requireActiveSuperAdmin } from "@/lib/access";
+import { requireAdminPermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { ORDERED_LEVELS } from "@/lib/levels";
 import { optionalPhoneNumberSchema } from "@/lib/validation";
@@ -36,7 +36,7 @@ export async function createStudentAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_STUDENTS");
 
   const parsed = createSchema.safeParse({
     name: formData.get("name"),
@@ -88,7 +88,7 @@ export async function updateStudentAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_STUDENTS");
 
   const parsed = updateSchema.safeParse({
     studentId: formData.get("studentId"),
@@ -124,7 +124,7 @@ export async function updateStudentAction(
 }
 
 export async function setStudentStatusAction(studentId: string, locked: boolean) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_STUDENTS");
   await prisma.user.update({
     where: { id: studentId, role: "STUDENT" },
     data: { status: locked ? "LOCKED" : "ACTIVE" },
@@ -134,7 +134,7 @@ export async function setStudentStatusAction(studentId: string, locked: boolean)
 }
 
 export async function approveStudentAction(studentId: string) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_STUDENTS");
   await prisma.user.update({
     where: { id: studentId, role: "STUDENT", status: "PENDING" },
     data: { status: "ACTIVE" },
@@ -144,7 +144,7 @@ export async function approveStudentAction(studentId: string) {
 }
 
 export async function deleteStudentAction(studentId: string) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_STUDENTS");
   await prisma.user.delete({ where: { id: studentId, role: "STUDENT" } });
   revalidatePath("/admin/students");
 }

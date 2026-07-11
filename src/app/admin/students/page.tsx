@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus, Eye } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPermission } from "@/lib/access";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ToggleStudentStatusButton, DeleteStudentButton } from "./[studentId]/danger-actions";
@@ -8,6 +9,7 @@ import { PendingRegistrations } from "./pending-registrations";
 import { PageHeader } from "@/components/ui/page-header";
 
 export default async function StudentsPage() {
+  await requireAdminPermission("MANAGE_STUDENTS");
   const allStudents = await prisma.user.findMany({
     where: { role: "STUDENT" },
     orderBy: { createdAt: "desc" },

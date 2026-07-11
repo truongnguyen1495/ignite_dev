@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { ClipboardList } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPermission } from "@/lib/access";
 import { BackLink } from "@/components/ui/back-link";
 import { EditLessonForm } from "./edit-lesson-form";
 import { DeleteLessonButton } from "./delete-lesson-button";
@@ -14,6 +15,7 @@ export default async function EditLessonPage({
 }: {
   params: Promise<{ lessonId: string }>;
 }) {
+  await requireAdminPermission("MANAGE_LESSONS_QUIZZES");
   const { lessonId } = await params;
   const lesson = await prisma.lesson.findUnique({
     where: { id: lessonId },

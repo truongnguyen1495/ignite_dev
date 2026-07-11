@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Level, LibraryItemType } from "@prisma/client";
-import { requireActiveSuperAdmin } from "@/lib/access";
+import { requireAdminPermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { downloadLibraryFile, uploadLibraryFile, deleteLibraryFile } from "@/lib/library-storage";
 import { extractFirstPages } from "@/lib/library-pdf";
@@ -38,7 +38,7 @@ export async function createLibraryItemAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_LIBRARY");
 
   const parsed = libraryItemSchema.safeParse({
     title: formData.get("title"),
@@ -90,7 +90,7 @@ export async function updateLibraryItemAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_LIBRARY");
 
   const parsed = updateLibraryItemSchema.safeParse({
     libraryItemId: formData.get("libraryItemId"),
@@ -139,7 +139,7 @@ export async function updateLibraryItemAction(
 }
 
 export async function deleteLibraryItemAction(libraryItemId: string) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_LIBRARY");
   const item = await prisma.libraryItem.findUnique({ where: { id: libraryItemId } });
   await prisma.libraryItem.delete({ where: { id: libraryItemId } });
 
@@ -160,7 +160,7 @@ export async function deleteLibraryItemAction(libraryItemId: string) {
 // Independent of level gating — only controls whether this item shows up
 // under /guest/* (see requireGuestLibraryItemAccess in src/lib/access.ts).
 export async function setLibraryItemGuestVisibilityAction(libraryItemId: string, visibleToGuest: boolean) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_LIBRARY");
   await prisma.libraryItem.update({ where: { id: libraryItemId }, data: { visibleToGuest } });
   revalidatePath("/admin/library");
 }
@@ -174,13 +174,13 @@ export async function setLibraryItemVisibleToStudentsAction(
   libraryItemId: string,
   visibleToStudents: boolean
 ) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_LIBRARY");
   await prisma.libraryItem.update({ where: { id: libraryItemId }, data: { visibleToStudents } });
   revalidatePath("/admin/library");
 }
 
 export async function grantLibraryAccessAction(libraryItemId: string, studentId: string) {
-  const admin = await requireActiveSuperAdmin();
+  const admin = await requireAdminPermission("MANAGE_LIBRARY");
   if (!studentId) {
     return;
   }
@@ -194,13 +194,13 @@ export async function grantLibraryAccessAction(libraryItemId: string, studentId:
 }
 
 export async function revokeLibraryAccessAction(grantId: string, libraryItemId: string) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_LIBRARY");
   await prisma.libraryAccessGrant.delete({ where: { id: grantId } });
   revalidatePath(`/admin/library/${libraryItemId}`);
 }
 
 export async function grantLibraryLevelAccessAction(libraryItemId: string, minLevel: Level) {
-  const admin = await requireActiveSuperAdmin();
+  const admin = await requireAdminPermission("MANAGE_LIBRARY");
   await prisma.libraryLevelGrant.upsert({
     where: { libraryItemId_minLevel: { libraryItemId, minLevel } },
     create: { libraryItemId, minLevel, grantedById: admin.id },
@@ -210,7 +210,7 @@ export async function grantLibraryLevelAccessAction(libraryItemId: string, minLe
 }
 
 export async function revokeLibraryLevelAccessAction(grantId: string, libraryItemId: string) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_LIBRARY");
   await prisma.libraryLevelGrant.delete({ where: { id: grantId } });
   revalidatePath(`/admin/library/${libraryItemId}`);
 }

@@ -1,8 +1,10 @@
+import { requireAdminPermission } from "@/lib/access";
 import { BackLink } from "@/components/ui/back-link";
 import { Card } from "@/components/ui/card";
 import { CreateLessonForm } from "./create-lesson-form";
 
-export default function NewLessonPage() {
+export default async function NewLessonPage() {
+  await requireAdminPermission("MANAGE_LESSONS_QUIZZES");
   return (
     <div className="mx-auto max-w-[1000px] space-y-6">
       <div>

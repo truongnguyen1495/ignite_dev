@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Level } from "@prisma/client";
-import { requireActiveSuperAdmin } from "@/lib/access";
+import { requireAdminPermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { parseYoutubeId } from "@/lib/youtube";
 
@@ -19,7 +19,7 @@ export async function createCourseAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_COURSES");
 
   const parsed = courseSchema.safeParse({
     title: formData.get("title"),
@@ -54,7 +54,7 @@ export async function updateCourseAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_COURSES");
 
   const parsed = updateCourseSchema.safeParse({
     courseId: formData.get("courseId"),
@@ -88,7 +88,7 @@ export async function updateCourseAction(
 
 // No redirect — the caller (course list page) just refreshes in place.
 export async function deleteCourseAction(courseId: string) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_COURSES");
   await prisma.course.delete({ where: { id: courseId } });
   revalidatePath("/admin/courses");
 }
@@ -111,7 +111,7 @@ export async function createCourseLessonAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_COURSES");
 
   const parsed = courseLessonSchema.safeParse({
     courseId: formData.get("courseId"),
@@ -155,7 +155,7 @@ export async function updateCourseLessonAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_COURSES");
 
   const parsed = updateCourseLessonSchema.safeParse({
     lessonId: formData.get("lessonId"),
@@ -193,7 +193,7 @@ export async function updateCourseLessonAction(
 
 // No redirect — callers differ on where they want to end up afterward.
 export async function deleteCourseLessonAction(lessonId: string, courseId: string) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_COURSES");
   await prisma.courseLesson.delete({ where: { id: lessonId } });
   revalidatePath(`/admin/courses/${courseId}`);
 }
@@ -206,13 +206,13 @@ export async function setCourseLessonGuestVisibilityAction(
   courseId: string,
   visibleToGuest: boolean
 ) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_COURSES");
   await prisma.courseLesson.update({ where: { id: lessonId }, data: { visibleToGuest } });
   revalidatePath(`/admin/courses/${courseId}`);
 }
 
 export async function grantCourseAccessAction(courseId: string, studentId: string) {
-  const admin = await requireActiveSuperAdmin();
+  const admin = await requireAdminPermission("MANAGE_COURSES");
   if (!studentId) {
     return;
   }
@@ -226,13 +226,13 @@ export async function grantCourseAccessAction(courseId: string, studentId: strin
 }
 
 export async function revokeCourseAccessAction(grantId: string, courseId: string) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_COURSES");
   await prisma.courseAccessGrant.delete({ where: { id: grantId } });
   revalidatePath(`/admin/courses/${courseId}`);
 }
 
 export async function grantCourseLevelAccessAction(courseId: string, minLevel: Level) {
-  const admin = await requireActiveSuperAdmin();
+  const admin = await requireAdminPermission("MANAGE_COURSES");
   await prisma.courseLevelGrant.upsert({
     where: { courseId_minLevel: { courseId, minLevel } },
     create: { courseId, minLevel, grantedById: admin.id },
@@ -242,7 +242,7 @@ export async function grantCourseLevelAccessAction(courseId: string, minLevel: L
 }
 
 export async function revokeCourseLevelAccessAction(grantId: string, courseId: string) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_COURSES");
   await prisma.courseLevelGrant.delete({ where: { id: grantId } });
   revalidatePath(`/admin/courses/${courseId}`);
 }

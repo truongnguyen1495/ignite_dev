@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import type { ChatThread, Level, Role, User } from "@prisma/client";
+import type { AdminPermissionKind, ChatThread, Level, Role, User } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hasLevelAccess } from "@/lib/levels";
@@ -58,6 +58,65 @@ export async function requireActiveStudent(): Promise<User> {
 
 export async function requireActiveSuperAdmin(): Promise<User> {
   return requireRole("SUPER_ADMIN");
+}
+
+// Same "fresh from DB, cached per request" shape as requireRole, but without
+// pinning a role — used by the permission helpers below, which need to
+// branch on role themselves rather than being redirected away by requireRole.
+const requireActiveUser = cache(async (): Promise<User> => {
+  const session = await requireSession();
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (!user || user.status !== "ACTIVE") {
+    redirect("/login");
+  }
+  return user;
+});
+
+// A STUDENT account can additionally hold specific admin permissions
+// (granted from /admin/settings, Super Admin only) without losing its
+// STUDENT role — this is what lets one account be "both a student and a
+// limited admin" rather than needing a third Role enum value. Cached per
+// request since both requireAnyAdminAccess (layout) and requireAdminPermission
+// (individual pages/actions) look this up on the same request.
+export const getAdminPermissions = cache(async (userId: string): Promise<Set<AdminPermissionKind>> => {
+  const rows = await prisma.adminPermission.findMany({ where: { userId }, select: { permission: true } });
+  return new Set(rows.map((r) => r.permission));
+});
+
+// Gate for an individual admin page/action scoped to one feature area.
+// SUPER_ADMIN always passes, regardless of the AdminPermission table — that
+// table only ever describes a STUDENT's limited slice of /admin.
+export async function requireAdminPermission(permission: AdminPermissionKind): Promise<User> {
+  const user = await requireActiveUser();
+  if (user.role === "SUPER_ADMIN") {
+    return user;
+  }
+  const permissions = await getAdminPermissions(user.id);
+  if (!permissions.has(permission)) {
+    redirect("/admin?denied=1");
+  }
+  return user;
+}
+
+// Gate for the /admin layout itself: lets in a SUPER_ADMIN (full access) or
+// a STUDENT holding at least one admin permission (dual-role admin) —
+// anyone else (a plain student with zero permissions) is bounced back to
+// /dashboard. Returns the granted permission set so the layout can filter
+// its nav accordingly.
+export async function requireAnyAdminAccess(): Promise<{
+  user: User;
+  isSuperAdmin: boolean;
+  permissions: Set<AdminPermissionKind>;
+}> {
+  const user = await requireActiveUser();
+  if (user.role === "SUPER_ADMIN") {
+    return { user, isSuperAdmin: true, permissions: new Set() };
+  }
+  const permissions = await getAdminPermissions(user.id);
+  if (permissions.size === 0) {
+    redirect("/dashboard");
+  }
+  return { user, isSuperAdmin: false, permissions };
 }
 
 // Master kill switch for the whole chat feature, toggled from
@@ -254,10 +313,20 @@ export async function requireGuestLibraryItemAccess(libraryItemId: string) {
 // below AND by the attachment-download route handler (same split as
 // studentHasLibraryItemAccess / requireLibraryItemAccess: redirect-based
 // helpers for pages, a plain boolean check for JSON-responding routes).
-export function userCanAccessChatThread(user: User, thread: ChatThread): boolean {
+// hasChatAdminPermission covers a STUDENT dual-role admin holding
+// MANAGE_CHAT — kept as a plain boolean the caller passes in (rather than
+// looking it up here) so this stays a sync function usable in the download
+// route's boolean check; only that route currently needs to pass it (see
+// getAdminPermissions in this file).
+export function userCanAccessChatThread(
+  user: User,
+  thread: ChatThread,
+  hasChatAdminPermission = false
+): boolean {
+  const isAdmin = user.role === "SUPER_ADMIN" || hasChatAdminPermission;
   switch (thread.kind) {
     case "SUPPORT":
-      return user.role === "SUPER_ADMIN" || user.id === thread.supportStudentId;
+      return isAdmin || user.id === thread.supportStudentId;
     case "DIRECT":
       return user.id === thread.directUserAId || user.id === thread.directUserBId;
     case "GROUP":
@@ -265,7 +334,7 @@ export function userCanAccessChatThread(user: User, thread: ChatThread): boolean
       // sees their own room plus every room below it, not just an exact
       // match. Admins see every group room regardless of level.
       return (
-        user.role === "SUPER_ADMIN" ||
+        isAdmin ||
         (user.role === "STUDENT" && !!thread.groupLevel && hasLevelAccess(user.grantedLevel, thread.groupLevel))
       );
   }
@@ -279,7 +348,7 @@ export async function requireOwnSupportThreadAccess() {
 }
 
 export async function requireAdminSupportThreadAccess(threadId: string) {
-  const admin = await requireActiveSuperAdmin();
+  const admin = await requireAdminPermission("MANAGE_CHAT");
   await requireChatEnabled("/admin");
   const thread = await prisma.chatThread.findUnique({ where: { id: threadId } });
   if (!thread || thread.kind !== "SUPPORT") {
@@ -314,7 +383,7 @@ export async function requireGroupThreadAccess(level: Level) {
 // of every /dashboard/* route before they ever got here) — every level is
 // open to every admin, no restriction.
 export async function requireAdminGroupThreadAccess(level: Level) {
-  const admin = await requireActiveSuperAdmin();
+  const admin = await requireAdminPermission("MANAGE_CHAT");
   await requireChatEnabled("/admin");
   return { admin, level };
 }

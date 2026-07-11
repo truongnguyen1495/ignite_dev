@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireActiveSuperAdmin } from "@/lib/access";
+import { requireAdminPermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { ORDERED_LEVELS } from "@/lib/levels";
 import { parseYoutubeId } from "@/lib/youtube";
@@ -30,7 +30,7 @@ export async function createLessonAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_LESSONS_QUIZZES");
 
   const parsed = lessonSchema.safeParse({
     title: formData.get("title"),
@@ -72,7 +72,7 @@ export async function updateLessonAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_LESSONS_QUIZZES");
 
   const parsed = updateSchema.safeParse({
     lessonId: formData.get("lessonId"),
@@ -115,7 +115,7 @@ export async function updateLessonAction(
 // (the edit page navigates away since its lesson is now gone, the list page
 // just refreshes in place), so navigation is left to the client component.
 export async function deleteLessonAction(lessonId: string) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_LESSONS_QUIZZES");
   await prisma.lesson.delete({ where: { id: lessonId } });
   revalidatePath("/admin/lessons");
 }

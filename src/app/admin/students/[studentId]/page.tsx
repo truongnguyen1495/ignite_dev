@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDateOnlyVN } from "@/lib/date";
+import { requireAdminPermission } from "@/lib/access";
 import { EditStudentForm } from "./edit-student-form";
 import { DeleteStudentButton, ToggleStudentStatusButton, ApproveStudentButton } from "./danger-actions";
 import { LEVEL_LABELS, hasLevelAccess, levelRank } from "@/lib/levels";
@@ -22,6 +23,7 @@ export default async function EditStudentPage({
 }: {
   params: Promise<{ studentId: string }>;
 }) {
+  await requireAdminPermission("MANAGE_STUDENTS");
   const { studentId } = await params;
   const student = await prisma.user.findUnique({ where: { id: studentId } });
   if (!student || student.role !== "STUDENT") {

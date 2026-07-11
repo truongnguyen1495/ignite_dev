@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireActiveSuperAdmin } from "@/lib/access";
+import { requireAdminPermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { ORDERED_LEVELS } from "@/lib/levels";
 import { ORDERED_ANNOUNCEMENT_CATEGORIES } from "@/lib/announcements";
@@ -30,7 +30,7 @@ export async function createAnnouncementAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_ANNOUNCEMENTS");
 
   const parsed = announcementSchema.safeParse({
     title: formData.get("title"),
@@ -70,7 +70,7 @@ export async function updateAnnouncementAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_ANNOUNCEMENTS");
 
   const parsed = updateSchema.safeParse({
     announcementId: formData.get("announcementId"),
@@ -109,7 +109,7 @@ export async function updateAnnouncementAction(
 // No redirect here — callers differ on where they want to end up afterward,
 // same convention as deleteLessonAction.
 export async function deleteAnnouncementAction(announcementId: string) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_ANNOUNCEMENTS");
   await prisma.announcement.delete({ where: { id: announcementId } });
   revalidatePath("/admin/announcements");
 }
@@ -120,7 +120,7 @@ export async function setAnnouncementGuestVisibilityAction(
   announcementId: string,
   visibleToGuest: boolean
 ) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_ANNOUNCEMENTS");
   await prisma.announcement.update({ where: { id: announcementId }, data: { visibleToGuest } });
   revalidatePath("/admin/announcements");
 }
@@ -133,7 +133,7 @@ export async function setAnnouncementVisibleToStudentsAction(
   announcementId: string,
   visibleToStudents: boolean
 ) {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_ANNOUNCEMENTS");
   await prisma.announcement.update({ where: { id: announcementId }, data: { visibleToStudents } });
   revalidatePath("/admin/announcements");
 }

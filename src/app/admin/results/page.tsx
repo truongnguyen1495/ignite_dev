@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/prisma";
+import { requireAdminPermission } from "@/lib/access";
 import { ResultRow } from "./result-row";
 import { PageHeader } from "@/components/ui/page-header";
 
 export default async function ResultsPage() {
+  await requireAdminPermission("MANAGE_RESULTS");
   const attempts = await prisma.quizAttempt.findMany({
     orderBy: { attemptedAt: "desc" },
     include: {

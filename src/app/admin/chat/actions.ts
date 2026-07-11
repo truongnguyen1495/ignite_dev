@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
-  requireActiveSuperAdmin,
+  requireAdminPermission,
   requireChatEnabled,
   requireAdminSupportThreadAccess,
   requireAdminGroupThreadAccess,
@@ -63,14 +63,14 @@ export async function sendAdminGroupMessageAction(
 // Generic — used for both support threads and group rooms, hence no kind
 // check (mirrors markThreadRead itself, which just upserts a watermark).
 export async function markThreadReadAction(threadId: string): Promise<void> {
-  const admin = await requireActiveSuperAdmin();
+  const admin = await requireAdminPermission("MANAGE_CHAT");
   await markThreadRead(threadId, admin.id);
 }
 
 export async function searchStudentsForSupportAction(
   query: string
 ): Promise<{ id: string; name: string; username: string | null }[]> {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_CHAT");
   const trimmed = query.trim();
   if (trimmed.length < 2) return [];
   return prisma.user.findMany({
@@ -95,7 +95,7 @@ export async function searchStudentsForSupportAction(
 // jumps straight to it, same lazy-creation idiom as getOrCreateSupportThread
 // everywhere else.
 export async function startSupportThreadAction(studentId: string): Promise<string | undefined> {
-  await requireActiveSuperAdmin();
+  await requireAdminPermission("MANAGE_CHAT");
   await requireChatEnabled("/admin");
   const student = await prisma.user.findUnique({ where: { id: studentId } });
   if (!student || student.role !== "STUDENT" || student.status !== "ACTIVE") {

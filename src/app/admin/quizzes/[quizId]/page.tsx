@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPermission } from "@/lib/access";
 import { QuizEditor } from "./quiz-editor";
 import { DeleteQuizButton } from "./delete-quiz-button";
 import { Card } from "@/components/ui/card";
@@ -9,6 +10,7 @@ export default async function QuizManagementPage({
 }: {
   params: Promise<{ quizId: string }>;
 }) {
+  await requireAdminPermission("MANAGE_LESSONS_QUIZZES");
   const { quizId } = await params;
   const [quiz, settings] = await Promise.all([
     prisma.quiz.findUnique({

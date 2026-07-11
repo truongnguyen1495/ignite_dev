@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPermission } from "@/lib/access";
 import { PageHeader } from "@/components/ui/page-header";
 import { AnnouncementsList } from "./announcements-list";
 
 export default async function AnnouncementsPage() {
+  await requireAdminPermission("MANAGE_ANNOUNCEMENTS");
   const announcements = await prisma.announcement.findMany({ orderBy: { publishedAt: "desc" } });
 
   const items = announcements.map((a) => ({

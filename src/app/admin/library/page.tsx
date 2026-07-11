@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPermission } from "@/lib/access";
 import { PageHeader } from "@/components/ui/page-header";
 import { LibraryList, type LibraryListItem } from "./library-list";
 
 export default async function LibraryPage() {
+  await requireAdminPermission("MANAGE_LIBRARY");
   const items = await prisma.libraryItem.findMany({
     orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     include: {

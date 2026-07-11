@@ -1,5 +1,6 @@
 import { CheckCircle2, XCircle, ArrowRight, ClipboardCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPermission } from "@/lib/access";
 import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
 import { getLevelCompletionStatus } from "@/lib/level-completion";
 import { LevelBadge } from "@/components/ui/level-badge";
@@ -11,6 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default async function LevelUpRequestsPage() {
+  await requireAdminPermission("MANAGE_LEVEL_UP_REQUESTS");
   const [pending, history] = await Promise.all([
     prisma.levelUpRequest.findMany({
       where: { status: "PENDING" },

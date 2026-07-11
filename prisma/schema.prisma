@@ -83,8 +83,40 @@ model User {
   supportThread           ChatThread?              @relation("SupportThreadOfStudent")
   directThreadsAsUserA    ChatThread[]             @relation("DirectThreadAsUserA")
   directThreadsAsUserB    ChatThread[]             @relation("DirectThreadAsUserB")
+  adminPermissions        AdminPermission[]        @relation("AdminPermissions")
+  adminPermissionsGranted AdminPermission[]        @relation("AdminPermissionsGranted")
 
   @@index([role])
+}
+
+// Grants a STUDENT account a limited, specific slice of /admin — the
+// account keeps studying at /dashboard as normal (see requireAnyAdminAccess
+// in src/lib/access.ts, which is how a single-role User model supports this
+// "student + limited admin" dual role without a new Role enum value).
+// SUPER_ADMIN accounts bypass this table entirely and always have every
+// permission implicitly.
+enum AdminPermissionKind {
+  MANAGE_COURSES
+  MANAGE_LESSONS_QUIZZES
+  MANAGE_LIBRARY
+  MANAGE_STUDENTS
+  MANAGE_CHAT
+  MANAGE_LEVEL_UP_REQUESTS
+  MANAGE_RESULTS
+  MANAGE_ANNOUNCEMENTS
+}
+
+model AdminPermission {
+  id          String              @id @default(cuid())
+  userId      String
+  permission  AdminPermissionKind
+  grantedById String
+  grantedAt   DateTime            @default(now())
+
+  user      User @relation("AdminPermissions", fields: [userId], references: [id], onDelete: Cascade)
+  grantedBy User @relation("AdminPermissionsGranted", fields: [grantedById], references: [id])
+
+  @@unique([userId, permission])
 }
 
 model Lesson {

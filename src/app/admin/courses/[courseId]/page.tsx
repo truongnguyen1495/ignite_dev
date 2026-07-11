@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPermission } from "@/lib/access";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { EditCourseForm } from "./edit-course-form";
 import { DeleteCourseButton } from "./delete-course-button";
@@ -17,6 +18,7 @@ export default async function EditCoursePage({
 }: {
   params: Promise<{ courseId: string }>;
 }) {
+  await requireAdminPermission("MANAGE_COURSES");
   const { courseId } = await params;
 
   const course = await prisma.course.findUnique({

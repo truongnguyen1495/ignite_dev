@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus, Video, ClipboardList } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPermission } from "@/lib/access";
 import { ORDERED_LEVELS } from "@/lib/levels";
 import { DeleteLessonInlineButton } from "./delete-lesson-inline-button";
 import { createQuizForLessonAction } from "../quizzes/actions";
@@ -9,6 +10,7 @@ import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { LevelBadge } from "@/components/ui/level-badge";
 
 export default async function LessonsPage() {
+  await requireAdminPermission("MANAGE_LESSONS_QUIZZES");
   const lessons = await prisma.lesson.findMany({
     orderBy: [{ level: "asc" }, { order: "asc" }],
     include: { quiz: true },

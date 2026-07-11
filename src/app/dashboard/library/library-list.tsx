@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { BookOpen, FileText, Lock, ArrowRight } from "lucide-react";
 import type { LibraryItemType } from "@prisma/client";
@@ -43,14 +43,11 @@ function Thumbnail({ item, className }: { item: StudentLibraryItem; className: s
 }
 
 export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
-  const [mode, setMode] = useState<ViewMode>("grid");
-
-  useEffect(() => {
+  const [mode, setMode] = useState<ViewMode>(() => {
+    if (typeof window === "undefined") return "grid";
     const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (saved === "grid" || saved === "list") {
-      setMode(saved);
-    }
-  }, []);
+    return saved === "grid" || saved === "list" ? saved : "grid";
+  });
 
   function handleChange(next: ViewMode) {
     setMode(next);

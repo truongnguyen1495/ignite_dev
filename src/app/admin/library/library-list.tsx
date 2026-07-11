@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { BookOpen, FileText } from "lucide-react";
 import type { Level, LibraryItemType } from "@prisma/client";
@@ -74,14 +74,11 @@ function AccessBadges({ item }: { item: LibraryListItem }) {
 
 export function LibraryList({ items }: { items: LibraryListItem[] }) {
   const [typeFilter, setTypeFilter] = useState<LibraryItemType | "ALL">("ALL");
-  const [mode, setMode] = useState<ViewMode>("grid");
-
-  useEffect(() => {
+  const [mode, setMode] = useState<ViewMode>(() => {
+    if (typeof window === "undefined") return "grid";
     const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (saved === "grid" || saved === "list") {
-      setMode(saved);
-    }
-  }, []);
+    return saved === "grid" || saved === "list" ? saved : "grid";
+  });
 
   function handleChange(next: ViewMode) {
     setMode(next);
