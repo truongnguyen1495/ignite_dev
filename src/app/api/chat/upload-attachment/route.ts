@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isChatEnabled } from "@/lib/access";
 import { uploadChatAttachment } from "@/lib/chat-storage";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -30,6 +31,9 @@ export async function POST(request: Request) {
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (!user || user.status !== "ACTIVE") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  if (!(await isChatEnabled())) {
+    return NextResponse.json({ error: "Chat is disabled" }, { status: 403 });
   }
 
   const formData = await request.formData();

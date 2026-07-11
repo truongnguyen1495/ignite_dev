@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   requireActiveStudent,
+  requireChatEnabled,
   requireOwnSupportThreadAccess,
   requireDirectThreadAccess,
   requireGroupThreadAccess,
@@ -83,6 +84,7 @@ export async function markThreadReadAction(threadId: string): Promise<void> {
 
 export async function startDirectThreadAction(otherStudentId: string): Promise<string | undefined> {
   const student = await requireActiveStudent();
+  await requireChatEnabled("/dashboard");
   if (otherStudentId === student.id) {
     return "Không thể nhắn tin với chính mình.";
   }

@@ -11,7 +11,7 @@ import {
   Library,
   MessageCircle,
 } from "lucide-react";
-import { requireActiveSuperAdmin } from "@/lib/access";
+import { requireActiveSuperAdmin, isChatEnabled } from "@/lib/access";
 import { getAdminSupportInbox } from "@/lib/chat";
 import { Sidebar, SidebarProvider, SidebarToggle, type NavItem } from "@/components/ui/sidebar";
 import { BrandLogo } from "@/components/brand-logo";
@@ -29,7 +29,8 @@ export default async function AdminLayout({
   // Live unread count needs a DB read, so NAV_ITEMS moves inside the async
   // body (unlike a purely static nav) — same reasoning as the "Nhắn tin"
   // badge in dashboard/layout.tsx.
-  const supportThreads = await getAdminSupportInbox(admin.id);
+  const chatEnabled = await isChatEnabled();
+  const supportThreads = chatEnabled ? await getAdminSupportInbox(admin.id) : [];
   const unreadSupportCount = supportThreads.reduce((sum, t) => sum + t.unreadCount, 0);
 
   const NAV_ITEMS: NavItem[] = [
@@ -39,12 +40,16 @@ export default async function AdminLayout({
     { href: "/admin/courses", label: "Khóa học độc quyền", icon: <Crown className={iconClass} /> },
     { href: "/admin/library", label: "Thư viện", icon: <Library className={iconClass} /> },
     { href: "/admin/announcements", label: "Bản tin", icon: <Megaphone className={iconClass} /> },
-    {
-      href: "/admin/chat",
-      label: "Hỗ trợ học viên",
-      icon: <MessageCircle className={iconClass} />,
-      badge: unreadSupportCount,
-    },
+    ...(chatEnabled
+      ? [
+          {
+            href: "/admin/chat",
+            label: "Hỗ trợ học viên",
+            icon: <MessageCircle className={iconClass} />,
+            badge: unreadSupportCount,
+          },
+        ]
+      : []),
     { href: "/admin/results", label: "Kết quả", icon: <ClipboardList className={iconClass} /> },
     { href: "/admin/level-up-requests", label: "Yêu cầu lên cấp", icon: <ArrowUpCircle className={iconClass} /> },
     { href: "/admin/settings", label: "Cài đặt", icon: <Settings className={iconClass} /> },

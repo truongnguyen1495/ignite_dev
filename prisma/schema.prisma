@@ -176,6 +176,7 @@ model LevelUpRequest {
 model Settings {
   id             Int      @id @default(1)
   passPercentage Int      @default(80)
+  chatEnabled    Boolean  @default(true)
   updatedAt      DateTime @updatedAt
 }
 

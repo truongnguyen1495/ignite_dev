@@ -8,7 +8,7 @@ import {
   Library,
   MessageCircle,
 } from "lucide-react";
-import { requireActiveStudent } from "@/lib/access";
+import { requireActiveStudent, isChatEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { getStudentChatInbox } from "@/lib/chat";
 import { LEVEL_LABELS, hasLevelAccess } from "@/lib/levels";
@@ -26,14 +26,15 @@ export default async function DashboardLayout({
 }) {
   const student = await requireActiveStudent();
 
-  const [announcements, reads, chatInbox] = await Promise.all([
+  const [announcements, reads, chatEnabled] = await Promise.all([
     prisma.announcement.findMany({ select: { id: true, minLevel: true, visibleToStudents: true } }),
     prisma.announcementRead.findMany({
       where: { studentId: student.id },
       select: { announcementId: true },
     }),
-    getStudentChatInbox(student),
+    isChatEnabled(),
   ]);
+  const chatInbox = chatEnabled ? await getStudentChatInbox(student) : null;
   const readIds = new Set(reads.map((r) => r.announcementId));
   const unreadAnnouncementCount = announcements.filter(
     (a) =>
@@ -41,10 +42,11 @@ export default async function DashboardLayout({
       (!a.minLevel || hasLevelAccess(student.grantedLevel, a.minLevel)) &&
       !readIds.has(a.id)
   ).length;
-  const unreadChatCount =
-    chatInbox.support.unreadCount +
-    chatInbox.directThreads.reduce((sum, t) => sum + t.unreadCount, 0) +
-    chatInbox.groupRooms.reduce((sum, r) => sum + r.unreadCount, 0);
+  const unreadChatCount = chatInbox
+    ? chatInbox.support.unreadCount +
+      chatInbox.directThreads.reduce((sum, t) => sum + t.unreadCount, 0) +
+      chatInbox.groupRooms.reduce((sum, r) => sum + r.unreadCount, 0)
+    : 0;
 
   const NAV_ITEMS: NavItem[] = [
     { href: "/dashboard", label: "5 Cấp đào tạo", icon: <LayoutDashboard className={iconClass} />, exact: true },
@@ -56,12 +58,16 @@ export default async function DashboardLayout({
       icon: <Megaphone className={iconClass} />,
       badge: unreadAnnouncementCount,
     },
-    {
-      href: "/dashboard/chat",
-      label: "Nhắn tin",
-      icon: <MessageCircle className={iconClass} />,
-      badge: unreadChatCount,
-    },
+    ...(chatEnabled
+      ? [
+          {
+            href: "/dashboard/chat",
+            label: "Nhắn tin",
+            icon: <MessageCircle className={iconClass} />,
+            badge: unreadChatCount,
+          },
+        ]
+      : []),
     { href: "/dashboard/level-up", label: "Xin lên cấp", icon: <ArrowUpCircle className={iconClass} /> },
     { href: "/dashboard/profile", label: "Thông tin cá nhân", icon: <UserCircle className={iconClass} /> },
   ];

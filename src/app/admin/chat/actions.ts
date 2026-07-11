@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { requireActiveSuperAdmin, requireAdminSupportThreadAccess, requireAdminGroupThreadAccess } from "@/lib/access";
+import {
+  requireActiveSuperAdmin,
+  requireChatEnabled,
+  requireAdminSupportThreadAccess,
+  requireAdminGroupThreadAccess,
+} from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { parseLevel } from "@/lib/levels";
 import { sendChatMessage, markThreadRead, getOrCreateSupportThread, getOrCreateGroupThread } from "@/lib/chat";
@@ -91,6 +96,7 @@ export async function searchStudentsForSupportAction(
 // everywhere else.
 export async function startSupportThreadAction(studentId: string): Promise<string | undefined> {
   await requireActiveSuperAdmin();
+  await requireChatEnabled("/admin");
   const student = await prisma.user.findUnique({ where: { id: studentId } });
   if (!student || student.role !== "STUDENT" || student.status !== "ACTIVE") {
     return "Không tìm thấy học viên này.";

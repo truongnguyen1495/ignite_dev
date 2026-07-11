@@ -60,6 +60,21 @@ export async function requireActiveSuperAdmin(): Promise<User> {
   return requireRole("SUPER_ADMIN");
 }
 
+// Master kill switch for the whole chat feature, toggled from
+// /admin/settings. Checked fresh from the DB (same convention as every
+// other guard in this file) rather than cached, so flipping it off takes
+// effect on the very next request.
+export async function isChatEnabled(): Promise<boolean> {
+  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
+  return settings?.chatEnabled ?? true;
+}
+
+export async function requireChatEnabled(redirectTo: string): Promise<void> {
+  if (!(await isChatEnabled())) {
+    redirect(redirectTo);
+  }
+}
+
 export async function requireLevelAccess(requestedLevel: Level): Promise<User> {
   const student = await requireActiveStudent();
   if (!hasLevelAccess(student.grantedLevel, requestedLevel)) {
@@ -258,12 +273,14 @@ export function userCanAccessChatThread(user: User, thread: ChatThread): boolean
 
 export async function requireOwnSupportThreadAccess() {
   const student = await requireActiveStudent();
+  await requireChatEnabled("/dashboard");
   const thread = await getOrCreateSupportThread(student.id);
   return { student, thread };
 }
 
 export async function requireAdminSupportThreadAccess(threadId: string) {
   const admin = await requireActiveSuperAdmin();
+  await requireChatEnabled("/admin");
   const thread = await prisma.chatThread.findUnique({ where: { id: threadId } });
   if (!thread || thread.kind !== "SUPPORT") {
     redirect("/admin/chat?denied=1");
@@ -275,6 +292,7 @@ export async function requireAdminSupportThreadAccess(threadId: string) {
 
 export async function requireDirectThreadAccess(threadId: string) {
   const student = await requireActiveStudent();
+  await requireChatEnabled("/dashboard");
   const thread = await prisma.chatThread.findUnique({ where: { id: threadId } });
   if (!thread || thread.kind !== "DIRECT" || !userCanAccessChatThread(student, thread)) {
     redirect("/dashboard/chat?denied=1");
@@ -284,6 +302,7 @@ export async function requireDirectThreadAccess(threadId: string) {
 
 export async function requireGroupThreadAccess(level: Level) {
   const student = await requireActiveStudent();
+  await requireChatEnabled("/dashboard");
   if (!hasLevelAccess(student.grantedLevel, level)) {
     redirect("/dashboard/chat?denied=1");
   }
@@ -296,5 +315,6 @@ export async function requireGroupThreadAccess(level: Level) {
 // open to every admin, no restriction.
 export async function requireAdminGroupThreadAccess(level: Level) {
   const admin = await requireActiveSuperAdmin();
+  await requireChatEnabled("/admin");
   return { admin, level };
 }

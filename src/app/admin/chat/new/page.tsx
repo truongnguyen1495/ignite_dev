@@ -1,10 +1,11 @@
-import { requireActiveSuperAdmin } from "@/lib/access";
+import { requireActiveSuperAdmin, requireChatEnabled } from "@/lib/access";
 import { BackLink } from "@/components/ui/back-link";
 import { PageHeader } from "@/components/ui/page-header";
 import { StudentPicker } from "./student-picker";
 
 export default async function NewSupportThreadPage() {
   await requireActiveSuperAdmin();
+  await requireChatEnabled("/admin");
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { userCanAccessChatThread } from "@/lib/access";
+import { userCanAccessChatThread, isChatEnabled } from "@/lib/access";
 import { downloadChatAttachment } from "@/lib/chat-storage";
 
 // Plain auth() + manual checks instead of the redirect-based requireXxx
@@ -18,6 +18,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ mess
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (!user || user.status !== "ACTIVE") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  if (!(await isChatEnabled())) {
+    return NextResponse.json({ error: "Chat is disabled" }, { status: 403 });
   }
 
   const message = await prisma.chatMessage.findUnique({
