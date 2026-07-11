@@ -124,6 +124,12 @@ export function AdminPermissionEditor({
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {STUDENT_PERMISSION_GROUPS.map(({ parent, children }) => {
           const parentChecked = permissions.has(parent);
+          // Also expand if a child is checked without the parent — e.g. an
+          // admin granted MANAGE_RESULTS before this grouping existed, or
+          // whose parent got unchecked in a previous unsaved edit — so an
+          // already-granted permission never becomes invisible/unreachable
+          // in this editor.
+          const expanded = parentChecked || children.some((child) => permissions.has(child));
           return (
             <div key={parent} className="space-y-2 rounded-lg border border-border px-3 py-2">
               <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground">
@@ -135,7 +141,7 @@ export function AdminPermissionEditor({
                 />
                 {ADMIN_PERMISSION_LABELS[parent]}
               </label>
-              {parentChecked && (
+              {expanded && (
                 <div className="ml-6 space-y-1.5 border-l border-border pl-3">
                   {children.map((child) => (
                     <label

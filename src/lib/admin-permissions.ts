@@ -1,16 +1,17 @@
 import type { AdminPermissionKind } from "@prisma/client";
 
 // Standalone permissions — each is one checkbox, no children. The two
-// student-related ones (MANAGE_STUDENTS/MANAGE_PROSPECTIVE_STUDENTS) are
-// deliberately excluded here — they're rendered as group parents instead,
-// see STUDENT_PERMISSION_GROUPS below.
+// student-related ones (MANAGE_STUDENTS/MANAGE_PROSPECTIVE_STUDENTS) and
+// the three nested under "Học viên" below (MANAGE_LESSONS_QUIZZES/
+// MANAGE_RESULTS/MANAGE_LEVEL_UP_REQUESTS) are deliberately excluded here —
+// they're rendered as group parents/children instead, see
+// STUDENT_PERMISSION_GROUPS. This is a UI-grouping-only change: each
+// permission's own gate (requireAdminPermission("MANAGE_RESULTS") etc.) is
+// unaffected, only where its checkbox appears in this editor.
 export const ORDERED_ADMIN_PERMISSIONS: AdminPermissionKind[] = [
   "MANAGE_COURSES",
-  "MANAGE_LESSONS_QUIZZES",
   "MANAGE_LIBRARY",
   "MANAGE_CHAT",
-  "MANAGE_LEVEL_UP_REQUESTS",
-  "MANAGE_RESULTS",
   "MANAGE_ANNOUNCEMENTS",
 ];
 
@@ -24,11 +25,22 @@ export type PermissionGroup = {
 // deleting an existing one are separate, independently grantable
 // capabilities nested under the parent in the permission editor UI (e.g.
 // an admin can be trusted to edit + lock but never delete). See the
-// permission checks in src/app/admin/students/actions.ts.
+// permission checks in src/app/admin/students/actions.ts. Bài học/Kết
+// quả/Yêu cầu lên cấp are grouped under "Học viên" too, per user request —
+// same content-vs-5-cấp relationship that already grouped them under
+// "Học viên" in the admin sidebar nav (admin/layout.tsx).
 export const STUDENT_PERMISSION_GROUPS: PermissionGroup[] = [
   {
     parent: "MANAGE_STUDENTS",
-    children: ["EDIT_STUDENTS", "LOCK_STUDENTS", "DELETE_STUDENTS", "DEMOTE_STUDENTS"],
+    children: [
+      "EDIT_STUDENTS",
+      "LOCK_STUDENTS",
+      "DELETE_STUDENTS",
+      "DEMOTE_STUDENTS",
+      "MANAGE_LESSONS_QUIZZES",
+      "MANAGE_RESULTS",
+      "MANAGE_LEVEL_UP_REQUESTS",
+    ],
   },
   {
     parent: "MANAGE_PROSPECTIVE_STUDENTS",
