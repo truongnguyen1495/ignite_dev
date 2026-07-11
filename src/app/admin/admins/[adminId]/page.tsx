@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { LEVEL_LABELS } from "@/lib/levels";
+import { formatDateTimeVN } from "@/lib/date";
 import { ADMIN_PERMISSION_LABELS } from "@/lib/admin-permissions";
 import { AdminPermissionEditor } from "./admin-permission-editor";
 import { ToggleAdminStatusButton, DeleteAdminAccountButton } from "./danger-actions";
@@ -63,11 +64,11 @@ export default async function AdminDetailPage({ params }: { params: Promise<{ ad
           </div>
           <div className="min-w-0">
             <dt className="text-xs text-muted">Ngày tạo</dt>
-            <dd className="text-foreground">{admin.createdAt.toLocaleString("vi-VN")}</dd>
+            <dd className="text-foreground">{formatDateTimeVN(admin.createdAt)}</dd>
           </div>
           <div className="min-w-0">
             <dt className="text-xs text-muted">Cập nhật lần cuối</dt>
-            <dd className="text-foreground">{admin.updatedAt.toLocaleString("vi-VN")}</dd>
+            <dd className="text-foreground">{formatDateTimeVN(admin.updatedAt)}</dd>
           </div>
         </dl>
       </Card>
@@ -94,7 +95,7 @@ export default async function AdminDetailPage({ params }: { params: Promise<{ ad
               >
                 <span className="font-medium text-foreground">{ADMIN_PERMISSION_LABELS[p.permission]}</span>
                 <span className="text-xs text-muted">
-                  Cấp bởi {p.grantedBy.name} · {p.grantedAt.toLocaleString("vi-VN")}
+                  Cấp bởi {p.grantedBy.name} · {formatDateTimeVN(p.grantedAt)}
                 </span>
               </li>
             ))}

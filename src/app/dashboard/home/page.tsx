@@ -5,6 +5,7 @@ import { requireActiveStudent } from "@/lib/access";
 import { getGuestCourseItems } from "@/lib/guest-courses";
 import { GuestCourseList } from "@/app/guest/courses/course-list";
 import { GuestLibraryList, type GuestLibraryItem } from "@/app/guest/library/library-list";
+import { formatDateVN } from "@/lib/date";
 
 // Same reasoning as guest/page.tsx: reads admin-toggleable featured/visible
 // flags, must not be statically prerendered.
@@ -104,7 +105,7 @@ export default async function StudentHomePage() {
                 <div className="p-3">
                   <p className="line-clamp-2 text-sm font-medium text-foreground">{announcement.title}</p>
                   <p className="mt-1 text-xs text-muted">
-                    {announcement.publishedAt.toLocaleDateString("vi-VN")}
+                    {formatDateVN(announcement.publishedAt)}
                   </p>
                 </div>
               </Link>

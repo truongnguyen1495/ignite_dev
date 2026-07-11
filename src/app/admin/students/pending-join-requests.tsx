@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp, CheckCircle2 } from "lucide-react";
 import type { LevelUpRequest, User } from "@prisma/client";
 import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
+import { formatDateTimeVN } from "@/lib/date";
 import { Button } from "@/components/ui/button";
 import { approveJoinRequestAction } from "./join-requests-actions";
 import { RejectForm } from "./reject-form";
@@ -54,7 +55,7 @@ export function PendingJoinRequests({ requests }: { requests: PendingJoinRequest
                 </div>
 
                 <p className="mt-2 text-xs text-muted">
-                  Yêu cầu lúc {request.requestedAt.toLocaleString("vi-VN")}
+                  Yêu cầu lúc {formatDateTimeVN(request.requestedAt)}
                 </p>
 
                 <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-border pt-3">

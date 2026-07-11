@@ -1,4 +1,5 @@
 import type { GuestChatSender } from "@prisma/client";
+import { formatTimeVN } from "@/lib/date";
 
 export type GuestChatMessageRow = {
   id: string;
@@ -46,7 +47,7 @@ export function GuestChatMessageList({
               <p className="whitespace-pre-wrap break-words">{message.body}</p>
             </div>
             <span className="mt-0.5 px-1 text-[11px] text-faint">
-              {createdAt.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+              {formatTimeVN(createdAt)}
             </span>
           </div>
         );

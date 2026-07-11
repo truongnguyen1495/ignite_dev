@@ -1,6 +1,7 @@
 import { AlertTriangle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
+import { formatDateVN } from "@/lib/date";
 import { GuestAnnouncementList } from "./announcement-list";
 
 // Reading searchParams already forces dynamic rendering, but declare this
@@ -27,7 +28,7 @@ export default async function GuestAnnouncementsPage({
     id: a.id,
     title: a.title,
     coverImageUrl: a.coverImageUrl,
-    publishedAt: a.publishedAt.toLocaleDateString("vi-VN"),
+    publishedAt: formatDateVN(a.publishedAt),
   }));
 
   return (

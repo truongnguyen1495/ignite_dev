@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPermission } from "@/lib/access";
 import { PageHeader } from "@/components/ui/page-header";
+import { formatDateVN } from "@/lib/date";
 import { AnnouncementsList } from "./announcements-list";
 
 export default async function AnnouncementsPage() {
@@ -17,7 +18,7 @@ export default async function AnnouncementsPage() {
     minLevel: a.minLevel,
     visibleToGuest: a.visibleToGuest,
     visibleToStudents: a.visibleToStudents,
-    publishedAtLabel: a.publishedAt.toLocaleDateString("vi-VN"),
+    publishedAtLabel: formatDateVN(a.publishedAt),
   }));
 
   return (

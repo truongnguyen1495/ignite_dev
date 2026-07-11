@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { formatDateTimeVN } from "@/lib/date";
 
 type Attempt = {
   id: string;
@@ -35,7 +36,7 @@ export function ResultRow({
         </td>
         <td className="px-4 py-4 sm:px-6 text-muted">
           <div className="flex items-center gap-2">
-            {latest.attemptedAt.toLocaleString("vi-VN")}
+            {formatDateTimeVN(latest.attemptedAt)}
             {history.length > 0 && (
               <button
                 type="button"
@@ -58,7 +59,7 @@ export function ResultRow({
             <td className="px-4 py-3 sm:px-6">
               {attempt.passed ? <Badge color="success">Đạt</Badge> : <Badge color="danger">Chưa đạt</Badge>}
             </td>
-            <td className="px-4 py-3 sm:px-6 text-muted">{attempt.attemptedAt.toLocaleString("vi-VN")}</td>
+            <td className="px-4 py-3 sm:px-6 text-muted">{formatDateTimeVN(attempt.attemptedAt)}</td>
           </tr>
         ))}
     </>

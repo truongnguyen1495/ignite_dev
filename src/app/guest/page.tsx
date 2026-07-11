@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Megaphone, UserPlus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getGuestCourseItems } from "@/lib/guest-courses";
+import { formatDateVN } from "@/lib/date";
 import { GuestCourseList } from "./courses/course-list";
 import { GuestLibraryList, type GuestLibraryItem } from "./library/library-list";
 
@@ -100,7 +101,7 @@ export default async function GuestHomePage() {
                 <div className="p-3">
                   <p className="line-clamp-2 text-sm font-medium text-foreground">{announcement.title}</p>
                   <p className="mt-1 text-xs text-muted">
-                    {announcement.publishedAt.toLocaleDateString("vi-VN")}
+                    {formatDateVN(announcement.publishedAt)}
                   </p>
                 </div>
               </Link>

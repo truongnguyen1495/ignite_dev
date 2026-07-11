@@ -1,4 +1,5 @@
 import { ChatAttachment } from "./chat-attachment";
+import { formatTimeVN } from "@/lib/date";
 
 export type ChatMessageRow = {
   id: string;
@@ -48,7 +49,7 @@ export function ChatMessageList({
               )}
             </div>
             <span className="mt-0.5 px-1 text-[11px] text-faint">
-              {message.createdAt.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+              {formatTimeVN(message.createdAt)}
             </span>
           </div>
         );

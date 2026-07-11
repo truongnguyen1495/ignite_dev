@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { LessonMarkdown } from "@/components/lesson-markdown";
 import { BackLink } from "@/components/ui/back-link";
 import { Card } from "@/components/ui/card";
+import { formatDateVN } from "@/lib/date";
 
 export default async function AnnouncementDetailPage({
   params,
@@ -27,7 +28,7 @@ export default async function AnnouncementDetailPage({
         <BackLink href="/dashboard/announcements">Bản tin</BackLink>
         <h1 className="mt-2 text-2xl font-semibold text-foreground">{announcement.title}</h1>
         <p className="mt-1 text-sm text-muted">
-          {announcement.publishedAt.toLocaleDateString("vi-VN")}
+          {formatDateVN(announcement.publishedAt)}
         </p>
       </div>
 

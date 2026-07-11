@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { formatDateOnlyVN } from "@/lib/date";
+import { formatDateOnlyVN, formatDateTimeVN } from "@/lib/date";
 import { requireAnyAdminPermission } from "@/lib/access";
 import { EditStudentForm } from "./edit-student-form";
 import { DeleteStudentButton, ToggleStudentStatusButton } from "./danger-actions";
@@ -175,7 +175,7 @@ export default async function EditStudentPage({
                     )}
                   </div>
                   <div className="mt-1 text-muted">
-                    {req.requestedAt.toLocaleString("vi-VN")}
+                    {formatDateTimeVN(req.requestedAt)}
                     {req.status === "REJECTED" && req.reviewerNote && ` — Lý do: ${req.reviewerNote}`}
                   </div>
                 </li>

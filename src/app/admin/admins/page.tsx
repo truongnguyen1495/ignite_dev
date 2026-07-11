@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ADMIN_PERMISSION_LABELS } from "@/lib/admin-permissions";
+import { formatDateVN } from "@/lib/date";
 
 export default async function AdminsPage() {
   await requireActiveSuperAdmin();
@@ -74,7 +75,7 @@ export default async function AdminsPage() {
                 </div>
               </div>
               <span className="hidden shrink-0 text-xs text-muted sm:block">
-                Tạo lúc {admin.createdAt.toLocaleDateString("vi-VN")}
+                Tạo lúc {formatDateVN(admin.createdAt)}
               </span>
               <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
             </Link>

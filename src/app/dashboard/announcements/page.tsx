@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { hasLevelAccess } from "@/lib/levels";
 import { ORDERED_ANNOUNCEMENT_CATEGORIES } from "@/lib/announcements";
 import { PageHeader } from "@/components/ui/page-header";
+import { formatDateVN } from "@/lib/date";
 import { AnnouncementTabs } from "./announcement-tabs";
 
 export default async function AnnouncementsPage({
@@ -32,7 +33,7 @@ export default async function AnnouncementsPage({
         id: a.id,
         title: a.title,
         coverImageUrl: a.coverImageUrl,
-        publishedAt: a.publishedAt.toLocaleDateString("vi-VN"),
+        publishedAt: formatDateVN(a.publishedAt),
         isUnread: !readIds.has(a.id),
       })),
   }));

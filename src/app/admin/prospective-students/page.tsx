@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminPermission } from "@/lib/access";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PageHeader } from "@/components/ui/page-header";
+import { formatDateVN } from "@/lib/date";
 import { ToggleStudentStatusButton, DeleteStudentButton } from "../students/[studentId]/danger-actions";
 
 export default async function ProspectiveStudentsPage() {
@@ -49,7 +50,7 @@ export default async function ProspectiveStudentsPage() {
                     )}
                   </td>
                   <td className="px-4 py-4 sm:px-6 text-muted">
-                    {student.createdAt.toLocaleDateString("vi-VN")}
+                    {formatDateVN(student.createdAt)}
                   </td>
                   <td className="px-4 py-4 sm:px-6">
                     <StatusBadge status={student.status} />

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminPermission } from "@/lib/access";
 import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
 import { getLevelCompletionStatus } from "@/lib/level-completion";
+import { formatDateTimeVN } from "@/lib/date";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { approveLevelUpRequestAction } from "./actions";
 import { RejectForm } from "./reject-form";
@@ -65,7 +66,7 @@ export default async function LevelUpRequestsPage() {
                     </div>
 
                     <p className="mt-2 text-xs text-muted">
-                      Yêu cầu lúc {req.requestedAt.toLocaleString("vi-VN")}
+                      Yêu cầu lúc {formatDateTimeVN(req.requestedAt)}
                     </p>
 
                     <div className="mt-3 flex items-start gap-1.5 text-sm">
