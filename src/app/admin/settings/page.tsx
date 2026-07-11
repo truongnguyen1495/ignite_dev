@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { ChatToggle } from "./chat-toggle";
+import { LanguageToggle } from "./language-toggle";
 
 export default async function SettingsPage() {
   const settings = await prisma.settings.upsert({
@@ -15,6 +16,9 @@ export default async function SettingsPage() {
       <PageHeader title="Cài đặt" />
       <Card className="max-w-lg">
         <ChatToggle chatEnabled={settings.chatEnabled} />
+      </Card>
+      <Card className="max-w-lg">
+        <LanguageToggle />
       </Card>
     </div>
   );
