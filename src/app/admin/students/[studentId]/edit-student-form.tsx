@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef, useState, type ReactNode } from "rea
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { updateStudentAction } from "../actions";
-import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
+import { ORDERED_LEVELS, LEVEL_LABELS, NO_LEVEL_VALUE } from "@/lib/levels";
 import type { AccountStatus, Level } from "@prisma/client";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { LevelBadge } from "@/components/ui/level-badge";
@@ -29,7 +29,7 @@ export function EditStudentForm({
   name: string;
   email: string;
   phoneNumber: string | null;
-  grantedLevel: Level;
+  grantedLevel: Level | null;
   status: AccountStatus;
   isPending: boolean;
   hasRegistrationInfo: boolean;
@@ -120,12 +120,18 @@ export function EditStudentForm({
             label="Mật khẩu mới (để trống nếu không đổi)"
             minLength={8}
           />
-          <Select id="grantedLevel" name="grantedLevel" label="Cấp được cấp quyền" defaultValue={grantedLevel}>
+          <Select
+            id="grantedLevel"
+            name="grantedLevel"
+            label="Cấp được cấp quyền"
+            defaultValue={grantedLevel ?? NO_LEVEL_VALUE}
+          >
             {ORDERED_LEVELS.map((level) => (
               <option key={level} value={level}>
                 {LEVEL_LABELS[level]}
               </option>
             ))}
+            <option value={NO_LEVEL_VALUE}>Chưa xếp cấp (không thuộc 5 cấp)</option>
           </Select>
           {error && <p className="text-sm text-danger">{error}</p>}
           <Button

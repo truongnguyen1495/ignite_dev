@@ -63,6 +63,20 @@ export async function requireActiveStudent(): Promise<User> {
   return user;
 }
 
+// A "no cấp" student (grantedLevel null — a self-registered account not yet
+// admitted into the 5-level system) is restricted to exclusive
+// courses/library/announcements/profile and the join-request page at
+// /dashboard/level-up. Every level-ladder area (dashboard home,
+// lessons/quizzes, chat) requires a real grantedLevel, enforced here as the
+// single choke point so those areas don't need their own null checks.
+export async function requireLeveledStudent(): Promise<User & { grantedLevel: Level }> {
+  const student = await requireActiveStudent();
+  if (student.grantedLevel === null) {
+    redirect("/dashboard/courses");
+  }
+  return student as User & { grantedLevel: Level };
+}
+
 export async function requireActiveSuperAdmin(): Promise<User> {
   return requireRole("SUPER_ADMIN");
 }
@@ -148,8 +162,15 @@ export async function requireChatEnabled(redirectTo: string): Promise<void> {
   }
 }
 
+// Master kill switch for public self-registration at /register, toggled from
+// /admin/settings — same fresh-from-DB convention as isChatEnabled.
+export async function isRegistrationEnabled(): Promise<boolean> {
+  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
+  return settings?.registrationEnabled ?? true;
+}
+
 export async function requireLevelAccess(requestedLevel: Level): Promise<User> {
-  const student = await requireActiveStudent();
+  const student = await requireLeveledStudent();
   if (!hasLevelAccess(student.grantedLevel, requestedLevel)) {
     redirect("/dashboard?denied=1");
   }
@@ -157,7 +178,7 @@ export async function requireLevelAccess(requestedLevel: Level): Promise<User> {
 }
 
 export async function requireLessonAccess(lessonId: string) {
-  const student = await requireActiveStudent();
+  const student = await requireLeveledStudent();
   const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
   if (!lesson) {
     redirect("/dashboard?denied=1");
@@ -169,7 +190,7 @@ export async function requireLessonAccess(lessonId: string) {
 }
 
 export async function requireQuizAccess(quizId: string) {
-  const student = await requireActiveStudent();
+  const student = await requireLeveledStudent();
   const quiz = await prisma.quiz.findUnique({
     where: { id: quizId },
     include: { lesson: true },
@@ -355,7 +376,7 @@ export function userCanAccessChatThread(
 }
 
 export async function requireOwnSupportThreadAccess() {
-  const student = await requireActiveStudent();
+  const student = await requireLeveledStudent();
   await requireChatEnabled("/dashboard");
   const thread = await getOrCreateSupportThread(student.id);
   return { student, thread };
@@ -374,7 +395,7 @@ export async function requireAdminSupportThreadAccess(threadId: string) {
 }
 
 export async function requireDirectThreadAccess(threadId: string) {
-  const student = await requireActiveStudent();
+  const student = await requireLeveledStudent();
   await requireChatEnabled("/dashboard");
   const thread = await prisma.chatThread.findUnique({ where: { id: threadId } });
   if (!thread || thread.kind !== "DIRECT" || !userCanAccessChatThread(student, thread)) {
@@ -384,7 +405,7 @@ export async function requireDirectThreadAccess(threadId: string) {
 }
 
 export async function requireGroupThreadAccess(level: Level) {
-  const student = await requireActiveStudent();
+  const student = await requireLeveledStudent();
   await requireChatEnabled("/dashboard");
   if (!hasLevelAccess(student.grantedLevel, level)) {
     redirect("/dashboard/chat?denied=1");

@@ -57,7 +57,9 @@ export default async function AdminDetailPage({ params }: { params: Promise<{ ad
           </div>
           <div className="min-w-0">
             <dt className="text-xs text-muted">Cấp học viên</dt>
-            <dd className="text-foreground">{LEVEL_LABELS[admin.grantedLevel]}</dd>
+            <dd className="text-foreground">
+              {admin.grantedLevel ? LEVEL_LABELS[admin.grantedLevel] : "Chưa xếp cấp"}
+            </dd>
           </div>
           <div className="min-w-0">
             <dt className="text-xs text-muted">Ngày tạo</dt>

@@ -14,8 +14,7 @@ export default function RegisterSuccessPage() {
         </span>
         <h1 className="mt-4 text-lg font-semibold text-foreground">Đăng ký thành công</h1>
         <p className="mt-2 text-sm text-muted">
-          Tài khoản của bạn đang chờ Super Admin phê duyệt. Bạn sẽ đăng nhập được sau khi tài khoản
-          được kích hoạt.
+          Tài khoản của bạn đã sẵn sàng — bạn có thể đăng nhập ngay bây giờ.
         </p>
         <Link
           href="/login"

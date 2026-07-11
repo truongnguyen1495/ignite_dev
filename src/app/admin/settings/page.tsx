@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { requireActiveSuperAdmin } from "@/lib/access";
 import { ChatToggle } from "./chat-toggle";
+import { RegistrationToggle } from "./registration-toggle";
 import { LanguageToggle } from "./language-toggle";
 
 export default async function SettingsPage() {
@@ -16,6 +17,9 @@ export default async function SettingsPage() {
       <PageHeader title="Cài đặt" />
       <Card className="max-w-lg">
         <ChatToggle chatEnabled={settings.chatEnabled} />
+      </Card>
+      <Card className="max-w-lg">
+        <RegistrationToggle registrationEnabled={settings.registrationEnabled} />
       </Card>
       <Card className="max-w-lg">
         <LanguageToggle />

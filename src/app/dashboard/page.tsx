@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Lock, Unlock, AlertTriangle } from "lucide-react";
-import { requireActiveStudent } from "@/lib/access";
+import { requireLeveledStudent } from "@/lib/access";
 import { ORDERED_LEVELS, LEVEL_NAMES, hasLevelAccess } from "@/lib/levels";
 import { LevelBadge } from "@/components/ui/level-badge";
 
@@ -9,7 +9,7 @@ export default async function StudentDashboardPage({
 }: {
   searchParams: Promise<{ denied?: string }>;
 }) {
-  const student = await requireActiveStudent();
+  const student = await requireLeveledStudent();
   const { denied } = await searchParams;
 
   return (

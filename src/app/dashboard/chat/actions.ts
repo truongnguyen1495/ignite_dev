@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
-  requireActiveStudent,
+  requireLeveledStudent,
   requireChatEnabled,
   requireOwnSupportThreadAccess,
   requireDirectThreadAccess,
@@ -74,7 +74,7 @@ export async function sendGroupMessageAction(
 }
 
 export async function markThreadReadAction(threadId: string): Promise<void> {
-  const student = await requireActiveStudent();
+  const student = await requireLeveledStudent();
   const thread = await prisma.chatThread.findUnique({ where: { id: threadId } });
   if (!thread || !userCanAccessChatThread(student, thread)) {
     return;
@@ -83,13 +83,16 @@ export async function markThreadReadAction(threadId: string): Promise<void> {
 }
 
 export async function startDirectThreadAction(otherStudentId: string): Promise<string | undefined> {
-  const student = await requireActiveStudent();
+  const student = await requireLeveledStudent();
   await requireChatEnabled("/dashboard");
   if (otherStudentId === student.id) {
     return "Không thể nhắn tin với chính mình.";
   }
   const other = await prisma.user.findUnique({ where: { id: otherStudentId } });
-  if (!other || other.role !== "STUDENT" || other.status !== "ACTIVE") {
+  // A no-cấp account (grantedLevel null) has no chat access of its own — treat
+  // it the same as "not found" so a leveled student can't start a thread that
+  // recipient can never open.
+  if (!other || other.role !== "STUDENT" || other.status !== "ACTIVE" || other.grantedLevel === null) {
     return "Không tìm thấy học viên này.";
   }
   const thread = await getOrCreateDirectThread(student.id, other.id);
@@ -97,7 +100,7 @@ export async function startDirectThreadAction(otherStudentId: string): Promise<s
 }
 
 export async function searchStudentsAction(query: string): Promise<{ id: string; name: string; username: string | null }[]> {
-  const student = await requireActiveStudent();
+  const student = await requireLeveledStudent();
   const trimmed = query.trim();
   if (trimmed.length < 2) return [];
   return prisma.user.findMany({
@@ -105,6 +108,7 @@ export async function searchStudentsAction(query: string): Promise<{ id: string;
       role: "STUDENT",
       adminOnly: false,
       status: "ACTIVE",
+      grantedLevel: { not: null },
       id: { not: student.id },
       OR: [
         { name: { contains: trimmed, mode: "insensitive" } },

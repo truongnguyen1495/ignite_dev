@@ -32,7 +32,11 @@ export function levelRank(level: Level): number {
   return LEVEL_ORDER[level];
 }
 
-export function hasLevelAccess(grantedLevel: Level, requestedLevel: Level): boolean {
+// grantedLevel is null for a "no cấp" account (not on the 5-level ladder at
+// all) — it satisfies no level threshold, so this returns false immediately
+// rather than indexing LEVEL_ORDER with a non-existent key.
+export function hasLevelAccess(grantedLevel: Level | null, requestedLevel: Level): boolean {
+  if (grantedLevel === null) return false;
   return levelRank(grantedLevel) >= levelRank(requestedLevel);
 }
 
@@ -49,3 +53,9 @@ export function isMaxLevel(level: Level): boolean {
 export function parseLevel(value: string): Level | null {
   return (ORDERED_LEVELS as string[]).includes(value) ? (value as Level) : null;
 }
+
+// Sentinel <select> value representing "no cấp" (grantedLevel: null) in the
+// admin create/edit student forms — not a real Level, since the enum has no
+// such member. Shared between the forms and their server actions so both
+// sides agree on the exact string.
+export const NO_LEVEL_VALUE = "NONE";

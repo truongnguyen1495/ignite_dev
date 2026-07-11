@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { LifeBuoy, MessageSquare, Users, ChevronRight } from "lucide-react";
-import { requireActiveStudent, requireChatEnabled } from "@/lib/access";
+import { requireLeveledStudent, requireChatEnabled } from "@/lib/access";
 import { getStudentChatInbox } from "@/lib/chat";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { Card } from "@/components/ui/card";
@@ -17,7 +17,7 @@ function UnreadBadge({ count }: { count: number }) {
 }
 
 export default async function ChatInboxPage() {
-  const student = await requireActiveStudent();
+  const student = await requireLeveledStudent();
   await requireChatEnabled("/dashboard");
   const inbox = await getStudentChatInbox(student);
 

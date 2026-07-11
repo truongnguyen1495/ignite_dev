@@ -38,7 +38,8 @@ export default async function DashboardLayout({
     getAdminPermissions(student.id),
   ]);
   const hasAdminAccess = adminPermissions.size > 0;
-  const chatInbox = chatEnabled ? await getStudentChatInbox(student) : null;
+  const isLeveled = student.grantedLevel !== null;
+  const chatInbox = chatEnabled && isLeveled ? await getStudentChatInbox(student) : null;
   const readIds = new Set(reads.map((r) => r.announcementId));
   const unreadAnnouncementCount = announcements.filter(
     (a) =>
@@ -53,7 +54,16 @@ export default async function DashboardLayout({
     : 0;
 
   const NAV_ITEMS: NavItem[] = [
-    { href: "/dashboard", label: "5 Cấp đào tạo", icon: <LayoutDashboard className={iconClass} />, exact: true },
+    ...(isLeveled
+      ? [
+          {
+            href: "/dashboard",
+            label: "5 Cấp đào tạo",
+            icon: <LayoutDashboard className={iconClass} />,
+            exact: true,
+          },
+        ]
+      : []),
     { href: "/dashboard/courses", label: "Khóa học độc quyền", icon: <Video className={iconClass} /> },
     { href: "/dashboard/library", label: "Thư viện", icon: <Library className={iconClass} /> },
     {
@@ -62,7 +72,7 @@ export default async function DashboardLayout({
       icon: <Megaphone className={iconClass} />,
       badge: unreadAnnouncementCount,
     },
-    ...(chatEnabled
+    ...(chatEnabled && isLeveled
       ? [
           {
             href: "/dashboard/chat",
@@ -72,17 +82,23 @@ export default async function DashboardLayout({
           },
         ]
       : []),
-    { href: "/dashboard/level-up", label: "Xin lên cấp", icon: <ArrowUpCircle className={iconClass} /> },
+    {
+      href: "/dashboard/level-up",
+      label: isLeveled ? "Xin lên cấp" : "Tham gia hệ thống 5 cấp",
+      icon: <ArrowUpCircle className={iconClass} />,
+    },
     { href: "/dashboard/profile", label: "Thông tin cá nhân", icon: <UserCircle className={iconClass} /> },
   ];
 
   return (
     <SidebarProvider>
-      <LevelUpWatcher
-        studentId={student.id}
-        level={student.grantedLevel}
-        label={LEVEL_LABELS[student.grantedLevel]}
-      />
+      {student.grantedLevel && (
+        <LevelUpWatcher
+          studentId={student.id}
+          level={student.grantedLevel}
+          label={LEVEL_LABELS[student.grantedLevel]}
+        />
+      )}
       <Sidebar items={NAV_ITEMS} brand={<BrandLogo subtitle="Học viên" />} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-8 sm:py-4">

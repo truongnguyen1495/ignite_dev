@@ -63,7 +63,12 @@ model User {
   phoneNumber  String?       @unique
   role         Role
   status       AccountStatus @default(ACTIVE)
-  grantedLevel Level         @default(CUSTOMER)
+  // Null means "no cấp" — a self-registered account not (yet) on the 5-level
+  // ladder, restricted to exclusive courses/library/announcements/profile
+  // (see requireLeveledStudent in src/lib/access.ts, the single choke point
+  // that walls the level ladder, lessons/quizzes, and chat off from these
+  // accounts). Admins can also set this directly via the student forms.
+  grantedLevel Level?
   // A STUDENT account created purely to be a limited admin (see
   // requireAnyAdminAccess/requireActiveStudent in src/lib/access.ts) — blocked
   // from /dashboard and excluded from student rosters/pickers, unlike a
@@ -201,7 +206,11 @@ model LevelUpRequest {
   id           String        @id @default(cuid())
   studentId    String
   student      User          @relation("StudentRequests", fields: [studentId], references: [id], onDelete: Cascade)
-  fromLevel    Level
+  // Null means the student is requesting to join the 5-level system from a
+  // "no cấp" account (User.grantedLevel null) rather than leveling up from an
+  // existing one — the same review queue at /admin/level-up-requests handles
+  // both cases, distinguished by this field.
+  fromLevel    Level?
   toLevel      Level
   status       LevelUpStatus @default(PENDING)
   requestedAt  DateTime      @default(now())
@@ -214,10 +223,14 @@ model LevelUpRequest {
 }
 
 model Settings {
-  id             Int      @id @default(1)
-  passPercentage Int      @default(80)
-  chatEnabled    Boolean  @default(true)
-  updatedAt      DateTime @updatedAt
+  id                  Int      @id @default(1)
+  passPercentage      Int      @default(80)
+  chatEnabled         Boolean  @default(true)
+  // Master switch for public self-registration at /register — toggled from
+  // /admin/settings (see isRegistrationEnabled in src/lib/access.ts). When
+  // false, new signups are rejected; existing accounts are unaffected.
+  registrationEnabled Boolean  @default(true)
+  updatedAt           DateTime @updatedAt
 }
 
 // Exclusive courses: a second, independent content track (no Level, no

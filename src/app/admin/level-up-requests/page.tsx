@@ -27,11 +27,14 @@ export default async function LevelUpRequestsPage() {
     }),
   ]);
 
+  // A join request (fromLevel null — the student has no cấp yet) has no
+  // current level to compute quiz completion against.
   const completionByRequest = new Map(
     await Promise.all(
-      pending.map(
-        async (req) => [req.id, await getLevelCompletionStatus(req.studentId, req.fromLevel)] as const
-      )
+      pending.map(async (req) => [
+        req.id,
+        req.fromLevel ? await getLevelCompletionStatus(req.studentId, req.fromLevel) : null,
+      ] as const)
     )
   );
 
@@ -44,8 +47,7 @@ export default async function LevelUpRequestsPage() {
         ) : (
           <ul className="space-y-3">
             {pending.map((req) => {
-              const completion = completionByRequest.get(req.id)!;
-              const isComplete = completion.incomplete.length === 0;
+              const completion = completionByRequest.get(req.id) ?? null;
               return (
                 <li key={req.id}>
                   <Card className="border-l-4 border-l-warning">
@@ -65,25 +67,34 @@ export default async function LevelUpRequestsPage() {
                       Yêu cầu lúc {req.requestedAt.toLocaleString("vi-VN")}
                     </p>
 
-                    <div className="mt-3 flex items-start gap-1.5 text-sm">
-                      <ClipboardCheck
-                        className={`mt-0.5 h-4 w-4 shrink-0 ${isComplete ? "text-success" : "text-warning"}`}
-                      />
-                      {isComplete ? (
-                        <span className="text-success">
-                          Đã hoàn thành {completion.completed}/{completion.total} bài test của{" "}
-                          {LEVEL_LABELS[req.fromLevel]}
-                        </span>
-                      ) : (
-                        <span className="text-warning">
-                          Mới hoàn thành {completion.completed}/{completion.total} bài test của{" "}
-                          {LEVEL_LABELS[req.fromLevel]} — còn thiếu:{" "}
-                          {completion.incomplete.map((quiz) => quiz.lesson.title).join(", ")}
-                        </span>
-                      )}
-                    </div>
+                    {req.fromLevel && completion ? (
+                      <>
+                        <div className="mt-3 flex items-start gap-1.5 text-sm">
+                          <ClipboardCheck
+                            className={`mt-0.5 h-4 w-4 shrink-0 ${completion.incomplete.length === 0 ? "text-success" : "text-warning"}`}
+                          />
+                          {completion.incomplete.length === 0 ? (
+                            <span className="text-success">
+                              Đã hoàn thành {completion.completed}/{completion.total} bài test của{" "}
+                              {LEVEL_LABELS[req.fromLevel]}
+                            </span>
+                          ) : (
+                            <span className="text-warning">
+                              Mới hoàn thành {completion.completed}/{completion.total} bài test của{" "}
+                              {LEVEL_LABELS[req.fromLevel]} — còn thiếu:{" "}
+                              {completion.incomplete.map((quiz) => quiz.lesson.title).join(", ")}
+                            </span>
+                          )}
+                        </div>
 
-                    <CompletionDetails details={completion.details} />
+                        <CompletionDetails details={completion.details} />
+                      </>
+                    ) : (
+                      <p className="mt-3 flex items-center gap-1.5 text-sm text-muted">
+                        <ClipboardCheck className="h-4 w-4 shrink-0" />
+                        Yêu cầu tham gia hệ thống đào tạo 5 cấp (chưa có cấp trước đó).
+                      </p>
+                    )}
 
                     <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-border pt-4">
                       <form action={approveLevelUpRequestAction} className="flex items-center gap-2">

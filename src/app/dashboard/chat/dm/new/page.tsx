@@ -1,10 +1,10 @@
-import { requireActiveStudent, requireChatEnabled } from "@/lib/access";
+import { requireLeveledStudent, requireChatEnabled } from "@/lib/access";
 import { BackLink } from "@/components/ui/back-link";
 import { PageHeader } from "@/components/ui/page-header";
 import { StudentPicker } from "./student-picker";
 
 export default async function NewDirectMessagePage() {
-  await requireActiveStudent();
+  await requireLeveledStudent();
   await requireChatEnabled("/dashboard");
 
   return (

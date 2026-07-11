@@ -13,3 +13,13 @@ export async function setChatEnabledAction(chatEnabled: boolean) {
   });
   revalidatePath("/admin/settings");
 }
+
+export async function setRegistrationEnabledAction(registrationEnabled: boolean) {
+  await requireActiveSuperAdmin();
+  await prisma.settings.upsert({
+    where: { id: 1 },
+    update: { registrationEnabled },
+    create: { id: 1, registrationEnabled },
+  });
+  revalidatePath("/admin/settings");
+}

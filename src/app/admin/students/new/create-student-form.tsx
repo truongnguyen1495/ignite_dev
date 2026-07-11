@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { createStudentAction } from "../actions";
-import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
+import { ORDERED_LEVELS, LEVEL_LABELS, NO_LEVEL_VALUE } from "@/lib/levels";
 import { Input, Select } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 
@@ -27,6 +27,7 @@ export function CreateStudentForm() {
             {LEVEL_LABELS[level]}
           </option>
         ))}
+        <option value={NO_LEVEL_VALUE}>Chưa xếp cấp (không thuộc 5 cấp)</option>
       </Select>
       {error && <p className="text-sm text-danger">{error}</p>}
       <Button type="submit" disabled={pending} isLoading={pending}>

@@ -212,7 +212,7 @@ export default async function EditStudentPage({
                 <li key={req.id} className="rounded-lg border border-border bg-background p-3 text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="flex items-center gap-2 text-foreground">
-                      {LEVEL_LABELS[req.fromLevel]}
+                      {req.fromLevel ? LEVEL_LABELS[req.fromLevel] : "Chưa xếp cấp"}
                       <ArrowLeft className="h-3.5 w-3.5 rotate-180 text-muted" />
                       {LEVEL_LABELS[req.toLevel]}
                     </span>

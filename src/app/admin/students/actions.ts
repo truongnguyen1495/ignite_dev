@@ -7,10 +7,15 @@ import { redirect } from "next/navigation";
 import { Prisma, type Level } from "@prisma/client";
 import { requireAdminPermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
-import { ORDERED_LEVELS } from "@/lib/levels";
+import { ORDERED_LEVELS, NO_LEVEL_VALUE } from "@/lib/levels";
 import { optionalPhoneNumberSchema } from "@/lib/validation";
 
 const levelEnum = z.enum(ORDERED_LEVELS as [Level, ...Level[]]);
+// NO_LEVEL_VALUE ("NONE") represents "no cấp" (grantedLevel: null) in the
+// admin create/edit student forms — not a real Level.
+const grantedLevelField = z
+  .union([levelEnum, z.literal(NO_LEVEL_VALUE)])
+  .transform((v): Level | null => (v === NO_LEVEL_VALUE ? null : v));
 
 function phoneNumberErrorFromP2002(e: unknown): string | undefined {
   if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
@@ -29,7 +34,7 @@ const createSchema = z.object({
   email: z.string().trim().email("Email không hợp lệ."),
   phoneNumber: optionalPhoneNumberSchema,
   password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự."),
-  grantedLevel: levelEnum,
+  grantedLevel: grantedLevelField,
 });
 
 export async function createStudentAction(
@@ -80,7 +85,7 @@ const updateSchema = z.object({
   name: z.string().trim().min(1, "Tên không được để trống."),
   email: z.string().trim().email("Email không hợp lệ."),
   phoneNumber: optionalPhoneNumberSchema,
-  grantedLevel: levelEnum,
+  grantedLevel: grantedLevelField,
   password: z.union([z.string().min(8), z.literal("")]),
 });
 

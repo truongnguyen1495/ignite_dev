@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isRegistrationEnabled } from "@/lib/access";
 import { phoneNumberSchema, dateOfBirthSchema } from "@/lib/validation";
 
 const registerSchema = z
@@ -33,6 +34,12 @@ export type RegisterFieldErrors = Partial<
 export type RegisterState = { fieldErrors: RegisterFieldErrors } | undefined;
 
 export async function registerAction(_prevState: RegisterState, formData: FormData): Promise<RegisterState> {
+  // Defense in depth — the page itself already hides the form when
+  // registration is disabled, but a direct POST must be rejected too.
+  if (!(await isRegistrationEnabled())) {
+    redirect("/register");
+  }
+
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -65,7 +72,10 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
         dateOfBirth: parsed.data.dateOfBirth,
         passwordHash,
         role: "STUDENT",
-        status: "PENDING",
+        status: "ACTIVE",
+        // No cấp — not on the 5-level ladder until an admin approves a join
+        // request from /dashboard/level-up (see requireLeveledStudent).
+        grantedLevel: null,
       },
     });
   } catch (e) {

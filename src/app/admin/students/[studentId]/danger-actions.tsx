@@ -100,7 +100,9 @@ export function ApproveStudentButton({
           </div>
           <div className="min-w-0">
             <dt className="text-xs text-muted">Cấp được cấp quyền</dt>
-            <dd className="text-foreground">{LEVEL_LABELS[student.grantedLevel]}</dd>
+            <dd className="text-foreground">
+              {student.grantedLevel ? LEVEL_LABELS[student.grantedLevel] : "Chưa xếp cấp"}
+            </dd>
           </div>
         </dl>
       ),
