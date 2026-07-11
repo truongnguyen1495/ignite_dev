@@ -9,7 +9,6 @@ import {
   MessageCircle,
   ShieldCheck,
   Home,
-  Contact,
 } from "lucide-react";
 import { requireActiveStudent, isChatEnabled, getAdminPermissions } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
@@ -119,10 +118,6 @@ export default async function DashboardLayout({
             <Link href="/dashboard/profile" className={linkClass}>
               <UserCircle className="h-4 w-4" />
               Thông tin cá nhân
-            </Link>
-            <Link href="/dashboard/student-profile" className={linkClass}>
-              <Contact className="h-4 w-4" />
-              Hồ sơ học sinh
             </Link>
           </nav>
         </header>
