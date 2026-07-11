@@ -12,6 +12,7 @@ import {
   Library,
   MessageCircle,
   GraduationCap,
+  UserCog,
 } from "lucide-react";
 import { requireAnyAdminAccess, isChatEnabled } from "@/lib/access";
 import { getAdminSupportInbox } from "@/lib/chat";
@@ -90,10 +91,11 @@ export default async function AdminLayout({
     ({ permission }) => !permission || (permission === "MANAGE_CHAT" ? canManageChat : canManage(permission))
   ).map(({ item }) => item);
 
-  // Settings (and the admin-permission grants it holds) stays Super-Admin
-  // only — a limited admin must never see, let alone reach, the page that
-  // could grant itself more permissions.
+  // Admin management and Settings (which together control who has admin
+  // permissions at all) stay Super-Admin only — a limited admin must never
+  // see, let alone reach, the pages that could grant itself more access.
   if (isSuperAdmin) {
+    NAV_ITEMS.push({ href: "/admin/admins", label: "Quản lý Admin", icon: <UserCog className={iconClass} /> });
     NAV_ITEMS.push({ href: "/admin/settings", label: "Cài đặt", icon: <Settings className={iconClass} /> });
   }
 
