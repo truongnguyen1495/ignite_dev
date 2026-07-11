@@ -241,18 +241,25 @@ model Settings {
 // level-up gating) — a sequence of video lessons only visible to students
 // the Super Admin explicitly grants access to via CourseAccessGrant.
 model Course {
-  id             String   @id @default(cuid())
-  title          String
-  description    String?  @db.Text
-  coverImageUrl  String?
-  order          Int      @default(0)
-  visibleToGuest Boolean  @default(false)
+  id                        String   @id @default(cuid())
+  title                     String
+  description               String?  @db.Text
+  coverImageUrl             String?
+  order                     Int      @default(0)
+  visibleToGuest            Boolean  @default(false)
   // Admin-curated, independent of visibleToGuest: only checked by the guest
   // homepage's "Khóa học nổi bật" section, which shows exactly the courses
   // opted in here rather than just the first few by `order`.
-  featuredOnHome Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  featuredOnHome            Boolean  @default(false)
+  // Continuous rule for "học sinh" (grantedLevel null) accounts, mirroring
+  // CourseLevelGrant's always-fresh-from-DB semantics — since hasLevelAccess
+  // never matches a null grantedLevel, CourseLevelGrant alone can never open
+  // a course to học sinh, so this is a dedicated on/off switch instead of a
+  // grant row. A future self-registered học sinh gains access automatically,
+  // no backfill needed. Checked in studentHasCourseAccess (src/lib/access.ts).
+  openToProspectiveStudents Boolean  @default(false)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 
   lessons     CourseLesson[]
   grants      CourseAccessGrant[]
@@ -529,8 +536,8 @@ enum GuestChatSender {
 // in src/lib/guest-chat.ts) — no name/email is ever collected, matching the
 // site's "fully anonymous" guest chat design.
 model GuestChatThread {
-  id             String   @id @default(cuid())
-  guestSessionId String   @unique
+  id             String @id @default(cuid())
+  guestSessionId String @unique
 
   lastMessageAt      DateTime @default(now())
   lastMessagePreview String?

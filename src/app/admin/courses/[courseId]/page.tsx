@@ -9,6 +9,7 @@ import {
   GrantAccessForm,
   GrantLevelAccessForm,
   RevokeLevelAccessButton,
+  ToggleOpenToProspectiveStudents,
 } from "./access-grants";
 import { CourseLessonsSection } from "./course-lessons-section";
 import { Card } from "@/components/ui/card";
@@ -39,6 +40,15 @@ export default async function EditCoursePage({
     orderBy: { name: "asc" },
   });
 
+  // "Học viên" (đã xếp cấp) và "Học sinh" (chưa xếp cấp) are kept as two
+  // independent lists/pickers throughout the admin, matching the rest of
+  // the app's Học sinh/Học viên split — see the ToggleOpenToProspectiveStudents
+  // card below for the "grant to all học sinh at once" continuous rule.
+  const hocVienGrants = course.grants.filter((g) => g.student.grantedLevel !== null);
+  const hocSinhGrants = course.grants.filter((g) => g.student.grantedLevel === null);
+  const ungrantedHocVien = ungrantedStudents.filter((s) => s.grantedLevel !== null);
+  const ungrantedHocSinh = ungrantedStudents.filter((s) => s.grantedLevel === null);
+
   return (
     <div className="mx-auto max-w-[1000px] space-y-6">
       <EditCourseForm
@@ -55,13 +65,13 @@ export default async function EditCoursePage({
 
       <Card padding="lg" className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">
-          Học viên được cấp quyền ({course.grants.length})
+          Học viên được cấp quyền ({hocVienGrants.length})
         </h2>
-        {course.grants.length === 0 ? (
+        {hocVienGrants.length === 0 ? (
           <p className="text-sm text-muted">Chưa cấp quyền cho học viên nào.</p>
         ) : (
           <ul className="space-y-2">
-            {course.grants.map((grant) => (
+            {hocVienGrants.map((grant) => (
               <li
                 key={grant.id}
                 className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background p-3 text-sm"
@@ -76,8 +86,8 @@ export default async function EditCoursePage({
           </ul>
         )}
 
-        {ungrantedStudents.length > 0 && (
-          <GrantAccessForm courseId={course.id} students={ungrantedStudents} />
+        {ungrantedHocVien.length > 0 && (
+          <GrantAccessForm courseId={course.id} students={ungrantedHocVien} />
         )}
       </Card>
 
@@ -102,6 +112,44 @@ export default async function EditCoursePage({
           </ul>
         )}
         <GrantLevelAccessForm courseId={course.id} />
+      </Card>
+
+      <Card padding="lg" className="space-y-3">
+        <h2 className="text-sm font-semibold text-foreground">
+          Học sinh được cấp quyền ({hocSinhGrants.length})
+        </h2>
+        <p className="text-xs text-muted">
+          Học sinh (tài khoản chưa xếp cấp) không thuộc thang 5 cấp nên không dùng được luật "Cấp quyền theo
+          cấp" ở trên — dùng công tắc bên dưới để mở cho tất cả, hoặc cấp riêng từng người.
+        </p>
+        <ToggleOpenToProspectiveStudents courseId={course.id} open={course.openToProspectiveStudents} />
+        {hocSinhGrants.length === 0 ? (
+          <p className="text-sm text-muted">Chưa cấp quyền riêng cho học sinh nào.</p>
+        ) : (
+          <ul className="space-y-2">
+            {hocSinhGrants.map((grant) => (
+              <li
+                key={grant.id}
+                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background p-3 text-sm"
+              >
+                <div>
+                  <p className="text-foreground">{grant.student.name}</p>
+                  <p className="text-muted">{grant.student.email}</p>
+                </div>
+                <RevokeAccessButton grantId={grant.id} courseId={course.id} />
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {ungrantedHocSinh.length > 0 && (
+          <GrantAccessForm
+            courseId={course.id}
+            students={ungrantedHocSinh}
+            placeholder="Chọn học sinh..."
+            submitLabel="Cấp quyền"
+          />
+        )}
       </Card>
 
       <Card padding="lg" className="space-y-3">

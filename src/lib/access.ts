@@ -229,13 +229,20 @@ export async function requireQuizAccess(quizId: string) {
 // who levels up into a rule's threshold gains access immediately, with no
 // backfill, since this is re-evaluated on every visit.
 async function studentHasCourseAccess(student: User, courseId: string): Promise<boolean> {
-  const [grant, levelGrants] = await Promise.all([
+  const [grant, levelGrants, course] = await Promise.all([
     prisma.courseAccessGrant.findUnique({
       where: { studentId_courseId: { studentId: student.id, courseId } },
     }),
     prisma.courseLevelGrant.findMany({ where: { courseId } }),
+    prisma.course.findUnique({ where: { id: courseId }, select: { openToProspectiveStudents: true } }),
   ]);
   if (grant) return true;
+  // "Học sinh" (grantedLevel null) never match a CourseLevelGrant's
+  // Level-typed minLevel — openToProspectiveStudents is their only
+  // level-independent equivalent of that continuous rule.
+  if (student.grantedLevel === null) {
+    return course?.openToProspectiveStudents ?? false;
+  }
   return levelGrants.some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel));
 }
 

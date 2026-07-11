@@ -246,3 +246,9 @@ export async function revokeCourseLevelAccessAction(grantId: string, courseId: s
   await prisma.courseLevelGrant.delete({ where: { id: grantId } });
   revalidatePath(`/admin/courses/${courseId}`);
 }
+
+export async function setCourseOpenToProspectiveStudentsAction(courseId: string, open: boolean) {
+  await requireAdminPermission("MANAGE_COURSES");
+  await prisma.course.update({ where: { id: courseId }, data: { openToProspectiveStudents: open } });
+  revalidatePath(`/admin/courses/${courseId}`);
+}
