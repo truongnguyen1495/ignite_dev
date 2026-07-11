@@ -108,7 +108,7 @@ export default async function AdminLayout({
         <header className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-8 sm:py-4">
           <SidebarToggle />
           <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
-            {!isSuperAdmin && (
+            {!isSuperAdmin && !admin.adminOnly && (
               <Link
                 href="/dashboard"
                 className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-primary/50 hover:text-foreground"
