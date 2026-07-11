@@ -51,20 +51,12 @@ export default async function AdminLayout({
   const ALL_NAV_ITEMS: { item: NavItem; permission?: AdminPermissionKind }[] = [
     { item: { href: "/admin", label: "Tổng quan", icon: <LayoutDashboard className={iconClass} />, exact: true } },
     {
-      item: { href: "/admin/students", label: "Học viên", icon: <Users className={iconClass} /> },
-      permission: "MANAGE_STUDENTS",
-    },
-    {
       item: {
         href: "/admin/prospective-students",
         label: "Học sinh",
         icon: <UserPlus className={iconClass} />,
       },
       permission: "MANAGE_PROSPECTIVE_STUDENTS",
-    },
-    {
-      item: { href: "/admin/lessons", label: "Bài học", icon: <BookOpen className={iconClass} /> },
-      permission: "MANAGE_LESSONS_QUIZZES",
     },
     {
       item: { href: "/admin/courses", label: "Khóa học độc quyền", icon: <Crown className={iconClass} /> },
@@ -87,23 +79,46 @@ export default async function AdminLayout({
       },
       permission: "MANAGE_CHAT",
     },
-    {
-      item: { href: "/admin/results", label: "Kết quả", icon: <ClipboardList className={iconClass} /> },
-      permission: "MANAGE_RESULTS",
-    },
-    {
-      item: {
-        href: "/admin/level-up-requests",
-        label: "Yêu cầu lên cấp",
-        icon: <ArrowUpCircle className={iconClass} />,
-      },
-      permission: "MANAGE_LEVEL_UP_REQUESTS",
-    },
   ];
 
   const NAV_ITEMS: NavItem[] = ALL_NAV_ITEMS.filter(
     ({ permission }) => !permission || (permission === "MANAGE_CHAT" ? canManageChat : canManage(permission))
   ).map(({ item }) => item);
+
+  // "Bài học" / "Kết quả" / "Yêu cầu lên cấp" nest under "Học viên" so the
+  // sidebar reads shorter, per user request — collapsed by default, the
+  // Sidebar component auto-expands it while the active route is inside one
+  // of them. A limited admin who can manage one of these but lacks
+  // MANAGE_STUDENTS itself (so has no "Học viên" row to nest under) falls
+  // back to flat top-level entries instead of losing access to the page.
+  const studentChildren: NavItem[] = [
+    ...(canManage("MANAGE_LESSONS_QUIZZES")
+      ? [{ href: "/admin/lessons", label: "Bài học", icon: <BookOpen className={iconClass} /> }]
+      : []),
+    ...(canManage("MANAGE_RESULTS")
+      ? [{ href: "/admin/results", label: "Kết quả", icon: <ClipboardList className={iconClass} /> }]
+      : []),
+    ...(canManage("MANAGE_LEVEL_UP_REQUESTS")
+      ? [
+          {
+            href: "/admin/level-up-requests",
+            label: "Yêu cầu lên cấp",
+            icon: <ArrowUpCircle className={iconClass} />,
+          },
+        ]
+      : []),
+  ];
+
+  if (canManage("MANAGE_STUDENTS")) {
+    NAV_ITEMS.splice(1, 0, {
+      href: "/admin/students",
+      label: "Học viên",
+      icon: <Users className={iconClass} />,
+      children: studentChildren.length > 0 ? studentChildren : undefined,
+    });
+  } else {
+    NAV_ITEMS.splice(1, 0, ...studentChildren);
+  }
 
   // Admin management and Settings (which together control who has admin
   // permissions at all) stay Super-Admin only — a limited admin must never

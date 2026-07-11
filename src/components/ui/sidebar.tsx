@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useContext, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 
 export type NavItem = {
   href: string;
@@ -16,6 +16,11 @@ export type NavItem = {
   // Unread-style count pill shown after the label, e.g. for "Bản tin". Only
   // rendered when > 0.
   badge?: number;
+  // Nested items shown collapsed under the parent, e.g. "Bài học"/"Kết
+  // quả"/"Yêu cầu lên cấp" under "Học viên" — collapsed by default, expands
+  // automatically when the active route is one of the children (see the
+  // active-child check in Sidebar) so it never hides where you currently are.
+  children?: NavItem[];
 };
 
 const SidebarContext = createContext<{ open: boolean; setOpen: (open: boolean) => void } | null>(
@@ -68,6 +73,18 @@ export function Sidebar({
   const pathname = usePathname();
   const { open, setOpen } = useSidebar();
   const navy = variant === "navy";
+  // Explicit user toggles override the "expand while a child route is
+  // active" default — undefined means "use the default" for that item.
+  const [expandOverrides, setExpandOverrides] = useState<Record<string, boolean>>({});
+
+  const linkClasses = (active: boolean) =>
+    `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+      active
+        ? "bg-primary text-primary-foreground"
+        : navy
+          ? "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"
+          : "text-muted hover:bg-surface-hover hover:text-foreground"
+    }`;
 
   return (
     <>
@@ -87,27 +104,70 @@ export function Sidebar({
         <nav className="flex-1 space-y-1 overflow-y-auto px-3">
           {items.map((item) => {
             const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+            const hasChildren = !!item.children?.length;
+            const childActive = hasChildren && item.children!.some((c) => pathname.startsWith(c.href));
+            const expanded = expandOverrides[item.href] ?? childActive;
+
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-primary text-primary-foreground"
-                    : navy
-                      ? "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"
-                      : "text-muted hover:bg-surface-hover hover:text-foreground"
-                }`}
-              >
-                {item.icon}
-                <span className="flex-1 truncate">{item.label}</span>
-                {!!item.badge && (
-                  <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-accent-foreground">
-                    {item.badge}
-                  </span>
+              <div key={item.href}>
+                <div className="flex items-center gap-1">
+                  <Link
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className={`${linkClasses(active)} flex-1`}
+                  >
+                    {item.icon}
+                    <span className="flex-1 truncate">{item.label}</span>
+                    {!!item.badge && (
+                      <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-accent-foreground">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                  {hasChildren && (
+                    <button
+                      type="button"
+                      onClick={() => setExpandOverrides((o) => ({ ...o, [item.href]: !expanded }))}
+                      aria-label={expanded ? `Thu gọn ${item.label}` : `Mở rộng ${item.label}`}
+                      aria-expanded={expanded}
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                        navy
+                          ? "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"
+                          : "text-muted hover:bg-surface-hover hover:text-foreground"
+                      }`}
+                    >
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                  )}
+                </div>
+                {hasChildren && expanded && (
+                  <div className="mt-1 space-y-1 border-l border-current/10 pl-3">
+                    {item.children!.map((child) => {
+                      const childIsActive = child.exact
+                        ? pathname === child.href
+                        : pathname.startsWith(child.href);
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          onClick={() => setOpen(false)}
+                          className={linkClasses(childIsActive)}
+                        >
+                          {child.icon}
+                          <span className="flex-1 truncate">{child.label}</span>
+                          {!!child.badge && (
+                            <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-accent-foreground">
+                              {child.badge}
+                            </span>
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
                 )}
-              </Link>
+              </div>
             );
           })}
         </nav>
