@@ -122,6 +122,13 @@ export default async function EditCoursePage({
           Học sinh (tài khoản chưa xếp cấp) không thuộc thang 5 cấp nên không dùng được luật "Cấp quyền theo
           cấp" ở trên — dùng công tắc bên dưới để mở cho tất cả, hoặc cấp riêng từng người.
         </p>
+        {course.visibleToGuest && (
+          <p className="rounded-lg border border-warning/40 bg-warning-bg px-3 py-2 text-xs text-warning">
+            Khóa học này đang <span className="font-semibold">hiển thị cho khách</span> (mục "Hiện cho khách"
+            ở form phía trên) nên mọi học sinh đã tự động xem được full, kể cả khi công tắc dưới đây đang tắt
+            và chưa cấp quyền riêng cho ai.
+          </p>
+        )}
         <ToggleOpenToProspectiveStudents courseId={course.id} open={course.openToProspectiveStudents} />
         {hocSinhGrants.length === 0 ? (
           <p className="text-sm text-muted">Chưa cấp quyền riêng cho học sinh nào.</p>
