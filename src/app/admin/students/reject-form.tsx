@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { XCircle } from "lucide-react";
-import { rejectJoinRequestAction } from "./actions";
+import { rejectJoinRequestAction } from "./join-requests-actions";
 import { Button } from "@/components/ui/button";
 
 export function RejectForm({ requestId }: { requestId: string }) {

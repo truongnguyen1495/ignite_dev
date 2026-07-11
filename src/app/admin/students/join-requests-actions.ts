@@ -10,13 +10,17 @@ import type { Level } from "@prisma/client";
 
 const levelEnum = z.enum(ORDERED_LEVELS as [Level, ...Level[]]);
 
+// Reviewing "tham gia hệ thống đào tạo 5 cấp" requests admits a học sinh
+// into the leveled Học viên roster, so this lives under MANAGE_STUDENTS
+// (the "Học viên" admin area), not MANAGE_PROSPECTIVE_STUDENTS — moved here
+// from admin/prospective-students per explicit user correction.
 export async function approveJoinRequestAction(formData: FormData) {
-  const admin = await requireAdminPermission("MANAGE_PROSPECTIVE_STUDENTS");
+  const admin = await requireAdminPermission("MANAGE_STUDENTS");
 
   const requestId = String(formData.get("requestId") ?? "");
   const parsedLevel = levelEnum.safeParse(formData.get("toLevel"));
   if (!requestId || !parsedLevel.success) {
-    redirect("/admin/prospective-students");
+    redirect("/admin/students");
   }
 
   const request = await prisma.levelUpRequest.findUnique({ where: { id: requestId } });
@@ -24,7 +28,7 @@ export async function approveJoinRequestAction(formData: FormData) {
   // level — reviewed on /admin/level-up-requests instead, under a separate
   // permission.
   if (!request || request.status !== "PENDING" || request.fromLevel !== null) {
-    redirect("/admin/prospective-students");
+    redirect("/admin/students");
   }
 
   await prisma.$transaction([
@@ -43,9 +47,9 @@ export async function approveJoinRequestAction(formData: FormData) {
     }),
   ]);
 
-  revalidatePath("/admin/prospective-students");
   revalidatePath("/admin/students");
-  redirect("/admin/prospective-students");
+  revalidatePath("/admin/prospective-students");
+  redirect("/admin/students");
 }
 
 const rejectSchema = z.object({
@@ -57,7 +61,7 @@ export async function rejectJoinRequestAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  const admin = await requireAdminPermission("MANAGE_PROSPECTIVE_STUDENTS");
+  const admin = await requireAdminPermission("MANAGE_STUDENTS");
 
   const parsed = rejectSchema.safeParse({
     requestId: formData.get("requestId"),
@@ -82,6 +86,6 @@ export async function rejectJoinRequestAction(
     },
   });
 
-  revalidatePath("/admin/prospective-students");
-  redirect("/admin/prospective-students");
+  revalidatePath("/admin/students");
+  redirect("/admin/students");
 }

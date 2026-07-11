@@ -6,7 +6,7 @@ import { ChevronDown, ChevronUp, CheckCircle2 } from "lucide-react";
 import type { LevelUpRequest, User } from "@prisma/client";
 import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
 import { Button } from "@/components/ui/button";
-import { approveJoinRequestAction } from "./actions";
+import { approveJoinRequestAction } from "./join-requests-actions";
 import { RejectForm } from "./reject-form";
 
 type PendingJoinRequest = LevelUpRequest & { student: User };

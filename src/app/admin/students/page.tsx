@@ -6,15 +6,25 @@ import { LevelBadge } from "@/components/ui/level-badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ToggleStudentStatusButton, DeleteStudentButton } from "./[studentId]/danger-actions";
 import { PageHeader } from "@/components/ui/page-header";
+import { PendingJoinRequests } from "./pending-join-requests";
 
 export default async function StudentsPage() {
   await requireAdminPermission("MANAGE_STUDENTS");
   // "Học sinh" (grantedLevel null) are a fully separate flow with their own
-  // page and permission — see /admin/prospective-students.
-  const students = await prisma.user.findMany({
-    where: { role: "STUDENT", adminOnly: false, grantedLevel: { not: null } },
-    orderBy: { createdAt: "desc" },
-  });
+  // page and permission — see /admin/prospective-students. Their pending
+  // "tham gia hệ thống đào tạo 5 cấp" requests are reviewed here instead,
+  // since approving one admits them into this Học viên roster.
+  const [students, pendingRequests] = await Promise.all([
+    prisma.user.findMany({
+      where: { role: "STUDENT", adminOnly: false, grantedLevel: { not: null } },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.levelUpRequest.findMany({
+      where: { fromLevel: null, status: "PENDING" },
+      orderBy: { requestedAt: "asc" },
+      include: { student: true },
+    }),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -30,6 +40,8 @@ export default async function StudentsPage() {
           </Link>
         }
       />
+
+      <PendingJoinRequests requests={pendingRequests} />
 
       {students.length === 0 ? (
         <p className="text-sm text-muted">Chưa có học viên nào.</p>

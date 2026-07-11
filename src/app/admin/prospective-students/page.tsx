@@ -5,31 +5,24 @@ import { requireAdminPermission } from "@/lib/access";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { ToggleStudentStatusButton, DeleteStudentButton } from "../students/[studentId]/danger-actions";
-import { PendingJoinRequests } from "./pending-join-requests";
 
 export default async function ProspectiveStudentsPage() {
   await requireAdminPermission("MANAGE_PROSPECTIVE_STUDENTS");
 
-  const [students, pendingRequests] = await Promise.all([
-    // "Học sinh" — self-registered (or admin-created) accounts not yet on
-    // the 5-level ladder. Kept as its own page/permission, independent of
-    // "Học viên" (/admin/students, leveled accounts).
-    prisma.user.findMany({
-      where: { role: "STUDENT", adminOnly: false, grantedLevel: null },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.levelUpRequest.findMany({
-      where: { fromLevel: null, status: "PENDING" },
-      orderBy: { requestedAt: "asc" },
-      include: { student: true },
-    }),
-  ]);
+  // "Học sinh" — self-registered (or admin-created) accounts not yet on
+  // the 5-level ladder. Kept as its own page/permission, independent of
+  // "Học viên" (/admin/students, leveled accounts). Pending "tham gia hệ
+  // thống đào tạo 5 cấp" requests are reviewed over on /admin/students
+  // instead — approving one admits someone into the Học viên roster, so
+  // that's where the review queue belongs (moved there per user request).
+  const students = await prisma.user.findMany({
+    where: { role: "STUDENT", adminOnly: false, grantedLevel: null },
+    orderBy: { createdAt: "desc" },
+  });
 
   return (
     <div className="space-y-6">
       <PageHeader title={`Học sinh (${students.length})`} />
-
-      <PendingJoinRequests requests={pendingRequests} />
 
       {students.length === 0 ? (
         <p className="text-sm text-muted">Chưa có học sinh nào.</p>
