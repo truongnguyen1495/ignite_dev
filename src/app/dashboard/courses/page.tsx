@@ -36,6 +36,11 @@ export default async function StudentCoursesPage() {
       .filter((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel))
       .map((lg) => lg.courseId)
   );
+  // "Học sinh" (grantedLevel null) never match levelGrants (Level-typed),
+  // so they unlock via openToProspectiveStudents or an already-guest-visible
+  // course instead — same rule as studentHasCourseAccess in src/lib/access.ts,
+  // kept in sync here purely for the lock icon/label on this listing.
+  const isHocSinh = student.grantedLevel === null;
 
   const completedCountByCourse = new Map<string, number>();
   for (const completion of completions) {
@@ -44,7 +49,9 @@ export default async function StudentCoursesPage() {
   }
 
   const items: StudentCourseItem[] = courses.map((course, index) => {
-    const unlocked = grantedCourseIds.has(course.id) || levelUnlockedCourseIds.has(course.id);
+    const unlocked = isHocSinh
+      ? grantedCourseIds.has(course.id) || course.openToProspectiveStudents || course.visibleToGuest
+      : grantedCourseIds.has(course.id) || levelUnlockedCourseIds.has(course.id);
     const totalLessons = course._count.lessons;
     const completedCount = completedCountByCourse.get(course.id) ?? 0;
     const progressPercent = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;

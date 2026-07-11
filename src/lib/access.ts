@@ -234,14 +234,21 @@ async function studentHasCourseAccess(student: User, courseId: string): Promise<
       where: { studentId_courseId: { studentId: student.id, courseId } },
     }),
     prisma.courseLevelGrant.findMany({ where: { courseId } }),
-    prisma.course.findUnique({ where: { id: courseId }, select: { openToProspectiveStudents: true } }),
+    prisma.course.findUnique({
+      where: { id: courseId },
+      select: { openToProspectiveStudents: true, visibleToGuest: true },
+    }),
   ]);
   if (grant) return true;
   // "Học sinh" (grantedLevel null) never match a CourseLevelGrant's
   // Level-typed minLevel — openToProspectiveStudents is their only
-  // level-independent equivalent of that continuous rule.
+  // level-independent equivalent of that continuous rule. A course already
+  // open to anonymous guests is also opened here, and — unlike the guest
+  // side, which only unlocks lessons individually flagged visibleToGuest —
+  // học sinh get every lesson in the course, since they're a signed-in
+  // account one step above an anonymous guest, not a trial audience.
   if (student.grantedLevel === null) {
-    return course?.openToProspectiveStudents ?? false;
+    return (course?.openToProspectiveStudents || course?.visibleToGuest) ?? false;
   }
   return levelGrants.some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel));
 }
