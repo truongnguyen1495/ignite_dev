@@ -12,6 +12,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { parseLevel } from "@/lib/levels";
 import { sendChatMessage, markThreadRead, getOrCreateSupportThread, getOrCreateGroupThread } from "@/lib/chat";
+import { sendGuestChatMessage, markGuestThreadReadByAdmin } from "@/lib/guest-chat";
 
 const messageInputSchema = z
   .object({
@@ -88,6 +89,38 @@ export async function searchStudentsForSupportAction(
     take: 20,
     orderBy: { name: "asc" },
   });
+}
+
+// Guest messages are text-only (no attachment fields) — reuses the same
+// requireAdminPermission("MANAGE_CHAT") gate as every other admin chat
+// action, but doesn't go through requireAdminSupportThreadAccess since a
+// guest thread isn't a ChatThread row at all (see GuestChatThread in
+// schema.prisma).
+const guestMessageSchema = z.string().trim().min(1, "Nhập nội dung tin nhắn.").max(4000);
+
+export async function sendGuestSupportReplyAction(
+  threadId: string,
+  body: string
+): Promise<{ error?: string }> {
+  const admin = await requireAdminPermission("MANAGE_CHAT");
+  await requireChatEnabled("/admin");
+  const thread = await prisma.guestChatThread.findUnique({ where: { id: threadId } });
+  if (!thread) {
+    return { error: "Không tìm thấy cuộc trò chuyện này." };
+  }
+  const parsed = guestMessageSchema.safeParse(body);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ." };
+  }
+  await sendGuestChatMessage(threadId, "ADMIN", parsed.data, admin.id);
+  revalidatePath(`/admin/chat/guest/${threadId}`);
+  revalidatePath("/admin/chat");
+  return {};
+}
+
+export async function markGuestThreadReadAction(threadId: string): Promise<void> {
+  const admin = await requireAdminPermission("MANAGE_CHAT");
+  await markGuestThreadReadByAdmin(threadId, admin.id);
 }
 
 // Lets an admin reach out first, unlike sendSupportReplyAction which only

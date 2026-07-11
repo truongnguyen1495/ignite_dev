@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { Home, Megaphone, Video, LogIn, UserPlus, Library } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import { isChatEnabled } from "@/lib/access";
+import { GuestChatWidget } from "./guest-chat-widget";
 
 // Public shell for the /guest/* tree — deliberately outside SidebarProvider
 // and requireActiveStudent: no session is ever read here. middleware.ts's
 // matcher only covers /dashboard and /admin, so this route needs no changes
 // there to stay unauthenticated.
-export default function GuestLayout({ children }: { children: React.ReactNode }) {
+export default async function GuestLayout({ children }: { children: React.ReactNode }) {
+  const chatEnabled = await isChatEnabled();
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-surface">
@@ -61,6 +64,7 @@ export default function GuestLayout({ children }: { children: React.ReactNode })
         </nav>
       </header>
       <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-8">{children}</main>
+      {chatEnabled && <GuestChatWidget />}
     </div>
   );
 }

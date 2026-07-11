@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ChevronRight, LifeBuoy, Users } from "lucide-react";
+import { ChevronRight, LifeBuoy, Users, Globe } from "lucide-react";
 import { requireAdminPermission, requireChatEnabled } from "@/lib/access";
 import { getAdminSupportInbox, getAdminGroupRooms } from "@/lib/chat";
+import { getAdminGuestChatInbox } from "@/lib/guest-chat";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -18,9 +19,10 @@ function UnreadBadge({ count }: { count: number }) {
 export default async function AdminChatPage() {
   const admin = await requireAdminPermission("MANAGE_CHAT");
   await requireChatEnabled("/admin");
-  const [threads, groupRooms] = await Promise.all([
+  const [threads, groupRooms, guestThreads] = await Promise.all([
     getAdminSupportInbox(admin.id),
     getAdminGroupRooms(admin.id),
+    getAdminGuestChatInbox(admin.id),
   ]);
 
   return (
@@ -51,6 +53,31 @@ export default async function AdminChatPage() {
               <LifeBuoy className="h-5 w-5 shrink-0 text-primary" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm text-foreground">{thread.student.name}</p>
+                {thread.lastMessagePreview && (
+                  <p className="truncate text-xs text-muted">{thread.lastMessagePreview}</p>
+                )}
+              </div>
+              <UnreadBadge count={thread.unreadCount} />
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
+            </Link>
+          ))
+        )}
+      </Card>
+
+      <Card className="space-y-2">
+        <h2 className="text-sm font-semibold text-foreground">Khách (chưa đăng nhập)</h2>
+        {guestThreads.length === 0 ? (
+          <p className="text-sm text-muted">Chưa có khách nào nhắn tin hỗ trợ.</p>
+        ) : (
+          guestThreads.map((thread) => (
+            <Link
+              key={thread.threadId}
+              href={`/admin/chat/guest/${thread.threadId}`}
+              className="flex items-center gap-3 rounded-lg border border-border bg-background p-3 transition-colors hover:border-primary/50"
+            >
+              <Globe className="h-5 w-5 shrink-0 text-info" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm text-foreground">{thread.guestLabel}</p>
                 {thread.lastMessagePreview && (
                   <p className="truncate text-xs text-muted">{thread.lastMessagePreview}</p>
                 )}

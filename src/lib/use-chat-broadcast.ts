@@ -8,8 +8,9 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 // `() => router.refresh()`, matching the RSC-refresh convention already used
 // throughout the app (see src/app/dashboard/level-up/request-button.tsx)
 // rather than introducing client-side message state.
-export function useChatBroadcast(threadId: string, onMessage: () => void) {
+export function useChatBroadcast(threadId: string | null, onMessage: () => void) {
   useEffect(() => {
+    if (!threadId) return;
     const channel = getSupabaseBrowser()
       .channel(`chat-thread-${threadId}`)
       .on("broadcast", { event: "new_message" }, onMessage)

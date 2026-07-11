@@ -14,7 +14,7 @@ export function ChatToggle({ chatEnabled }: { chatEnabled: boolean }) {
       <div>
         <p className="text-sm font-medium text-foreground">Tính năng chat</p>
         <p className="text-sm text-muted">
-          Bật/tắt nhắn tin hỗ trợ, nhắn tin trực tiếp và chat nhóm cho học viên và admin.
+          Bật/tắt nhắn tin hỗ trợ, nhắn tin trực tiếp, chat nhóm cho học viên và admin, và chat hỗ trợ cho khách chưa đăng nhập.
         </p>
       </div>
       <button

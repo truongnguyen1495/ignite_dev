@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { requireAnyAdminAccess, isChatEnabled } from "@/lib/access";
 import { getAdminSupportInbox } from "@/lib/chat";
+import { getAdminGuestChatInbox } from "@/lib/guest-chat";
 import { Sidebar, SidebarProvider, SidebarToggle, type NavItem } from "@/components/ui/sidebar";
 import { BrandLogo } from "@/components/brand-logo";
 import { LogoutButton } from "@/components/logout-button";
@@ -36,8 +37,12 @@ export default async function AdminLayout({
   // badge in dashboard/layout.tsx.
   const chatEnabled = await isChatEnabled();
   const canManageChat = chatEnabled && canManage("MANAGE_CHAT");
-  const supportThreads = canManageChat ? await getAdminSupportInbox(admin.id) : [];
-  const unreadSupportCount = supportThreads.reduce((sum, t) => sum + t.unreadCount, 0);
+  const [supportThreads, guestThreads] = canManageChat
+    ? await Promise.all([getAdminSupportInbox(admin.id), getAdminGuestChatInbox(admin.id)])
+    : [[], []];
+  const unreadSupportCount =
+    supportThreads.reduce((sum, t) => sum + t.unreadCount, 0) +
+    guestThreads.reduce((sum, t) => sum + t.unreadCount, 0);
 
   // Every item not gated by a permission (Tổng quan) is visible to any admin,
   // full or limited — the rest only show up if requireAnyAdminAccess granted

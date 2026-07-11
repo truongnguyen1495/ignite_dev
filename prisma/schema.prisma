@@ -91,6 +91,8 @@ model User {
   directThreadsAsUserB    ChatThread[]             @relation("DirectThreadAsUserB")
   adminPermissions        AdminPermission[]        @relation("AdminPermissions")
   adminPermissionsGranted AdminPermission[]        @relation("AdminPermissionsGranted")
+  guestChatMessagesSent   GuestChatMessage[]       @relation("GuestChatMessagesSent")
+  guestChatThreadReads    GuestChatThreadRead[]    @relation("GuestChatThreadReads")
 
   @@index([role])
 }
@@ -493,4 +495,64 @@ model ChatThreadRead {
 
   @@unique([threadId, userId])
   @@index([userId])
+}
+
+enum GuestChatSender {
+  GUEST
+  ADMIN
+}
+
+// Deliberately separate from ChatThread/ChatMessage rather than adding a
+// fourth ChatThreadKind — every field on those models keys off a real
+// User.id (senderId, supportStudentId, etc. are all non-nullable FKs), and
+// a guest visitor never has a User row (see requireAnyAdminAccess and the
+// User model comment for the other half of "who can act as admin" — this
+// is the "who is the OTHER party" half, for anonymous visitors instead).
+// Identified purely by an opaque cookie value (see getOrCreateGuestSessionId
+// in src/lib/guest-chat.ts) — no name/email is ever collected, matching the
+// site's "fully anonymous" guest chat design.
+model GuestChatThread {
+  id             String   @id @default(cuid())
+  guestSessionId String   @unique
+
+  lastMessageAt      DateTime @default(now())
+  lastMessagePreview String?
+  createdAt          DateTime @default(now())
+
+  messages GuestChatMessage[]
+  reads    GuestChatThreadRead[]
+}
+
+model GuestChatMessage {
+  id       String          @id @default(cuid())
+  threadId String
+  thread   GuestChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender   GuestChatSender
+
+  // Set only when sender = ADMIN — which admin replied, for the "who
+  // answered" context an admin sees; a GUEST-sent message has no User to
+  // attribute (that's the whole point of the anonymous cookie identity).
+  senderAdminId String?
+  senderAdmin   User?   @relation("GuestChatMessagesSent", fields: [senderAdminId], references: [id], onDelete: SetNull)
+
+  // Text-only for this first cut, unlike ChatMessage — no attachment
+  // support yet for anonymous guests.
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([threadId, createdAt])
+}
+
+// Per-admin read watermark, same idiom as ChatThreadRead — any admin with
+// MANAGE_CHAT may reply, so unread is tracked per admin, not per thread.
+model GuestChatThreadRead {
+  id         String          @id @default(cuid())
+  threadId   String
+  thread     GuestChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  adminId    String
+  admin      User            @relation("GuestChatThreadReads", fields: [adminId], references: [id], onDelete: Cascade)
+  lastReadAt DateTime        @default(now())
+
+  @@unique([threadId, adminId])
+  @@index([adminId])
 }
