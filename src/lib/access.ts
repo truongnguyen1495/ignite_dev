@@ -72,7 +72,7 @@ export async function requireActiveStudent(): Promise<User> {
 export async function requireLeveledStudent(): Promise<User & { grantedLevel: Level }> {
   const student = await requireActiveStudent();
   if (student.grantedLevel === null) {
-    redirect("/dashboard/courses");
+    redirect("/dashboard/home");
   }
   return student as User & { grantedLevel: Level };
 }
