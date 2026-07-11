@@ -1,11 +1,13 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
+import { requireActiveSuperAdmin } from "@/lib/access";
 import { ChatToggle } from "./chat-toggle";
 import { LanguageToggle } from "./language-toggle";
 import { AdminRoleAssignment } from "./admin-role-assignment";
 
 export default async function SettingsPage() {
+  await requireActiveSuperAdmin();
   const [settings, grantedAdmins] = await Promise.all([
     prisma.settings.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } }),
     prisma.user.findMany({

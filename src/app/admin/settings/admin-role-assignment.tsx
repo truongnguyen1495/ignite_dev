@@ -2,16 +2,18 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X, Pencil, Loader2 } from "lucide-react";
+import { Search, X, Pencil, Loader2, UserPlus } from "lucide-react";
 import type { AdminPermissionKind } from "@prisma/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/form";
 import { ORDERED_ADMIN_PERMISSIONS, ADMIN_PERMISSION_LABELS } from "@/lib/admin-permissions";
 import {
   searchAccountsForPermissionAction,
   getAccountPermissionsAction,
   setAccountPermissionsAction,
+  createAdminAccountAction,
   type AccountSearchResult,
 } from "./actions";
 
@@ -35,6 +37,13 @@ export function AdminRoleAssignment({ initialGrantedAdmins }: { initialGrantedAd
   const [loadingPermissions, setLoadingPermissions] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();
+
+  const [creatingAccount, setCreatingAccount] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [createError, setCreateError] = useState<string | undefined>();
+  const [createPending, startCreateTransition] = useTransition();
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -70,6 +79,26 @@ export function AdminRoleAssignment({ initialGrantedAdmins }: { initialGrantedAd
     const permissions = await getAccountPermissionsAction(account.id);
     setEditingPermissions(new Set(permissions));
     setLoadingPermissions(false);
+  }
+
+  function handleCreateAccount() {
+    setCreateError(undefined);
+    startCreateTransition(async () => {
+      const result = await createAdminAccountAction({
+        name: newName,
+        email: newEmail,
+        password: newPassword,
+      });
+      if (result.error || !result.account) {
+        setCreateError(result.error ?? "Không thể tạo tài khoản.");
+        return;
+      }
+      setCreatingAccount(false);
+      setNewName("");
+      setNewEmail("");
+      setNewPassword("");
+      await openEditor(result.account, []);
+    });
   }
 
   function togglePermission(permission: AdminPermissionKind) {
@@ -146,6 +175,67 @@ export function AdminRoleAssignment({ initialGrantedAdmins }: { initialGrantedAd
               </div>
             </button>
           ))}
+        </div>
+      )}
+
+      {!creatingAccount ? (
+        <button
+          type="button"
+          onClick={() => setCreatingAccount(true)}
+          className="flex items-center gap-1.5 text-sm text-primary hover:text-primary-hover"
+        >
+          <UserPlus className="h-4 w-4" />
+          Tạo tài khoản admin mới
+        </button>
+      ) : (
+        <div className="space-y-3 rounded-lg border border-border bg-background p-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium text-foreground">Tạo tài khoản admin mới</p>
+            <button
+              type="button"
+              onClick={() => {
+                setCreatingAccount(false);
+                setCreateError(undefined);
+              }}
+              className="shrink-0 rounded-lg p-1.5 text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <p className="text-xs text-muted">
+            Tài khoản mới sẽ ở dạng học viên và chưa có quyền admin nào — bước tiếp theo bạn sẽ tick chọn
+            các tính năng muốn cấp ngay sau khi tạo.
+          </p>
+          <Input
+            label="Họ tên"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="Nguyễn Văn A"
+          />
+          <Input
+            label="Email"
+            type="email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="admin@example.com"
+          />
+          <Input
+            label="Mật khẩu"
+            type="password"
+            minLength={8}
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="Tối thiểu 8 ký tự"
+          />
+          {createError && <p className="text-sm text-danger">{createError}</p>}
+          <Button
+            type="button"
+            onClick={handleCreateAccount}
+            disabled={createPending || !newName.trim() || !newEmail.trim() || newPassword.length < 8}
+            isLoading={createPending}
+          >
+            Tạo & cấp quyền
+          </Button>
         </div>
       )}
 

@@ -1,9 +1,11 @@
 "use server";
 
+import { z } from "zod";
+import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { requireActiveSuperAdmin } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
-import type { AdminPermissionKind } from "@prisma/client";
+import { Prisma, type AdminPermissionKind } from "@prisma/client";
 
 export async function setChatEnabledAction(chatEnabled: boolean) {
   await requireActiveSuperAdmin();
@@ -13,6 +15,56 @@ export async function setChatEnabledAction(chatEnabled: boolean) {
     create: { id: 1, chatEnabled },
   });
   revalidatePath("/admin/settings");
+}
+
+const createAdminAccountSchema = z.object({
+  name: z.string().trim().min(1, "Tên không được để trống."),
+  email: z.string().trim().email("Email không hợp lệ."),
+  password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự."),
+});
+
+export type CreateAdminAccountResult = {
+  error?: string;
+  account?: { id: string; name: string; email: string };
+};
+
+// Creates a brand-new STUDENT account (role is never SUPER_ADMIN here — see
+// requireAnyAdminAccess in src/lib/access.ts for why a STUDENT can still act
+// as a limited admin) with no permissions yet; the caller opens the
+// permission editor for the returned account right after, in the same flow
+// as picking an existing one via searchAccountsForPermissionAction.
+export async function createAdminAccountAction(input: {
+  name: string;
+  email: string;
+  password: string;
+}): Promise<CreateAdminAccountResult> {
+  await requireActiveSuperAdmin();
+
+  const parsed = createAdminAccountSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ." };
+  }
+
+  const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+  try {
+    const account = await prisma.user.create({
+      data: {
+        name: parsed.data.name,
+        email: parsed.data.email,
+        passwordHash,
+        role: "STUDENT",
+        status: "ACTIVE",
+      },
+      select: { id: true, name: true, email: true },
+    });
+    revalidatePath("/admin/settings");
+    return { account };
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      return { error: "Email này đã được sử dụng." };
+    }
+    throw e;
+  }
 }
 
 export type AccountSearchResult = { id: string; name: string; email: string; username: string | null };
