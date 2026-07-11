@@ -228,7 +228,16 @@ export async function requireQuizAccess(quizId: string) {
 // same as everything else in this file. Either one is sufficient; a student
 // who levels up into a rule's threshold gains access immediately, with no
 // backfill, since this is re-evaluated on every visit.
-async function studentHasCourseAccess(student: User, courseId: string): Promise<boolean> {
+//
+// "trial" is a third tier that only exists for "học sinh" (grantedLevel
+// null): a course already open to anonymous guests (visibleToGuest) is at
+// least as open to a signed-in học sinh — but only the same subset of
+// lessons a guest gets (CourseLesson.visibleToGuest), not the whole course.
+// A học sinh only reaches "full" once explicitly granted, same as anyone
+// else — via CourseAccessGrant or the openToProspectiveStudents switch.
+export type CourseAccessLevel = "none" | "trial" | "full";
+
+export async function getCourseAccessLevel(student: User, courseId: string): Promise<CourseAccessLevel> {
   const [grant, levelGrants, course] = await Promise.all([
     prisma.courseAccessGrant.findUnique({
       where: { studentId_courseId: { studentId: student.id, courseId } },
@@ -239,18 +248,13 @@ async function studentHasCourseAccess(student: User, courseId: string): Promise<
       select: { openToProspectiveStudents: true, visibleToGuest: true },
     }),
   ]);
-  if (grant) return true;
-  // "Học sinh" (grantedLevel null) never match a CourseLevelGrant's
-  // Level-typed minLevel — openToProspectiveStudents is their only
-  // level-independent equivalent of that continuous rule. A course already
-  // open to anonymous guests is also opened here, and — unlike the guest
-  // side, which only unlocks lessons individually flagged visibleToGuest —
-  // học sinh get every lesson in the course, since they're a signed-in
-  // account one step above an anonymous guest, not a trial audience.
+  if (grant) return "full";
   if (student.grantedLevel === null) {
-    return (course?.openToProspectiveStudents || course?.visibleToGuest) ?? false;
+    if (course?.openToProspectiveStudents) return "full";
+    if (course?.visibleToGuest) return "trial";
+    return "none";
   }
-  return levelGrants.some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel));
+  return levelGrants.some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel)) ? "full" : "none";
 }
 
 export async function requireCourseAccess(courseId: string) {
@@ -259,10 +263,11 @@ export async function requireCourseAccess(courseId: string) {
   if (!course) {
     redirect("/dashboard?denied=1");
   }
-  if (!(await studentHasCourseAccess(student, courseId))) {
+  const accessLevel = await getCourseAccessLevel(student, courseId);
+  if (accessLevel === "none") {
     redirect("/dashboard?denied=1");
   }
-  return { student, course };
+  return { student, course, accessLevel };
 }
 
 export async function requireCourseLessonAccess(lessonId: string) {
@@ -271,10 +276,11 @@ export async function requireCourseLessonAccess(lessonId: string) {
   if (!lesson) {
     redirect("/dashboard?denied=1");
   }
-  if (!(await studentHasCourseAccess(student, lesson.courseId))) {
+  const accessLevel = await getCourseAccessLevel(student, lesson.courseId);
+  if (accessLevel === "none" || (accessLevel === "trial" && !lesson.visibleToGuest)) {
     redirect("/dashboard?denied=1");
   }
-  return { student, lesson };
+  return { student, lesson, accessLevel };
 }
 
 // Library items (books/documents) use the exact same grant model as

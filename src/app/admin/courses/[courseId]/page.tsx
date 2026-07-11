@@ -125,8 +125,9 @@ export default async function EditCoursePage({
         {course.visibleToGuest && (
           <p className="rounded-lg border border-warning/40 bg-warning-bg px-3 py-2 text-xs text-warning">
             Khóa học này đang <span className="font-semibold">hiển thị cho khách</span> (mục "Hiện cho khách"
-            ở form phía trên) nên mọi học sinh đã tự động xem được full, kể cả khi công tắc dưới đây đang tắt
-            và chưa cấp quyền riêng cho ai.
+            ở form phía trên) nên mọi học sinh đều xem được các bài{" "}
+            <span className="font-semibold">học thử</span> giống trang khách, dù công tắc dưới đây đang tắt
+            và chưa cấp quyền riêng cho ai. Bật công tắc hoặc cấp quyền riêng để họ xem được full.
           </p>
         )}
         <ToggleOpenToProspectiveStudents courseId={course.id} open={course.openToProspectiveStudents} />

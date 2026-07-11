@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BookOpen, Lock, Video, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
+import type { CourseAccessLevel } from "@/lib/access";
 
 const STORAGE_KEY = "student-courses-view";
 
@@ -13,13 +14,19 @@ export type StudentCourseItem = {
   title: string;
   description: string | null;
   coverImageUrl: string | null;
-  unlocked: boolean;
+  accessLevel: CourseAccessLevel;
   totalLessons: number;
   completedCount: number;
   progressPercent: number;
   href: string;
   gradient: string;
 };
+
+function AccessBadge({ accessLevel }: { accessLevel: CourseAccessLevel }) {
+  if (accessLevel === "full") return <Badge color="success">Đã mở khóa</Badge>;
+  if (accessLevel === "trial") return <Badge color="warning">Học thử</Badge>;
+  return <Badge color="faint">Chưa mở khóa</Badge>;
+}
 
 function Thumbnail({ course, className }: { course: StudentCourseItem; className: string }) {
   if (course.coverImageUrl) {
@@ -30,17 +37,17 @@ function Thumbnail({ course, className }: { course: StudentCourseItem; className
   }
   return (
     <div className={`${className} flex items-center justify-center bg-gradient-to-br ${course.gradient}`}>
-      {course.unlocked ? (
-        <Video className="h-9 w-9 text-white/90" />
-      ) : (
+      {course.accessLevel === "none" ? (
         <Lock className="h-9 w-9 text-white/90" />
+      ) : (
+        <Video className="h-9 w-9 text-white/90" />
       )}
     </div>
   );
 }
 
 function ProgressBar({ course }: { course: StudentCourseItem }) {
-  if (!course.unlocked || course.totalLessons === 0) return null;
+  if (course.accessLevel === "none" || course.totalLessons === 0) return null;
   return (
     <div>
       <div className="flex items-center justify-between text-xs text-dark-muted">
@@ -84,31 +91,28 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
       {mode === "grid" ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {courses.map((course) => {
+            const clickable = course.accessLevel !== "none";
             const card = (
               <div
                 className={`flex h-full flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors ${
-                  course.unlocked ? "hover:border-primary/60" : "opacity-60"
+                  clickable ? "hover:border-primary/60" : "opacity-60"
                 }`}
               >
                 <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-dark-surface-raised">
                   <Thumbnail course={course} className="h-full w-full" />
-                  {!course.unlocked && (
+                  {!clickable && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                       <Lock className="h-8 w-8 text-white" />
                     </div>
                   )}
                 </div>
                 <div className="flex flex-1 flex-col p-5">
-                  {course.unlocked ? (
-                    <Badge color="success">Đã mở khóa</Badge>
-                  ) : (
-                    <Badge color="faint">Chưa mở khóa</Badge>
-                  )}
+                  <AccessBadge accessLevel={course.accessLevel} />
                   <p className="mt-3 font-semibold text-dark-foreground">{course.title}</p>
                   {course.description && (
                     <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{course.description}</p>
                   )}
-                  {course.unlocked && course.totalLessons > 0 && (
+                  {clickable && course.totalLessons > 0 && (
                     <div className="mt-4">
                       <ProgressBar course={course} />
                     </div>
@@ -118,7 +122,7 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                       <BookOpen className="h-3.5 w-3.5" />
                       {course.totalLessons} bài học
                     </span>
-                    {course.unlocked && (
+                    {clickable && (
                       <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
                         Vào học
                         <ArrowRight className="h-3.5 w-3.5" />
@@ -128,7 +132,7 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                 </div>
               </div>
             );
-            return course.unlocked ? (
+            return clickable ? (
               <Link key={course.id} href={course.href} className="block h-full">
                 {card}
               </Link>
@@ -142,15 +146,16 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
       ) : (
         <div className="space-y-3">
           {courses.map((course) => {
+            const clickable = course.accessLevel !== "none";
             const row = (
               <div
                 className={`flex items-center gap-4 rounded-xl border border-dark-border bg-dark-surface p-3 transition-colors ${
-                  course.unlocked ? "hover:border-primary/60" : "opacity-60"
+                  clickable ? "hover:border-primary/60" : "opacity-60"
                 }`}
               >
                 <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-dark-surface-raised">
                   <Thumbnail course={course} className="h-full w-full" />
-                  {!course.unlocked && (
+                  {!clickable && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                       <Lock className="h-4 w-4 text-white" />
                     </div>
@@ -158,11 +163,7 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    {course.unlocked ? (
-                      <Badge color="success">Đã mở khóa</Badge>
-                    ) : (
-                      <Badge color="faint">Chưa mở khóa</Badge>
-                    )}
+                    <AccessBadge accessLevel={course.accessLevel} />
                     <p className="truncate font-semibold text-dark-foreground">{course.title}</p>
                   </div>
                   {course.description && (
@@ -176,12 +177,10 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                   <BookOpen className="h-3.5 w-3.5" />
                   {course.totalLessons} bài học
                 </div>
-                {course.unlocked && (
-                  <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />
-                )}
+                {clickable && <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />}
               </div>
             );
-            return course.unlocked ? (
+            return clickable ? (
               <Link key={course.id} href={course.href}>
                 {row}
               </Link>

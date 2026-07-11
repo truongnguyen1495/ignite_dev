@@ -1,4 +1,4 @@
-import { requireActiveStudent } from "@/lib/access";
+import { requireActiveStudent, type CourseAccessLevel } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { hasLevelAccess } from "@/lib/levels";
 import { CourseList, type StudentCourseItem } from "./course-list";
@@ -19,7 +19,10 @@ export default async function StudentCoursesPage() {
       orderBy: { order: "asc" },
       include: {
         _count: { select: { lessons: true } },
-        lessons: { orderBy: [{ order: "asc" }, { createdAt: "asc" }], select: { id: true }, take: 1 },
+        lessons: {
+          orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+          select: { id: true, visibleToGuest: true },
+        },
       },
     }),
     prisma.courseAccessGrant.findMany({ where: { studentId: student.id } }),
@@ -36,10 +39,10 @@ export default async function StudentCoursesPage() {
       .filter((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel))
       .map((lg) => lg.courseId)
   );
-  // "Học sinh" (grantedLevel null) never match levelGrants (Level-typed),
-  // so they unlock via openToProspectiveStudents or an already-guest-visible
-  // course instead — same rule as studentHasCourseAccess in src/lib/access.ts,
-  // kept in sync here purely for the lock icon/label on this listing.
+  // "Học sinh" (grantedLevel null) never match levelGrants (Level-typed) — a
+  // course open to anonymous guests gives them "trial" (same lessons a guest
+  // gets) until explicitly granted "full" — same rule as getCourseAccessLevel
+  // in src/lib/access.ts, kept in sync here purely for this listing's badge.
   const isHocSinh = student.grantedLevel === null;
 
   const completedCountByCourse = new Map<string, number>();
@@ -49,15 +52,22 @@ export default async function StudentCoursesPage() {
   }
 
   const items: StudentCourseItem[] = courses.map((course, index) => {
-    const unlocked = isHocSinh
-      ? grantedCourseIds.has(course.id) || course.openToProspectiveStudents || course.visibleToGuest
-      : grantedCourseIds.has(course.id) || levelUnlockedCourseIds.has(course.id);
+    let accessLevel: CourseAccessLevel;
+    if (grantedCourseIds.has(course.id)) {
+      accessLevel = "full";
+    } else if (isHocSinh) {
+      accessLevel = course.openToProspectiveStudents ? "full" : course.visibleToGuest ? "trial" : "none";
+    } else {
+      accessLevel = levelUnlockedCourseIds.has(course.id) ? "full" : "none";
+    }
+
     const totalLessons = course._count.lessons;
     const completedCount = completedCountByCourse.get(course.id) ?? 0;
     const progressPercent = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
-    const firstLessonId = course.lessons[0]?.id;
-    const href = firstLessonId
-      ? `/dashboard/courses/${course.id}/lessons/${firstLessonId}`
+    const firstLesson =
+      accessLevel === "trial" ? course.lessons.find((l) => l.visibleToGuest) : course.lessons[0];
+    const href = firstLesson
+      ? `/dashboard/courses/${course.id}/lessons/${firstLesson.id}`
       : `/dashboard/courses/${course.id}`;
 
     return {
@@ -65,7 +75,7 @@ export default async function StudentCoursesPage() {
       title: course.title,
       description: course.description,
       coverImageUrl: course.coverImageUrl,
-      unlocked,
+      accessLevel,
       totalLessons,
       completedCount,
       progressPercent,

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, CheckCircle2, Lock } from "lucide-react";
 import { requireCourseLessonAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { YoutubeEmbed } from "@/components/youtube-embed";
@@ -13,7 +13,8 @@ export default async function StudentCourseLessonPage({
   params: Promise<{ courseId: string; lessonId: string }>;
 }) {
   const { courseId, lessonId } = await params;
-  const { student, lesson } = await requireCourseLessonAccess(lessonId);
+  const { student, lesson, accessLevel } = await requireCourseLessonAccess(lessonId);
+  const isTrial = accessLevel === "trial";
 
   const [course, siblingLessons, completions] = await Promise.all([
     prisma.course.findUnique({ where: { id: lesson.courseId } }),
@@ -30,8 +31,15 @@ export default async function StudentCourseLessonPage({
   const completedLessonIds = new Set(completions.map((c) => c.courseLessonId));
   const currentIndex = siblingLessons.findIndex((l) => l.id === lessonId);
   const totalLessons = siblingLessons.length;
-  const prevLesson = currentIndex > 0 ? siblingLessons[currentIndex - 1] : null;
-  const nextLesson = currentIndex >= 0 && currentIndex < totalLessons - 1 ? siblingLessons[currentIndex + 1] : null;
+  // A trial ("học thử") student only navigates between the same lessons a
+  // guest can reach (CourseLesson.visibleToGuest) — full access still walks
+  // every lesson regardless, unchanged from before.
+  const isReachable = (l: (typeof siblingLessons)[number]) => !isTrial || l.visibleToGuest;
+  const prevCandidate = currentIndex > 0 ? siblingLessons[currentIndex - 1] : null;
+  const nextCandidate =
+    currentIndex >= 0 && currentIndex < totalLessons - 1 ? siblingLessons[currentIndex + 1] : null;
+  const prevLesson = prevCandidate && isReachable(prevCandidate) ? prevCandidate : null;
+  const nextLesson = nextCandidate && isReachable(nextCandidate) ? nextCandidate : null;
 
   return (
     <div className="rounded-2xl border border-dark-border bg-dark-surface-raised p-4 sm:p-6">
@@ -42,6 +50,13 @@ export default async function StudentCourseLessonPage({
         <ArrowLeft className="h-4 w-4" />
         Quay lại
       </Link>
+
+      {isTrial && (
+        <p className="mt-4 rounded-lg border border-warning/40 bg-warning-bg px-3 py-2 text-xs text-warning">
+          Bạn đang <span className="font-semibold">học thử</span> khóa học này — chỉ xem được một số bài,
+          cần được cấp quyền đầy đủ để xem toàn bộ.
+        </p>
+      )}
 
       <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-4">
@@ -116,6 +131,25 @@ export default async function StudentCourseLessonPage({
               {siblingLessons.map((l, index) => {
                 const isCurrent = l.id === lessonId;
                 const isDone = completedLessonIds.has(l.id);
+
+                if (isTrial && !l.visibleToGuest) {
+                  return (
+                    <li key={l.id}>
+                      <div className="flex items-start gap-3 rounded-lg px-3 py-2.5 text-sm text-dark-muted/50">
+                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-dark-border">
+                          <Lock className="h-2.5 w-2.5" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="line-clamp-2 block">{l.title}</span>
+                          <span className="mt-0.5 block text-xs italic text-dark-muted/40">
+                            Cần được cấp quyền để xem
+                          </span>
+                        </span>
+                      </div>
+                    </li>
+                  );
+                }
+
                 return (
                   <li key={l.id}>
                     <Link
