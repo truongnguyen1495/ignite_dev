@@ -4,7 +4,11 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { AdminPermissionKind } from "@prisma/client";
 import { Button } from "@/components/ui/button";
-import { ORDERED_ADMIN_PERMISSIONS, ADMIN_PERMISSION_LABELS } from "@/lib/admin-permissions";
+import {
+  ORDERED_ADMIN_PERMISSIONS,
+  ADMIN_PERMISSION_LABELS,
+  STUDENT_PERMISSION_GROUPS,
+} from "@/lib/admin-permissions";
 import { setAccountPermissionsAction } from "../actions";
 
 export function AdminPermissionEditor({
@@ -29,6 +33,23 @@ export function AdminPermissionEditor({
         next.delete(permission);
       } else {
         next.add(permission);
+      }
+      return next;
+    });
+  }
+
+  // Unchecking a group's parent (e.g. "Học viên") also clears its children
+  // ("Sửa/Khóa/Xóa học viên") — they'd be unreachable/meaningless anyway
+  // once the admin can't even view that page, so leaving them checked but
+  // orphaned would just be confusing on the next visit to this screen.
+  function toggleGroupParent(parent: AdminPermissionKind, children: AdminPermissionKind[]) {
+    setPermissions((prev) => {
+      const next = new Set(prev);
+      if (next.has(parent)) {
+        next.delete(parent);
+        for (const child of children) next.delete(child);
+      } else {
+        next.add(parent);
       }
       return next;
     });
@@ -98,6 +119,43 @@ export function AdminPermissionEditor({
             </label>
           ))}
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {STUDENT_PERMISSION_GROUPS.map(({ parent, children }) => {
+          const parentChecked = permissions.has(parent);
+          return (
+            <div key={parent} className="space-y-2 rounded-lg border border-border px-3 py-2">
+              <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground">
+                <input
+                  type="checkbox"
+                  checked={parentChecked}
+                  onChange={() => toggleGroupParent(parent, children)}
+                  className="h-4 w-4 accent-primary"
+                />
+                {ADMIN_PERMISSION_LABELS[parent]}
+              </label>
+              {parentChecked && (
+                <div className="ml-6 space-y-1.5 border-l border-border pl-3">
+                  {children.map((child) => (
+                    <label
+                      key={child}
+                      className="flex cursor-pointer items-center gap-2 text-xs text-muted hover:text-foreground"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={permissions.has(child)}
+                        onChange={() => togglePermission(child)}
+                        className="h-3.5 w-3.5 accent-primary"
+                      />
+                      {ADMIN_PERMISSION_LABELS[child]}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}

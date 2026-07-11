@@ -22,6 +22,7 @@ export function EditStudentForm({
   hasRegistrationInfo,
   username,
   dateOfBirthLabel,
+  canEdit,
   canDemote,
 }: {
   studentId: string;
@@ -33,6 +34,10 @@ export function EditStudentForm({
   hasRegistrationInfo: boolean;
   username: string | null;
   dateOfBirthLabel: string | null;
+  // EDIT_STUDENTS/EDIT_PROSPECTIVE_STUDENTS (or Super Admin) — without it
+  // this renders as a read-only view: fields disabled, no submit button.
+  // updateStudentAction enforces the same check server-side regardless.
+  canEdit: boolean;
   // Whether the current admin may demote a học viên back to học sinh
   // (DEMOTE_STUDENTS permission or Super Admin) — hides the "Học sinh"
   // option below for a currently-leveled student otherwise, so this form
@@ -98,6 +103,11 @@ export function EditStudentForm({
             )}
           </div>
         )}
+        {!canEdit && (
+          <p className="mb-4 rounded-lg bg-warning-bg px-3 py-2 text-xs text-warning">
+            Bạn chỉ có quyền xem tài khoản này — không có quyền sửa.
+          </p>
+        )}
         <form
           id="edit-student-form"
           action={formAction}
@@ -105,8 +115,16 @@ export function EditStudentForm({
           className="space-y-4"
         >
           <input type="hidden" name="studentId" value={studentId} />
-          <Input id="name" name="name" label="Họ tên" defaultValue={name} required />
-          <Input id="email" name="email" type="email" label="Email" defaultValue={email} required />
+          <Input id="name" name="name" label="Họ tên" defaultValue={name} required disabled={!canEdit} />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            label="Email"
+            defaultValue={email}
+            required
+            disabled={!canEdit}
+          />
           <Input
             id="phoneNumber"
             name="phoneNumber"
@@ -114,6 +132,7 @@ export function EditStudentForm({
             label="Số điện thoại (tùy chọn)"
             defaultValue={phoneNumber ?? ""}
             placeholder="0xxxxxxxxx hoặc +84xxxxxxxxx"
+            disabled={!canEdit}
           />
           <Input
             id="password"
@@ -121,12 +140,14 @@ export function EditStudentForm({
             type="password"
             label="Mật khẩu mới (để trống nếu không đổi)"
             minLength={8}
+            disabled={!canEdit}
           />
           <Select
             id="grantedLevel"
             name="grantedLevel"
             label="Cấp được cấp quyền"
             defaultValue={grantedLevel ?? NO_LEVEL_VALUE}
+            disabled={!canEdit}
           >
             {ORDERED_LEVELS.map((level) => (
               <option key={level} value={level}>
@@ -138,14 +159,16 @@ export function EditStudentForm({
             )}
           </Select>
           {error && <p className="text-sm text-danger">{error}</p>}
-          <Button
-            type="submit"
-            variant={isDirty ? "primary" : "secondary"}
-            disabled={pending || !isDirty}
-            isLoading={pending}
-          >
-            {pending ? "Đang lưu..." : isDirty ? "Lưu thay đổi" : "Đã lưu"}
-          </Button>
+          {canEdit && (
+            <Button
+              type="submit"
+              variant={isDirty ? "primary" : "secondary"}
+              disabled={pending || !isDirty}
+              isLoading={pending}
+            >
+              {pending ? "Đang lưu..." : isDirty ? "Lưu thay đổi" : "Đã lưu"}
+            </Button>
+          )}
         </form>
       </Card>
     </>

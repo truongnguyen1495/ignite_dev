@@ -30,14 +30,18 @@ export default async function EditStudentPage({
     notFound();
   }
 
-  // Locking/deleting a "học viên" (grantedLevel set) is Super Admin only;
-  // a "học sinh" target keeps the ordinary shared-permission access this
-  // page itself is already gated by. Demoting a học viên back to học sinh
-  // needs its own DEMOTE_STUDENTS permission regardless of target kind.
+  // Editing/locking/deleting an existing account each need their own
+  // permission, decided by which the target actually is right now (a
+  // "học viên" with grantedLevel set, or a "học sinh") — MANAGE_STUDENTS/
+  // MANAGE_PROSPECTIVE_STUDENTS (this page's own gate) only cover viewing +
+  // creating. Demoting only ever applies to a học viên target.
   const isSuperAdmin = admin.role === "SUPER_ADMIN";
   const isHocVien = student.grantedLevel !== null;
-  const canDemote = isSuperAdmin || (await getAdminPermissions(admin.id)).has("DEMOTE_STUDENTS");
-  const canLockOrDelete = isHocVien ? isSuperAdmin : true;
+  const granted = isSuperAdmin ? null : await getAdminPermissions(admin.id);
+  const canEdit = isSuperAdmin || !!granted?.has(isHocVien ? "EDIT_STUDENTS" : "EDIT_PROSPECTIVE_STUDENTS");
+  const canLock = isSuperAdmin || !!granted?.has(isHocVien ? "LOCK_STUDENTS" : "LOCK_PROSPECTIVE_STUDENTS");
+  const canDelete = isSuperAdmin || !!granted?.has(isHocVien ? "DELETE_STUDENTS" : "DELETE_PROSPECTIVE_STUDENTS");
+  const canDemote = isSuperAdmin || !!granted?.has("DEMOTE_STUDENTS");
 
   const [attempts, levelUpRequests, courseGrants, courseLevelGrants] = await Promise.all([
     prisma.quizAttempt.findMany({
@@ -107,6 +111,7 @@ export default async function EditStudentPage({
         hasRegistrationInfo={hasRegistrationInfo}
         username={student.username}
         dateOfBirthLabel={student.dateOfBirth ? formatDateOnlyVN(student.dateOfBirth) : null}
+        canEdit={canEdit}
         canDemote={canDemote}
       />
 
@@ -195,20 +200,22 @@ export default async function EditStudentPage({
         </CollapsibleSection>
       </Card>
 
-      <Card className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">Khu vực nguy hiểm</h2>
-        <div className="flex flex-wrap items-center gap-3">
-          {isHocVien && canDemote && (
-            <DemoteStudentButton studentId={student.id} studentName={student.name} />
-          )}
-          {canLockOrDelete && (
-            <>
+      {(canLock || canDelete || (isHocVien && canDemote)) && (
+        <Card className="space-y-3">
+          <h2 className="text-sm font-semibold text-foreground">Khu vực nguy hiểm</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            {isHocVien && canDemote && (
+              <DemoteStudentButton studentId={student.id} studentName={student.name} />
+            )}
+            {canLock && (
               <ToggleStudentStatusButton studentId={student.id} locked={student.status === "LOCKED"} />
+            )}
+            {canDelete && (
               <DeleteStudentButton studentId={student.id} studentName={student.name} redirectAfter />
-            </>
-          )}
-        </div>
-      </Card>
+            )}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

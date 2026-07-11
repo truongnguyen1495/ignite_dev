@@ -127,6 +127,19 @@ enum AdminPermissionKind {
   // plain MANAGE_STUDENTS — see requireAdminPermission("DEMOTE_STUDENTS")
   // call sites in admin/students/actions.ts.
   DEMOTE_STUDENTS
+  // MANAGE_STUDENTS/MANAGE_PROSPECTIVE_STUDENTS above only grant viewing the
+  // list/detail page and creating new accounts now — editing, locking, and
+  // deleting an existing học viên or học sinh are separate, independently
+  // grantable capabilities (explicit user decision: e.g. an admin can be
+  // trusted to edit+lock but never delete). Rendered as sub-checkboxes
+  // nested under their parent in the admin-permission editor UI — see
+  // STUDENT_PERMISSION_GROUPS in src/lib/admin-permissions.ts.
+  EDIT_STUDENTS
+  LOCK_STUDENTS
+  DELETE_STUDENTS
+  EDIT_PROSPECTIVE_STUDENTS
+  LOCK_PROSPECTIVE_STUDENTS
+  DELETE_PROSPECTIVE_STUDENTS
 }
 
 model AdminPermission {

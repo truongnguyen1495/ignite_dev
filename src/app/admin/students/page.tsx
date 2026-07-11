@@ -10,13 +10,16 @@ import { PendingJoinRequests } from "./pending-join-requests";
 
 export default async function StudentsPage() {
   const admin = await requireAdminPermission("MANAGE_STUDENTS");
-  // Locking/deleting a học viên is Super Admin only, and demoting one back
-  // to học sinh needs its own DEMOTE_STUDENTS permission — both stricter
-  // than the MANAGE_STUDENTS gate on this page itself, so a limited admin
-  // may see this list without being able to do either. Computed once here
-  // to decide which action buttons each row renders.
+  // Editing/locking/deleting/demoting a học viên each need their own
+  // permission — stricter than the base MANAGE_STUDENTS gate on this page
+  // itself (which only covers viewing the list + creating new accounts), so
+  // a limited admin may see this list without being able to do any of them.
+  // Computed once here to decide which action buttons each row renders.
   const isSuperAdmin = admin.role === "SUPER_ADMIN";
-  const canDemote = isSuperAdmin || (await getAdminPermissions(admin.id)).has("DEMOTE_STUDENTS");
+  const granted = isSuperAdmin ? null : await getAdminPermissions(admin.id);
+  const canLock = isSuperAdmin || !!granted?.has("LOCK_STUDENTS");
+  const canDelete = isSuperAdmin || !!granted?.has("DELETE_STUDENTS");
+  const canDemote = isSuperAdmin || !!granted?.has("DEMOTE_STUDENTS");
   // "Học sinh" (grantedLevel null) are a fully separate flow with their own
   // page and permission — see /admin/prospective-students. Their pending
   // "tham gia hệ thống đào tạo 5 cấp" requests are reviewed here instead,
@@ -92,19 +95,19 @@ export default async function StudentsPage() {
                       {canDemote && (
                         <DemoteStudentButton studentId={student.id} studentName={student.name} iconOnly />
                       )}
-                      {isSuperAdmin && (
-                        <>
-                          <ToggleStudentStatusButton
-                            studentId={student.id}
-                            locked={student.status === "LOCKED"}
-                            iconOnly
-                          />
-                          <DeleteStudentButton
-                            studentId={student.id}
-                            studentName={student.name}
-                            iconOnly
-                          />
-                        </>
+                      {canLock && (
+                        <ToggleStudentStatusButton
+                          studentId={student.id}
+                          locked={student.status === "LOCKED"}
+                          iconOnly
+                        />
+                      )}
+                      {canDelete && (
+                        <DeleteStudentButton
+                          studentId={student.id}
+                          studentName={student.name}
+                          iconOnly
+                        />
                       )}
                     </div>
                   </td>
