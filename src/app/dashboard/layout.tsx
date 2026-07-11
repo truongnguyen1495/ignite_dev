@@ -103,7 +103,7 @@ export default async function DashboardLayout({
               </span>
               <span className="min-w-0">
                 <span className="block truncate text-xs font-medium text-foreground">{student.name}</span>
-                <span className="hidden items-center gap-1.5 sm:flex">
+                <span className="flex items-center gap-1.5">
                   {student.username && (
                     <span className="truncate text-[11px] text-muted">@{student.username}</span>
                   )}
