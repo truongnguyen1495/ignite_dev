@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   LayoutDashboard,
   ArrowUpCircle,
-  GraduationCap,
   Video,
   UserCircle,
   Megaphone,
@@ -17,6 +16,7 @@ import { LEVEL_LABELS, hasLevelAccess } from "@/lib/levels";
 import { Sidebar, SidebarProvider, SidebarToggle, type NavItem } from "@/components/ui/sidebar";
 import { BrandLogo } from "@/components/brand-logo";
 import { LogoutButton } from "@/components/logout-button";
+import { LevelBadge } from "@/components/ui/level-badge";
 import { LevelUpWatcher } from "./level-up-watcher";
 
 const iconClass = "h-4 w-4";
@@ -97,11 +97,18 @@ export default async function DashboardLayout({
                 Vào trang Admin
               </Link>
             )}
-            <span className="flex min-w-0 items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs text-muted">
-              <GraduationCap className="h-3.5 w-3.5 shrink-0 text-primary" />
-              <span className="truncate">{student.name}</span>
-              <span className="hidden shrink-0 text-foreground sm:inline">
-                ({LEVEL_LABELS[student.grantedLevel]})
+            <span className="flex min-w-0 items-center gap-2 rounded-full border border-border py-1 pl-1 pr-3">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                {student.name.charAt(0).toUpperCase()}
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-xs font-medium text-foreground">{student.name}</span>
+                <span className="hidden items-center gap-1.5 sm:flex">
+                  {student.username && (
+                    <span className="truncate text-[11px] text-muted">@{student.username}</span>
+                  )}
+                  <LevelBadge level={student.grantedLevel} />
+                </span>
               </span>
             </span>
             <LogoutButton />
