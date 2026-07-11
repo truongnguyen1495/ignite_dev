@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/form";
 import { ORDERED_ADMIN_PERMISSIONS, ADMIN_PERMISSION_LABELS } from "@/lib/admin-permissions";
 import {
   searchAccountsForPermissionAction,
-  getAccountPermissionsAction,
+  getAccountDetailsAction,
   setAccountPermissionsAction,
   createAdminAccountAction,
   type AccountSearchResult,
@@ -35,6 +35,7 @@ export function AdminRoleAssignment({ initialGrantedAdmins }: { initialGrantedAd
     null
   );
   const [editingPermissions, setEditingPermissions] = useState<Set<AdminPermissionKind>>(new Set());
+  const [editingAdminOnly, setEditingAdminOnly] = useState(false);
   const [loadingPermissions, setLoadingPermissions] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();
@@ -68,18 +69,24 @@ export function AdminRoleAssignment({ initialGrantedAdmins }: { initialGrantedAd
     };
   }, [query]);
 
-  async function openEditor(account: { id: string; name: string; email: string }, known?: AdminPermissionKind[]) {
+  async function openEditor(
+    account: { id: string; name: string; email: string },
+    known?: AdminPermissionKind[],
+    knownAdminOnly?: boolean
+  ) {
     setError(undefined);
     setEditingAccount(account);
     setQuery("");
     setResults([]);
-    if (known) {
+    if (known && knownAdminOnly !== undefined) {
       setEditingPermissions(new Set(known));
+      setEditingAdminOnly(knownAdminOnly);
       return;
     }
     setLoadingPermissions(true);
-    const permissions = await getAccountPermissionsAction(account.id);
-    setEditingPermissions(new Set(permissions));
+    const details = await getAccountDetailsAction(account.id);
+    setEditingPermissions(new Set(details.permissions));
+    setEditingAdminOnly(details.adminOnly);
     setLoadingPermissions(false);
   }
 
@@ -100,8 +107,9 @@ export function AdminRoleAssignment({ initialGrantedAdmins }: { initialGrantedAd
       setNewName("");
       setNewEmail("");
       setNewPassword("");
+      const createdAdminOnly = newAdminOnly;
       setNewAdminOnly(false);
-      await openEditor(result.account, []);
+      await openEditor(result.account, [], createdAdminOnly);
     });
   }
 
@@ -120,7 +128,11 @@ export function AdminRoleAssignment({ initialGrantedAdmins }: { initialGrantedAd
   function handleSave() {
     if (!editingAccount) return;
     startTransition(async () => {
-      const result = await setAccountPermissionsAction(editingAccount.id, Array.from(editingPermissions));
+      const result = await setAccountPermissionsAction(
+        editingAccount.id,
+        Array.from(editingPermissions),
+        editingAdminOnly
+      );
       if (result) {
         setError(result);
         return;
@@ -130,9 +142,9 @@ export function AdminRoleAssignment({ initialGrantedAdmins }: { initialGrantedAd
     });
   }
 
-  function handleRevokeAll(accountId: string) {
+  function handleRevokeAll(accountId: string, accountAdminOnly: boolean) {
     startTransition(async () => {
-      await setAccountPermissionsAction(accountId, []);
+      await setAccountPermissionsAction(accountId, [], accountAdminOnly);
       router.refresh();
     });
   }
@@ -293,22 +305,55 @@ export function AdminRoleAssignment({ initialGrantedAdmins }: { initialGrantedAd
               <Loader2 className="h-3.5 w-3.5 animate-spin" /> Đang tải quyền hiện tại...
             </p>
           ) : (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {ORDERED_ADMIN_PERMISSIONS.map((permission) => (
-                <label
-                  key={permission}
-                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-foreground hover:bg-surface-hover"
-                >
+            <>
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-foreground">Loại tài khoản</p>
+                <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-surface-hover">
                   <input
-                    type="checkbox"
-                    checked={editingPermissions.has(permission)}
-                    onChange={() => togglePermission(permission)}
-                    className="h-4 w-4 accent-primary"
+                    type="radio"
+                    checked={!editingAdminOnly}
+                    onChange={() => setEditingAdminOnly(false)}
+                    className="mt-0.5 accent-primary"
                   />
-                  {ADMIN_PERMISSION_LABELS[permission]}
+                  <span>
+                    <span className="block font-medium text-foreground">Vừa học vừa admin</span>
+                    <span className="block text-xs text-muted">
+                      Vẫn vào được /dashboard và học bình thường, cộng thêm quyền admin bên dưới.
+                    </span>
+                  </span>
                 </label>
-              ))}
-            </div>
+                <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-surface-hover">
+                  <input
+                    type="radio"
+                    checked={editingAdminOnly}
+                    onChange={() => setEditingAdminOnly(true)}
+                    className="mt-0.5 accent-primary"
+                  />
+                  <span>
+                    <span className="block font-medium text-foreground">Chỉ làm admin</span>
+                    <span className="block text-xs text-muted">
+                      Không vào được /dashboard, không hiện trong danh sách học viên.
+                    </span>
+                  </span>
+                </label>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {ORDERED_ADMIN_PERMISSIONS.map((permission) => (
+                  <label
+                    key={permission}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-foreground hover:bg-surface-hover"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={editingPermissions.has(permission)}
+                      onChange={() => togglePermission(permission)}
+                      className="h-4 w-4 accent-primary"
+                    />
+                    {ADMIN_PERMISSION_LABELS[permission]}
+                  </label>
+                ))}
+              </div>
+            </>
           )}
 
           <Button type="button" onClick={handleSave} disabled={pending || loadingPermissions} isLoading={pending}>
@@ -347,7 +392,7 @@ export function AdminRoleAssignment({ initialGrantedAdmins }: { initialGrantedAd
               <button
                 type="button"
                 title="Sửa quyền"
-                onClick={() => openEditor(admin, admin.permissions)}
+                onClick={() => openEditor(admin, admin.permissions, admin.adminOnly)}
                 className="shrink-0 rounded-lg p-1.5 text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
               >
                 <Pencil className="h-4 w-4" />
@@ -355,7 +400,7 @@ export function AdminRoleAssignment({ initialGrantedAdmins }: { initialGrantedAd
               <button
                 type="button"
                 title="Thu hồi toàn bộ quyền"
-                onClick={() => handleRevokeAll(admin.id)}
+                onClick={() => handleRevokeAll(admin.id, admin.adminOnly)}
                 disabled={pending}
                 className="shrink-0 rounded-lg p-1.5 text-muted transition-colors hover:bg-danger-bg hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
               >

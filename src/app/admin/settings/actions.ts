@@ -98,25 +98,29 @@ export async function searchAccountsForPermissionAction(query: string): Promise<
   });
 }
 
-export async function getAccountPermissionsAction(userId: string): Promise<AdminPermissionKind[]> {
+export type AccountDetails = { adminOnly: boolean; permissions: AdminPermissionKind[] };
+
+export async function getAccountDetailsAction(userId: string): Promise<AccountDetails> {
   await requireActiveSuperAdmin();
-  const rows = await prisma.adminPermission.findMany({
-    where: { userId },
-    select: { permission: true },
-  });
-  return rows.map((r) => r.permission);
+  const [user, rows] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: { adminOnly: true } }),
+    prisma.adminPermission.findMany({ where: { userId }, select: { permission: true } }),
+  ]);
+  return { adminOnly: user?.adminOnly ?? false, permissions: rows.map((r) => r.permission) };
 }
 
 // Replaces the account's entire permission set with `permissions` (an empty
-// array fully revokes limited-admin access, without touching its STUDENT
-// role or any other data) — simpler for the UI than tracking an add/remove
-// diff, and this table is small per user so the full delete+recreate is
-// cheap. Array-form $transaction, not the interactive-callback form: see
-// saveQuizAction in admin/quizzes/actions.ts for why (Supabase's pooled
-// connection doesn't support holding a transaction open across round trips).
+// array fully revokes limited-admin access) and updates its adminOnly kind
+// in the same save — simpler for the UI than tracking an add/remove diff or
+// a separate save step, and this table is small per user so the full
+// delete+recreate is cheap. Array-form $transaction, not the
+// interactive-callback form: see saveQuizAction in admin/quizzes/actions.ts
+// for why (Supabase's pooled connection doesn't support holding a
+// transaction open across round trips).
 export async function setAccountPermissionsAction(
   userId: string,
-  permissions: AdminPermissionKind[]
+  permissions: AdminPermissionKind[],
+  adminOnly: boolean
 ): Promise<string | undefined> {
   const admin = await requireActiveSuperAdmin();
   const target = await prisma.user.findUnique({ where: { id: userId } });
@@ -126,6 +130,7 @@ export async function setAccountPermissionsAction(
 
   const unique = Array.from(new Set(permissions));
   await prisma.$transaction([
+    prisma.user.update({ where: { id: userId }, data: { adminOnly } }),
     prisma.adminPermission.deleteMany({ where: { userId } }),
     ...(unique.length > 0
       ? [
