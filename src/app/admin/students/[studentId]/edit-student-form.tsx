@@ -22,6 +22,7 @@ export function EditStudentForm({
   hasRegistrationInfo,
   username,
   dateOfBirthLabel,
+  canDemote,
 }: {
   studentId: string;
   name: string;
@@ -32,6 +33,13 @@ export function EditStudentForm({
   hasRegistrationInfo: boolean;
   username: string | null;
   dateOfBirthLabel: string | null;
+  // Whether the current admin may demote a học viên back to học sinh
+  // (DEMOTE_STUDENTS permission or Super Admin) — hides the "Học sinh"
+  // option below for a currently-leveled student otherwise, so this form
+  // can't be used to bypass demoteStudentAction's permission boundary.
+  // Irrelevant (always shown) for a student who's already học sinh, since
+  // re-selecting the same value isn't a demotion.
+  canDemote: boolean;
 }) {
   const [error, formAction, pending] = useActionState(updateStudentAction, undefined);
   const [isDirty, setIsDirty] = useState(false);
@@ -125,7 +133,9 @@ export function EditStudentForm({
                 {LEVEL_LABELS[level]}
               </option>
             ))}
-            <option value={NO_LEVEL_VALUE}>Học sinh (chưa tham gia đào tạo 5 cấp)</option>
+            {(canDemote || grantedLevel === null) && (
+              <option value={NO_LEVEL_VALUE}>Học sinh (chưa tham gia đào tạo 5 cấp)</option>
+            )}
           </Select>
           {error && <p className="text-sm text-danger">{error}</p>}
           <Button

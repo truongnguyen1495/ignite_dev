@@ -2,10 +2,10 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Unlock, Trash2 } from "lucide-react";
+import { Lock, Unlock, Trash2, UserMinus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm-dialog";
-import { deleteStudentAction, setStudentStatusAction } from "../actions";
+import { deleteStudentAction, demoteStudentAction, setStudentStatusAction } from "../actions";
 
 export function ToggleStudentStatusButton({
   studentId,
@@ -101,6 +101,57 @@ export function DeleteStudentButton({
   return (
     <Button type="button" variant="danger" disabled={pending} onClick={onClick}>
       {pending ? "Đang xóa..." : "Xóa học viên"}
+    </Button>
+  );
+}
+
+export function DemoteStudentButton({
+  studentId,
+  studentName,
+  iconOnly = false,
+}: {
+  studentId: string;
+  studentName: string;
+  iconOnly?: boolean;
+}) {
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
+  const confirm = useConfirm();
+
+  const onClick = async () => {
+    const ok = await confirm({
+      title: `Đẩy "${studentName}" về học sinh?`,
+      description:
+        "Học viên sẽ mất cấp hiện tại và quay về tài khoản học sinh (chưa xếp cấp) — không vào được bài học/quiz 5 cấp hay chat cho đến khi được duyệt tham gia lại.",
+      confirmLabel: "Đẩy về học sinh",
+      tone: "danger",
+    });
+    if (!ok) return;
+    startTransition(async () => {
+      await demoteStudentAction(studentId);
+      router.refresh();
+    });
+  };
+
+  if (iconOnly) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        disabled={pending}
+        onClick={onClick}
+        title="Đẩy về học sinh"
+        className="hover:bg-warning-bg hover:text-warning"
+      >
+        <UserMinus className="h-4 w-4" />
+      </Button>
+    );
+  }
+
+  return (
+    <Button type="button" variant="secondary" disabled={pending} onClick={onClick}>
+      {pending ? "Đang xử lý..." : "Đẩy về học sinh"}
     </Button>
   );
 }

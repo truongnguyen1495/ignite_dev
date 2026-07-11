@@ -3,9 +3,9 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDateOnlyVN, formatDateTimeVN } from "@/lib/date";
-import { requireAnyAdminPermission } from "@/lib/access";
+import { requireAnyAdminPermission, getAdminPermissions } from "@/lib/access";
 import { EditStudentForm } from "./edit-student-form";
-import { DeleteStudentButton, ToggleStudentStatusButton } from "./danger-actions";
+import { DeleteStudentButton, ToggleStudentStatusButton, DemoteStudentButton } from "./danger-actions";
 import { LEVEL_LABELS, hasLevelAccess, levelRank } from "@/lib/levels";
 import { CollapsibleSection } from "./collapsible-section";
 import { AttemptGroup } from "./attempt-group";
@@ -23,12 +23,21 @@ export default async function EditStudentPage({
 }: {
   params: Promise<{ studentId: string }>;
 }) {
-  await requireAnyAdminPermission(["MANAGE_STUDENTS", "MANAGE_PROSPECTIVE_STUDENTS"]);
+  const admin = await requireAnyAdminPermission(["MANAGE_STUDENTS", "MANAGE_PROSPECTIVE_STUDENTS"]);
   const { studentId } = await params;
   const student = await prisma.user.findUnique({ where: { id: studentId } });
   if (!student || student.role !== "STUDENT" || student.adminOnly) {
     notFound();
   }
+
+  // Locking/deleting a "học viên" (grantedLevel set) is Super Admin only;
+  // a "học sinh" target keeps the ordinary shared-permission access this
+  // page itself is already gated by. Demoting a học viên back to học sinh
+  // needs its own DEMOTE_STUDENTS permission regardless of target kind.
+  const isSuperAdmin = admin.role === "SUPER_ADMIN";
+  const isHocVien = student.grantedLevel !== null;
+  const canDemote = isSuperAdmin || (await getAdminPermissions(admin.id)).has("DEMOTE_STUDENTS");
+  const canLockOrDelete = isHocVien ? isSuperAdmin : true;
 
   const [attempts, levelUpRequests, courseGrants, courseLevelGrants] = await Promise.all([
     prisma.quizAttempt.findMany({
@@ -98,6 +107,7 @@ export default async function EditStudentPage({
         hasRegistrationInfo={hasRegistrationInfo}
         username={student.username}
         dateOfBirthLabel={student.dateOfBirth ? formatDateOnlyVN(student.dateOfBirth) : null}
+        canDemote={canDemote}
       />
 
       <Card className="space-y-3">
@@ -187,9 +197,16 @@ export default async function EditStudentPage({
 
       <Card className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">Khu vực nguy hiểm</h2>
-        <div className="flex items-center gap-3">
-          <ToggleStudentStatusButton studentId={student.id} locked={student.status === "LOCKED"} />
-          <DeleteStudentButton studentId={student.id} studentName={student.name} redirectAfter />
+        <div className="flex flex-wrap items-center gap-3">
+          {isHocVien && canDemote && (
+            <DemoteStudentButton studentId={student.id} studentName={student.name} />
+          )}
+          {canLockOrDelete && (
+            <>
+              <ToggleStudentStatusButton studentId={student.id} locked={student.status === "LOCKED"} />
+              <DeleteStudentButton studentId={student.id} studentName={student.name} redirectAfter />
+            </>
+          )}
         </div>
       </Card>
     </div>

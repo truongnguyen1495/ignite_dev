@@ -121,6 +121,12 @@ enum AdminPermissionKind {
   // leveled accounts) by design — these are two independent flows with
   // their own admin page (/admin/prospective-students) and review queue.
   MANAGE_PROSPECTIVE_STUDENTS
+  // Narrower than MANAGE_STUDENTS on purpose: revoking a học viên's level
+  // (pushing grantedLevel back to null, i.e. demoting them back to "học
+  // sinh") is a separate, explicitly-grantable capability, not implied by
+  // plain MANAGE_STUDENTS — see requireAdminPermission("DEMOTE_STUDENTS")
+  // call sites in admin/students/actions.ts.
+  DEMOTE_STUDENTS
 }
 
 model AdminPermission {

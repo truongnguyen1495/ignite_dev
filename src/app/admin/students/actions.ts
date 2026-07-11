@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Prisma, type Level } from "@prisma/client";
-import { requireAnyAdminPermission } from "@/lib/access";
+import { requireAnyAdminPermission, requireAdminPermission, requireActiveSuperAdmin } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { ORDERED_LEVELS, NO_LEVEL_VALUE } from "@/lib/levels";
 import { optionalPhoneNumberSchema } from "@/lib/validation";
@@ -117,6 +117,15 @@ export async function updateStudentAction(
 
   const { studentId, name, email, phoneNumber, grantedLevel, password } = parsed.data;
 
+  // Pushing a currently-leveled "học viên" back to "học sinh" (grantedLevel
+  // -> null) via this shared edit form is the same demotion the dedicated
+  // DemoteStudentButton performs — gate it identically, or that button's
+  // permission boundary would be trivially bypassable through this form.
+  const current = await prisma.user.findUnique({ where: { id: studentId }, select: { grantedLevel: true } });
+  if (current?.grantedLevel !== null && grantedLevel === null) {
+    await requireAdminPermission("DEMOTE_STUDENTS");
+  }
+
   const data: Prisma.UserUpdateInput = { name, email, phoneNumber, grantedLevel };
   if (password) {
     data.passwordHash = await bcrypt.hash(password, 10);
@@ -137,8 +146,24 @@ export async function updateStudentAction(
   redirect("/admin/students");
 }
 
+// Locking/deleting a "học viên" (grantedLevel set) is Super Admin only, per
+// explicit user decision — not even a grantable AdminPermission, unlike
+// everything else in this file. A "học sinh" (grantedLevel null) target
+// keeps the original shared-permission check. Always re-read grantedLevel
+// fresh here rather than trusting the caller's page context, same "never
+// trust the client for an authorization decision" rule as the rest of the
+// app's access control.
+async function requireCanLockOrDeleteStudent(studentId: string) {
+  const target = await prisma.user.findUnique({ where: { id: studentId }, select: { grantedLevel: true } });
+  if (target?.grantedLevel !== null) {
+    await requireActiveSuperAdmin();
+  } else {
+    await requireAnyAdminPermission(STUDENT_MANAGEMENT_PERMISSIONS);
+  }
+}
+
 export async function setStudentStatusAction(studentId: string, locked: boolean) {
-  await requireAnyAdminPermission(STUDENT_MANAGEMENT_PERMISSIONS);
+  await requireCanLockOrDeleteStudent(studentId);
   await prisma.user.update({
     where: { id: studentId, role: "STUDENT" },
     data: { status: locked ? "LOCKED" : "ACTIVE" },
@@ -149,8 +174,24 @@ export async function setStudentStatusAction(studentId: string, locked: boolean)
 }
 
 export async function deleteStudentAction(studentId: string) {
-  await requireAnyAdminPermission(STUDENT_MANAGEMENT_PERMISSIONS);
+  await requireCanLockOrDeleteStudent(studentId);
   await prisma.user.delete({ where: { id: studentId, role: "STUDENT" } });
   revalidatePath("/admin/students");
   revalidatePath("/admin/prospective-students");
+}
+
+// Explicit "revoke a học viên's level, push back to học sinh" action — same
+// end state as picking "Học sinh" in the edit form's level dropdown, but as
+// a dedicated one-click button (see DemoteStudentButton). Gated by its own
+// permission rather than plain MANAGE_STUDENTS, per explicit user decision:
+// Super Admin decides which admins may demote a học viên.
+export async function demoteStudentAction(studentId: string) {
+  await requireAdminPermission("DEMOTE_STUDENTS");
+  await prisma.user.update({
+    where: { id: studentId, role: "STUDENT" },
+    data: { grantedLevel: null },
+  });
+  revalidatePath("/admin/students");
+  revalidatePath("/admin/prospective-students");
+  revalidatePath(`/admin/students/${studentId}`);
 }
