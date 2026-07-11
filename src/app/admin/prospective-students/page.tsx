@@ -1,45 +1,38 @@
 import Link from "next/link";
-import { Eye, Clock } from "lucide-react";
+import { Eye } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPermission } from "@/lib/access";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PageHeader } from "@/components/ui/page-header";
-import { BackLink } from "@/components/ui/back-link";
-import { ToggleStudentStatusButton, DeleteStudentButton } from "../[studentId]/danger-actions";
+import { ToggleStudentStatusButton, DeleteStudentButton } from "../students/[studentId]/danger-actions";
+import { PendingJoinRequests } from "./pending-join-requests";
 
-export default async function UnassignedStudentsPage() {
-  await requireAdminPermission("MANAGE_STUDENTS");
+export default async function ProspectiveStudentsPage() {
+  await requireAdminPermission("MANAGE_PROSPECTIVE_STUDENTS");
 
   const [students, pendingRequests] = await Promise.all([
-    // "Chưa xếp cấp" — self-registered (or admin-created) accounts not on
-    // the 5-level ladder yet. status filter is defensive: the open
-    // registration flow never creates PENDING rows anymore, but a stray one
-    // from before that change shouldn't show up here.
+    // "Học sinh" — self-registered (or admin-created) accounts not yet on
+    // the 5-level ladder. Kept as its own page/permission, independent of
+    // "Học viên" (/admin/students, leveled accounts).
     prisma.user.findMany({
-      where: { role: "STUDENT", adminOnly: false, grantedLevel: null, status: { not: "PENDING" } },
+      where: { role: "STUDENT", adminOnly: false, grantedLevel: null },
       orderBy: { createdAt: "desc" },
     }),
     prisma.levelUpRequest.findMany({
       where: { fromLevel: null, status: "PENDING" },
-      select: { studentId: true },
+      orderBy: { requestedAt: "asc" },
+      include: { student: true },
     }),
   ]);
-  const requestedIds = new Set(pendingRequests.map((r) => r.studentId));
 
   return (
     <div className="space-y-6">
-      <div>
-        <BackLink href="/admin/students">Quay lại danh sách học viên</BackLink>
-        <div className="mt-2">
-          <PageHeader
-            title={`Tài khoản chưa xếp cấp (${students.length})`}
-            description="Tự đăng ký qua /register — chỉ xem được khóa học độc quyền, thư viện, bản tin và thông tin cá nhân cho tới khi được nhận vào hệ thống đào tạo 5 cấp."
-          />
-        </div>
-      </div>
+      <PageHeader title={`Học sinh (${students.length})`} />
+
+      <PendingJoinRequests requests={pendingRequests} />
 
       {students.length === 0 ? (
-        <p className="text-sm text-muted">Chưa có tài khoản nào ở trạng thái chưa xếp cấp.</p>
+        <p className="text-sm text-muted">Chưa có học sinh nào.</p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="w-full whitespace-nowrap text-sm">
@@ -49,7 +42,6 @@ export default async function UnassignedStudentsPage() {
                 <th className="px-4 py-3 font-medium sm:px-6">Tài khoản</th>
                 <th className="px-4 py-3 font-medium sm:px-6">Ngày đăng ký</th>
                 <th className="px-4 py-3 font-medium sm:px-6">Trạng thái</th>
-                <th className="px-4 py-3 font-medium sm:px-6">Yêu cầu tham gia</th>
                 <th className="px-4 py-3 font-medium sm:px-6 text-right">Thao tác</th>
               </tr>
             </thead>
@@ -68,19 +60,6 @@ export default async function UnassignedStudentsPage() {
                   </td>
                   <td className="px-4 py-4 sm:px-6">
                     <StatusBadge status={student.status} />
-                  </td>
-                  <td className="px-4 py-4 sm:px-6">
-                    {requestedIds.has(student.id) ? (
-                      <Link
-                        href="/admin/level-up-requests"
-                        className="inline-flex items-center gap-1.5 rounded-full bg-warning-bg px-2.5 py-1 text-xs font-medium text-warning hover:opacity-80"
-                      >
-                        <Clock className="h-3.5 w-3.5" />
-                        Đang chờ duyệt
-                      </Link>
-                    ) : (
-                      <span className="text-xs text-faint">Chưa gửi</span>
-                    )}
                   </td>
                   <td className="px-4 py-4 sm:px-6">
                     <div className="flex items-center justify-end gap-1">

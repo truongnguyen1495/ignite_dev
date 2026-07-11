@@ -19,7 +19,6 @@ enum Role {
 enum AccountStatus {
   ACTIVE
   LOCKED
-  PENDING
 }
 
 enum Level {
@@ -117,6 +116,11 @@ enum AdminPermissionKind {
   MANAGE_LEVEL_UP_REQUESTS
   MANAGE_RESULTS
   MANAGE_ANNOUNCEMENTS
+  // "Học sinh" — self-registered accounts not yet on the 5-level ladder
+  // (User.grantedLevel null). Separate from MANAGE_STUDENTS ("Học viên",
+  // leveled accounts) by design — these are two independent flows with
+  // their own admin page (/admin/prospective-students) and review queue.
+  MANAGE_PROSPECTIVE_STUDENTS
 }
 
 model AdminPermission {

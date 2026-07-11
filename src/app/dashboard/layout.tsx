@@ -99,7 +99,7 @@ export default async function DashboardLayout({
           label={LEVEL_LABELS[student.grantedLevel]}
         />
       )}
-      <Sidebar items={NAV_ITEMS} brand={<BrandLogo subtitle="Học viên" />} />
+      <Sidebar items={NAV_ITEMS} brand={<BrandLogo subtitle={isLeveled ? "Học viên" : "Học sinh"} />} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-8 sm:py-4">
           <SidebarToggle />

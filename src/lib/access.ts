@@ -119,6 +119,24 @@ export async function requireAdminPermission(permission: AdminPermissionKind): P
   return user;
 }
 
+// Same as requireAdminPermission, but passes if the admin holds any one of
+// several permissions — used by shared plumbing (the student detail/edit
+// page and its create/update/lock/delete actions) that both MANAGE_STUDENTS
+// ("Học viên") and MANAGE_PROSPECTIVE_STUDENTS ("Học sinh") admins need,
+// even though their list pages and request-review queues stay strictly
+// separate.
+export async function requireAnyAdminPermission(permissions: AdminPermissionKind[]): Promise<User> {
+  const user = await requireActiveUser();
+  if (user.role === "SUPER_ADMIN") {
+    return user;
+  }
+  const granted = await getAdminPermissions(user.id);
+  if (!permissions.some((permission) => granted.has(permission))) {
+    redirect("/admin?denied=1");
+  }
+  return user;
+}
+
 // Gate for the /admin layout itself: lets in a SUPER_ADMIN (full access) or
 // a STUDENT holding at least one admin permission (dual-role admin) —
 // anyone else (a plain student with zero permissions) is bounced back to

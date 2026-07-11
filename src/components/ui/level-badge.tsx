@@ -12,7 +12,7 @@ const LEVEL_COLORS: Record<Level, BadgeColor> = {
 
 export function LevelBadge({ level, full = false }: { level: Level | null; full?: boolean }) {
   if (!level) {
-    return <Badge color="muted">{full ? "Chưa xếp cấp" : "—"}</Badge>;
+    return <Badge color="muted">{full ? "Học sinh" : "HS"}</Badge>;
   }
   return (
     <Badge color={LEVEL_COLORS[level]}>

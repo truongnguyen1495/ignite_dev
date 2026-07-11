@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   LayoutDashboard,
   Users,
+  UserPlus,
   BookOpen,
   ClipboardList,
   ArrowUpCircle,
@@ -52,6 +53,14 @@ export default async function AdminLayout({
     {
       item: { href: "/admin/students", label: "Học viên", icon: <Users className={iconClass} /> },
       permission: "MANAGE_STUDENTS",
+    },
+    {
+      item: {
+        href: "/admin/prospective-students",
+        label: "Học sinh",
+        icon: <UserPlus className={iconClass} />,
+      },
+      permission: "MANAGE_PROSPECTIVE_STUDENTS",
     },
     {
       item: { href: "/admin/lessons", label: "Bài học", icon: <BookOpen className={iconClass} /> },

@@ -23,7 +23,7 @@ export default async function ProfilePage() {
           username={student.username}
           dateOfBirth={student.dateOfBirth ? toDateOnlyISOString(student.dateOfBirth) : null}
           phoneNumber={student.phoneNumber}
-          grantedLevelLabel={student.grantedLevel ? LEVEL_LABELS[student.grantedLevel] : "Chưa xếp cấp"}
+          grantedLevelLabel={student.grantedLevel ? LEVEL_LABELS[student.grantedLevel] : "Học sinh"}
         />
       </Card>
     </div>

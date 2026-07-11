@@ -13,28 +13,28 @@ import { Button } from "@/components/ui/button";
 
 export default async function LevelUpRequestsPage() {
   await requireAdminPermission("MANAGE_LEVEL_UP_REQUESTS");
+  // Join requests (fromLevel null — a "học sinh" account with no cấp yet
+  // asking to join) are reviewed on /admin/prospective-students instead —
+  // this page is exclusively for existing "học viên" requesting the next
+  // level.
   const [pending, history] = await Promise.all([
     prisma.levelUpRequest.findMany({
-      where: { status: "PENDING" },
+      where: { status: "PENDING", fromLevel: { not: null } },
       orderBy: { requestedAt: "asc" },
       include: { student: true },
     }),
     prisma.levelUpRequest.findMany({
-      where: { status: { in: ["APPROVED", "REJECTED"] } },
+      where: { status: { in: ["APPROVED", "REJECTED"] }, fromLevel: { not: null } },
       orderBy: { reviewedAt: "desc" },
       take: 20,
       include: { student: true },
     }),
   ]);
 
-  // A join request (fromLevel null — the student has no cấp yet) has no
-  // current level to compute quiz completion against.
   const completionByRequest = new Map(
     await Promise.all(
-      pending.map(async (req) => [
-        req.id,
-        req.fromLevel ? await getLevelCompletionStatus(req.studentId, req.fromLevel) : null,
-      ] as const)
+      // fromLevel is guaranteed non-null here by the query filter above.
+      pending.map(async (req) => [req.id, await getLevelCompletionStatus(req.studentId, req.fromLevel!)] as const)
     )
   );
 
@@ -47,7 +47,8 @@ export default async function LevelUpRequestsPage() {
         ) : (
           <ul className="space-y-3">
             {pending.map((req) => {
-              const completion = completionByRequest.get(req.id) ?? null;
+              const completion = completionByRequest.get(req.id)!;
+              const fromLevel = req.fromLevel!;
               return (
                 <li key={req.id}>
                   <Card className="border-l-4 border-l-warning">
@@ -57,7 +58,7 @@ export default async function LevelUpRequestsPage() {
                         <p className="text-sm text-muted">{req.student.email}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <LevelBadge level={req.fromLevel} full />
+                        <LevelBadge level={fromLevel} full />
                         <ArrowRight className="h-3.5 w-3.5 text-muted" />
                         <LevelBadge level={req.toLevel} full />
                       </div>
@@ -67,34 +68,25 @@ export default async function LevelUpRequestsPage() {
                       Yêu cầu lúc {req.requestedAt.toLocaleString("vi-VN")}
                     </p>
 
-                    {req.fromLevel && completion ? (
-                      <>
-                        <div className="mt-3 flex items-start gap-1.5 text-sm">
-                          <ClipboardCheck
-                            className={`mt-0.5 h-4 w-4 shrink-0 ${completion.incomplete.length === 0 ? "text-success" : "text-warning"}`}
-                          />
-                          {completion.incomplete.length === 0 ? (
-                            <span className="text-success">
-                              Đã hoàn thành {completion.completed}/{completion.total} bài test của{" "}
-                              {LEVEL_LABELS[req.fromLevel]}
-                            </span>
-                          ) : (
-                            <span className="text-warning">
-                              Mới hoàn thành {completion.completed}/{completion.total} bài test của{" "}
-                              {LEVEL_LABELS[req.fromLevel]} — còn thiếu:{" "}
-                              {completion.incomplete.map((quiz) => quiz.lesson.title).join(", ")}
-                            </span>
-                          )}
-                        </div>
+                    <div className="mt-3 flex items-start gap-1.5 text-sm">
+                      <ClipboardCheck
+                        className={`mt-0.5 h-4 w-4 shrink-0 ${completion.incomplete.length === 0 ? "text-success" : "text-warning"}`}
+                      />
+                      {completion.incomplete.length === 0 ? (
+                        <span className="text-success">
+                          Đã hoàn thành {completion.completed}/{completion.total} bài test của{" "}
+                          {LEVEL_LABELS[fromLevel]}
+                        </span>
+                      ) : (
+                        <span className="text-warning">
+                          Mới hoàn thành {completion.completed}/{completion.total} bài test của{" "}
+                          {LEVEL_LABELS[fromLevel]} — còn thiếu:{" "}
+                          {completion.incomplete.map((quiz) => quiz.lesson.title).join(", ")}
+                        </span>
+                      )}
+                    </div>
 
-                        <CompletionDetails details={completion.details} />
-                      </>
-                    ) : (
-                      <p className="mt-3 flex items-center gap-1.5 text-sm text-muted">
-                        <ClipboardCheck className="h-4 w-4 shrink-0" />
-                        Yêu cầu tham gia hệ thống đào tạo 5 cấp (chưa có cấp trước đó).
-                      </p>
-                    )}
+                    <CompletionDetails details={completion.details} />
 
                     <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-border pt-4">
                       <form action={approveLevelUpRequestAction} className="flex items-center gap-2">

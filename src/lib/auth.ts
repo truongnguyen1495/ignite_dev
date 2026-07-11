@@ -11,13 +11,6 @@ export class AccountLockedError extends CredentialsSignin {
   code = "account_locked";
 }
 
-// Thrown when credentials are correct but the account is a self-registered
-// student still awaiting Super Admin approval — distinct from "locked" so
-// the login action can show the right message.
-export class AccountPendingError extends CredentialsSignin {
-  code = "account_pending";
-}
-
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
@@ -48,9 +41,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // guessing emails.
         if (user.status === "LOCKED") {
           throw new AccountLockedError();
-        }
-        if (user.status === "PENDING") {
-          throw new AccountPendingError();
         }
 
         return {

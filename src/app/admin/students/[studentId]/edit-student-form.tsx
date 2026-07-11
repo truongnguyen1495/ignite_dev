@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, type ReactNode } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { updateStudentAction } from "../actions";
@@ -19,11 +19,9 @@ export function EditStudentForm({
   phoneNumber,
   grantedLevel,
   status,
-  isPending,
   hasRegistrationInfo,
   username,
   dateOfBirthLabel,
-  children,
 }: {
   studentId: string;
   name: string;
@@ -31,11 +29,9 @@ export function EditStudentForm({
   phoneNumber: string | null;
   grantedLevel: Level | null;
   status: AccountStatus;
-  isPending: boolean;
   hasRegistrationInfo: boolean;
   username: string | null;
   dateOfBirthLabel: string | null;
-  children?: ReactNode;
 }) {
   const [error, formAction, pending] = useActionState(updateStudentAction, undefined);
   const [isDirty, setIsDirty] = useState(false);
@@ -73,11 +69,9 @@ export function EditStudentForm({
         </div>
       </div>
 
-      {children}
-
       <Card>
         <h2 className="mb-4 text-sm font-semibold text-foreground">Thông tin tài khoản</h2>
-        {!isPending && hasRegistrationInfo && (
+        {hasRegistrationInfo && (
           <div className="mb-4 flex flex-wrap gap-x-6 gap-y-1 rounded-lg bg-background px-4 py-3 text-sm">
             {username && (
               <span className="text-muted">
@@ -131,7 +125,7 @@ export function EditStudentForm({
                 {LEVEL_LABELS[level]}
               </option>
             ))}
-            <option value={NO_LEVEL_VALUE}>Chưa xếp cấp (không thuộc 5 cấp)</option>
+            <option value={NO_LEVEL_VALUE}>Học sinh (chưa tham gia đào tạo 5 cấp)</option>
           </Select>
           {error && <p className="text-sm text-danger">{error}</p>}
           <Button

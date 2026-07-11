@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDateOnlyVN } from "@/lib/date";
-import { requireAdminPermission } from "@/lib/access";
+import { requireAnyAdminPermission } from "@/lib/access";
 import { EditStudentForm } from "./edit-student-form";
-import { DeleteStudentButton, ToggleStudentStatusButton, ApproveStudentButton } from "./danger-actions";
+import { DeleteStudentButton, ToggleStudentStatusButton } from "./danger-actions";
 import { LEVEL_LABELS, hasLevelAccess, levelRank } from "@/lib/levels";
 import { CollapsibleSection } from "./collapsible-section";
 import { AttemptGroup } from "./attempt-group";
@@ -23,7 +23,7 @@ export default async function EditStudentPage({
 }: {
   params: Promise<{ studentId: string }>;
 }) {
-  await requireAdminPermission("MANAGE_STUDENTS");
+  await requireAnyAdminPermission(["MANAGE_STUDENTS", "MANAGE_PROSPECTIVE_STUDENTS"]);
   const { studentId } = await params;
   const student = await prisma.user.findUnique({ where: { id: studentId } });
   if (!student || student.role !== "STUDENT" || student.adminOnly) {
@@ -50,7 +50,6 @@ export default async function EditStudentPage({
     }),
   ]);
 
-  const isPending = student.status === "PENDING";
   const hasRegistrationInfo = Boolean(student.username || student.dateOfBirth || student.phoneNumber);
 
   const grantedCourses = courseGrants.map((g) => g.course);
@@ -96,68 +95,15 @@ export default async function EditStudentPage({
         phoneNumber={student.phoneNumber}
         grantedLevel={student.grantedLevel}
         status={student.status}
-        isPending={isPending}
         hasRegistrationInfo={hasRegistrationInfo}
         username={student.username}
         dateOfBirthLabel={student.dateOfBirth ? formatDateOnlyVN(student.dateOfBirth) : null}
-      >
-        {isPending && (
-          <div className="space-y-4 rounded-xl border border-warning/30 bg-warning-bg p-6">
-            <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-              <Clock className="h-4 w-4 text-warning" />
-              Đăng ký đang chờ duyệt
-            </h2>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
-              <div className="min-w-0">
-                <dt className="text-xs text-muted">Email</dt>
-                <dd className="break-words text-foreground">{student.email}</dd>
-              </div>
-              {student.username && (
-                <div className="min-w-0">
-                  <dt className="text-xs text-muted">Username</dt>
-                  <dd className="break-words text-foreground">@{student.username}</dd>
-                </div>
-              )}
-              {student.dateOfBirth && (
-                <div className="min-w-0">
-                  <dt className="text-xs text-muted">Ngày sinh</dt>
-                  <dd className="text-foreground">{formatDateOnlyVN(student.dateOfBirth)}</dd>
-                </div>
-              )}
-              {student.phoneNumber && (
-                <div className="min-w-0">
-                  <dt className="text-xs text-muted">Số điện thoại</dt>
-                  <dd className="break-words text-foreground">{student.phoneNumber}</dd>
-                </div>
-              )}
-              <div className="min-w-0">
-                <dt className="text-xs text-muted">Ngày đăng ký</dt>
-                <dd className="text-foreground">{student.createdAt.toLocaleDateString("vi-VN")}</dd>
-              </div>
-            </dl>
-            <div className="flex flex-wrap items-center gap-3 border-t border-warning/30 pt-4">
-              <ApproveStudentButton student={student} />
-              <DeleteStudentButton
-                studentId={student.id}
-                studentName={student.name}
-                pendingRegistration
-                redirectAfter
-              />
-            </div>
-          </div>
-        )}
-      </EditStudentForm>
+      />
 
       <Card className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">
           Khóa học độc quyền được cấp quyền ({grantedCourses.length + levelUnlockedCourses.length})
         </h2>
-        {isPending && (grantedCourses.length > 0 || levelUnlockedCourses.length > 0) && (
-          <p className="flex items-center gap-1.5 rounded-lg border border-warning/30 bg-warning-bg px-3 py-2 text-xs text-warning">
-            <Clock className="h-3.5 w-3.5 shrink-0" />
-            Tài khoản đang chờ duyệt — các quyền dưới đây chỉ có hiệu lực sau khi được duyệt.
-          </p>
-        )}
         {grantedCourses.length === 0 && levelUnlockedCourses.length === 0 ? (
           <p className="text-sm text-muted">Học viên chưa được cấp quyền khóa học độc quyền nào.</p>
         ) : (
@@ -212,7 +158,7 @@ export default async function EditStudentPage({
                 <li key={req.id} className="rounded-lg border border-border bg-background p-3 text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="flex items-center gap-2 text-foreground">
-                      {req.fromLevel ? LEVEL_LABELS[req.fromLevel] : "Chưa xếp cấp"}
+                      {req.fromLevel ? LEVEL_LABELS[req.fromLevel] : "Học sinh"}
                       <ArrowLeft className="h-3.5 w-3.5 rotate-180 text-muted" />
                       {LEVEL_LABELS[req.toLevel]}
                     </span>
@@ -239,15 +185,13 @@ export default async function EditStudentPage({
         </CollapsibleSection>
       </Card>
 
-      {!isPending && (
-        <Card className="space-y-3">
-          <h2 className="text-sm font-semibold text-foreground">Khu vực nguy hiểm</h2>
-          <div className="flex items-center gap-3">
-            <ToggleStudentStatusButton studentId={student.id} locked={student.status === "LOCKED"} />
-            <DeleteStudentButton studentId={student.id} studentName={student.name} redirectAfter />
-          </div>
-        </Card>
-      )}
+      <Card className="space-y-3">
+        <h2 className="text-sm font-semibold text-foreground">Khu vực nguy hiểm</h2>
+        <div className="flex items-center gap-3">
+          <ToggleStudentStatusButton studentId={student.id} locked={student.status === "LOCKED"} />
+          <DeleteStudentButton studentId={student.id} studentName={student.name} redirectAfter />
+        </div>
+      </Card>
     </div>
   );
 }

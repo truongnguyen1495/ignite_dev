@@ -5,10 +5,17 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Prisma, type Level } from "@prisma/client";
-import { requireAdminPermission } from "@/lib/access";
+import { requireAnyAdminPermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { ORDERED_LEVELS, NO_LEVEL_VALUE } from "@/lib/levels";
 import { optionalPhoneNumberSchema } from "@/lib/validation";
+import type { AdminPermissionKind } from "@prisma/client";
+
+// Create/update/lock/delete are shared plumbing between the "Học viên"
+// (MANAGE_STUDENTS) and "Học sinh" (MANAGE_PROSPECTIVE_STUDENTS) admin
+// areas — both list pages and request-review queues stay separate, but
+// either kind of admin needs to be able to manage the account record itself.
+const STUDENT_MANAGEMENT_PERMISSIONS: AdminPermissionKind[] = ["MANAGE_STUDENTS", "MANAGE_PROSPECTIVE_STUDENTS"];
 
 const levelEnum = z.enum(ORDERED_LEVELS as [Level, ...Level[]]);
 // NO_LEVEL_VALUE ("NONE") represents "no cấp" (grantedLevel: null) in the
@@ -41,7 +48,7 @@ export async function createStudentAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireAdminPermission("MANAGE_STUDENTS");
+  await requireAnyAdminPermission(STUDENT_MANAGEMENT_PERMISSIONS);
 
   const parsed = createSchema.safeParse({
     name: formData.get("name"),
@@ -77,6 +84,7 @@ export async function createStudentAction(
   }
 
   revalidatePath("/admin/students");
+  revalidatePath("/admin/prospective-students");
   redirect("/admin/students");
 }
 
@@ -93,7 +101,7 @@ export async function updateStudentAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireAdminPermission("MANAGE_STUDENTS");
+  await requireAnyAdminPermission(STUDENT_MANAGEMENT_PERMISSIONS);
 
   const parsed = updateSchema.safeParse({
     studentId: formData.get("studentId"),
@@ -125,31 +133,24 @@ export async function updateStudentAction(
   }
 
   revalidatePath("/admin/students");
+  revalidatePath("/admin/prospective-students");
   redirect("/admin/students");
 }
 
 export async function setStudentStatusAction(studentId: string, locked: boolean) {
-  await requireAdminPermission("MANAGE_STUDENTS");
+  await requireAnyAdminPermission(STUDENT_MANAGEMENT_PERMISSIONS);
   await prisma.user.update({
     where: { id: studentId, role: "STUDENT" },
     data: { status: locked ? "LOCKED" : "ACTIVE" },
   });
   revalidatePath("/admin/students");
-  revalidatePath(`/admin/students/${studentId}`);
-}
-
-export async function approveStudentAction(studentId: string) {
-  await requireAdminPermission("MANAGE_STUDENTS");
-  await prisma.user.update({
-    where: { id: studentId, role: "STUDENT", status: "PENDING" },
-    data: { status: "ACTIVE" },
-  });
-  revalidatePath("/admin/students");
+  revalidatePath("/admin/prospective-students");
   revalidatePath(`/admin/students/${studentId}`);
 }
 
 export async function deleteStudentAction(studentId: string) {
-  await requireAdminPermission("MANAGE_STUDENTS");
+  await requireAnyAdminPermission(STUDENT_MANAGEMENT_PERMISSIONS);
   await prisma.user.delete({ where: { id: studentId, role: "STUDENT" } });
   revalidatePath("/admin/students");
+  revalidatePath("/admin/prospective-students");
 }

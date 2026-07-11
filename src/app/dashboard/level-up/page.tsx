@@ -63,7 +63,7 @@ export default async function LevelUpPage() {
       <div className="max-w-xl space-y-6">
         <PageHeader
           title="Tham gia hệ thống đào tạo 5 cấp"
-          description="Tài khoản của bạn hiện chưa thuộc cấp nào."
+          description="Bạn đang là học sinh — chưa tham gia hệ thống đào tạo 5 cấp."
         />
 
         {latestRequestCard}

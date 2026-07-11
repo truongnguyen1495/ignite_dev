@@ -10,22 +10,21 @@ import type { Level } from "@prisma/client";
 
 const levelEnum = z.enum(ORDERED_LEVELS as [Level, ...Level[]]);
 
-export async function approveLevelUpRequestAction(formData: FormData) {
-  const admin = await requireAdminPermission("MANAGE_LEVEL_UP_REQUESTS");
+export async function approveJoinRequestAction(formData: FormData) {
+  const admin = await requireAdminPermission("MANAGE_PROSPECTIVE_STUDENTS");
 
   const requestId = String(formData.get("requestId") ?? "");
   const parsedLevel = levelEnum.safeParse(formData.get("toLevel"));
   if (!requestId || !parsedLevel.success) {
-    redirect("/admin/level-up-requests");
+    redirect("/admin/prospective-students");
   }
 
   const request = await prisma.levelUpRequest.findUnique({ where: { id: requestId } });
-  // fromLevel null is a join request from a "học sinh" (no cấp) account —
-  // reviewed on /admin/prospective-students instead, under a separate
-  // permission. Defensive check so MANAGE_LEVEL_UP_REQUESTS alone can't act
-  // on those.
-  if (!request || request.status !== "PENDING" || request.fromLevel === null) {
-    redirect("/admin/level-up-requests");
+  // toLevel non-null would be an existing "học viên" requesting the next
+  // level — reviewed on /admin/level-up-requests instead, under a separate
+  // permission.
+  if (!request || request.status !== "PENDING" || request.fromLevel !== null) {
+    redirect("/admin/prospective-students");
   }
 
   await prisma.$transaction([
@@ -44,8 +43,9 @@ export async function approveLevelUpRequestAction(formData: FormData) {
     }),
   ]);
 
-  revalidatePath("/admin/level-up-requests");
-  redirect("/admin/level-up-requests");
+  revalidatePath("/admin/prospective-students");
+  revalidatePath("/admin/students");
+  redirect("/admin/prospective-students");
 }
 
 const rejectSchema = z.object({
@@ -53,11 +53,11 @@ const rejectSchema = z.object({
   reviewerNote: z.string().trim().min(1, "Vui lòng nhập lý do từ chối."),
 });
 
-export async function rejectLevelUpRequestAction(
+export async function rejectJoinRequestAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  const admin = await requireAdminPermission("MANAGE_LEVEL_UP_REQUESTS");
+  const admin = await requireAdminPermission("MANAGE_PROSPECTIVE_STUDENTS");
 
   const parsed = rejectSchema.safeParse({
     requestId: formData.get("requestId"),
@@ -68,7 +68,7 @@ export async function rejectLevelUpRequestAction(
   }
 
   const request = await prisma.levelUpRequest.findUnique({ where: { id: parsed.data.requestId } });
-  if (!request || request.status !== "PENDING" || request.fromLevel === null) {
+  if (!request || request.status !== "PENDING" || request.fromLevel !== null) {
     return "Yêu cầu không còn hợp lệ (có thể đã được xử lý).";
   }
 
@@ -82,6 +82,6 @@ export async function rejectLevelUpRequestAction(
     },
   });
 
-  revalidatePath("/admin/level-up-requests");
-  redirect("/admin/level-up-requests");
+  revalidatePath("/admin/prospective-students");
+  redirect("/admin/prospective-students");
 }

@@ -27,7 +27,7 @@ export function CreateStudentForm() {
             {LEVEL_LABELS[level]}
           </option>
         ))}
-        <option value={NO_LEVEL_VALUE}>Chưa xếp cấp (không thuộc 5 cấp)</option>
+        <option value={NO_LEVEL_VALUE}>Học sinh (chưa tham gia đào tạo 5 cấp)</option>
       </Select>
       {error && <p className="text-sm text-danger">{error}</p>}
       <Button type="submit" disabled={pending} isLoading={pending}>
