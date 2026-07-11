@@ -22,10 +22,13 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  if (pathname.startsWith("/admin") && session.user.role !== "SUPER_ADMIN") {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
-  }
-
+  // /admin is intentionally not gated here beyond requiring *a* session — a
+  // STUDENT account can hold specific admin permissions (dual-role admin,
+  // see requireAnyAdminAccess in src/lib/access.ts) and that decision needs
+  // a fresh DB read, which the Edge runtime can't do. The real gate lives in
+  // src/app/admin/layout.tsx and runs on every request, so nothing is
+  // actually exposed by letting a plain STUDENT past this fast path — they
+  // just take one extra round trip before being bounced back to /dashboard.
   if (pathname.startsWith("/dashboard") && session.user.role !== "STUDENT") {
     return NextResponse.redirect(new URL("/admin", req.url));
   }
