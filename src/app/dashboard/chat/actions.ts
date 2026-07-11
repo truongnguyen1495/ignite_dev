@@ -103,6 +103,7 @@ export async function searchStudentsAction(query: string): Promise<{ id: string;
   return prisma.user.findMany({
     where: {
       role: "STUDENT",
+      adminOnly: false,
       status: "ACTIVE",
       id: { not: student.id },
       OR: [

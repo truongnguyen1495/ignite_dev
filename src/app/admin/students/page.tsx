@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/ui/page-header";
 export default async function StudentsPage() {
   await requireAdminPermission("MANAGE_STUDENTS");
   const allStudents = await prisma.user.findMany({
-    where: { role: "STUDENT" },
+    where: { role: "STUDENT", adminOnly: false },
     orderBy: { createdAt: "desc" },
   });
   const pending = allStudents.filter((student) => student.status === "PENDING");

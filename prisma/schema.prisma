@@ -64,6 +64,12 @@ model User {
   role         Role
   status       AccountStatus @default(ACTIVE)
   grantedLevel Level         @default(CUSTOMER)
+  // A STUDENT account created purely to be a limited admin (see
+  // requireAnyAdminAccess/requireActiveStudent in src/lib/access.ts) — blocked
+  // from /dashboard and excluded from student rosters/pickers, unlike a
+  // regular dual-role admin (a real student additionally granted an
+  // AdminPermission) which keeps studying as normal.
+  adminOnly    Boolean       @default(false)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 

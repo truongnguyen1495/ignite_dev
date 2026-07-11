@@ -21,6 +21,7 @@ type GrantedAdmin = {
   id: string;
   name: string;
   email: string;
+  adminOnly: boolean;
   permissions: AdminPermissionKind[];
 };
 
@@ -42,6 +43,7 @@ export function AdminRoleAssignment({ initialGrantedAdmins }: { initialGrantedAd
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [newAdminOnly, setNewAdminOnly] = useState(false);
   const [createError, setCreateError] = useState<string | undefined>();
   const [createPending, startCreateTransition] = useTransition();
 
@@ -88,6 +90,7 @@ export function AdminRoleAssignment({ initialGrantedAdmins }: { initialGrantedAd
         name: newName,
         email: newEmail,
         password: newPassword,
+        adminOnly: newAdminOnly,
       });
       if (result.error || !result.account) {
         setCreateError(result.error ?? "Không thể tạo tài khoản.");
@@ -97,6 +100,7 @@ export function AdminRoleAssignment({ initialGrantedAdmins }: { initialGrantedAd
       setNewName("");
       setNewEmail("");
       setNewPassword("");
+      setNewAdminOnly(false);
       await openEditor(result.account, []);
     });
   }
@@ -202,10 +206,37 @@ export function AdminRoleAssignment({ initialGrantedAdmins }: { initialGrantedAd
               <X className="h-4 w-4" />
             </button>
           </div>
-          <p className="text-xs text-muted">
-            Tài khoản mới sẽ ở dạng học viên và chưa có quyền admin nào — bước tiếp theo bạn sẽ tick chọn
-            các tính năng muốn cấp ngay sau khi tạo.
-          </p>
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-foreground">Loại tài khoản</p>
+            <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-surface-hover">
+              <input
+                type="radio"
+                checked={!newAdminOnly}
+                onChange={() => setNewAdminOnly(false)}
+                className="mt-0.5 accent-primary"
+              />
+              <span>
+                <span className="block font-medium text-foreground">Vừa học vừa admin</span>
+                <span className="block text-xs text-muted">
+                  Vẫn vào được /dashboard và học bình thường, cộng thêm quyền admin bạn cấp bên dưới.
+                </span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-surface-hover">
+              <input
+                type="radio"
+                checked={newAdminOnly}
+                onChange={() => setNewAdminOnly(true)}
+                className="mt-0.5 accent-primary"
+              />
+              <span>
+                <span className="block font-medium text-foreground">Chỉ làm admin</span>
+                <span className="block text-xs text-muted">
+                  Không vào được /dashboard, không hiện trong danh sách học viên — chỉ dùng để làm việc.
+                </span>
+              </span>
+            </label>
+          </div>
           <Input
             label="Họ tên"
             value={newName}
@@ -299,7 +330,12 @@ export function AdminRoleAssignment({ initialGrantedAdmins }: { initialGrantedAd
                 {admin.name.charAt(0).toUpperCase()}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-foreground">{admin.name}</p>
+                <p className="flex items-center gap-1.5 truncate text-sm text-foreground">
+                  {admin.name}
+                  <Badge color={admin.adminOnly ? "warning" : "muted"}>
+                    {admin.adminOnly ? "Chỉ admin" : "Học viên + Admin"}
+                  </Badge>
+                </p>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {admin.permissions.map((permission) => (
                     <Badge key={permission} color="primary">

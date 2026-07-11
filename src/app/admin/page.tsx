@@ -6,8 +6,8 @@ import { PageHeader } from "@/components/ui/page-header";
 export default async function AdminOverviewPage() {
   const [studentCount, pendingRegistrations, pendingRequests, lessonCount, attemptCount] =
     await Promise.all([
-      prisma.user.count({ where: { role: "STUDENT" } }),
-      prisma.user.count({ where: { role: "STUDENT", status: "PENDING" } }),
+      prisma.user.count({ where: { role: "STUDENT", adminOnly: false } }),
+      prisma.user.count({ where: { role: "STUDENT", adminOnly: false, status: "PENDING" } }),
       prisma.levelUpRequest.count({ where: { status: "PENDING" } }),
       prisma.lesson.count(),
       prisma.quizAttempt.count(),

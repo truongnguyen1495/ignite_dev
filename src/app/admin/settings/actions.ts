@@ -21,6 +21,7 @@ const createAdminAccountSchema = z.object({
   name: z.string().trim().min(1, "Tên không được để trống."),
   email: z.string().trim().email("Email không hợp lệ."),
   password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự."),
+  adminOnly: z.boolean(),
 });
 
 export type CreateAdminAccountResult = {
@@ -33,10 +34,17 @@ export type CreateAdminAccountResult = {
 // as a limited admin) with no permissions yet; the caller opens the
 // permission editor for the returned account right after, in the same flow
 // as picking an existing one via searchAccountsForPermissionAction.
+//
+// adminOnly decides which of the two admin shapes this account gets: left
+// false, it's a normal dual-role admin (keeps studying at /dashboard); set
+// true, requireActiveStudent blocks it from /dashboard entirely and it's
+// excluded from student rosters/pickers (see the User.adminOnly comment in
+// schema.prisma for the full list of call sites that filter on it).
 export async function createAdminAccountAction(input: {
   name: string;
   email: string;
   password: string;
+  adminOnly: boolean;
 }): Promise<CreateAdminAccountResult> {
   await requireActiveSuperAdmin();
 
@@ -54,6 +62,7 @@ export async function createAdminAccountAction(input: {
         passwordHash,
         role: "STUDENT",
         status: "ACTIVE",
+        adminOnly: parsed.data.adminOnly,
       },
       select: { id: true, name: true, email: true },
     });

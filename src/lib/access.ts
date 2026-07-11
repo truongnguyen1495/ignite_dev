@@ -53,7 +53,14 @@ export const requireRole = cache(async (role: Role): Promise<User> => {
 });
 
 export async function requireActiveStudent(): Promise<User> {
-  return requireRole("STUDENT");
+  const user = await requireRole("STUDENT");
+  // adminOnly accounts are STUDENT in role only (see the User model comment)
+  // — they never get to act as a student, so /dashboard bounces them to
+  // /admin instead of the usual mismatched-role destination.
+  if (user.adminOnly) {
+    redirect("/admin");
+  }
+  return user;
 }
 
 export async function requireActiveSuperAdmin(): Promise<User> {
@@ -103,6 +110,13 @@ export async function requireAdminPermission(permission: AdminPermissionKind): P
 // anyone else (a plain student with zero permissions) is bounced back to
 // /dashboard. Returns the granted permission set so the layout can filter
 // its nav accordingly.
+//
+// adminOnly accounts are the one exception to the "redirect to /dashboard"
+// fallback: requireActiveStudent already blocks them from /dashboard, so
+// bouncing them there on zero permissions would just loop. This only
+// happens if a Super Admin creates one and revokes every permission without
+// granting new ones — they land on a nearly-empty /admin (just "Tổng quan")
+// instead, which is odd but not broken.
 export async function requireAnyAdminAccess(): Promise<{
   user: User;
   isSuperAdmin: boolean;
@@ -113,7 +127,7 @@ export async function requireAnyAdminAccess(): Promise<{
     return { user, isSuperAdmin: true, permissions: new Set() };
   }
   const permissions = await getAdminPermissions(user.id);
-  if (permissions.size === 0) {
+  if (permissions.size === 0 && !user.adminOnly) {
     redirect("/dashboard");
   }
   return { user, isSuperAdmin: false, permissions };

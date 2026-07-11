@@ -76,6 +76,7 @@ export async function searchStudentsForSupportAction(
   return prisma.user.findMany({
     where: {
       role: "STUDENT",
+      adminOnly: false,
       status: "ACTIVE",
       OR: [
         { name: { contains: trimmed, mode: "insensitive" } },

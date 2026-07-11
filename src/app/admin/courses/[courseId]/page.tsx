@@ -35,7 +35,7 @@ export default async function EditCoursePage({
 
   const grantedStudentIds = new Set(course.grants.map((g) => g.studentId));
   const ungrantedStudents = await prisma.user.findMany({
-    where: { role: "STUDENT", id: { notIn: [...grantedStudentIds] } },
+    where: { role: "STUDENT", adminOnly: false, id: { notIn: [...grantedStudentIds] } },
     orderBy: { name: "asc" },
   });
 

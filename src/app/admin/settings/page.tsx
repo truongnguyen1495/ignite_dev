@@ -16,6 +16,7 @@ export default async function SettingsPage() {
         id: true,
         name: true,
         email: true,
+        adminOnly: true,
         adminPermissions: { select: { permission: true } },
       },
       orderBy: { name: "asc" },
@@ -26,6 +27,7 @@ export default async function SettingsPage() {
     id: a.id,
     name: a.name,
     email: a.email,
+    adminOnly: a.adminOnly,
     permissions: a.adminPermissions.map((p) => p.permission),
   }));
 

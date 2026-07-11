@@ -26,7 +26,7 @@ export default async function EditStudentPage({
   await requireAdminPermission("MANAGE_STUDENTS");
   const { studentId } = await params;
   const student = await prisma.user.findUnique({ where: { id: studentId } });
-  if (!student || student.role !== "STUDENT") {
+  if (!student || student.role !== "STUDENT" || student.adminOnly) {
     notFound();
   }
 
