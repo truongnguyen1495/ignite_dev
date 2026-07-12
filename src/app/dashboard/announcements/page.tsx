@@ -22,7 +22,11 @@ export default async function AnnouncementsPage({
 
   const readIds = new Set(reads.map((r) => r.announcementId));
   const visible = announcements.filter(
-    (a) => a.visibleToStudents && (!a.minLevel || hasLevelAccess(student.grantedLevel, a.minLevel))
+    (a) =>
+      a.visibleToStudents &&
+      (!a.minLevel ||
+        hasLevelAccess(student.grantedLevel, a.minLevel) ||
+        (student.grantedLevel === null && a.openToProspectiveStudents))
   );
 
   const categories = ORDERED_ANNOUNCEMENT_CATEGORIES.map((category) => ({

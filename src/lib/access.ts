@@ -321,7 +321,11 @@ export async function requireAnnouncementAccess(announcementId: string) {
   if (!announcement || !announcement.visibleToStudents) {
     redirect("/dashboard/announcements?denied=1");
   }
-  if (announcement.minLevel && !hasLevelAccess(student.grantedLevel, announcement.minLevel)) {
+  // A "học sinh" (grantedLevel null) can never satisfy a minLevel rule via
+  // hasLevelAccess (it always returns false for null) — openToProspectiveStudents
+  // is the dedicated escape hatch, same as Course.openToProspectiveStudents.
+  const prospectiveOk = student.grantedLevel === null && announcement.openToProspectiveStudents;
+  if (announcement.minLevel && !prospectiveOk && !hasLevelAccess(student.grantedLevel, announcement.minLevel)) {
     redirect("/dashboard/announcements?denied=1");
   }
   return { student, announcement };

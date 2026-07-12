@@ -438,6 +438,12 @@ model Announcement {
   // one, overriding visibleToGuest — without deleting it. Defaults true so
   // existing rows keep showing up unchanged.
   visibleToStudents Boolean              @default(true)
+  // Same escape hatch as Course.openToProspectiveStudents: a "học sinh"
+  // (grantedLevel null) normally can't pass a minLevel gate at all (there's
+  // no level to compare), so this explicitly lets one through a specific
+  // gated announcement anyway. Irrelevant when minLevel is null — that case
+  // is already open to every student, học sinh included.
+  openToProspectiveStudents Boolean      @default(false)
   publishedAt       DateTime             @default(now())
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt

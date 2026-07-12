@@ -33,6 +33,7 @@ export default async function EditAnnouncementPage({
           coverImageUrl={announcement.coverImageUrl}
           category={announcement.category}
           minLevel={announcement.minLevel}
+          openToProspectiveStudents={announcement.openToProspectiveStudents}
           visibleToGuest={announcement.visibleToGuest}
         />
       </Card>

@@ -21,6 +21,7 @@ export type AnnouncementListItem = {
   coverImageUrl: string | null;
   category: AnnouncementCategory;
   minLevel: Level | null;
+  openToProspectiveStudents: boolean;
   visibleToGuest: boolean;
   visibleToStudents: boolean;
   publishedAtLabel: string;
@@ -263,6 +264,9 @@ export function AnnouncementsList({ announcements }: { announcements: Announceme
                       <Badge color="primary">{LEVEL_LABELS[announcement.minLevel]} trở lên</Badge>
                     ) : (
                       <Badge color="muted">Tất cả học viên</Badge>
+                    )}
+                    {announcement.minLevel && announcement.openToProspectiveStudents && (
+                      <Badge color="info">+ Học sinh</Badge>
                     )}
                     {hidden && <Badge color="warning">Đã ẩn</Badge>}
                     {announcement.visibleToGuest && <Badge color="info">Công khai</Badge>}
