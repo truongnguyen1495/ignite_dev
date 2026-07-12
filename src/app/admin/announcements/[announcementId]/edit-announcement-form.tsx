@@ -17,7 +17,6 @@ export function EditAnnouncementForm({
   coverImageUrl,
   category,
   minLevel,
-  openToProspectiveStudents,
   visibleToGuest,
 }: {
   announcementId: string;
@@ -26,7 +25,6 @@ export function EditAnnouncementForm({
   coverImageUrl: string | null;
   category: AnnouncementCategory;
   minLevel: Level | null;
-  openToProspectiveStudents: boolean;
   visibleToGuest: boolean;
 }) {
   const [error, formAction, pending] = useActionState(updateAnnouncementAction, undefined);
@@ -59,15 +57,6 @@ export function EditAnnouncementForm({
             </option>
           ))}
         </Select>
-        <label className="flex items-center gap-2 text-sm text-foreground">
-          <input
-            type="checkbox"
-            name="openToProspectiveStudents"
-            defaultChecked={openToProspectiveStudents}
-            className="h-4 w-4 accent-primary"
-          />
-          Cho học sinh (chưa xếp cấp) xem được, dù không đạt cấp yêu cầu ở trên
-        </label>
         <label className="flex items-center gap-2 text-sm text-foreground">
           <input
             type="checkbox"

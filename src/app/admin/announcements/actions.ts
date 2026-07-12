@@ -20,7 +20,6 @@ const announcementSchema = z.object({
   coverImageUrl: z.string().trim().optional(),
   category: categoryEnum,
   minLevel: z.union([levelEnum, z.literal("")]).optional(),
-  openToProspectiveStudents: z.boolean(),
 });
 
 function resolveMinLevel(raw: Level | "" | undefined): Level | null {
@@ -39,7 +38,6 @@ export async function createAnnouncementAction(
     coverImageUrl: formData.get("coverImageUrl") || undefined,
     category: formData.get("category"),
     minLevel: formData.get("minLevel") || "",
-    openToProspectiveStudents: formData.get("openToProspectiveStudents") === "on",
   });
   if (!parsed.success) {
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
@@ -52,7 +50,6 @@ export async function createAnnouncementAction(
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       category: parsed.data.category,
       minLevel: resolveMinLevel(parsed.data.minLevel),
-      openToProspectiveStudents: parsed.data.openToProspectiveStudents,
       visibleToGuest: formData.get("visibleToGuest") === "on",
       // New announcements always start visible to students — hiding one is
       // a separate, deliberate action via the eye-icon toggle on the list
@@ -82,7 +79,6 @@ export async function updateAnnouncementAction(
     coverImageUrl: formData.get("coverImageUrl") || undefined,
     category: formData.get("category"),
     minLevel: formData.get("minLevel") || "",
-    openToProspectiveStudents: formData.get("openToProspectiveStudents") === "on",
   });
   if (!parsed.success) {
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
@@ -98,7 +94,6 @@ export async function updateAnnouncementAction(
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       category: parsed.data.category,
       minLevel: resolveMinLevel(parsed.data.minLevel),
-      openToProspectiveStudents: parsed.data.openToProspectiveStudents,
       visibleToGuest: formData.get("visibleToGuest") === "on",
       // visibleToStudents is intentionally left untouched here — it's owned
       // solely by the eye-icon toggle (setAnnouncementVisibleToStudentsAction)

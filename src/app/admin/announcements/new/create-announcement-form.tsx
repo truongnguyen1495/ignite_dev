@@ -33,10 +33,6 @@ export function CreateAnnouncementForm() {
           ))}
         </Select>
         <label className="flex items-center gap-2 text-sm text-foreground">
-          <input type="checkbox" name="openToProspectiveStudents" className="h-4 w-4 accent-primary" />
-          Cho học sinh (chưa xếp cấp) xem được, dù không đạt cấp yêu cầu ở trên
-        </label>
-        <label className="flex items-center gap-2 text-sm text-foreground">
           <input type="checkbox" name="visibleToGuest" className="h-4 w-4 accent-primary" />
           Hiển thị công khai cho khách (không cần đăng nhập)
         </label>

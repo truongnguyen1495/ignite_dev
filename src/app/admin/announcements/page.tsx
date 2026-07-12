@@ -16,7 +16,6 @@ export default async function AnnouncementsPage() {
     coverImageUrl: a.coverImageUrl,
     category: a.category,
     minLevel: a.minLevel,
-    openToProspectiveStudents: a.openToProspectiveStudents,
     visibleToGuest: a.visibleToGuest,
     visibleToStudents: a.visibleToStudents,
     publishedAtLabel: formatDateVN(a.publishedAt),
