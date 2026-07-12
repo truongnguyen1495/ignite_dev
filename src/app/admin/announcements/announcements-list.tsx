@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Filter, Megaphone } from "lucide-react";
+import { EyeOff, Filter, Megaphone } from "lucide-react";
 import type { AnnouncementCategory, Level } from "@prisma/client";
 import {
   ORDERED_ANNOUNCEMENT_CATEGORIES,
@@ -221,27 +221,38 @@ export function AnnouncementsList({ announcements }: { announcements: Announceme
         </p>
       ) : (
         <ul className="space-y-2">
-          {filtered.map((announcement) => (
+          {filtered.map((announcement) => {
+            const hidden = !announcement.visibleToStudents;
+            return (
             <li
               key={announcement.id}
-              className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3 hover:border-primary/50"
+              className={`flex items-center gap-3 rounded-lg border border-border bg-surface p-3 hover:border-primary/50 ${
+                hidden ? "opacity-60" : ""
+              }`}
             >
               <Link
                 href={`/admin/announcements/${announcement.id}`}
                 className="flex min-w-0 flex-1 flex-wrap items-center gap-3"
               >
-                {announcement.coverImageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={announcement.coverImageUrl}
-                    alt=""
-                    className="aspect-video w-16 shrink-0 rounded-md object-cover"
-                  />
-                ) : (
-                  <span className="flex aspect-video w-16 shrink-0 items-center justify-center rounded-md bg-faint-bg">
-                    <Megaphone className="h-4 w-4 text-muted" />
-                  </span>
-                )}
+                <span className="relative aspect-video w-16 shrink-0 overflow-hidden rounded-md">
+                  {announcement.coverImageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={announcement.coverImageUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center bg-faint-bg">
+                      <Megaphone className="h-4 w-4 text-muted" />
+                    </span>
+                  )}
+                  {hidden && (
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/50">
+                      <EyeOff className="h-4 w-4 text-white" />
+                    </span>
+                  )}
+                </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
                   <span className="truncate text-foreground">{announcement.title}</span>
                   <span className="flex flex-wrap items-center gap-2">
@@ -253,7 +264,7 @@ export function AnnouncementsList({ announcements }: { announcements: Announceme
                     ) : (
                       <Badge color="muted">Tất cả học viên</Badge>
                     )}
-                    {!announcement.visibleToStudents && <Badge color="warning">Đã ẩn</Badge>}
+                    {hidden && <Badge color="warning">Đã ẩn</Badge>}
                     {announcement.visibleToGuest && <Badge color="info">Công khai</Badge>}
                     <span className="text-xs text-muted">{announcement.publishedAtLabel}</span>
                   </span>
@@ -272,7 +283,8 @@ export function AnnouncementsList({ announcements }: { announcements: Announceme
                 announcementTitle={announcement.title}
               />
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>
