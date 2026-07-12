@@ -52,6 +52,17 @@ enum ChatThreadKind {
   GROUP
 }
 
+enum OrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum OrderItemKind {
+  COURSE
+  LIBRARY_ITEM
+}
+
 model User {
   id           String        @id @default(cuid())
   email        String        @unique
@@ -97,6 +108,8 @@ model User {
   adminPermissionsGranted AdminPermission[]        @relation("AdminPermissionsGranted")
   guestChatMessagesSent   GuestChatMessage[]       @relation("GuestChatMessagesSent")
   guestChatThreadReads    GuestChatThreadRead[]    @relation("GuestChatThreadReads")
+  orders                  Order[]                  @relation("StudentOrders")
+  ordersConfirmed         Order[]                  @relation("OrderConfirmedBy")
 
   @@index([role])
 }
@@ -140,6 +153,10 @@ enum AdminPermissionKind {
   EDIT_PROSPECTIVE_STUDENTS
   LOCK_PROSPECTIVE_STUDENTS
   DELETE_PROSPECTIVE_STUDENTS
+  // Xác nhận/hủy đơn hàng mua khóa học độc quyền/tài liệu thư viện (/admin/orders)
+  // — độc lập với MANAGE_COURSES/MANAGE_LIBRARY vì đây là nghiệp vụ tiền bạc,
+  // không phải quản lý nội dung.
+  MANAGE_ORDERS
 }
 
 model AdminPermission {
@@ -259,6 +276,16 @@ model Settings {
   // /admin/settings (see isRegistrationEnabled in src/lib/access.ts). When
   // false, new signups are rejected; existing accounts are unaffected.
   registrationEnabled Boolean  @default(true)
+  // Master switch for the "Mua ngay" buy flow (see isSalesEnabled in
+  // src/lib/access.ts) — defaults off since bank info below starts empty;
+  // Super Admin turns it on once bankName/bankAccountNumber are filled in.
+  // Never hides /admin/orders or a student's own order history, only new
+  // purchases.
+  salesEnabled        Boolean  @default(false)
+  bankName            String?
+  bankAccountNumber   String?
+  bankAccountHolder   String?
+  bankQrImageUrl      String?
   updatedAt           DateTime @updatedAt
 }
 
@@ -283,12 +310,16 @@ model Course {
   // grant row. A future self-registered học sinh gains access automatically,
   // no backfill needed. Checked in studentHasCourseAccess (src/lib/access.ts).
   openToProspectiveStudents Boolean  @default(false)
+  // VND, 0 = "không bán" (khóa học vẫn hoạt động như cũ, chỉ cấp qua
+  // grant/level-rule như trước giờ) — xem OrderItem cho snapshot giá lúc mua.
+  price                     Int      @default(0)
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 
   lessons     CourseLesson[]
   grants      CourseAccessGrant[]
   levelGrants CourseLevelGrant[]
+  orderItems  OrderItem[]
 }
 
 model CourseLesson {
@@ -382,11 +413,14 @@ model LibraryItem {
   // Admin-curated, independent of visibleToGuest: only checked by the guest
   // homepage's "Ebook nổi bật" section, same convention as Course.featuredOnHome.
   featuredOnHome    Boolean         @default(false)
+  // VND, 0 = "không bán", same convention as Course.price.
+  price             Int             @default(0)
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
   grants      LibraryAccessGrant[]
   levelGrants LibraryLevelGrant[]
+  orderItems  OrderItem[]
 
   @@index([type, order])
 }
@@ -420,6 +454,53 @@ model LibraryLevelGrant {
 
   @@unique([libraryItemId, minLevel])
   @@index([libraryItemId])
+}
+
+// Bán khóa học độc quyền/tài liệu thư viện qua chuyển khoản ngân hàng thủ
+// công (SePay dự kiến tích hợp sau — xem fulfillOrder trong
+// src/lib/order-fulfillment.ts, hàm duy nhất cần gọi lại khi có webhook tự
+// động, không cần đổi schema). "Đã thanh toán" chỉ đơn giản là tạo đúng
+// CourseAccessGrant/LibraryAccessGrant row mà admin vẫn cấp tay bấy lâu nay
+// (grantedById: null = hệ thống cấp qua đơn hàng) — không có logic quyền
+// riêng nào ở đây, src/lib/access.ts không cần biết Order tồn tại.
+model Order {
+  id            String      @id @default(cuid())
+  // Số ngắn, duy nhất, dùng làm nội dung chuyển khoản — hiển thị dạng
+  // "DH" + số này (xem formatOrderCode trong src/lib/orders.ts).
+  orderNumber   Int         @unique @default(autoincrement())
+  studentId     String
+  student       User        @relation("StudentOrders", fields: [studentId], references: [id], onDelete: Cascade)
+  status        OrderStatus @default(PENDING)
+  totalAmount   Int
+  createdAt     DateTime    @default(now())
+  paidAt        DateTime?
+  cancelledAt   DateTime?
+  confirmedById String?
+  confirmedBy   User?       @relation("OrderConfirmedBy", fields: [confirmedById], references: [id])
+
+  items OrderItem[]
+
+  @@index([studentId])
+  @@index([status])
+}
+
+// Discriminated by kind, same convention as ChatThread: exactly one of
+// courseId/libraryItemId is populated, matching kind. titleSnapshot/
+// priceAtPurchase freeze what was actually paid for — the underlying
+// Course/LibraryItem's title or price may change later.
+model OrderItem {
+  id              String        @id @default(cuid())
+  orderId         String
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kind            OrderItemKind
+  courseId        String?
+  course          Course?       @relation(fields: [courseId], references: [id])
+  libraryItemId   String?
+  libraryItem     LibraryItem?  @relation(fields: [libraryItemId], references: [id])
+  titleSnapshot   String
+  priceAtPurchase Int
+
+  @@index([orderId])
 }
 
 // In-app announcements (bản tin) — simpler than the Course grant system on

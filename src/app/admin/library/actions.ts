@@ -21,6 +21,7 @@ const libraryItemSchema = z.object({
   pageCount: z.coerce.number().int().optional(),
   guestPreviewPages: z.coerce.number().int().positive().optional(),
   order: z.coerce.number().int().default(0),
+  price: z.coerce.number().int().min(0, "Giá không được âm.").default(0),
 });
 
 // Builds a standalone preview PDF (first `pages` pages of `filePath`) and
@@ -50,6 +51,7 @@ export async function createLibraryItemAction(
     pageCount: formData.get("pageCount") || undefined,
     guestPreviewPages: formData.get("guestPreviewPages") || undefined,
     order: formData.get("order") || 0,
+    price: formData.get("price") || 0,
   });
   if (!parsed.success) {
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
@@ -73,6 +75,7 @@ export async function createLibraryItemAction(
       previewFilePath,
       guestPreviewPages: parsed.data.guestPreviewPages ?? null,
       order: parsed.data.order,
+      price: parsed.data.price,
       visibleToGuest,
       featuredOnHome: formData.get("featuredOnHome") === "on",
     },
@@ -103,6 +106,7 @@ export async function updateLibraryItemAction(
     pageCount: formData.get("pageCount") || undefined,
     guestPreviewPages: formData.get("guestPreviewPages") || undefined,
     order: formData.get("order") || 0,
+    price: formData.get("price") || 0,
   });
   if (!parsed.success) {
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
@@ -128,6 +132,7 @@ export async function updateLibraryItemAction(
       previewFilePath,
       guestPreviewPages: parsed.data.guestPreviewPages ?? null,
       order: parsed.data.order,
+      price: parsed.data.price,
       visibleToGuest,
       featuredOnHome: formData.get("featuredOnHome") === "on",
     },

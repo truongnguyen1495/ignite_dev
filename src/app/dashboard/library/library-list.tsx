@@ -6,6 +6,7 @@ import { BookOpen, FileText, Lock, ArrowRight } from "lucide-react";
 import type { LibraryItemType } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
+import { BuyButton } from "@/components/buy-button";
 
 const STORAGE_KEY = "student-library-view";
 
@@ -20,6 +21,8 @@ export type StudentLibraryItem = {
   pageCount: number | null;
   href: string;
   gradient: string;
+  price: number;
+  salesEnabled: boolean;
 };
 
 const TYPE_ICON: Record<LibraryItemType, typeof BookOpen> = {
@@ -67,10 +70,11 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
       {mode === "grid" ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => {
+            const purchasable = !item.unlocked && item.salesEnabled && item.price > 0;
             const card = (
               <div
                 className={`flex h-full flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors ${
-                  item.unlocked ? "hover:border-primary/60" : "opacity-60"
+                  item.unlocked || purchasable ? "hover:border-primary/60" : "opacity-60"
                 }`}
               >
                 <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-dark-surface-raised">
@@ -96,11 +100,13 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
                     <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
                       {item.pageCount ? `${item.pageCount} trang` : "—"}
                     </span>
-                    {item.unlocked && (
+                    {item.unlocked ? (
                       <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
                         Đọc
                         <ArrowRight className="h-3.5 w-3.5" />
                       </span>
+                    ) : (
+                      purchasable && <BuyButton kind="LIBRARY_ITEM" itemId={item.id} price={item.price} />
                     )}
                   </div>
                 </div>
@@ -120,10 +126,11 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
       ) : (
         <div className="space-y-3">
           {items.map((item) => {
+            const purchasable = !item.unlocked && item.salesEnabled && item.price > 0;
             const row = (
               <div
                 className={`flex items-center gap-4 rounded-xl border border-dark-border bg-dark-surface p-3 transition-colors ${
-                  item.unlocked ? "hover:border-primary/60" : "opacity-60"
+                  item.unlocked || purchasable ? "hover:border-primary/60" : "opacity-60"
                 }`}
               >
                 <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-dark-surface-raised">
@@ -148,8 +155,10 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
                 <div className="hidden shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300 md:flex">
                   {item.pageCount ? `${item.pageCount} trang` : "—"}
                 </div>
-                {item.unlocked && (
+                {item.unlocked ? (
                   <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />
+                ) : (
+                  purchasable && <BuyButton kind="LIBRARY_ITEM" itemId={item.id} price={item.price} />
                 )}
               </div>
             );

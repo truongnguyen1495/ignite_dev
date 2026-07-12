@@ -1,5 +1,5 @@
 import { AlertTriangle } from "lucide-react";
-import { requireActiveStudent } from "@/lib/access";
+import { requireActiveStudent, isSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { hasLevelAccess } from "@/lib/levels";
 import { LibraryList, type StudentLibraryItem } from "./library-list";
@@ -20,7 +20,7 @@ export default async function StudentLibraryPage({
   const student = await requireActiveStudent();
   const { denied } = await searchParams;
 
-  const [items, grants, levelGrants] = await Promise.all([
+  const [items, grants, levelGrants, salesEnabled] = await Promise.all([
     // visibleToStudents doubles as a master hide switch, same as announcements.
     prisma.libraryItem.findMany({
       where: { visibleToStudents: true },
@@ -28,6 +28,7 @@ export default async function StudentLibraryPage({
     }),
     prisma.libraryAccessGrant.findMany({ where: { studentId: student.id } }),
     prisma.libraryLevelGrant.findMany(),
+    isSalesEnabled(),
   ]);
 
   const grantedItemIds = new Set(grants.map((g) => g.libraryItemId));
@@ -48,6 +49,8 @@ export default async function StudentLibraryPage({
     pageCount: item.pageCount,
     href: `/dashboard/library/${item.id}`,
     gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
+    price: item.price,
+    salesEnabled,
   }));
 
   return (

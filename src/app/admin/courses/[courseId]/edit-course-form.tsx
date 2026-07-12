@@ -14,6 +14,7 @@ export function EditCourseForm({
   description,
   coverImageUrl,
   order,
+  price,
   visibleToGuest,
   featuredOnHome,
 }: {
@@ -22,6 +23,7 @@ export function EditCourseForm({
   description: string | null;
   coverImageUrl: string | null;
   order: number;
+  price: number;
   visibleToGuest: boolean;
   featuredOnHome: boolean;
 }) {
@@ -76,6 +78,16 @@ export function EditCourseForm({
             onChange={() => setIsDirty(true)}
           />
           <Input id="order" name="order" type="number" defaultValue={order} label="Thứ tự hiển thị" />
+          <Input
+            id="price"
+            name="price"
+            type="number"
+            min={0}
+            step={1000}
+            defaultValue={price}
+            label="Giá bán (VNĐ)"
+            hint="0 = không bán, chỉ cấp quyền thủ công như trước giờ."
+          />
           <label className="flex items-center gap-2 text-sm text-foreground">
             <input
               type="checkbox"

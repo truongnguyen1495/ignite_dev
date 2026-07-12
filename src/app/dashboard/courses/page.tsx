@@ -1,4 +1,4 @@
-import { requireActiveStudent, type CourseAccessLevel } from "@/lib/access";
+import { requireActiveStudent, isSalesEnabled, type CourseAccessLevel } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { hasLevelAccess } from "@/lib/levels";
 import { CourseList, type StudentCourseItem } from "./course-list";
@@ -14,7 +14,7 @@ const BANNER_GRADIENTS = [
 export default async function StudentCoursesPage() {
   const student = await requireActiveStudent();
 
-  const [courses, grants, levelGrants, completions] = await Promise.all([
+  const [courses, grants, levelGrants, completions, salesEnabled] = await Promise.all([
     prisma.course.findMany({
       orderBy: { order: "asc" },
       include: {
@@ -31,6 +31,7 @@ export default async function StudentCoursesPage() {
       where: { studentId: student.id },
       select: { courseLesson: { select: { courseId: true } } },
     }),
+    isSalesEnabled(),
   ]);
 
   const grantedCourseIds = new Set(grants.map((g) => g.courseId));
@@ -81,6 +82,8 @@ export default async function StudentCoursesPage() {
       progressPercent,
       href,
       gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
+      price: course.price,
+      salesEnabled,
     };
   });
 

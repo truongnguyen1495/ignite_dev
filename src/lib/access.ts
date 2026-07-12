@@ -190,6 +190,16 @@ export async function isRegistrationEnabled(): Promise<boolean> {
   return settings?.registrationEnabled ?? true;
 }
 
+// Master kill switch for the "Mua ngay" buy flow, toggled from
+// /admin/settings — defaults off (bank info starts empty). Never hides
+// /admin/orders or a student's own order history, only new purchases; see
+// createOrderAction in src/app/dashboard/orders/actions.ts, the other
+// place this is checked (defense-in-depth, not just hiding the UI button).
+export async function isSalesEnabled(): Promise<boolean> {
+  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
+  return settings?.salesEnabled ?? false;
+}
+
 export async function requireLevelAccess(requestedLevel: Level): Promise<User> {
   const student = await requireLeveledStudent();
   if (!hasLevelAccess(student.grantedLevel, requestedLevel)) {

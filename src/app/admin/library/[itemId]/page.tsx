@@ -50,6 +50,7 @@ export default async function EditLibraryItemPage({
         pageCount={item.pageCount}
         guestPreviewPages={item.guestPreviewPages}
         order={item.order}
+        price={item.price}
         visibleToGuest={item.visibleToGuest}
         featuredOnHome={item.featuredOnHome}
       />

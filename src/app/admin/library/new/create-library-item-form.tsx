@@ -24,6 +24,16 @@ export function CreateLibraryItemForm() {
       <CoverImageInput alt="Ảnh bìa sách/tài liệu" />
       <LibraryFileInput onChange={({ pageCount }) => setPageCount(pageCount)} />
       <Input id="order" name="order" type="number" defaultValue={0} label="Thứ tự hiển thị" />
+      <Input
+        id="price"
+        name="price"
+        type="number"
+        min={0}
+        step={1000}
+        defaultValue={0}
+        label="Giá bán (VNĐ)"
+        hint="0 = không bán, chỉ cấp quyền thủ công như trước giờ."
+      />
 
       <label className="flex items-center gap-2 text-sm text-foreground">
         <input

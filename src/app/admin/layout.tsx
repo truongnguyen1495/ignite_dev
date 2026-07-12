@@ -14,6 +14,7 @@ import {
   MessageCircle,
   GraduationCap,
   UserCog,
+  Receipt,
 } from "lucide-react";
 import { requireAnyAdminAccess, isChatEnabled } from "@/lib/access";
 import { getAdminSupportInbox } from "@/lib/chat";
@@ -65,6 +66,10 @@ export default async function AdminLayout({
     {
       item: { href: "/admin/library", label: "Thư viện", icon: <Library className={iconClass} /> },
       permission: "MANAGE_LIBRARY",
+    },
+    {
+      item: { href: "/admin/orders", label: "Đơn hàng", icon: <Receipt className={iconClass} /> },
+      permission: "MANAGE_ORDERS",
     },
     {
       item: { href: "/admin/announcements", label: "Bản tin", icon: <Megaphone className={iconClass} /> },

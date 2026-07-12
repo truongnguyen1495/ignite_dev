@@ -7,6 +7,8 @@ import { requireActiveSuperAdmin } from "@/lib/access";
 import { ChatToggle } from "./chat-toggle";
 import { RegistrationToggle } from "./registration-toggle";
 import { LanguageToggle } from "./language-toggle";
+import { SalesToggle } from "./sales-toggle";
+import { BankInfoForm } from "./bank-info-form";
 
 export default async function SettingsPage() {
   await requireActiveSuperAdmin();
@@ -23,6 +25,17 @@ export default async function SettingsPage() {
       </Card>
       <Card className="max-w-lg">
         <LanguageToggle />
+      </Card>
+      <Card className="max-w-lg">
+        <SalesToggle salesEnabled={settings.salesEnabled} />
+      </Card>
+      <Card className="max-w-lg">
+        <BankInfoForm
+          bankName={settings.bankName}
+          bankAccountNumber={settings.bankAccountNumber}
+          bankAccountHolder={settings.bankAccountHolder}
+          bankQrImageUrl={settings.bankQrImageUrl}
+        />
       </Card>
       <Link
         href="/admin/admins"

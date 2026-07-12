@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BookOpen, Lock, Video, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
+import { BuyButton } from "@/components/buy-button";
 import type { CourseAccessLevel } from "@/lib/access";
 
 const STORAGE_KEY = "student-courses-view";
@@ -20,6 +21,8 @@ export type StudentCourseItem = {
   progressPercent: number;
   href: string;
   gradient: string;
+  price: number;
+  salesEnabled: boolean;
 };
 
 function AccessBadge({ accessLevel }: { accessLevel: CourseAccessLevel }) {
@@ -92,10 +95,11 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {courses.map((course) => {
             const clickable = course.accessLevel !== "none";
+            const purchasable = !clickable && course.salesEnabled && course.price > 0;
             const card = (
               <div
                 className={`flex h-full flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors ${
-                  clickable ? "hover:border-primary/60" : "opacity-60"
+                  clickable || purchasable ? "hover:border-primary/60" : "opacity-60"
                 }`}
               >
                 <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-dark-surface-raised">
@@ -122,11 +126,13 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                       <BookOpen className="h-3.5 w-3.5" />
                       {course.totalLessons} bài học
                     </span>
-                    {clickable && (
+                    {clickable ? (
                       <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
                         Vào học
                         <ArrowRight className="h-3.5 w-3.5" />
                       </span>
+                    ) : (
+                      purchasable && <BuyButton kind="COURSE" itemId={course.id} price={course.price} />
                     )}
                   </div>
                 </div>
@@ -147,10 +153,11 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
         <div className="space-y-3">
           {courses.map((course) => {
             const clickable = course.accessLevel !== "none";
+            const purchasable = !clickable && course.salesEnabled && course.price > 0;
             const row = (
               <div
                 className={`flex items-center gap-4 rounded-xl border border-dark-border bg-dark-surface p-3 transition-colors ${
-                  clickable ? "hover:border-primary/60" : "opacity-60"
+                  clickable || purchasable ? "hover:border-primary/60" : "opacity-60"
                 }`}
               >
                 <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-dark-surface-raised">
@@ -177,7 +184,11 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                   <BookOpen className="h-3.5 w-3.5" />
                   {course.totalLessons} bài học
                 </div>
-                {clickable && <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />}
+                {clickable ? (
+                  <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />
+                ) : (
+                  purchasable && <BuyButton kind="COURSE" itemId={course.id} price={course.price} />
+                )}
               </div>
             );
             return clickable ? (

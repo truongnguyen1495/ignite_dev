@@ -13,6 +13,7 @@ const courseSchema = z.object({
   description: z.string().trim().optional(),
   coverImageUrl: z.string().trim().optional(),
   order: z.coerce.number().int().default(0),
+  price: z.coerce.number().int().min(0, "Giá không được âm.").default(0),
 });
 
 export async function createCourseAction(
@@ -26,6 +27,7 @@ export async function createCourseAction(
     description: formData.get("description") || undefined,
     coverImageUrl: formData.get("coverImageUrl") || undefined,
     order: formData.get("order") || 0,
+    price: formData.get("price") || 0,
   });
   if (!parsed.success) {
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
@@ -37,6 +39,7 @@ export async function createCourseAction(
       description: parsed.data.description ?? null,
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       order: parsed.data.order,
+      price: parsed.data.price,
       visibleToGuest: formData.get("visibleToGuest") === "on",
       featuredOnHome: formData.get("featuredOnHome") === "on",
     },
@@ -62,6 +65,7 @@ export async function updateCourseAction(
     description: formData.get("description") || undefined,
     coverImageUrl: formData.get("coverImageUrl") || undefined,
     order: formData.get("order") || 0,
+    price: formData.get("price") || 0,
   });
   if (!parsed.success) {
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
@@ -76,6 +80,7 @@ export async function updateCourseAction(
       description: parsed.data.description ?? null,
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       order: parsed.data.order,
+      price: parsed.data.price,
       visibleToGuest: formData.get("visibleToGuest") === "on",
       featuredOnHome: formData.get("featuredOnHome") === "on",
     },

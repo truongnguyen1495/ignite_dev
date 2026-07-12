@@ -15,6 +15,16 @@ export function CreateCourseForm() {
       <Textarea id="description" name="description" rows={3} label="Mô tả (tùy chọn)" />
       <CoverImageInput alt="Ảnh bìa khóa học" />
       <Input id="order" name="order" type="number" defaultValue={0} label="Thứ tự hiển thị" />
+      <Input
+        id="price"
+        name="price"
+        type="number"
+        min={0}
+        step={1000}
+        defaultValue={0}
+        label="Giá bán (VNĐ)"
+        hint="0 = không bán, chỉ cấp quyền thủ công như trước giờ."
+      />
       <label className="flex items-center gap-2 text-sm text-foreground">
         <input type="checkbox" name="visibleToGuest" className="h-4 w-4 accent-primary" />
         Hiển thị công khai cho khách (không cần đăng nhập)

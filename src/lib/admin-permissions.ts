@@ -13,6 +13,7 @@ export const ORDERED_ADMIN_PERMISSIONS: AdminPermissionKind[] = [
   "MANAGE_LIBRARY",
   "MANAGE_CHAT",
   "MANAGE_ANNOUNCEMENTS",
+  "MANAGE_ORDERS",
 ];
 
 export type PermissionGroup = {
@@ -65,4 +66,5 @@ export const ADMIN_PERMISSION_LABELS: Record<AdminPermissionKind, string> = {
   MANAGE_LEVEL_UP_REQUESTS: "Yêu cầu lên cấp",
   MANAGE_RESULTS: "Kết quả bài test",
   MANAGE_ANNOUNCEMENTS: "Bản tin",
+  MANAGE_ORDERS: "Đơn hàng",
 };

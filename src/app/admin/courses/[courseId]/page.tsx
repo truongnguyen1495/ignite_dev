@@ -57,6 +57,7 @@ export default async function EditCoursePage({
         description={course.description}
         coverImageUrl={course.coverImageUrl}
         order={course.order}
+        price={course.price}
         visibleToGuest={course.visibleToGuest}
         featuredOnHome={course.featuredOnHome}
       />
