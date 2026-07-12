@@ -82,35 +82,81 @@ export async function createAdminAccountAction(input: {
   }
 }
 
-// Replaces the account's entire permission set with `permissions` (an empty
+// Replaces the account's active permission set with `permissions` (an empty
 // array fully revokes limited-admin access) and updates its adminOnly kind
-// in the same save. Array-form $transaction, not the interactive-callback
-// form: see saveQuizAction in admin/quizzes/actions.ts for why (Supabase's
-// pooled connection doesn't support holding a transaction open across round
-// trips).
+// in the same save. Permissions dropped from the set are soft-revoked
+// (revokedAt set), not deleted, so the grant survives to be restored later
+// (restoreRevokedPermissionsAction below) and grant history stays intact.
+// Array-form $transaction, not the interactive-callback form: see
+// saveQuizAction in admin/quizzes/actions.ts for why (Supabase's pooled
+// connection doesn't support holding a transaction open across round trips).
 export async function setAccountPermissionsAction(
   userId: string,
   permissions: AdminPermissionKind[],
   adminOnly: boolean
 ): Promise<string | undefined> {
   const admin = await requireActiveSuperAdmin();
-  const target = await prisma.user.findUnique({ where: { id: userId } });
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { adminPermissions: true },
+  });
   if (!target || target.role !== "STUDENT") {
     return "Không tìm thấy tài khoản học viên này.";
   }
 
   const unique = Array.from(new Set(permissions));
+  const existingByPermission = new Map(target.adminPermissions.map((p) => [p.permission, p]));
+
   await prisma.$transaction([
     prisma.user.update({ where: { id: userId }, data: { adminOnly } }),
-    prisma.adminPermission.deleteMany({ where: { userId } }),
-    ...(unique.length > 0
-      ? [
-          prisma.adminPermission.createMany({
-            data: unique.map((permission) => ({ userId, permission, grantedById: admin.id })),
+    prisma.adminPermission.updateMany({
+      where: { userId, revokedAt: null, permission: { notIn: unique } },
+      data: { revokedAt: new Date() },
+    }),
+    ...unique.flatMap((permission) => {
+      const existing = existingByPermission.get(permission);
+      if (!existing) {
+        return [prisma.adminPermission.create({ data: { userId, permission, grantedById: admin.id } })];
+      }
+      if (existing.revokedAt !== null) {
+        return [
+          prisma.adminPermission.update({
+            where: { id: existing.id },
+            data: { revokedAt: null, grantedById: admin.id, grantedAt: new Date() },
           }),
-        ]
-      : []),
+        ];
+      }
+      return [];
+    }),
   ]);
+
+  revalidatePath("/admin/admins");
+  revalidatePath(`/admin/admins/${userId}`);
+  return undefined;
+}
+
+// Undoes the most recent revoke — reactivates every AdminPermission row that
+// shares the latest revokedAt timestamp (the batch from one revoke action,
+// whether that was the revoke-all button or an editor save that unchecked
+// some boxes), not every permission ever revoked in this account's history.
+export async function restoreRevokedPermissionsAction(userId: string): Promise<string | undefined> {
+  await requireActiveSuperAdmin();
+  const target = await prisma.user.findUnique({ where: { id: userId } });
+  if (!target || target.role !== "STUDENT") {
+    return "Không tìm thấy tài khoản học viên này.";
+  }
+
+  const lastRevoked = await prisma.adminPermission.findFirst({
+    where: { userId, revokedAt: { not: null } },
+    orderBy: { revokedAt: "desc" },
+    select: { revokedAt: true },
+  });
+  if (!lastRevoked) return undefined;
+
+  await prisma.adminPermission.updateMany({
+    where: { userId, revokedAt: lastRevoked.revokedAt },
+    data: { revokedAt: null },
+  });
 
   revalidatePath("/admin/admins");
   revalidatePath(`/admin/admins/${userId}`);

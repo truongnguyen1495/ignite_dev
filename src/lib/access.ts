@@ -100,7 +100,10 @@ const requireActiveUser = cache(async (): Promise<User> => {
 // request since both requireAnyAdminAccess (layout) and requireAdminPermission
 // (individual pages/actions) look this up on the same request.
 export const getAdminPermissions = cache(async (userId: string): Promise<Set<AdminPermissionKind>> => {
-  const rows = await prisma.adminPermission.findMany({ where: { userId }, select: { permission: true } });
+  const rows = await prisma.adminPermission.findMany({
+    where: { userId, revokedAt: null },
+    select: { permission: true },
+  });
   return new Set(rows.map((r) => r.permission));
 });
 

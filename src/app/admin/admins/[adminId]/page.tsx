@@ -78,7 +78,7 @@ export default async function AdminDetailPage({ params }: { params: Promise<{ ad
         <AdminPermissionEditor
           adminId={admin.id}
           initialAdminOnly={admin.adminOnly}
-          initialPermissions={admin.adminPermissions.map((p) => p.permission)}
+          initialPermissions={admin.adminPermissions.filter((p) => !p.revokedAt).map((p) => p.permission)}
         />
       </Card>
 
@@ -91,11 +91,15 @@ export default async function AdminDetailPage({ params }: { params: Promise<{ ad
             {admin.adminPermissions.map((p) => (
               <li
                 key={p.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-background p-3 text-sm"
+                className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-background p-3 text-sm ${p.revokedAt ? "opacity-60" : ""}`}
               >
-                <span className="font-medium text-foreground">{ADMIN_PERMISSION_LABELS[p.permission]}</span>
+                <span className="flex items-center gap-1.5 font-medium text-foreground">
+                  {ADMIN_PERMISSION_LABELS[p.permission]}
+                  {p.revokedAt && <Badge color="muted">Đã thu hồi</Badge>}
+                </span>
                 <span className="text-xs text-muted">
                   Cấp bởi {p.grantedBy.name} · {formatDateTimeVN(p.grantedAt)}
+                  {p.revokedAt && <> · Thu hồi lúc {formatDateTimeVN(p.revokedAt)}</>}
                 </span>
               </li>
             ))}

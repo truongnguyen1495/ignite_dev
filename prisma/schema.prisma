@@ -148,6 +148,12 @@ model AdminPermission {
   permission  AdminPermissionKind
   grantedById String
   grantedAt   DateTime            @default(now())
+  // Soft-revoke marker: null means the grant is active. Revoking sets this
+  // instead of deleting the row so the grant survives to be restored later
+  // (see restoreRevokedPermissionsAction in admin/admins/actions.ts, which
+  // reactivates every row sharing the same revokedAt — the batch from one
+  // revoke action) and so "Lịch sử cấp quyền" keeps full history.
+  revokedAt   DateTime?
 
   user      User @relation("AdminPermissions", fields: [userId], references: [id], onDelete: Cascade)
   grantedBy User @relation("AdminPermissionsGranted", fields: [grantedById], references: [id])
