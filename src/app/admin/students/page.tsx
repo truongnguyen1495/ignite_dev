@@ -1,12 +1,10 @@
 import Link from "next/link";
-import { Plus, Eye } from "lucide-react";
+import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPermission, getAdminPermissions } from "@/lib/access";
-import { LevelBadge } from "@/components/ui/level-badge";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { ToggleStudentStatusButton, DeleteStudentButton, DemoteStudentButton } from "./[studentId]/danger-actions";
 import { PageHeader } from "@/components/ui/page-header";
 import { PendingJoinRequests } from "./pending-join-requests";
+import { StudentsTable, type StudentRow } from "./students-table";
 
 export default async function StudentsPage() {
   const admin = await requireAdminPermission("MANAGE_STUDENTS");
@@ -24,7 +22,7 @@ export default async function StudentsPage() {
   // page and permission — see /admin/prospective-students. Their pending
   // "tham gia hệ thống đào tạo 5 cấp" requests are reviewed here instead,
   // since approving one admits them into this Học viên roster.
-  const [students, pendingRequests] = await Promise.all([
+  const [students, pendingRequests, approvedJoinRequests] = await Promise.all([
     prisma.user.findMany({
       where: { role: "STUDENT", adminOnly: false, grantedLevel: { not: null } },
       orderBy: { createdAt: "desc" },
@@ -34,7 +32,31 @@ export default async function StudentsPage() {
       orderBy: { requestedAt: "asc" },
       include: { student: true },
     }),
+    // "Ngày tham gia hệ thống 5 cấp" — when a join request got approved, not
+    // account creation date, since a học viên may have registered as a học
+    // sinh long before being admitted. Falls back to createdAt below for a
+    // học viên an admin created directly (no join request ever existed).
+    prisma.levelUpRequest.findMany({
+      where: { fromLevel: null, status: "APPROVED" },
+      orderBy: { reviewedAt: "desc" },
+      select: { studentId: true, reviewedAt: true },
+    }),
   ]);
+  const joinedAtByStudent = new Map<string, Date>();
+  for (const req of approvedJoinRequests) {
+    if (!joinedAtByStudent.has(req.studentId) && req.reviewedAt) {
+      joinedAtByStudent.set(req.studentId, req.reviewedAt);
+    }
+  }
+  const studentRows: StudentRow[] = students.map((s) => ({
+    id: s.id,
+    name: s.name,
+    email: s.email,
+    username: s.username,
+    grantedLevel: s.grantedLevel!,
+    status: s.status,
+    joinedAt: joinedAtByStudent.get(s.id) ?? s.createdAt,
+  }));
 
   return (
     <div className="space-y-6">
@@ -56,66 +78,7 @@ export default async function StudentsPage() {
       {students.length === 0 ? (
         <p className="text-sm text-muted">Chưa có học viên nào.</p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
-          <table className="w-full whitespace-nowrap text-sm">
-            <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted">
-              <tr>
-                <th className="px-4 py-3 font-medium sm:px-6">Họ tên</th>
-                <th className="px-4 py-3 font-medium sm:px-6">Tài khoản</th>
-                <th className="px-4 py-3 font-medium sm:px-6">Cấp độ hiện tại</th>
-                <th className="px-4 py-3 font-medium sm:px-6">Trạng thái</th>
-                <th className="px-4 py-3 font-medium sm:px-6 text-right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {students.map((student) => (
-                <tr key={student.id} className="border-b border-border last:border-0 hover:bg-surface-hover">
-                  <td className="px-4 py-4 sm:px-6 font-medium text-foreground">{student.name}</td>
-                  <td className="px-4 py-4 sm:px-6 text-muted">
-                    {student.email}
-                    {student.username && (
-                      <span className="block text-xs text-faint">@{student.username}</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-4 sm:px-6">
-                    <LevelBadge level={student.grantedLevel} />
-                  </td>
-                  <td className="px-4 py-4 sm:px-6">
-                    <StatusBadge status={student.status} />
-                  </td>
-                  <td className="px-4 py-4 sm:px-6">
-                    <div className="flex items-center justify-end gap-1">
-                      <Link
-                        href={`/admin/students/${student.id}`}
-                        title="Xem / sửa"
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                      {canDemote && (
-                        <DemoteStudentButton studentId={student.id} studentName={student.name} iconOnly />
-                      )}
-                      {canLock && (
-                        <ToggleStudentStatusButton
-                          studentId={student.id}
-                          locked={student.status === "LOCKED"}
-                          iconOnly
-                        />
-                      )}
-                      {canDelete && (
-                        <DeleteStudentButton
-                          studentId={student.id}
-                          studentName={student.name}
-                          iconOnly
-                        />
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <StudentsTable students={studentRows} canLock={canLock} canDelete={canDelete} canDemote={canDemote} />
       )}
     </div>
   );

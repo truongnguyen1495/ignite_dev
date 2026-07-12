@@ -19,6 +19,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { LogoutButton } from "@/components/logout-button";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { LevelUpWatcher } from "./level-up-watcher";
+import { HocSinhNav, type HocSinhNavItem } from "./hoc-sinh-nav";
 
 const iconClass = "h-4 w-4";
 
@@ -60,8 +61,18 @@ export default async function DashboardLayout({
   // cá nhân, Hồ sơ học sinh. "Học viên" (đã có cấp) giữ nguyên khung sidebar
   // hiện có, xem nhánh bên dưới.
   if (!isLeveled) {
-    const linkClass =
-      "flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium text-muted transition-colors hover:bg-surface-hover hover:text-foreground";
+    const hocSinhNavItems: HocSinhNavItem[] = [
+      { href: "/dashboard/home", label: "Trang chủ", icon: <Home className="h-4 w-4" />, exact: true },
+      { href: "/dashboard/announcements", label: "Bản tin", icon: <Megaphone className="h-4 w-4" /> },
+      { href: "/dashboard/courses", label: "Khóa học độc quyền", icon: <Video className="h-4 w-4" /> },
+      { href: "/dashboard/library", label: "Thư viện", icon: <Library className="h-4 w-4" /> },
+      {
+        href: "/dashboard/level-up",
+        label: "Tham gia hệ thống 5 cấp",
+        icon: <ArrowUpCircle className="h-4 w-4" />,
+      },
+      { href: "/dashboard/profile", label: "Thông tin cá nhân", icon: <UserCircle className="h-4 w-4" /> },
+    ];
     return (
       <div className="min-h-screen bg-background">
         <header className="border-b border-border bg-surface">
@@ -94,32 +105,7 @@ export default async function DashboardLayout({
               <LogoutButton />
             </div>
           </div>
-          <nav className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-2 px-4 py-3 text-sm sm:px-8">
-            <Link href="/dashboard/home" className={linkClass}>
-              <Home className="h-4 w-4" />
-              Trang chủ
-            </Link>
-            <Link href="/dashboard/announcements" className={linkClass}>
-              <Megaphone className="h-4 w-4" />
-              Bản tin
-            </Link>
-            <Link href="/dashboard/courses" className={linkClass}>
-              <Video className="h-4 w-4" />
-              Khóa học độc quyền
-            </Link>
-            <Link href="/dashboard/library" className={linkClass}>
-              <Library className="h-4 w-4" />
-              Thư viện
-            </Link>
-            <Link href="/dashboard/level-up" className={linkClass}>
-              <ArrowUpCircle className="h-4 w-4" />
-              Tham gia hệ thống 5 cấp
-            </Link>
-            <Link href="/dashboard/profile" className={linkClass}>
-              <UserCircle className="h-4 w-4" />
-              Thông tin cá nhân
-            </Link>
-          </nav>
+          <HocSinhNav items={hocSinhNavItems} />
         </header>
         <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-8">{children}</main>
       </div>
