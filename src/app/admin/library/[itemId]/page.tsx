@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminPermission, isSalesEnabled } from "@/lib/access";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { EditLibraryItemForm } from "./edit-library-item-form";
+import { LibraryItemGuestAccessForm } from "./library-item-guest-access-form";
 import { DeleteLibraryItemButton } from "./delete-library-item-button";
 import {
   RevokeAccessButton,
@@ -49,10 +50,16 @@ export default async function EditLibraryItemPage({
         coverImageUrl={item.coverImageUrl}
         filePath={item.filePath}
         pageCount={item.pageCount}
-        guestPreviewPages={item.guestPreviewPages}
         order={item.order}
         price={item.price}
         salesEnabled={salesEnabled}
+      />
+
+      <LibraryItemGuestAccessForm
+        libraryItemId={item.id}
+        filePath={item.filePath}
+        pageCount={item.pageCount}
+        guestPreviewPages={item.guestPreviewPages}
         visibleToGuest={item.visibleToGuest}
         featuredOnHome={item.featuredOnHome}
       />

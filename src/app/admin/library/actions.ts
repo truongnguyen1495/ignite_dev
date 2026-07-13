@@ -113,11 +113,22 @@ export async function updateLibraryItemAction(
   }
 
   const { libraryItemId } = parsed.data;
-  const visibleToGuest = formData.get("visibleToGuest") === "on";
-  const previewFilePath =
-    visibleToGuest && parsed.data.guestPreviewPages
-      ? await generateLibraryPreview(parsed.data.filePath, parsed.data.guestPreviewPages)
-      : null;
+
+  // visibleToGuest/guestPreviewPages/featuredOnHome are edited from the
+  // separate "Cấp quyền cho khách" form (setLibraryItemGuestAccessAction)
+  // now, not this one — read the current row so swapping the PDF here still
+  // regenerates (or clears) the preview correctly without this form having
+  // to carry those fields along just to avoid resetting them.
+  const current = await prisma.libraryItem.findUnique({
+    where: { id: libraryItemId },
+    select: { filePath: true, visibleToGuest: true, guestPreviewPages: true, previewFilePath: true },
+  });
+  const fileChanged = current !== null && current.filePath !== parsed.data.filePath;
+  const previewFilePath = fileChanged
+    ? current?.visibleToGuest && current.guestPreviewPages
+      ? await generateLibraryPreview(parsed.data.filePath, current.guestPreviewPages)
+      : null
+    : (current?.previewFilePath ?? null);
 
   await prisma.libraryItem.update({
     where: { id: libraryItemId },
@@ -130,11 +141,54 @@ export async function updateLibraryItemAction(
       filePath: parsed.data.filePath,
       pageCount: parsed.data.pageCount ?? null,
       previewFilePath,
-      guestPreviewPages: parsed.data.guestPreviewPages ?? null,
       order: parsed.data.order,
       price: parsed.data.price,
+    },
+  });
+
+  revalidatePath("/admin/library");
+  revalidatePath(`/admin/library/${libraryItemId}`);
+  return undefined;
+}
+
+// Backs the "Cấp quyền cho khách" form on the library item edit page — the
+// guest-facing counterpart to updateLibraryItemAction above, split out the
+// same way CourseGuestAccessForm/setCourseGuestAccessAction is split from
+// the course edit form. filePath is carried in as a hidden field (current
+// value, not editable here) purely so the preview PDF can be regenerated.
+export async function setLibraryItemGuestAccessAction(
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  await requireAdminPermission("MANAGE_LIBRARY");
+
+  const libraryItemId = formData.get("libraryItemId");
+  const filePath = formData.get("filePath");
+  if (typeof libraryItemId !== "string" || !libraryItemId || typeof filePath !== "string" || !filePath) {
+    return "Thiếu dữ liệu.";
+  }
+
+  const guestPreviewPagesRaw = formData.get("guestPreviewPages");
+  const guestPreviewPages =
+    typeof guestPreviewPagesRaw === "string" && guestPreviewPagesRaw
+      ? Number.parseInt(guestPreviewPagesRaw, 10)
+      : undefined;
+  if (guestPreviewPages !== undefined && (!Number.isInteger(guestPreviewPages) || guestPreviewPages <= 0)) {
+    return "Số trang đọc thử không hợp lệ.";
+  }
+
+  const visibleToGuest = formData.get("visibleToGuest") === "on";
+  const featuredOnHome = formData.get("featuredOnHome") === "on";
+  const previewFilePath =
+    visibleToGuest && guestPreviewPages ? await generateLibraryPreview(filePath, guestPreviewPages) : null;
+
+  await prisma.libraryItem.update({
+    where: { id: libraryItemId },
+    data: {
       visibleToGuest,
-      featuredOnHome: formData.get("featuredOnHome") === "on",
+      guestPreviewPages: guestPreviewPages ?? null,
+      previewFilePath,
+      featuredOnHome,
     },
   });
 
