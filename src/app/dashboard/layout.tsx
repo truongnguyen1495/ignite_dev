@@ -68,9 +68,6 @@ export default async function DashboardLayout({
       { href: "/dashboard/announcements", label: "Bản tin", icon: <Megaphone className="h-4 w-4" /> },
       { href: "/dashboard/courses", label: "Khóa học độc quyền", icon: <Video className="h-4 w-4" /> },
       { href: "/dashboard/library", label: "Thư viện", icon: <Library className="h-4 w-4" /> },
-      ...(salesEnabled
-        ? [{ href: "/dashboard/orders", label: "Đơn hàng của tôi", icon: <ShoppingCart className="h-4 w-4" /> }]
-        : []),
       {
         href: "/dashboard/level-up",
         label: "Tham gia hệ thống 5 cấp",
@@ -107,6 +104,15 @@ export default async function DashboardLayout({
                   </span>
                 </span>
               </span>
+              {salesEnabled && (
+                <Link
+                  href="/dashboard/orders"
+                  className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  Đơn hàng của tôi
+                </Link>
+              )}
               <LogoutButton />
             </div>
           </div>
@@ -121,9 +127,6 @@ export default async function DashboardLayout({
     { href: "/dashboard", label: "5 Cấp đào tạo", icon: <LayoutDashboard className={iconClass} />, exact: true },
     { href: "/dashboard/courses", label: "Khóa học độc quyền", icon: <Video className={iconClass} /> },
     { href: "/dashboard/library", label: "Thư viện", icon: <Library className={iconClass} /> },
-    ...(salesEnabled
-      ? [{ href: "/dashboard/orders", label: "Đơn hàng của tôi", icon: <ShoppingCart className={iconClass} /> }]
-      : []),
     {
       href: "/dashboard/announcements",
       label: "Bản tin",
@@ -179,6 +182,15 @@ export default async function DashboardLayout({
                 </span>
               </span>
             </span>
+            {salesEnabled && (
+              <Link
+                href="/dashboard/orders"
+                className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                Đơn hàng của tôi
+              </Link>
+            )}
             <LogoutButton />
           </div>
         </header>
