@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import type { BookPageData } from "@/lib/library-book-elements";
 import { BookPage } from "./book-page";
 import { FLIPBOOK_DEFAULTS } from "./flipbook-defaults";
-import { isPagedSpread, isLastSpread, type FlipbookOrientation, type FlipbookState } from "./flipbook-spread";
+import { isPagedSpread, isLastSpread, type FlipbookOrientation } from "./flipbook-spread";
 
 type PagesResponse = {
   pages: BookPageData[];
@@ -23,7 +23,6 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
   const [data, setData] = useState<PagesResponse | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [orientation, setOrientation] = useState<FlipbookOrientation>("portrait");
-  const [flipState, setFlipState] = useState<FlipbookState>("read");
   const [error, setError] = useState<string | null>(null);
   const flipRef = useRef<{ pageFlip(): { flipPrev(): void; flipNext(): void } } | null>(null);
 
@@ -81,13 +80,12 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
           onFlip={(e: { data: number }) => setCurrentPage(e.data)}
           onChangeOrientation={(e: { data: FlipbookOrientation }) => setOrientation(e.data)}
           onInit={(e: { data: { mode: FlipbookOrientation } }) => setOrientation(e.data.mode)}
-          onChangeState={(e: { data: FlipbookState }) => setFlipState(e.data)}
         >
           {pages.map((page, i) => (
             <BookPage key={i} page={page} bookWidth={bookWidth} bookHeight={bookHeight} isActive={i === currentPage} />
           ))}
         </HTMLFlipBook>
-        <div className="flipbook-gutter" style={{ opacity: spread && flipState === "read" ? 1 : 0 }} aria-hidden />
+        {spread && <div className="flipbook-gutter" aria-hidden />}
       </div>
 
       <div className="flex items-center gap-4 text-sm text-muted">
