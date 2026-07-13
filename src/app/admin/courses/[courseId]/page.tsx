@@ -14,6 +14,7 @@ import {
 import { CourseLessonsSection } from "./course-lessons-section";
 import { CourseGuestAccessForm } from "./course-guest-access-form";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default async function EditCoursePage({
   params,
@@ -114,7 +115,10 @@ export default async function EditCoursePage({
                 className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background p-3 text-sm"
               >
                 <div>
-                  <p className="text-foreground">{grant.student.name}</p>
+                  <p className="flex items-center gap-1.5 text-foreground">
+                    {grant.student.name}
+                    {grant.grantedById === null && <Badge color="info">Đã mua</Badge>}
+                  </p>
                   <p className="text-muted">{grant.student.email}</p>
                 </div>
                 <RevokeAccessButton grantId={grant.id} courseId={course.id} />

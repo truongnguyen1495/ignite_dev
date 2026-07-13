@@ -10,7 +10,9 @@ export default async function LibraryPage() {
   const items = await prisma.libraryItem.findMany({
     orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     include: {
-      _count: { select: { grants: true } },
+      // grantedById: null = system-granted via a paid order, non-null = an
+      // admin granted it by hand — split into two badges below.
+      grants: { select: { grantedById: true } },
       levelGrants: { select: { minLevel: true }, orderBy: { minLevel: "asc" } },
     },
   });
@@ -22,7 +24,8 @@ export default async function LibraryPage() {
     type: item.type,
     coverImageUrl: item.coverImageUrl,
     pageCount: item.pageCount,
-    grantsCount: item._count.grants,
+    manualGrantsCount: item.grants.filter((g) => g.grantedById !== null).length,
+    purchasedGrantsCount: item.grants.filter((g) => g.grantedById === null).length,
     levelGrants: item.levelGrants.map((lg) => lg.minLevel),
     visibleToGuest: item.visibleToGuest,
     visibleToStudents: item.visibleToStudents,

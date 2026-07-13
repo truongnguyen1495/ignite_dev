@@ -20,7 +20,10 @@ export type LibraryListItem = {
   type: LibraryItemType;
   coverImageUrl: string | null;
   pageCount: number | null;
-  grantsCount: number;
+  // Split by LibraryAccessGrant.grantedById, same convention as
+  // AdminCourseItem.manualGrantsCount/purchasedGrantsCount.
+  manualGrantsCount: number;
+  purchasedGrantsCount: number;
   levelGrants: Level[];
   visibleToGuest: boolean;
   visibleToStudents: boolean;
@@ -56,7 +59,11 @@ function Thumbnail({ item, className }: { item: LibraryListItem; className: stri
 // reach this item — which levels are auto-granted, whether any students
 // were granted individually as an exception, and whether it's public.
 function AccessBadges({ item }: { item: LibraryListItem }) {
-  const hasAnyGrant = item.visibleToGuest || item.levelGrants.length > 0 || item.grantsCount > 0;
+  const hasAnyGrant =
+    item.visibleToGuest ||
+    item.levelGrants.length > 0 ||
+    item.manualGrantsCount > 0 ||
+    item.purchasedGrantsCount > 0;
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       <Badge color={item.type === "BOOK" ? "primary" : "info"}>{TYPE_LABELS[item.type]}</Badge>
@@ -68,7 +75,10 @@ function AccessBadges({ item }: { item: LibraryListItem }) {
           {LEVEL_LABELS[level]} trở lên
         </Badge>
       ))}
-      {item.grantsCount > 0 && <Badge color="warning">{item.grantsCount} học viên ngoại lệ</Badge>}
+      {item.manualGrantsCount > 0 && (
+        <Badge color="warning">{item.manualGrantsCount} học viên ngoại lệ</Badge>
+      )}
+      {item.purchasedGrantsCount > 0 && <Badge color="info">{item.purchasedGrantsCount} đã mua</Badge>}
       {!hasAnyGrant && <Badge color="muted">Chưa cấp quyền</Badge>}
     </div>
   );

@@ -16,7 +16,11 @@ export type AdminCourseItem = {
   description: string | null;
   coverImageUrl: string | null;
   lessonsCount: number;
-  grantsCount: number;
+  // Split by CourseAccessGrant.grantedById: null = system-granted via a paid
+  // order, non-null = an admin granted it by hand — different enough
+  // provenance to warrant separate badges (see order-fulfillment.ts).
+  manualGrantsCount: number;
+  purchasedGrantsCount: number;
   levelGrants: Level[];
   hiddenFromGuest: boolean;
   guestTrialLessonsCount: number;
@@ -44,7 +48,11 @@ function Thumbnail({ course, className }: { course: AdminCourseItem; className: 
 // granted individually as an exception on top of that.
 function AccessBadges({ course }: { course: AdminCourseItem }) {
   const hasGuestTrial = !course.hiddenFromGuest && course.guestTrialLessonsCount > 0;
-  const hasAnyGrant = hasGuestTrial || course.levelGrants.length > 0 || course.grantsCount > 0;
+  const hasAnyGrant =
+    hasGuestTrial ||
+    course.levelGrants.length > 0 ||
+    course.manualGrantsCount > 0 ||
+    course.purchasedGrantsCount > 0;
   return (
     <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
       {course.isFree && <Badge color="success">Miễn phí</Badge>}
@@ -55,8 +63,11 @@ function AccessBadges({ course }: { course: AdminCourseItem }) {
           {LEVEL_LABELS[level]} trở lên
         </Badge>
       ))}
-      {course.grantsCount > 0 && (
-        <Badge color="warning">{course.grantsCount} học viên ngoại lệ</Badge>
+      {course.manualGrantsCount > 0 && (
+        <Badge color="warning">{course.manualGrantsCount} học viên ngoại lệ</Badge>
+      )}
+      {course.purchasedGrantsCount > 0 && (
+        <Badge color="info">{course.purchasedGrantsCount} đã mua</Badge>
       )}
       {!hasAnyGrant && <Badge color="muted">Chưa cấp quyền</Badge>}
     </div>
@@ -109,7 +120,7 @@ export function CourseList({ courses }: { courses: AdminCourseItem[] }) {
                   </span>
                   <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
                     <Users className="h-3.5 w-3.5" />
-                    {course.grantsCount} học viên
+                    {course.manualGrantsCount + course.purchasedGrantsCount} học viên
                   </span>
                 </div>
               </div>
@@ -141,7 +152,7 @@ export function CourseList({ courses }: { courses: AdminCourseItem[] }) {
                 </span>
                 <span className="flex items-center gap-1 whitespace-nowrap">
                   <Users className="h-3.5 w-3.5" />
-                  {course.grantsCount} học viên
+                  {course.manualGrantsCount + course.purchasedGrantsCount} học viên
                 </span>
               </div>
             </Link>

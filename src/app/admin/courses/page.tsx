@@ -18,7 +18,11 @@ export default async function CoursesPage() {
   const courses = await prisma.course.findMany({
     orderBy: { order: "asc" },
     include: {
-      _count: { select: { lessons: true, grants: true } },
+      _count: { select: { lessons: true } },
+      // grantedById: null = system-granted via a paid order, non-null = an
+      // admin granted it by hand — split into two badges below instead of
+      // one combined count (see order-fulfillment.ts for the convention).
+      grants: { select: { grantedById: true } },
       levelGrants: { select: { minLevel: true }, orderBy: { minLevel: "asc" } },
       lessons: { where: { visibleToGuest: true }, select: { id: true } },
     },
@@ -30,7 +34,8 @@ export default async function CoursesPage() {
     description: course.description,
     coverImageUrl: course.coverImageUrl,
     lessonsCount: course._count.lessons,
-    grantsCount: course._count.grants,
+    manualGrantsCount: course.grants.filter((g) => g.grantedById !== null).length,
+    purchasedGrantsCount: course.grants.filter((g) => g.grantedById === null).length,
     levelGrants: course.levelGrants.map((lg) => lg.minLevel),
     hiddenFromGuest: course.hiddenFromGuest,
     guestTrialLessonsCount: course.lessons.length,
