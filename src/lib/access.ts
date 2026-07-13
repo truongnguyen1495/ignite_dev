@@ -250,12 +250,13 @@ export async function requireQuizAccess(quizId: string) {
 // who levels up into a rule's threshold gains access immediately, with no
 // backfill, since this is re-evaluated on every visit.
 //
-// "trial" is a third tier that only exists for "học sinh" (grantedLevel
-// null): a course not hidden from anonymous guests (!hiddenFromGuest) is at
-// least as open to a signed-in học sinh — but only the same subset of
-// lessons a guest gets (CourseLesson.visibleToGuest), not the whole course.
-// A học sinh only reaches "full" once explicitly granted, same as anyone
-// else — via CourseAccessGrant or the openToProspectiveStudents switch.
+// "trial" is a third tier for anyone who isn't "full" yet — a course not
+// hidden from anonymous guests (!hiddenFromGuest) is at least as open to any
+// signed-in student, học viên or học sinh, as it is to a guest: only the
+// same subset of lessons a guest gets (CourseLesson.visibleToGuest), not the
+// whole course. A student only reaches "full" once explicitly granted, same
+// as anyone else — via CourseAccessGrant, a level rule, or
+// openToProspectiveStudents for học sinh specifically.
 export type CourseAccessLevel = "none" | "trial" | "full";
 
 export async function getCourseAccessLevel(student: User, courseId: string): Promise<CourseAccessLevel> {
@@ -274,12 +275,13 @@ export async function getCourseAccessLevel(student: User, courseId: string): Pro
   // admin-grant-only).
   if (course?.isFree) return "full";
   if (grant) return "full";
-  if (student.grantedLevel === null) {
-    if (course?.openToProspectiveStudents) return "full";
-    if (course && !course.hiddenFromGuest) return "trial";
-    return "none";
-  }
-  return levelGrants.some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel)) ? "full" : "none";
+  const isFullViaLevel =
+    student.grantedLevel === null
+      ? (course?.openToProspectiveStudents ?? false)
+      : levelGrants.some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel));
+  if (isFullViaLevel) return "full";
+  if (course && !course.hiddenFromGuest) return "trial";
+  return "none";
 }
 
 export async function requireCourseAccess(courseId: string) {

@@ -41,9 +41,10 @@ export default async function StudentCoursesPage() {
       .map((lg) => lg.courseId)
   );
   // "Học sinh" (grantedLevel null) never match levelGrants (Level-typed) — a
-  // course open to anonymous guests gives them "trial" (same lessons a guest
-  // gets) until explicitly granted "full" — same rule as getCourseAccessLevel
-  // in src/lib/access.ts, kept in sync here purely for this listing's badge.
+  // course open to anonymous guests gives any not-yet-full student "trial"
+  // (same lessons a guest gets), học viên included, same rule as
+  // getCourseAccessLevel in src/lib/access.ts, kept in sync here purely for
+  // this listing's badge.
   const isHocSinh = student.grantedLevel === null;
 
   const completedCountByCourse = new Map<string, number>();
@@ -56,10 +57,11 @@ export default async function StudentCoursesPage() {
     let accessLevel: CourseAccessLevel;
     if (course.isFree || grantedCourseIds.has(course.id)) {
       accessLevel = "full";
-    } else if (isHocSinh) {
-      accessLevel = course.openToProspectiveStudents ? "full" : !course.hiddenFromGuest ? "trial" : "none";
     } else {
-      accessLevel = levelUnlockedCourseIds.has(course.id) ? "full" : "none";
+      const fullViaLevel = isHocSinh
+        ? course.openToProspectiveStudents
+        : levelUnlockedCourseIds.has(course.id);
+      accessLevel = fullViaLevel ? "full" : !course.hiddenFromGuest ? "trial" : "none";
     }
 
     const totalLessons = course._count.lessons;

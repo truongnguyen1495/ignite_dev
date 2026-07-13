@@ -16,10 +16,10 @@ export default async function StudentCoursePage({
   const { courseId } = await params;
   const { course, accessLevel } = await requireCourseAccess(courseId);
 
-  // "trial" học sinh only get the same lesson subset a guest gets — the
-  // student lesson-viewer page (not the guest one) still renders it, but
-  // only if it's actually reachable, same restriction requireCourseLessonAccess
-  // enforces on direct URL access.
+  // "trial" students (học viên or học sinh) only get the same lesson subset
+  // a guest gets — the student lesson-viewer page (not the guest one) still
+  // renders it, but only if it's actually reachable, same restriction
+  // requireCourseLessonAccess enforces on direct URL access.
   const firstLesson = await prisma.courseLesson.findFirst({
     where: accessLevel === "trial" ? { courseId, visibleToGuest: true } : { courseId },
     orderBy: [{ order: "asc" }, { createdAt: "asc" }],
