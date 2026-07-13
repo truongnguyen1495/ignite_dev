@@ -9,7 +9,7 @@ import {
   MessageCircle,
   ShieldCheck,
   Home,
-  Receipt,
+  ShoppingCart,
 } from "lucide-react";
 import { requireActiveStudent, isChatEnabled, isSalesEnabled, getAdminPermissions } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
@@ -69,7 +69,7 @@ export default async function DashboardLayout({
       { href: "/dashboard/courses", label: "Khóa học độc quyền", icon: <Video className="h-4 w-4" /> },
       { href: "/dashboard/library", label: "Thư viện", icon: <Library className="h-4 w-4" /> },
       ...(salesEnabled
-        ? [{ href: "/dashboard/orders", label: "Đơn hàng của tôi", icon: <Receipt className="h-4 w-4" /> }]
+        ? [{ href: "/dashboard/orders", label: "Đơn hàng của tôi", icon: <ShoppingCart className="h-4 w-4" /> }]
         : []),
       {
         href: "/dashboard/level-up",
@@ -122,7 +122,7 @@ export default async function DashboardLayout({
     { href: "/dashboard/courses", label: "Khóa học độc quyền", icon: <Video className={iconClass} /> },
     { href: "/dashboard/library", label: "Thư viện", icon: <Library className={iconClass} /> },
     ...(salesEnabled
-      ? [{ href: "/dashboard/orders", label: "Đơn hàng của tôi", icon: <Receipt className={iconClass} /> }]
+      ? [{ href: "/dashboard/orders", label: "Đơn hàng của tôi", icon: <ShoppingCart className={iconClass} /> }]
       : []),
     {
       href: "/dashboard/announcements",
