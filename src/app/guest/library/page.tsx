@@ -14,10 +14,19 @@ const BANNER_GRADIENTS = [
 ];
 
 export default async function GuestLibraryPage() {
-  // Guests only ever see items with a generated preview to actually read.
-  // visibleToStudents doubles as a master hide switch, same as announcements.
+  // Guests only ever see items with actual trial content to read — format-
+  // aware, same rule as requireGuestLibraryItemAccess (src/lib/access.ts):
+  // PDF needs a generated previewFilePath, INTERACTIVE just needs
+  // guestPreviewPages set (it has no PDF to slice a preview from).
   const items = await prisma.libraryItem.findMany({
-    where: { visibleToGuest: true, previewFilePath: { not: null }, visibleToStudents: true },
+    where: {
+      visibleToGuest: true,
+      visibleToStudents: true,
+      OR: [
+        { format: "PDF", previewFilePath: { not: null } },
+        { format: "INTERACTIVE", guestPreviewPages: { gt: 0 } },
+      ],
+    },
     orderBy: [{ order: "asc" }, { createdAt: "desc" }],
   });
 

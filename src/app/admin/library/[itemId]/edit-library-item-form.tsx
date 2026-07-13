@@ -48,6 +48,7 @@ export function EditLibraryItemForm({
   const [error, formAction, pending] = useActionState(updateLibraryItemAction, undefined);
   const [isDirty, setIsDirty] = useState(false);
   const [isFree, setIsFree] = useState(initialIsFree);
+  const [coverUploading, setCoverUploading] = useState(false);
   const wasPending = useRef(false);
 
   useEffect(() => {
@@ -89,6 +90,7 @@ export function EditLibraryItemForm({
             alt="Ảnh bìa sách/tài liệu"
             defaultValue={coverImageUrl ?? ""}
             onChange={() => setIsDirty(true)}
+            onUploadingChange={setCoverUploading}
           />
           {format === "PDF" ? (
             <LibraryFileInput
@@ -169,10 +171,10 @@ export function EditLibraryItemForm({
             <Button
               type="submit"
               variant={isDirty ? "primary" : "secondary"}
-              disabled={pending || !isDirty}
+              disabled={pending || !isDirty || coverUploading}
               isLoading={pending}
             >
-              {pending ? "Đang lưu..." : isDirty ? "Lưu thay đổi" : "Đã lưu"}
+              {pending ? "Đang lưu..." : coverUploading ? "Đang tải ảnh..." : isDirty ? "Lưu thay đổi" : "Đã lưu"}
             </Button>
           </div>
         </form>

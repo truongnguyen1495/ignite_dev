@@ -19,6 +19,7 @@ export function CreateLibraryItemForm({
   const [visibleToGuest, setVisibleToGuest] = useState(false);
   const [pageCount, setPageCount] = useState<number | null>(null);
   const [format, setFormat] = useState<"PDF" | "INTERACTIVE">("PDF");
+  const [coverUploading, setCoverUploading] = useState(false);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -29,7 +30,7 @@ export function CreateLibraryItemForm({
         <option value="DOCUMENT">Tài liệu</option>
       </Select>
       <Textarea id="description" name="description" rows={3} label="Mô tả (tùy chọn)" />
-      <CoverImageInput alt="Ảnh bìa sách/tài liệu" />
+      <CoverImageInput alt="Ảnh bìa sách/tài liệu" onUploadingChange={setCoverUploading} />
 
       <div className="space-y-1.5">
         <p className="text-sm font-medium text-foreground">Nguồn nội dung</p>
@@ -167,8 +168,14 @@ export function CreateLibraryItemForm({
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
-      <Button type="submit" disabled={pending} isLoading={pending}>
-        {pending ? "Đang tạo..." : format === "INTERACTIVE" ? "Tạo và mở trình soạn thảo" : "Tạo mục thư viện"}
+      <Button type="submit" disabled={pending || coverUploading} isLoading={pending}>
+        {pending
+          ? "Đang tạo..."
+          : coverUploading
+            ? "Đang tải ảnh..."
+            : format === "INTERACTIVE"
+              ? "Tạo và mở trình soạn thảo"
+              : "Tạo mục thư viện"}
       </Button>
     </form>
   );

@@ -35,12 +35,18 @@ export function CoverImageInput({
   alt = "Ảnh bìa",
   defaultValue = "",
   onChange,
+  onUploadingChange,
 }: {
   name?: string;
   label?: string;
   alt?: string;
   defaultValue?: string;
   onChange?: () => void;
+  // Lets the enclosing form disable its submit button while an upload is in
+  // flight — without it, an admin who hits Save right after picking a file
+  // submits before the hidden input's value actually updates, silently
+  // saving the old (often empty) cover URL instead of the new one.
+  onUploadingChange?: (uploading: boolean) => void;
 }) {
   const [url, setUrl] = useState(defaultValue);
   const [uploading, setUploading] = useState(false);
@@ -64,6 +70,7 @@ export function CoverImageInput({
     }
 
     setUploading(true);
+    onUploadingChange?.(true);
     setError(null);
     setWarning(null);
     const isCorrectRatio = await checkAspectRatio(file);
@@ -84,6 +91,7 @@ export function CoverImageInput({
       setError(err instanceof Error ? err.message : "Tải ảnh lên thất bại.");
     } finally {
       setUploading(false);
+      onUploadingChange?.(false);
     }
   }
 
