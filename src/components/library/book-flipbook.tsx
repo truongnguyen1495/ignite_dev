@@ -7,6 +7,7 @@ import type { BookPageData } from "@/lib/library-book-elements";
 import { BookPage } from "./book-page";
 import { FLIPBOOK_DEFAULTS } from "./flipbook-defaults";
 import { useFlipbookPageWidth } from "./use-flipbook-page-width";
+import { FlipbookFrame } from "./flipbook-frame";
 
 type PagesResponse = {
   pages: BookPageData[];
@@ -62,30 +63,32 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <div ref={containerRef} className="flex w-full max-w-full justify-center overflow-x-auto">
-        <HTMLFlipBook
-          {...FLIPBOOK_DEFAULTS}
-          key={pageWidth}
-          ref={flipRef}
-          startPage={currentPage}
-          width={pageWidth}
-          height={height}
-          size="fixed"
-          // Required by IProps but irrelevant in "fixed" mode — page-flip's
-          // validateSettings overwrites all four to width/height anyway.
-          minWidth={pageWidth}
-          maxWidth={pageWidth}
-          minHeight={height}
-          maxHeight={height}
-          showCover={false}
-          maxShadowOpacity={0.5}
-          className="shadow-lg"
-          onFlip={(e: { data: number }) => setCurrentPage(e.data)}
-        >
-          {pages.map((page, i) => (
-            <BookPage key={i} page={page} bookWidth={bookWidth} bookHeight={bookHeight} isActive={i === currentPage} />
-          ))}
-        </HTMLFlipBook>
+      <div ref={containerRef} className="flex w-full max-w-full justify-center overflow-x-auto px-4">
+        <FlipbookFrame width={pageWidth} height={height} currentPage={currentPage} totalPages={pages.length}>
+          <HTMLFlipBook
+            {...FLIPBOOK_DEFAULTS}
+            key={pageWidth}
+            ref={flipRef}
+            startPage={currentPage}
+            width={pageWidth}
+            height={height}
+            size="fixed"
+            // Required by IProps but irrelevant in "fixed" mode — page-flip's
+            // validateSettings overwrites all four to width/height anyway.
+            minWidth={pageWidth}
+            maxWidth={pageWidth}
+            minHeight={height}
+            maxHeight={height}
+            showCover={false}
+            maxShadowOpacity={0.5}
+            className="shadow-lg rounded-md flipbook-page-curve"
+            onFlip={(e: { data: number }) => setCurrentPage(e.data)}
+          >
+            {pages.map((page, i) => (
+              <BookPage key={i} page={page} bookWidth={bookWidth} bookHeight={bookHeight} isActive={i === currentPage} />
+            ))}
+          </HTMLFlipBook>
+        </FlipbookFrame>
       </div>
 
       <div className="flex items-center gap-4 text-sm text-muted">
