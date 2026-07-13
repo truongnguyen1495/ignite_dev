@@ -57,55 +57,59 @@ export default async function EditLibraryItemPage({
         featuredOnHome={item.featuredOnHome}
       />
 
-      <Card padding="lg" className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">
-          Học viên được cấp quyền ({item.grants.length})
-        </h2>
-        {item.grants.length === 0 ? (
-          <p className="text-sm text-muted">Chưa cấp quyền cho học viên nào.</p>
-        ) : (
-          <ul className="space-y-2">
-            {item.grants.map((grant) => (
-              <li
-                key={grant.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background p-3 text-sm"
-              >
-                <div>
-                  <p className="text-foreground">{grant.student.name}</p>
-                  <p className="text-muted">{grant.student.email}</p>
-                </div>
-                <RevokeAccessButton grantId={grant.id} libraryItemId={item.id} />
-              </li>
-            ))}
-          </ul>
-        )}
+      <Card padding="lg" className="space-y-5">
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-foreground">
+            Học viên được cấp quyền ({item.grants.length})
+          </h2>
+          {item.grants.length === 0 ? (
+            <p className="text-sm text-muted">Chưa cấp quyền cho học viên nào.</p>
+          ) : (
+            <ul className="space-y-2">
+              {item.grants.map((grant) => (
+                <li
+                  key={grant.id}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background p-3 text-sm"
+                >
+                  <div>
+                    <p className="text-foreground">{grant.student.name}</p>
+                    <p className="text-muted">{grant.student.email}</p>
+                  </div>
+                  <RevokeAccessButton grantId={grant.id} libraryItemId={item.id} />
+                </li>
+              ))}
+            </ul>
+          )}
 
-        {ungrantedStudents.length > 0 && (
-          <GrantAccessForm libraryItemId={item.id} students={ungrantedStudents} />
-        )}
-      </Card>
+          {ungrantedStudents.length > 0 && (
+            <GrantAccessForm libraryItemId={item.id} students={ungrantedStudents} />
+          )}
+        </div>
 
-      <Card padding="lg" className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">Cấp quyền theo cấp</h2>
-        <p className="text-xs text-muted">
-          Học viên đủ cấp — kể cả lên cấp sau này — sẽ tự động xem được mục này, không cần cấp lại thủ công.
-        </p>
-        {item.levelGrants.length === 0 ? (
-          <p className="text-sm text-muted">Chưa có luật cấp nào.</p>
-        ) : (
-          <ul className="flex flex-wrap gap-2">
-            {item.levelGrants.map((levelGrant) => (
-              <li
-                key={levelGrant.id}
-                className="flex items-center gap-1.5 rounded-full bg-primary/10 py-1 pl-3 pr-1.5 text-sm text-primary"
-              >
-                {LEVEL_LABELS[levelGrant.minLevel]} trở lên
-                <RevokeLevelAccessButton grantId={levelGrant.id} libraryItemId={item.id} />
-              </li>
-            ))}
-          </ul>
-        )}
-        <GrantLevelAccessForm libraryItemId={item.id} />
+        <hr className="border-border" />
+
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-foreground">Cấp quyền theo cấp</h2>
+          <p className="text-xs text-muted">
+            Học viên đủ cấp — kể cả lên cấp sau này — sẽ tự động xem được mục này, không cần cấp lại thủ công.
+          </p>
+          {item.levelGrants.length === 0 ? (
+            <p className="text-sm text-muted">Chưa có luật cấp nào.</p>
+          ) : (
+            <ul className="flex flex-wrap gap-2">
+              {item.levelGrants.map((levelGrant) => (
+                <li
+                  key={levelGrant.id}
+                  className="flex items-center gap-1.5 rounded-full bg-primary/10 py-1 pl-3 pr-1.5 text-sm text-primary"
+                >
+                  {LEVEL_LABELS[levelGrant.minLevel]} trở lên
+                  <RevokeLevelAccessButton grantId={levelGrant.id} libraryItemId={item.id} />
+                </li>
+              ))}
+            </ul>
+          )}
+          <GrantLevelAccessForm libraryItemId={item.id} />
+        </div>
       </Card>
 
       <Card padding="lg" className="space-y-3">
