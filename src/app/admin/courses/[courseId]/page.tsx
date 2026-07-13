@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireAdminPermission } from "@/lib/access";
+import { requireAdminPermission, isSalesEnabled } from "@/lib/access";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { EditCourseForm } from "./edit-course-form";
 import { DeleteCourseButton } from "./delete-course-button";
@@ -21,6 +21,7 @@ export default async function EditCoursePage({
 }) {
   await requireAdminPermission("MANAGE_COURSES");
   const { courseId } = await params;
+  const salesEnabled = await isSalesEnabled();
 
   const course = await prisma.course.findUnique({
     where: { id: courseId },
@@ -58,6 +59,7 @@ export default async function EditCoursePage({
         coverImageUrl={course.coverImageUrl}
         order={course.order}
         price={course.price}
+        salesEnabled={salesEnabled}
         visibleToGuest={course.visibleToGuest}
         featuredOnHome={course.featuredOnHome}
       />

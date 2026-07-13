@@ -7,7 +7,7 @@ import { LibraryFileInput } from "../library-file-input";
 import { Input, Select, Textarea } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 
-export function CreateLibraryItemForm() {
+export function CreateLibraryItemForm({ salesEnabled }: { salesEnabled: boolean }) {
   const [error, formAction, pending] = useActionState(createLibraryItemAction, undefined);
   const [visibleToGuest, setVisibleToGuest] = useState(false);
   const [pageCount, setPageCount] = useState<number | null>(null);
@@ -24,16 +24,18 @@ export function CreateLibraryItemForm() {
       <CoverImageInput alt="Ảnh bìa sách/tài liệu" />
       <LibraryFileInput onChange={({ pageCount }) => setPageCount(pageCount)} />
       <Input id="order" name="order" type="number" defaultValue={0} label="Thứ tự hiển thị" />
-      <Input
-        id="price"
-        name="price"
-        type="number"
-        min={0}
-        step={1000}
-        defaultValue={0}
-        label="Giá bán (VNĐ)"
-        hint="0 = không bán, chỉ cấp quyền thủ công như trước giờ."
-      />
+      {salesEnabled && (
+        <Input
+          id="price"
+          name="price"
+          type="number"
+          min={0}
+          step={1000}
+          defaultValue={0}
+          label="Giá bán (VNĐ)"
+          hint="0 = không bán, chỉ cấp quyền thủ công như trước giờ."
+        />
+      )}
 
       <label className="flex items-center gap-2 text-sm text-foreground">
         <input

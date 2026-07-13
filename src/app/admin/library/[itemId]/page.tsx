@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireAdminPermission } from "@/lib/access";
+import { requireAdminPermission, isSalesEnabled } from "@/lib/access";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { EditLibraryItemForm } from "./edit-library-item-form";
 import { DeleteLibraryItemButton } from "./delete-library-item-button";
@@ -19,6 +19,7 @@ export default async function EditLibraryItemPage({
 }) {
   await requireAdminPermission("MANAGE_LIBRARY");
   const { itemId } = await params;
+  const salesEnabled = await isSalesEnabled();
 
   const item = await prisma.libraryItem.findUnique({
     where: { id: itemId },
@@ -51,6 +52,7 @@ export default async function EditLibraryItemPage({
         guestPreviewPages={item.guestPreviewPages}
         order={item.order}
         price={item.price}
+        salesEnabled={salesEnabled}
         visibleToGuest={item.visibleToGuest}
         featuredOnHome={item.featuredOnHome}
       />

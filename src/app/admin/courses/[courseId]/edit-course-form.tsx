@@ -15,6 +15,7 @@ export function EditCourseForm({
   coverImageUrl,
   order,
   price,
+  salesEnabled,
   visibleToGuest,
   featuredOnHome,
 }: {
@@ -24,6 +25,7 @@ export function EditCourseForm({
   coverImageUrl: string | null;
   order: number;
   price: number;
+  salesEnabled: boolean;
   visibleToGuest: boolean;
   featuredOnHome: boolean;
 }) {
@@ -78,16 +80,22 @@ export function EditCourseForm({
             onChange={() => setIsDirty(true)}
           />
           <Input id="order" name="order" type="number" defaultValue={order} label="Thứ tự hiển thị" />
-          <Input
-            id="price"
-            name="price"
-            type="number"
-            min={0}
-            step={1000}
-            defaultValue={price}
-            label="Giá bán (VNĐ)"
-            hint="0 = không bán, chỉ cấp quyền thủ công như trước giờ."
-          />
+          {salesEnabled ? (
+            <Input
+              id="price"
+              name="price"
+              type="number"
+              min={0}
+              step={1000}
+              defaultValue={price}
+              label="Giá bán (VNĐ)"
+              hint="0 = không bán, chỉ cấp quyền thủ công như trước giờ."
+            />
+          ) : (
+            // Tính năng bán hàng đang tắt — ẩn ô nhập giá nhưng vẫn gửi kèm
+            // giá trị hiện tại để lưu không vô tình reset giá về 0.
+            <input type="hidden" name="price" defaultValue={price} />
+          )}
           <label className="flex items-center gap-2 text-sm text-foreground">
             <input
               type="checkbox"
