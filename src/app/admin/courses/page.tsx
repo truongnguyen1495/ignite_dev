@@ -34,6 +34,7 @@ export default async function CoursesPage() {
     levelGrants: course.levelGrants.map((lg) => lg.minLevel),
     hiddenFromGuest: course.hiddenFromGuest,
     guestTrialLessonsCount: course.lessons.length,
+    isFree: course.isFree,
     gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
   }));
 

@@ -26,6 +26,7 @@ export default async function LibraryPage() {
     levelGrants: item.levelGrants.map((lg) => lg.minLevel),
     visibleToGuest: item.visibleToGuest,
     visibleToStudents: item.visibleToStudents,
+    isFree: item.isFree,
   }));
 
   return (

@@ -62,6 +62,8 @@ export default async function EditLibraryItemPage({
         pageCount={item.pageCount}
         order={item.order}
         price={item.price}
+        salePrice={item.salePrice}
+        isFree={item.isFree}
         salesEnabled={salesEnabled}
       />
 
@@ -74,6 +76,18 @@ export default async function EditLibraryItemPage({
         featuredOnHome={item.featuredOnHome}
       />
 
+      {item.isFree && (
+        <Card padding="lg" className="space-y-1">
+          <h2 className="text-sm font-semibold text-foreground">Mục này đang miễn phí</h2>
+          <p className="text-xs text-muted">
+            Mọi học viên &amp; học sinh (kể cả đăng ký sau này) tự động có toàn quyền xem, nên các phần cấp
+            quyền riêng bên dưới đang tạm ẩn. Bỏ tick &ldquo;Miễn phí&rdquo; ở form phía trên để dùng lại.
+          </p>
+        </Card>
+      )}
+
+      {!item.isFree && (
+      <>
       <Card padding="lg" className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">
           Học sinh được cấp quyền ({hocSinhGrants.length})
@@ -166,6 +180,8 @@ export default async function EditLibraryItemPage({
           <GrantLevelAccessForm libraryItemId={item.id} />
         </div>
       </Card>
+      </>
+      )}
 
       <Card padding="lg" className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">Khu vực nguy hiểm</h2>

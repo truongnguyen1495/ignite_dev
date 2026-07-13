@@ -51,12 +51,15 @@ export default async function StudentLibraryPage({
     type: item.type,
     coverImageUrl: item.coverImageUrl,
     unlocked:
+      item.isFree ||
       grantedItemIds.has(item.id) ||
       (isHocSinh ? item.openToProspectiveStudents : levelUnlockedItemIds.has(item.id)),
     pageCount: item.pageCount,
     href: `/dashboard/library/${item.id}`,
     gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
     price: item.price,
+    salePrice: item.salePrice,
+    isFree: item.isFree,
     salesEnabled,
   }));
 

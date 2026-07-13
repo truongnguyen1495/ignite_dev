@@ -319,6 +319,17 @@ model Course {
   // VND, 0 = "không bán" (khóa học vẫn hoạt động như cũ, chỉ cấp qua
   // grant/level-rule như trước giờ) — xem OrderItem cho snapshot giá lúc mua.
   price                     Int      @default(0)
+  // Optional discounted price, must be < price when set — the actual amount
+  // charged at checkout (see getPricing in src/lib/pricing.ts). Null = no
+  // discount, full price applies. Irrelevant when isFree is true.
+  salePrice                 Int?
+  // Master "free for everyone" switch — distinct from price = 0 ("không
+  // bán", still admin-grant-only). True grants every student (học viên +
+  // học sinh, including future ones) full access outright, no order/
+  // checkout involved — checked first in getCourseAccessLevel
+  // (src/lib/access.ts). Does not affect guest access, which stays governed
+  // by hiddenFromGuest/CourseLesson.visibleToGuest independently.
+  isFree                    Boolean  @default(false)
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 
@@ -427,6 +438,10 @@ model LibraryItem {
   openToProspectiveStudents Boolean @default(false)
   // VND, 0 = "không bán", same convention as Course.price.
   price             Int             @default(0)
+  // Optional discounted price, same convention as Course.salePrice.
+  salePrice         Int?
+  // Master "free for everyone" switch, same convention as Course.isFree.
+  isFree            Boolean         @default(false)
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 

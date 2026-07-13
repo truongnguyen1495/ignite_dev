@@ -54,7 +54,7 @@ export default async function StudentCoursesPage() {
 
   const items: StudentCourseItem[] = courses.map((course, index) => {
     let accessLevel: CourseAccessLevel;
-    if (grantedCourseIds.has(course.id)) {
+    if (course.isFree || grantedCourseIds.has(course.id)) {
       accessLevel = "full";
     } else if (isHocSinh) {
       accessLevel = course.openToProspectiveStudents ? "full" : !course.hiddenFromGuest ? "trial" : "none";
@@ -83,6 +83,8 @@ export default async function StudentCoursesPage() {
       href,
       gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
       price: course.price,
+      salePrice: course.salePrice,
+      isFree: course.isFree,
       salesEnabled,
     };
   });

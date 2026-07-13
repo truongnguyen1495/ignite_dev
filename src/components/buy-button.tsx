@@ -7,7 +7,17 @@ import type { OrderItemKind } from "@prisma/client";
 import { createOrderAction } from "@/app/dashboard/orders/actions";
 import { formatVND } from "@/lib/currency";
 
-export function BuyButton({ kind, itemId, price }: { kind: OrderItemKind; itemId: string; price: number }) {
+export function BuyButton({
+  kind,
+  itemId,
+  price,
+  originalPrice,
+}: {
+  kind: OrderItemKind;
+  itemId: string;
+  price: number;
+  originalPrice?: number | null;
+}) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | undefined>();
   const router = useRouter();
@@ -35,7 +45,17 @@ export function BuyButton({ kind, itemId, price }: { kind: OrderItemKind; itemId
         className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
       >
         <ShoppingCart className="h-3.5 w-3.5" />
-        {pending ? "Đang xử lý..." : `Mua ngay · ${formatVND(price)}`}
+        {pending ? (
+          "Đang xử lý..."
+        ) : (
+          <span className="flex items-baseline gap-1">
+            Mua ngay ·
+            {originalPrice != null && (
+              <span className="text-[10px] line-through opacity-70">{formatVND(originalPrice)}</span>
+            )}
+            {formatVND(price)}
+          </span>
+        )}
       </button>
       {error && <p className="text-xs text-danger">{error}</p>}
     </div>

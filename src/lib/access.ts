@@ -266,9 +266,13 @@ export async function getCourseAccessLevel(student: User, courseId: string): Pro
     prisma.courseLevelGrant.findMany({ where: { courseId } }),
     prisma.course.findUnique({
       where: { id: courseId },
-      select: { openToProspectiveStudents: true, hiddenFromGuest: true },
+      select: { openToProspectiveStudents: true, hiddenFromGuest: true, isFree: true },
     }),
   ]);
+  // isFree is a blanket "everyone gets full access" switch, checked before
+  // any grant/level logic — distinct from price = 0 ("không bán", still
+  // admin-grant-only).
+  if (course?.isFree) return "full";
   if (grant) return "full";
   if (student.grantedLevel === null) {
     if (course?.openToProspectiveStudents) return "full";
@@ -316,8 +320,14 @@ export async function studentHasLibraryItemAccess(student: User, libraryItemId: 
       where: { studentId_libraryItemId: { studentId: student.id, libraryItemId } },
     }),
     prisma.libraryLevelGrant.findMany({ where: { libraryItemId } }),
-    prisma.libraryItem.findUnique({ where: { id: libraryItemId }, select: { openToProspectiveStudents: true } }),
+    prisma.libraryItem.findUnique({
+      where: { id: libraryItemId },
+      select: { openToProspectiveStudents: true, isFree: true },
+    }),
   ]);
+  // isFree is a blanket "everyone gets full access" switch, same convention
+  // as Course.isFree — checked before any grant/level logic.
+  if (libraryItem?.isFree) return true;
   if (grant) return true;
   // "Học sinh" (grantedLevel null) never match levelGrants (Level-typed) —
   // same rule as Course.openToProspectiveStudents, see getCourseAccessLevel.

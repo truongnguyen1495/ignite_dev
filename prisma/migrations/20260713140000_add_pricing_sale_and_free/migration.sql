@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "Course" ADD COLUMN "salePrice" INTEGER,
+ADD COLUMN "isFree" BOOLEAN NOT NULL DEFAULT false;
+
+-- AlterTable
+ALTER TABLE "LibraryItem" ADD COLUMN "salePrice" INTEGER,
+ADD COLUMN "isFree" BOOLEAN NOT NULL DEFAULT false;

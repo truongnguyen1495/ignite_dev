@@ -20,6 +20,7 @@ export type AdminCourseItem = {
   levelGrants: Level[];
   hiddenFromGuest: boolean;
   guestTrialLessonsCount: number;
+  isFree: boolean;
   gradient: string;
 };
 
@@ -46,6 +47,7 @@ function AccessBadges({ course }: { course: AdminCourseItem }) {
   const hasAnyGrant = hasGuestTrial || course.levelGrants.length > 0 || course.grantsCount > 0;
   return (
     <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+      {course.isFree && <Badge color="success">Miễn phí</Badge>}
       {course.hiddenFromGuest && <Badge color="muted">Ẩn khỏi khách</Badge>}
       {hasGuestTrial && <Badge color="info">Có bài học thử</Badge>}
       {course.levelGrants.map((level) => (

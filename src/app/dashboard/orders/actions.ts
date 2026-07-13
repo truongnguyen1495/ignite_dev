@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { OrderItemKind } from "@prisma/client";
 import { requireActiveStudent, isSalesEnabled, getCourseAccessLevel, studentHasLibraryItemAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
+import { getPricing } from "@/lib/pricing";
 
 export type CreateOrderResult = { error?: string; orderId?: string };
 
@@ -20,7 +21,8 @@ export async function createOrderAction(kind: OrderItemKind, itemId: string): Pr
 
   if (kind === "COURSE") {
     const course = await prisma.course.findUnique({ where: { id: itemId } });
-    if (!course || course.price <= 0) {
+    const coursePricing = course && getPricing(course);
+    if (!course || !coursePricing?.forSale) {
       return { error: "Khóa học này không bán." };
     }
     const accessLevel = await getCourseAccessLevel(student, itemId);
@@ -36,13 +38,13 @@ export async function createOrderAction(kind: OrderItemKind, itemId: string): Pr
     const order = await prisma.order.create({
       data: {
         studentId: student.id,
-        totalAmount: course.price,
+        totalAmount: coursePricing.chargeAmount,
         items: {
           create: {
             kind: "COURSE",
             courseId: itemId,
             titleSnapshot: course.title,
-            priceAtPurchase: course.price,
+            priceAtPurchase: coursePricing.chargeAmount,
           },
         },
       },
@@ -52,7 +54,8 @@ export async function createOrderAction(kind: OrderItemKind, itemId: string): Pr
   }
 
   const item = await prisma.libraryItem.findUnique({ where: { id: itemId } });
-  if (!item || item.price <= 0) {
+  const itemPricing = item && getPricing(item);
+  if (!item || !itemPricing?.forSale) {
     return { error: "Tài liệu này không bán." };
   }
   if (await studentHasLibraryItemAccess(student, itemId)) {
@@ -67,13 +70,13 @@ export async function createOrderAction(kind: OrderItemKind, itemId: string): Pr
   const order = await prisma.order.create({
     data: {
       studentId: student.id,
-      totalAmount: item.price,
+      totalAmount: itemPricing.chargeAmount,
       items: {
         create: {
           kind: "LIBRARY_ITEM",
           libraryItemId: itemId,
           titleSnapshot: item.title,
-          priceAtPurchase: item.price,
+          priceAtPurchase: itemPricing.chargeAmount,
         },
       },
     },

@@ -14,7 +14,27 @@ const courseSchema = z.object({
   coverImageUrl: z.string().trim().optional(),
   order: z.coerce.number().int().default(0),
   price: z.coerce.number().int().min(0, "Giá không được âm.").default(0),
+  salePrice: z.coerce.number().int().min(0, "Giá khuyến mãi không được âm.").optional(),
 });
+
+// isFree/salePrice aren't part of the zod schema above (isFree is a plain
+// checkbox, salePrice's validity depends on isFree) — validated here so
+// both create/update share the same rule: a sale price only makes sense
+// against a real giá gốc, and must actually be cheaper than it.
+function resolvePricingFields(
+  formData: FormData,
+  price: number,
+  salePrice: number | undefined
+): { isFree: boolean; salePrice: number | null } | string {
+  const isFree = formData.get("isFree") === "on";
+  if (isFree || !salePrice) {
+    return { isFree, salePrice: null };
+  }
+  if (salePrice >= price) {
+    return "Giá khuyến mãi phải nhỏ hơn giá gốc.";
+  }
+  return { isFree, salePrice };
+}
 
 export async function createCourseAction(
   _prevState: string | undefined,
@@ -28,9 +48,15 @@ export async function createCourseAction(
     coverImageUrl: formData.get("coverImageUrl") || undefined,
     order: formData.get("order") || 0,
     price: formData.get("price") || 0,
+    salePrice: formData.get("salePrice") || undefined,
   });
   if (!parsed.success) {
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
+  }
+
+  const pricing = resolvePricingFields(formData, parsed.data.price, parsed.data.salePrice);
+  if (typeof pricing === "string") {
+    return pricing;
   }
 
   const course = await prisma.course.create({
@@ -40,6 +66,8 @@ export async function createCourseAction(
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       order: parsed.data.order,
       price: parsed.data.price,
+      salePrice: pricing.salePrice,
+      isFree: pricing.isFree,
       hiddenFromGuest: formData.get("hiddenFromGuest") === "on",
       featuredOnHome: formData.get("featuredOnHome") === "on",
     },
@@ -66,12 +94,18 @@ export async function updateCourseAction(
     coverImageUrl: formData.get("coverImageUrl") || undefined,
     order: formData.get("order") || 0,
     price: formData.get("price") || 0,
+    salePrice: formData.get("salePrice") || undefined,
   });
   if (!parsed.success) {
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
   }
 
   const { courseId } = parsed.data;
+
+  const pricing = resolvePricingFields(formData, parsed.data.price, parsed.data.salePrice);
+  if (typeof pricing === "string") {
+    return pricing;
+  }
 
   await prisma.course.update({
     where: { id: courseId },
@@ -81,6 +115,8 @@ export async function updateCourseAction(
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       order: parsed.data.order,
       price: parsed.data.price,
+      salePrice: pricing.salePrice,
+      isFree: pricing.isFree,
     },
   });
 

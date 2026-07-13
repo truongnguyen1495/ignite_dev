@@ -22,7 +22,24 @@ const libraryItemSchema = z.object({
   guestPreviewPages: z.coerce.number().int().positive().optional(),
   order: z.coerce.number().int().default(0),
   price: z.coerce.number().int().min(0, "Giá không được âm.").default(0),
+  salePrice: z.coerce.number().int().min(0, "Giá khuyến mãi không được âm.").optional(),
 });
+
+// Same rule as resolvePricingFields in admin/courses/actions.ts.
+function resolvePricingFields(
+  formData: FormData,
+  price: number,
+  salePrice: number | undefined
+): { isFree: boolean; salePrice: number | null } | string {
+  const isFree = formData.get("isFree") === "on";
+  if (isFree || !salePrice) {
+    return { isFree, salePrice: null };
+  }
+  if (salePrice >= price) {
+    return "Giá khuyến mãi phải nhỏ hơn giá gốc.";
+  }
+  return { isFree, salePrice };
+}
 
 // Builds a standalone preview PDF (first `pages` pages of `filePath`) and
 // stores it as its own object, reusing the source's base name so repeated
@@ -52,9 +69,15 @@ export async function createLibraryItemAction(
     guestPreviewPages: formData.get("guestPreviewPages") || undefined,
     order: formData.get("order") || 0,
     price: formData.get("price") || 0,
+    salePrice: formData.get("salePrice") || undefined,
   });
   if (!parsed.success) {
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
+  }
+
+  const pricing = resolvePricingFields(formData, parsed.data.price, parsed.data.salePrice);
+  if (typeof pricing === "string") {
+    return pricing;
   }
 
   const visibleToGuest = formData.get("visibleToGuest") === "on";
@@ -76,6 +99,8 @@ export async function createLibraryItemAction(
       guestPreviewPages: parsed.data.guestPreviewPages ?? null,
       order: parsed.data.order,
       price: parsed.data.price,
+      salePrice: pricing.salePrice,
+      isFree: pricing.isFree,
       visibleToGuest,
       featuredOnHome: formData.get("featuredOnHome") === "on",
     },
@@ -107,12 +132,18 @@ export async function updateLibraryItemAction(
     guestPreviewPages: formData.get("guestPreviewPages") || undefined,
     order: formData.get("order") || 0,
     price: formData.get("price") || 0,
+    salePrice: formData.get("salePrice") || undefined,
   });
   if (!parsed.success) {
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
   }
 
   const { libraryItemId } = parsed.data;
+
+  const pricing = resolvePricingFields(formData, parsed.data.price, parsed.data.salePrice);
+  if (typeof pricing === "string") {
+    return pricing;
+  }
 
   // visibleToGuest/guestPreviewPages/featuredOnHome are edited from the
   // separate "Cấp quyền cho khách" form (setLibraryItemGuestAccessAction)
@@ -143,6 +174,8 @@ export async function updateLibraryItemAction(
       previewFilePath,
       order: parsed.data.order,
       price: parsed.data.price,
+      salePrice: pricing.salePrice,
+      isFree: pricing.isFree,
     },
   });
 

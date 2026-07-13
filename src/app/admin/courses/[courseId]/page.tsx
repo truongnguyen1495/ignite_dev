@@ -60,6 +60,8 @@ export default async function EditCoursePage({
         coverImageUrl={course.coverImageUrl}
         order={course.order}
         price={course.price}
+        salePrice={course.salePrice}
+        isFree={course.isFree}
         salesEnabled={salesEnabled}
       />
 
@@ -72,6 +74,18 @@ export default async function EditCoursePage({
         lessons={course.lessons}
       />
 
+      {course.isFree && (
+        <Card padding="lg" className="space-y-1">
+          <h2 className="text-sm font-semibold text-foreground">Khóa học đang miễn phí</h2>
+          <p className="text-xs text-muted">
+            Mọi học viên &amp; học sinh (kể cả đăng ký sau này) tự động có toàn quyền xem, nên các phần cấp
+            quyền riêng bên dưới đang tạm ẩn. Bỏ tick &ldquo;Miễn phí&rdquo; ở form phía trên để dùng lại.
+          </p>
+        </Card>
+      )}
+
+      {!course.isFree && (
+      <>
       <Card padding="lg" className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">
           Học sinh được cấp quyền ({hocSinhGrants.length})
@@ -174,6 +188,8 @@ export default async function EditCoursePage({
           <GrantLevelAccessForm courseId={course.id} />
         </div>
       </Card>
+      </>
+      )}
 
       <Card padding="lg" className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">Khu vực nguy hiểm</h2>

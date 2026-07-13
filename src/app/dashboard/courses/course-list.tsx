@@ -6,6 +6,7 @@ import { BookOpen, Lock, Video, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
 import { BuyButton } from "@/components/buy-button";
+import { getPricing } from "@/lib/pricing";
 import type { CourseAccessLevel } from "@/lib/access";
 
 const STORAGE_KEY = "student-courses-view";
@@ -22,11 +23,13 @@ export type StudentCourseItem = {
   href: string;
   gradient: string;
   price: number;
+  salePrice: number | null;
+  isFree: boolean;
   salesEnabled: boolean;
 };
 
-function AccessBadge({ accessLevel }: { accessLevel: CourseAccessLevel }) {
-  if (accessLevel === "full") return <Badge color="success">Đã mở khóa</Badge>;
+function AccessBadge({ accessLevel, isFree }: { accessLevel: CourseAccessLevel; isFree: boolean }) {
+  if (accessLevel === "full") return <Badge color="success">{isFree ? "Miễn phí" : "Đã mở khóa"}</Badge>;
   if (accessLevel === "trial") return <Badge color="warning">Học thử</Badge>;
   return <Badge color="faint">Chưa mở khóa</Badge>;
 }
@@ -95,7 +98,8 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {courses.map((course) => {
             const clickable = course.accessLevel !== "none";
-            const purchasable = !clickable && course.salesEnabled && course.price > 0;
+            const pricing = getPricing(course);
+            const purchasable = !clickable && course.salesEnabled && pricing.forSale;
             const card = (
               <div
                 className={`flex h-full flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors ${
@@ -111,7 +115,7 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                   )}
                 </div>
                 <div className="flex flex-1 flex-col p-5">
-                  <AccessBadge accessLevel={course.accessLevel} />
+                  <AccessBadge accessLevel={course.accessLevel} isFree={course.isFree} />
                   <p className="mt-3 font-semibold text-dark-foreground">{course.title}</p>
                   {course.description && (
                     <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{course.description}</p>
@@ -132,7 +136,15 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                         <ArrowRight className="h-3.5 w-3.5" />
                       </span>
                     ) : (
-                      purchasable && <BuyButton kind="COURSE" itemId={course.id} price={course.price} />
+                      purchasable &&
+                        pricing.forSale && (
+                          <BuyButton
+                            kind="COURSE"
+                            itemId={course.id}
+                            price={pricing.chargeAmount}
+                            originalPrice={pricing.originalPrice}
+                          />
+                        )
                     )}
                   </div>
                 </div>
@@ -153,7 +165,8 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
         <div className="space-y-3">
           {courses.map((course) => {
             const clickable = course.accessLevel !== "none";
-            const purchasable = !clickable && course.salesEnabled && course.price > 0;
+            const pricing = getPricing(course);
+            const purchasable = !clickable && course.salesEnabled && pricing.forSale;
             const row = (
               <div
                 className={`flex items-center gap-4 rounded-xl border border-dark-border bg-dark-surface p-3 transition-colors ${
@@ -170,7 +183,7 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <AccessBadge accessLevel={course.accessLevel} />
+                    <AccessBadge accessLevel={course.accessLevel} isFree={course.isFree} />
                     <p className="truncate font-semibold text-dark-foreground">{course.title}</p>
                   </div>
                   {course.description && (
@@ -187,7 +200,15 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                 {clickable ? (
                   <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />
                 ) : (
-                  purchasable && <BuyButton kind="COURSE" itemId={course.id} price={course.price} />
+                  purchasable &&
+                        pricing.forSale && (
+                          <BuyButton
+                            kind="COURSE"
+                            itemId={course.id}
+                            price={pricing.chargeAmount}
+                            originalPrice={pricing.originalPrice}
+                          />
+                        )
                 )}
               </div>
             );

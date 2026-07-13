@@ -7,6 +7,7 @@ import type { LibraryItemType } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
 import { BuyButton } from "@/components/buy-button";
+import { getPricing } from "@/lib/pricing";
 
 const STORAGE_KEY = "student-library-view";
 
@@ -18,10 +19,12 @@ export type StudentLibraryItem = {
   type: LibraryItemType;
   coverImageUrl: string | null;
   unlocked: boolean;
+  isFree: boolean;
   pageCount: number | null;
   href: string;
   gradient: string;
   price: number;
+  salePrice: number | null;
   salesEnabled: boolean;
 };
 
@@ -70,7 +73,8 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
       {mode === "grid" ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => {
-            const purchasable = !item.unlocked && item.salesEnabled && item.price > 0;
+            const pricing = getPricing(item);
+            const purchasable = !item.unlocked && item.salesEnabled && pricing.forSale;
             const card = (
               <div
                 className={`flex h-full flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors ${
@@ -87,7 +91,7 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
                 </div>
                 <div className="flex flex-1 flex-col p-5">
                   {item.unlocked ? (
-                    <Badge color="success">Đã mở khóa</Badge>
+                    <Badge color="success">{item.isFree ? "Miễn phí" : "Đã mở khóa"}</Badge>
                   ) : (
                     <Badge color="faint">Chưa mở khóa</Badge>
                   )}
@@ -106,7 +110,15 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
                         <ArrowRight className="h-3.5 w-3.5" />
                       </span>
                     ) : (
-                      purchasable && <BuyButton kind="LIBRARY_ITEM" itemId={item.id} price={item.price} />
+                      purchasable &&
+                        pricing.forSale && (
+                          <BuyButton
+                            kind="LIBRARY_ITEM"
+                            itemId={item.id}
+                            price={pricing.chargeAmount}
+                            originalPrice={pricing.originalPrice}
+                          />
+                        )
                     )}
                   </div>
                 </div>
@@ -126,7 +138,8 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
       ) : (
         <div className="space-y-3">
           {items.map((item) => {
-            const purchasable = !item.unlocked && item.salesEnabled && item.price > 0;
+            const pricing = getPricing(item);
+            const purchasable = !item.unlocked && item.salesEnabled && pricing.forSale;
             const row = (
               <div
                 className={`flex items-center gap-4 rounded-xl border border-dark-border bg-dark-surface p-3 transition-colors ${
@@ -158,7 +171,15 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
                 {item.unlocked ? (
                   <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />
                 ) : (
-                  purchasable && <BuyButton kind="LIBRARY_ITEM" itemId={item.id} price={item.price} />
+                  purchasable &&
+                        pricing.forSale && (
+                          <BuyButton
+                            kind="LIBRARY_ITEM"
+                            itemId={item.id}
+                            price={pricing.chargeAmount}
+                            originalPrice={pricing.originalPrice}
+                          />
+                        )
                 )}
               </div>
             );

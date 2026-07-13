@@ -24,6 +24,7 @@ export type LibraryListItem = {
   levelGrants: Level[];
   visibleToGuest: boolean;
   visibleToStudents: boolean;
+  isFree: boolean;
 };
 
 const TYPE_LABELS: Record<LibraryItemType, string> = {
@@ -59,6 +60,7 @@ function AccessBadges({ item }: { item: LibraryListItem }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       <Badge color={item.type === "BOOK" ? "primary" : "info"}>{TYPE_LABELS[item.type]}</Badge>
+      {item.isFree && <Badge color="success">Miễn phí</Badge>}
       {!item.visibleToStudents && <Badge color="warning">Đã ẩn</Badge>}
       {item.visibleToGuest && <Badge color="info">Công khai</Badge>}
       {item.levelGrants.map((level) => (
