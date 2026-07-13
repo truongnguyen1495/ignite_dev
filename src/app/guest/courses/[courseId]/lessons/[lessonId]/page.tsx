@@ -115,7 +115,10 @@ export default async function GuestCourseLessonPage({
                 if (!l.visibleToGuest) {
                   return (
                     <li key={l.id}>
-                      <div className="flex items-start gap-3 rounded-lg px-3 py-2.5 text-sm text-dark-muted/50">
+                      <Link
+                        href="/login"
+                        className="flex items-start gap-3 rounded-lg px-3 py-2.5 text-sm text-dark-muted/50 transition-colors hover:bg-dark-surface-raised hover:text-dark-muted"
+                      >
                         <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-dark-border">
                           <Lock className="h-2.5 w-2.5" />
                         </span>
@@ -125,7 +128,7 @@ export default async function GuestCourseLessonPage({
                             Cần đăng nhập để xem
                           </span>
                         </span>
-                      </div>
+                      </Link>
                     </li>
                   );
                 }
