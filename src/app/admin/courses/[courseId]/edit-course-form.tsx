@@ -16,7 +16,6 @@ export function EditCourseForm({
   order,
   price,
   salesEnabled,
-  featuredOnHome,
 }: {
   courseId: string;
   title: string;
@@ -25,7 +24,6 @@ export function EditCourseForm({
   order: number;
   price: number;
   salesEnabled: boolean;
-  featuredOnHome: boolean;
 }) {
   const [error, formAction, pending] = useActionState(updateCourseAction, undefined);
   const [isDirty, setIsDirty] = useState(false);
@@ -94,15 +92,6 @@ export function EditCourseForm({
             // giá trị hiện tại để lưu không vô tình reset giá về 0.
             <input type="hidden" name="price" defaultValue={price} />
           )}
-          <label className="flex items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              name="featuredOnHome"
-              defaultChecked={featuredOnHome}
-              className="h-4 w-4 accent-primary"
-            />
-            Hiện trong mục &quot;Khóa học nổi bật&quot; ở trang chủ khách
-          </label>
           {error && <p className="text-sm text-danger">{error}</p>}
         </form>
       </Card>

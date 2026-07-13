@@ -81,7 +81,6 @@ export async function updateCourseAction(
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       order: parsed.data.order,
       price: parsed.data.price,
-      featuredOnHome: formData.get("featuredOnHome") === "on",
     },
   });
 
@@ -215,12 +214,14 @@ export async function setCourseLessonGuestVisibilityAction(
   revalidatePath(`/admin/courses/${courseId}`);
 }
 
-// Backs the "Cấp quyền học thử cho khách" form on the course edit page: one
-// submit sets the course-level hide switch and replaces the full set of
-// trial lessons in a single transaction, rather than juggling per-lesson
-// toggles for a bulk change. Unchecking every lesson here doesn't hide the
-// course itself (that's hiddenFromGuest's job) — it just leaves the course
-// listed with nothing guests can actually open, i.e. effectively locked.
+// Backs the "Cấp quyền học thử cho khách" form on the course edit page — the
+// one place that groups every guest-facing setting for a course (hide
+// switch, "Khóa học nổi bật" home placement, and which lessons are trial).
+// Sets the course-level fields and replaces the full set of trial lessons in
+// a single transaction, rather than juggling per-lesson toggles for a bulk
+// change. Unchecking every lesson here doesn't hide the course itself
+// (that's hiddenFromGuest's job) — it just leaves the course listed with
+// nothing guests can actually open, i.e. effectively locked.
 export async function setCourseGuestAccessAction(
   _prevState: string | undefined,
   formData: FormData
@@ -232,10 +233,11 @@ export async function setCourseGuestAccessAction(
     return "Thiếu mã khóa học.";
   }
   const hiddenFromGuest = formData.get("hiddenFromGuest") === "on";
+  const featuredOnHome = formData.get("featuredOnHome") === "on";
   const trialLessonIds = formData.getAll("trialLessonIds").filter((v): v is string => typeof v === "string");
 
   await prisma.$transaction([
-    prisma.course.update({ where: { id: courseId }, data: { hiddenFromGuest } }),
+    prisma.course.update({ where: { id: courseId }, data: { hiddenFromGuest, featuredOnHome } }),
     prisma.courseLesson.updateMany({ where: { courseId }, data: { visibleToGuest: false } }),
     prisma.courseLesson.updateMany({
       where: { courseId, id: { in: trialLessonIds } },

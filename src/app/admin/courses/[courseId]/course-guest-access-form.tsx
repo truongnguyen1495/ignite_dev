@@ -14,10 +14,12 @@ type Lesson = {
 export function CourseGuestAccessForm({
   courseId,
   hiddenFromGuest,
+  featuredOnHome,
   lessons,
 }: {
   courseId: string;
   hiddenFromGuest: boolean;
+  featuredOnHome: boolean;
   lessons: Lesson[];
 }) {
   const [error, formAction, pending] = useActionState(setCourseGuestAccessAction, undefined);
@@ -56,6 +58,16 @@ export function CourseGuestAccessForm({
             className="h-4 w-4 accent-primary"
           />
           Không công khai cho khách (ẩn hoàn toàn khóa học này khỏi trang khách)
+        </label>
+
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <input
+            type="checkbox"
+            name="featuredOnHome"
+            defaultChecked={featuredOnHome}
+            className="h-4 w-4 accent-primary"
+          />
+          Hiện trong mục &quot;Khóa học nổi bật&quot; ở trang chủ khách
         </label>
 
         {lessons.length === 0 ? (

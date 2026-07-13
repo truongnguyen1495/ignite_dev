@@ -61,7 +61,6 @@ export default async function EditCoursePage({
         order={course.order}
         price={course.price}
         salesEnabled={salesEnabled}
-        featuredOnHome={course.featuredOnHome}
       />
 
       <CourseLessonsSection courseId={course.id} lessons={course.lessons} />
@@ -69,6 +68,7 @@ export default async function EditCoursePage({
       <CourseGuestAccessForm
         courseId={course.id}
         hiddenFromGuest={course.hiddenFromGuest}
+        featuredOnHome={course.featuredOnHome}
         lessons={course.lessons}
       />
 
