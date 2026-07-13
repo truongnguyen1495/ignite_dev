@@ -142,7 +142,18 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                     {purchasable && (
                       <div className="flex items-center justify-between gap-3 border-t border-dark-border pt-3">
                         <PriceBlock price={pricing.chargeAmount} originalPrice={pricing.originalPrice} />
-                        <BuyButton kind="COURSE" itemId={course.id} />
+                        <BuyButton
+                          kind="COURSE"
+                          itemId={course.id}
+                          details={{
+                            title: course.title,
+                            description: course.description,
+                            coverImageUrl: course.coverImageUrl,
+                            meta: `${course.totalLessons} bài học`,
+                            price: pricing.chargeAmount,
+                            originalPrice: pricing.originalPrice,
+                          }}
+                        />
                       </div>
                     )}
                   </div>
@@ -200,7 +211,18 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                   {purchasable && (
                     <>
                       <PriceBlock price={pricing.chargeAmount} originalPrice={pricing.originalPrice} />
-                      <BuyButton kind="COURSE" itemId={course.id} />
+                      <BuyButton
+                        kind="COURSE"
+                        itemId={course.id}
+                        details={{
+                          title: course.title,
+                          description: course.description,
+                          coverImageUrl: course.coverImageUrl,
+                          meta: `${course.totalLessons} bài học`,
+                          price: pricing.chargeAmount,
+                          originalPrice: pricing.originalPrice,
+                        }}
+                      />
                     </>
                   )}
                   {clickable && <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />}

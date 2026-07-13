@@ -41,6 +41,11 @@ const TYPE_ICON: Record<LibraryItemType, typeof BookOpen> = {
   DOCUMENT: FileText,
 };
 
+function itemMeta(item: StudentLibraryItem): string | undefined {
+  const parts = [item.author, item.pageCount ? `${item.pageCount} trang` : null].filter(Boolean);
+  return parts.length > 0 ? parts.join(" · ") : undefined;
+}
+
 function Thumbnail({ item, className }: { item: StudentLibraryItem; className: string }) {
   const Icon = TYPE_ICON[item.type];
   if (item.coverImageUrl) {
@@ -120,7 +125,18 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
                     {purchasable && (
                       <div className="flex items-center justify-between gap-3 border-t border-dark-border pt-3">
                         <PriceBlock price={pricing.chargeAmount} originalPrice={pricing.originalPrice} />
-                        <BuyButton kind="LIBRARY_ITEM" itemId={item.id} />
+                        <BuyButton
+                          kind="LIBRARY_ITEM"
+                          itemId={item.id}
+                          details={{
+                            title: item.title,
+                            description: item.description,
+                            coverImageUrl: item.coverImageUrl,
+                            meta: itemMeta(item),
+                            price: pricing.chargeAmount,
+                            originalPrice: pricing.originalPrice,
+                          }}
+                        />
                       </div>
                     )}
                   </div>
@@ -172,7 +188,18 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
                   {purchasable && (
                     <>
                       <PriceBlock price={pricing.chargeAmount} originalPrice={pricing.originalPrice} />
-                      <BuyButton kind="LIBRARY_ITEM" itemId={item.id} />
+                      <BuyButton
+                        kind="LIBRARY_ITEM"
+                        itemId={item.id}
+                        details={{
+                          title: item.title,
+                          description: item.description,
+                          coverImageUrl: item.coverImageUrl,
+                          meta: itemMeta(item),
+                          price: pricing.chargeAmount,
+                          originalPrice: pricing.originalPrice,
+                        }}
+                      />
                     </>
                   )}
                   {clickable && <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />}
