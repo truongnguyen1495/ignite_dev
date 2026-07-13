@@ -11,7 +11,7 @@ export type CardProps = ComponentPropsWithoutRef<"div"> & {
 
 export function Card({ padding = "md", className = "", children, ...props }: CardProps) {
   return (
-    <div className={`border border-border bg-surface ${PADDING_CLASSES[padding]} ${className}`} {...props}>
+    <div className={`border border-primary/40 bg-surface ${PADDING_CLASSES[padding]} ${className}`} {...props}>
       {children}
     </div>
   );
