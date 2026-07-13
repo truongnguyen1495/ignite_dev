@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatVND } from "@/lib/currency";
 import { formatOrderCode, ORDER_STATUS_LABELS, ORDER_STATUS_BADGE_COLOR } from "@/lib/orders";
+import { CancelOrderButton } from "./cancel-order-button";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ orderId: string }> }) {
   const student = await requireActiveStudent();
@@ -88,6 +89,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
             Sau khi chuyển khoản, vui lòng đợi admin xác nhận — trang này sẽ tự cập nhật trạng thái khi đơn
             được duyệt.
           </p>
+          <div className="flex justify-end border-t border-border pt-3">
+            <CancelOrderButton orderId={order.id} orderNumber={order.orderNumber} />
+          </div>
         </Card>
       )}
     </div>
