@@ -63,7 +63,7 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className="flex w-full max-w-full justify-center overflow-x-auto px-4">
+      <div className="relative flex w-full max-w-full justify-center overflow-x-auto px-4">
         <HTMLFlipBook
           {...FLIPBOOK_DEFAULTS}
           ref={flipRef}
@@ -85,6 +85,7 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
             <BookPage key={i} page={page} bookWidth={bookWidth} bookHeight={bookHeight} isActive={i === currentPage} />
           ))}
         </HTMLFlipBook>
+        {spread && <div className="flipbook-gutter" aria-hidden />}
       </div>
 
       <div className="flex items-center gap-4 text-sm text-muted">

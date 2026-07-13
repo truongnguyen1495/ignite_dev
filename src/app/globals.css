@@ -200,33 +200,37 @@ body {
 }
 
 /* Flipbook "real book" chrome (see BookFlipbook/PdfFlipbook, applied
-   directly to react-pageflip's own root element via its className prop).
+   directly to react-pageflip's own root element via its className prop,
+   plus a sibling .flipbook-gutter div rendered alongside it).
    react-pageflip renders one flat page image with no sense of the pages
    behind it, so these fake the rest of a bound book:
    - .flipbook-page-curve: a soft vignette on both outer edges of the
      current page/spread, like light catching a slightly curved sheet.
-   - .flipbook-spread .stf__item.--left/--right: the "gutter" shadow where
-     two open pages meet in the middle — react-pageflip tags whichever page
-     element is currently the left/right half of a spread with --left/
-     --right itself, so this targets the true inner edge of each page
-     directly. Scoped under .flipbook-spread (added by BookFlipbook/
-     PdfFlipbook only while a real two-page spread is showing) since a
-     single page shown alone — the cover, or an odd last page — still gets
-     a --left or --right class but has no neighbor to fake a seam against.
+   - .flipbook-gutter: the "gutter" shadow where two open pages meet in the
+     middle. This is a single element centered on the whole book (not two
+     per-page overlays meeting at the seam) on purpose — react-pageflip's
+     two page elements don't always abut at an exact pixel boundary, and
+     with two separate overlays any sub-pixel gap between them showed
+     through as a bright crack splitting the book in two once shadow was
+     added on both sides of it. A book with only one page currently on
+     screen (the cover, or an odd last page) has no real seam, so callers
+     only render this alongside a genuine two-page spread.
    - .stf__item's own border-radius: rounded on every corner by default (a
      lone page/cover reads as one card), but the spine-side corners go
      square while part of a real spread — otherwise two independently
      rounded pages read as separate cards shoved together instead of one
      continuous open book.
 
-   Both edge effects are gradient-filled ::before/::after overlays, NOT
-   box-shadow: react-pageflip's own stylesheet sets `transform-style:
-   preserve-3d` on every .stf__item (needed for its page-turn animation),
-   and Chromium silently fails to paint box-shadow on elements inside that
-   3D rendering context — confirmed by screenshotting a throwaway page-flip
-   instance outside this app; box-shadow rendered fine on plain boxes but
-   was invisible once applied to an actual .stf__item. A regular
-   background gradient paints regardless, so that's what both use.
+   Both shadow effects are gradient-filled overlays, NOT box-shadow:
+   react-pageflip's own stylesheet sets `transform-style: preserve-3d` on
+   every .stf__item (needed for its page-turn animation) and `transform:
+   translateZ(0)` on its root element (forcing its own GPU layer), and
+   Chromium silently fails to paint box-shadow on elements promoted to
+   their own layer like this — confirmed by screenshotting a throwaway
+   page-flip instance outside this app; box-shadow rendered fine on a
+   plain sibling div but was invisible on the actual page-flip elements.
+   A regular background gradient paints regardless, so that's what both
+   use.
    (An earlier version also faked page-stack "thickness" with tilted
    striped strips past each edge — dropped, it read as a stray UI glitch
    rather than a stack of paper.) */
@@ -253,7 +257,6 @@ body {
 }
 
 .stf__item {
-  position: relative;
   border-radius: 6px;
   overflow: hidden;
 }
@@ -265,22 +268,22 @@ body {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
-.flipbook-spread .stf__item.--left::after,
-.flipbook-spread .stf__item.--right::after {
-  content: "";
+
+.flipbook-gutter {
   position: absolute;
   top: 0;
   bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 10%;
+  z-index: 6;
   pointer-events: none;
-}
-.flipbook-spread .stf__item.--left::after {
-  right: 0;
-  background: linear-gradient(to right, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.28));
-}
-.flipbook-spread .stf__item.--right::after {
-  left: 0;
-  background: linear-gradient(to left, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.28));
+  background: linear-gradient(
+    to right,
+    rgba(15, 23, 42, 0) 0%,
+    rgba(15, 23, 42, 0.28) 50%,
+    rgba(15, 23, 42, 0) 100%
+  );
 }
 
 .flipbook-book {
