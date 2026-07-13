@@ -38,20 +38,9 @@ export function EditCourseForm({
 
   return (
     <>
-      <div className="sticky top-0 z-20 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background py-3">
-        <div>
-          <BackLink href="/admin/courses">Quay lại</BackLink>
-          <h1 className="mt-1 text-2xl font-semibold text-foreground">{title}</h1>
-        </div>
-        <Button
-          type="submit"
-          form="edit-course-form"
-          variant={isDirty ? "primary" : "secondary"}
-          disabled={pending || !isDirty}
-          isLoading={pending}
-        >
-          {pending ? "Đang lưu..." : isDirty ? "Lưu thay đổi" : "Đã lưu"}
-        </Button>
+      <div className="sticky top-0 z-20 mb-6 border-b border-border bg-background py-3">
+        <BackLink href="/admin/courses">Quay lại</BackLink>
+        <h1 className="mt-1 text-2xl font-semibold text-foreground">{title}</h1>
       </div>
 
       <Card padding="lg">
@@ -93,6 +82,17 @@ export function EditCourseForm({
             <input type="hidden" name="price" defaultValue={price} />
           )}
           {error && <p className="text-sm text-danger">{error}</p>}
+
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              variant={isDirty ? "primary" : "secondary"}
+              disabled={pending || !isDirty}
+              isLoading={pending}
+            >
+              {pending ? "Đang lưu..." : isDirty ? "Lưu thay đổi" : "Đã lưu"}
+            </Button>
+          </div>
         </form>
       </Card>
     </>
