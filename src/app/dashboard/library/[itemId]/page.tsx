@@ -7,7 +7,8 @@ export default async function LibraryItemReaderPage({
   params: Promise<{ itemId: string }>;
 }) {
   const { itemId } = await params;
-  const { libraryItem } = await requireLibraryItemAccess(itemId);
+  const { libraryItem, accessLevel } = await requireLibraryItemAccess(itemId);
+  const isTrial = accessLevel === "trial";
 
   return (
     <div className="space-y-4">
@@ -15,10 +16,15 @@ export default async function LibraryItemReaderPage({
         <BackLink href="/dashboard/library">Thư viện</BackLink>
         <h1 className="mt-2 text-2xl font-semibold text-foreground">{libraryItem.title}</h1>
         {libraryItem.author && <p className="mt-1 text-sm text-muted">{libraryItem.author}</p>}
+        {isTrial && libraryItem.guestPreviewPages && (
+          <p className="mt-1 text-sm text-muted">
+            Bản xem thử — {libraryItem.guestPreviewPages} trang đầu. Mua để đọc toàn bộ.
+          </p>
+        )}
       </div>
 
       <iframe
-        src={`/api/library/${itemId}/file`}
+        src={`/api/library/${itemId}/${isTrial ? "preview" : "file"}`}
         className="h-[80vh] w-full rounded-xl border border-border"
         title={libraryItem.title}
       />

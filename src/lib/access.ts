@@ -311,12 +311,17 @@ export async function requireCourseLessonAccess(lessonId: string) {
 }
 
 // Library items (books/documents) use the exact same grant model as
-// courses — a direct per-student grant OR a "Level >= minLevel" rule.
-// Exported (unlike studentHasCourseAccess) because /api/library/[itemId]/file
-// needs this same check outside of the redirect-based helpers below — it
-// serves raw PDF bytes to an <iframe>, so it needs a JSON/plain error
-// response instead of a redirect on failure.
-export async function studentHasLibraryItemAccess(student: User, libraryItemId: string): Promise<boolean> {
+// courses — a direct per-student grant OR a "Level >= minLevel" rule, plus
+// the same "trial" tier: an item open to anonymous guests (visibleToGuest +
+// an actual previewFilePath) is at least as open to any signed-in student,
+// học viên or học sinh, as it is to a guest — same truncated preview PDF,
+// not the full file. Mirrors getCourseAccessLevel exactly.
+export type LibraryAccessLevel = "none" | "trial" | "full";
+
+export async function getLibraryItemAccessLevel(
+  student: User,
+  libraryItemId: string
+): Promise<LibraryAccessLevel> {
   const [grant, levelGrants, libraryItem] = await Promise.all([
     prisma.libraryAccessGrant.findUnique({
       where: { studentId_libraryItemId: { studentId: student.id, libraryItemId } },
@@ -324,19 +329,30 @@ export async function studentHasLibraryItemAccess(student: User, libraryItemId: 
     prisma.libraryLevelGrant.findMany({ where: { libraryItemId } }),
     prisma.libraryItem.findUnique({
       where: { id: libraryItemId },
-      select: { openToProspectiveStudents: true, isFree: true },
+      select: { openToProspectiveStudents: true, isFree: true, visibleToGuest: true, previewFilePath: true },
     }),
   ]);
   // isFree is a blanket "everyone gets full access" switch, same convention
   // as Course.isFree — checked before any grant/level logic.
-  if (libraryItem?.isFree) return true;
-  if (grant) return true;
-  // "Học sinh" (grantedLevel null) never match levelGrants (Level-typed) —
-  // same rule as Course.openToProspectiveStudents, see getCourseAccessLevel.
-  if (student.grantedLevel === null) {
-    return libraryItem?.openToProspectiveStudents ?? false;
-  }
-  return levelGrants.some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel));
+  if (libraryItem?.isFree) return "full";
+  if (grant) return "full";
+  const isFullViaLevel =
+    student.grantedLevel === null
+      ? (libraryItem?.openToProspectiveStudents ?? false)
+      : levelGrants.some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel));
+  if (isFullViaLevel) return "full";
+  if (libraryItem?.visibleToGuest && libraryItem.previewFilePath) return "trial";
+  return "none";
+}
+
+// Exported (unlike studentHasCourseAccess) because /api/library/[itemId]/file
+// needs this same check outside of the redirect-based helpers below — it
+// serves raw PDF bytes to an <iframe>, so it needs a JSON/plain error
+// response instead of a redirect on failure. Deliberately "full" only —
+// "trial" access reads the preview file via /api/library/[itemId]/preview
+// instead, never this route.
+export async function studentHasLibraryItemAccess(student: User, libraryItemId: string): Promise<boolean> {
+  return (await getLibraryItemAccessLevel(student, libraryItemId)) === "full";
 }
 
 export async function requireLibraryItemAccess(libraryItemId: string) {
@@ -345,10 +361,11 @@ export async function requireLibraryItemAccess(libraryItemId: string) {
   if (!libraryItem || !libraryItem.visibleToStudents) {
     redirect("/dashboard/library?denied=1");
   }
-  if (!(await studentHasLibraryItemAccess(student, libraryItemId))) {
+  const accessLevel = await getLibraryItemAccessLevel(student, libraryItemId);
+  if (accessLevel === "none") {
     redirect("/dashboard/library?denied=1");
   }
-  return { student, libraryItem };
+  return { student, libraryItem, accessLevel };
 }
 
 export async function requireAnnouncementAccess(announcementId: string) {

@@ -9,6 +9,7 @@ import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
 import { BuyButton } from "@/components/buy-button";
 import { PriceBlock } from "@/components/price-block";
 import { getPricing } from "@/lib/pricing";
+import type { LibraryAccessLevel } from "@/lib/access";
 
 const STORAGE_KEY = "student-library-view";
 
@@ -19,7 +20,7 @@ export type StudentLibraryItem = {
   description: string | null;
   type: LibraryItemType;
   coverImageUrl: string | null;
-  unlocked: boolean;
+  accessLevel: LibraryAccessLevel;
   isFree: boolean;
   pageCount: number | null;
   href: string;
@@ -28,6 +29,12 @@ export type StudentLibraryItem = {
   salePrice: number | null;
   salesEnabled: boolean;
 };
+
+function AccessBadge({ accessLevel, isFree }: { accessLevel: LibraryAccessLevel; isFree: boolean }) {
+  if (accessLevel === "full") return <Badge color="success">{isFree ? "Miễn phí" : "Đã mở khóa"}</Badge>;
+  if (accessLevel === "trial") return <Badge color="warning">Học thử</Badge>;
+  return <Badge color="faint">Chưa mở khóa</Badge>;
+}
 
 const TYPE_ICON: Record<LibraryItemType, typeof BookOpen> = {
   BOOK: BookOpen,
@@ -74,28 +81,25 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
       {mode === "grid" ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => {
+            const clickable = item.accessLevel !== "none";
             const pricing = getPricing(item);
-            const purchasable = !item.unlocked && item.salesEnabled && pricing.forSale;
+            const purchasable = item.accessLevel !== "full" && item.salesEnabled && pricing.forSale;
             const card = (
               <div
                 className={`flex h-full flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors ${
-                  item.unlocked || purchasable ? "hover:border-primary/60" : "opacity-60"
+                  clickable || purchasable ? "hover:border-primary/60" : "opacity-60"
                 }`}
               >
                 <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-dark-surface-raised">
                   <Thumbnail item={item} className="h-full w-full" />
-                  {!item.unlocked && (
+                  {!clickable && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                       <Lock className="h-8 w-8 text-white" />
                     </div>
                   )}
                 </div>
                 <div className="flex flex-1 flex-col p-5">
-                  {item.unlocked ? (
-                    <Badge color="success">{item.isFree ? "Miễn phí" : "Đã mở khóa"}</Badge>
-                  ) : (
-                    <Badge color="faint">Chưa mở khóa</Badge>
-                  )}
+                  <AccessBadge accessLevel={item.accessLevel} isFree={item.isFree} />
                   <p className="mt-3 font-semibold text-dark-foreground">{item.title}</p>
                   {item.author && <p className="mt-0.5 text-sm text-dark-muted">{item.author}</p>}
                   {item.description && (
@@ -106,9 +110,9 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
                       <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
                         {item.pageCount ? `${item.pageCount} trang` : "—"}
                       </span>
-                      {item.unlocked && (
+                      {clickable && (
                         <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
-                          Đọc
+                          {item.accessLevel === "trial" ? "Đọc thử" : "Đọc"}
                           <ArrowRight className="h-3.5 w-3.5" />
                         </span>
                       )}
@@ -123,7 +127,7 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
                 </div>
               </div>
             );
-            return item.unlocked ? (
+            return clickable ? (
               <Link key={item.id} href={item.href} className="block h-full">
                 {card}
               </Link>
@@ -137,17 +141,18 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
       ) : (
         <div className="space-y-3">
           {items.map((item) => {
+            const clickable = item.accessLevel !== "none";
             const pricing = getPricing(item);
-            const purchasable = !item.unlocked && item.salesEnabled && pricing.forSale;
+            const purchasable = item.accessLevel !== "full" && item.salesEnabled && pricing.forSale;
             const row = (
               <div
                 className={`flex items-center gap-4 rounded-xl border border-dark-border bg-dark-surface p-3 transition-colors ${
-                  item.unlocked || purchasable ? "hover:border-primary/60" : "opacity-60"
+                  clickable || purchasable ? "hover:border-primary/60" : "opacity-60"
                 }`}
               >
                 <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-dark-surface-raised">
                   <Thumbnail item={item} className="h-full w-full" />
-                  {!item.unlocked && (
+                  {!clickable && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                       <Lock className="h-4 w-4 text-white" />
                     </div>
@@ -155,11 +160,7 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    {item.unlocked ? (
-                      <Badge color="success">Đã mở khóa</Badge>
-                    ) : (
-                      <Badge color="faint">Chưa mở khóa</Badge>
-                    )}
+                    <AccessBadge accessLevel={item.accessLevel} isFree={item.isFree} />
                     <p className="truncate font-semibold text-dark-foreground">{item.title}</p>
                   </div>
                   {item.author && <p className="line-clamp-1 text-sm text-dark-muted">{item.author}</p>}
@@ -174,13 +175,11 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
                       <BuyButton kind="LIBRARY_ITEM" itemId={item.id} />
                     </>
                   )}
-                  {item.unlocked && (
-                    <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />
-                  )}
+                  {clickable && <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />}
                 </div>
               </div>
             );
-            return item.unlocked ? (
+            return clickable ? (
               <Link key={item.id} href={item.href}>
                 {row}
               </Link>

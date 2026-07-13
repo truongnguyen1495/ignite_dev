@@ -1,5 +1,5 @@
 import { AlertTriangle } from "lucide-react";
-import { requireActiveStudent, isSalesEnabled } from "@/lib/access";
+import { requireActiveStudent, isSalesEnabled, type LibraryAccessLevel } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { hasLevelAccess } from "@/lib/levels";
 import { LibraryList, type StudentLibraryItem } from "./library-list";
@@ -38,30 +38,41 @@ export default async function StudentLibraryPage({
       .map((lg) => lg.libraryItemId)
   );
   // "Học sinh" (grantedLevel null) never match levelGrants (Level-typed) —
-  // openToProspectiveStudents is their only other path to "unlocked", same
-  // rule as studentHasLibraryItemAccess (src/lib/access.ts), kept in sync
-  // here purely for this listing's badge.
+  // openToProspectiveStudents is their only other path to "full", same rule
+  // as getLibraryItemAccessLevel (src/lib/access.ts), kept in sync here
+  // purely for this listing's badge.
   const isHocSinh = student.grantedLevel === null;
 
-  const listItems: StudentLibraryItem[] = items.map((item, index) => ({
-    id: item.id,
-    title: item.title,
-    author: item.author,
-    description: item.description,
-    type: item.type,
-    coverImageUrl: item.coverImageUrl,
-    unlocked:
-      item.isFree ||
-      grantedItemIds.has(item.id) ||
-      (isHocSinh ? item.openToProspectiveStudents : levelUnlockedItemIds.has(item.id)),
-    pageCount: item.pageCount,
-    href: `/dashboard/library/${item.id}`,
-    gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
-    price: item.price,
-    salePrice: item.salePrice,
-    isFree: item.isFree,
-    salesEnabled,
-  }));
+  const listItems: StudentLibraryItem[] = items.map((item, index) => {
+    let accessLevel: LibraryAccessLevel;
+    if (item.isFree || grantedItemIds.has(item.id)) {
+      accessLevel = "full";
+    } else {
+      const fullViaLevel = isHocSinh ? item.openToProspectiveStudents : levelUnlockedItemIds.has(item.id);
+      accessLevel = fullViaLevel
+        ? "full"
+        : item.visibleToGuest && item.previewFilePath
+          ? "trial"
+          : "none";
+    }
+
+    return {
+      id: item.id,
+      title: item.title,
+      author: item.author,
+      description: item.description,
+      type: item.type,
+      coverImageUrl: item.coverImageUrl,
+      accessLevel,
+      pageCount: item.pageCount,
+      href: `/dashboard/library/${item.id}`,
+      gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
+      price: item.price,
+      salePrice: item.salePrice,
+      isFree: item.isFree,
+      salesEnabled,
+    };
+  });
 
   return (
     <div className="space-y-6">
