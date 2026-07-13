@@ -200,16 +200,11 @@ body {
 }
 
 /* Flipbook "real book" chrome (see BookFlipbook/PdfFlipbook, applied
-   directly to react-pageflip's own root element via its className/style
-   props). react-pageflip renders one flat page image with no sense of the
-   pages behind it, so these fake the rest of a bound book:
+   directly to react-pageflip's own root element via its className prop).
+   react-pageflip renders one flat page image with no sense of the pages
+   behind it, so these fake the rest of a bound book:
    - .flipbook-page-curve: a soft inset vignette on both edges of the
      current page/spread, like light catching a slightly curved sheet.
-   - .flipbook-book::before/::after: a striped, tilted strip on either side
-     simulating a stack of page edges. Sized via the --stack-left/
-     --stack-right custom properties (set inline, per reading progress) so
-     this doesn't need to know react-pageflip's actual rendered width —
-     "stretch" sizing picks that dynamically and isn't easily read from JS.
    - .flipbook-spread .stf__item.--left/--right: the "gutter" shadow where
      two open pages meet in the middle — react-pageflip tags whichever page
      element is currently the left/right half of a spread with --left/
@@ -222,7 +217,10 @@ body {
      lone page/cover reads as one card), but the spine-side corners go
      square while part of a real spread — otherwise two independently
      rounded pages read as separate cards shoved together instead of one
-     continuous open book. */
+     continuous open book.
+   (An earlier version also faked page-stack "thickness" with tilted
+   striped strips past each edge — dropped, it read as a stray UI glitch
+   rather than a stack of paper.) */
 .flipbook-page-curve {
   box-shadow:
     inset 10px 0 14px -12px rgba(15, 23, 42, 0.35),
@@ -234,41 +232,16 @@ body {
   overflow: hidden;
 }
 .flipbook-spread .stf__item.--left {
-  box-shadow: inset -26px 0 28px -22px rgba(15, 23, 42, 0.5);
+  box-shadow: inset -40px 0 32px -24px rgba(15, 23, 42, 0.75);
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
 }
 .flipbook-spread .stf__item.--right {
-  box-shadow: inset 26px 0 28px -22px rgba(15, 23, 42, 0.5);
+  box-shadow: inset 40px 0 32px -24px rgba(15, 23, 42, 0.75);
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
 
 .flipbook-book {
-  position: relative;
   border: 1px solid rgba(15, 23, 42, 0.08);
-}
-.flipbook-book::before,
-.flipbook-book::after {
-  content: "";
-  position: absolute;
-  top: 5px;
-  bottom: 5px;
-  border-radius: 2px;
-  background: repeating-linear-gradient(to bottom, #e2e8f0 0px, #e2e8f0 1.5px, #f8fafc 1.5px, #f8fafc 3px);
-  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.18);
-}
-.flipbook-book::before {
-  right: 100%;
-  margin-right: 2px;
-  width: var(--stack-left, 4px);
-  transform: perspective(300px) rotateY(20deg);
-  transform-origin: right center;
-}
-.flipbook-book::after {
-  left: 100%;
-  margin-left: 2px;
-  width: var(--stack-right, 4px);
-  transform: perspective(300px) rotateY(-20deg);
-  transform-origin: left center;
 }

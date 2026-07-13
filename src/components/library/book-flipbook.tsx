@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
 import HTMLFlipBook from "react-pageflip";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import type { BookPageData } from "@/lib/library-book-elements";
@@ -13,14 +13,6 @@ type PagesResponse = {
   bookWidth: number | null;
   bookHeight: number | null;
 };
-
-const MIN_STACK_PX = 4;
-const MAX_STACK_PX = 16;
-
-function stackWidth(fraction: number): number {
-  const clamped = Math.min(1, Math.max(0, fraction));
-  return Math.round(MIN_STACK_PX + (MAX_STACK_PX - MIN_STACK_PX) * clamped);
-}
 
 // Renders an INTERACTIVE-format LibraryItem (fetched from
 // /api/library/[itemId]/pages, the same access-gated route for both trial
@@ -68,11 +60,6 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
   const aspect = bookWidth / bookHeight;
   const totalPages = pages.length;
   const spread = isPagedSpread(orientation, currentPage, totalPages);
-  const progress = totalPages > 1 ? currentPage / (totalPages - 1) : 0;
-  const stackStyle = {
-    "--stack-left": `${stackWidth(progress)}px`,
-    "--stack-right": `${stackWidth(1 - progress)}px`,
-  } as CSSProperties;
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -90,7 +77,6 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
           showCover
           maxShadowOpacity={0.5}
           className={`shadow-lg flipbook-page-curve flipbook-book ${spread ? "flipbook-spread" : ""}`}
-          style={stackStyle}
           onFlip={(e: { data: number }) => setCurrentPage(e.data)}
           onChangeOrientation={(e: { data: FlipbookOrientation }) => setOrientation(e.data)}
           onInit={(e: { data: { mode: FlipbookOrientation } }) => setOrientation(e.data.mode)}

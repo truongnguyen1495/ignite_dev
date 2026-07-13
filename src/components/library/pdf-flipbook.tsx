@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { PDFDocumentProxy, PDFDocumentLoadingTask } from "pdfjs-dist";
 import HTMLFlipBook from "react-pageflip";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
@@ -10,14 +10,6 @@ import { isPagedSpread, isLastSpread, type FlipbookOrientation } from "./flipboo
 
 const RENDER_SCALE = 1.5;
 const JPEG_QUALITY = 0.85;
-
-const MIN_STACK_PX = 4;
-const MAX_STACK_PX = 16;
-
-function stackWidth(fraction: number): number {
-  const clamped = Math.min(1, Math.max(0, fraction));
-  return Math.round(MIN_STACK_PX + (MAX_STACK_PX - MIN_STACK_PX) * clamped);
-}
 
 // Renders a PDF (served from `src`, same access-gated API route the plain
 // iframe viewer already uses) as a page-turn flipbook. Pages are rasterized
@@ -135,11 +127,6 @@ export function PdfFlipbook({ src, title }: { src: string; title: string }) {
   }
 
   const spread = isPagedSpread(orientation, currentPage, numPages);
-  const progress = numPages > 1 ? currentPage / (numPages - 1) : 0;
-  const stackStyle = {
-    "--stack-left": `${stackWidth(progress)}px`,
-    "--stack-right": `${stackWidth(1 - progress)}px`,
-  } as CSSProperties;
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -157,7 +144,6 @@ export function PdfFlipbook({ src, title }: { src: string; title: string }) {
           showCover
           maxShadowOpacity={0.5}
           className={`shadow-lg flipbook-page-curve flipbook-book ${spread ? "flipbook-spread" : ""}`}
-          style={stackStyle}
           onFlip={(e: { data: number }) => {
             setCurrentPage(e.data);
             prioritize(e.data + 1);
