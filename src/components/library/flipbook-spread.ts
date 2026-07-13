@@ -1,5 +1,9 @@
 export type FlipbookOrientation = "portrait" | "landscape";
 
+// react-pageflip's own PageState, re-declared here since its settings.d.ts
+// types onChangeState's payload as `any`.
+export type FlipbookState = "user_fold" | "fold_corner" | "flipping" | "read";
+
 // Mirrors react-pageflip's own spread pairing so the UI's page-range label
 // and prev/next disabling agree with what's actually on screen. With
 // showCover=true (see BookFlipbook/PdfFlipbook), the library always shows

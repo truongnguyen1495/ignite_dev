@@ -214,7 +214,12 @@ body {
      through as a bright crack splitting the book in two once shadow was
      added on both sides of it. A book with only one page currently on
      screen (the cover, or an odd last page) has no real seam, so callers
-     only render this alongside a genuine two-page spread.
+     only fade this to opacity 1 alongside a genuine two-page spread — and
+     fade it back to 0 while react-pageflip's state is anything but "read"
+     (see FlipbookState), since this shadow doesn't itself animate with the
+     page turning in 3D; left on throughout a flip, it just sits there
+     static while the page curls past it, reading as detached from the
+     actual page motion instead of part of it.
    - .stf__item's own border-radius: rounded on every corner by default (a
      lone page/cover reads as one card), but the spine-side corners go
      square while part of a real spread — otherwise two independently
@@ -278,6 +283,7 @@ body {
   width: 10%;
   z-index: 6;
   pointer-events: none;
+  transition: opacity 220ms ease;
   background: linear-gradient(
     to right,
     rgba(15, 23, 42, 0) 0%,
