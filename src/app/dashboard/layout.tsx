@@ -107,10 +107,11 @@ export default async function DashboardLayout({
               {salesEnabled && (
                 <Link
                   href="/dashboard/orders"
-                  className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+                  title="Đơn hàng của tôi"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary-hover"
                 >
                   <ShoppingCart className="h-4 w-4" />
-                  Đơn hàng của tôi
+                  <span className="sr-only">Đơn hàng của tôi</span>
                 </Link>
               )}
               <LogoutButton />
@@ -185,10 +186,11 @@ export default async function DashboardLayout({
             {salesEnabled && (
               <Link
                 href="/dashboard/orders"
-                className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+                title="Đơn hàng của tôi"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary-hover"
               >
                 <ShoppingCart className="h-4 w-4" />
-                Đơn hàng của tôi
+                <span className="sr-only">Đơn hàng của tôi</span>
               </Link>
             )}
             <LogoutButton />
