@@ -199,21 +199,29 @@ body {
   cursor: col-resize;
 }
 
-/* Flipbook "real book" chrome (see FlipbookFrame + BookFlipbook/PdfFlipbook).
-   react-pageflip renders one flat page image with no sense of the pages
-   behind it, so these fake the rest of a bound book:
+/* Flipbook "real book" chrome (see BookFlipbook/PdfFlipbook, applied
+   directly to react-pageflip's own root element via its className/style
+   props). react-pageflip renders one flat page image with no sense of the
+   pages behind it, so these fake the rest of a bound book:
    - .flipbook-page-curve: a soft inset vignette on both edges of the
-     current page, like light catching a slightly curved sheet of paper.
-   - .flipbook-stack: a striped, tilted strip on either side simulating a
-     stack of page edges — width is set inline per side by FlipbookFrame
-     based on reading progress. */
+     current page/spread, like light catching a slightly curved sheet.
+   - .flipbook-book::before/::after: a striped, tilted strip on either side
+     simulating a stack of page edges. Sized via the --stack-left/
+     --stack-right custom properties (set inline, per reading progress) so
+     this doesn't need to know react-pageflip's actual rendered width —
+     "stretch" sizing picks that dynamically and isn't easily read from JS. */
 .flipbook-page-curve {
   box-shadow:
     inset 10px 0 14px -12px rgba(15, 23, 42, 0.35),
     inset -10px 0 14px -12px rgba(15, 23, 42, 0.35);
 }
 
-.flipbook-stack {
+.flipbook-book {
+  position: relative;
+}
+.flipbook-book::before,
+.flipbook-book::after {
+  content: "";
   position: absolute;
   top: 5px;
   bottom: 5px;
@@ -221,15 +229,17 @@ body {
   background: repeating-linear-gradient(to bottom, #e2e8f0 0px, #e2e8f0 1.5px, #f8fafc 1.5px, #f8fafc 3px);
   box-shadow: 0 3px 8px rgba(15, 23, 42, 0.18);
 }
-.flipbook-stack--left {
+.flipbook-book::before {
   right: 100%;
   margin-right: 2px;
+  width: var(--stack-left, 4px);
   transform: perspective(300px) rotateY(20deg);
   transform-origin: right center;
 }
-.flipbook-stack--right {
+.flipbook-book::after {
   left: 100%;
   margin-left: 2px;
+  width: var(--stack-right, 4px);
   transform: perspective(300px) rotateY(-20deg);
   transform-origin: left center;
 }

@@ -1,16 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import type { PDFDocumentProxy, PDFDocumentLoadingTask } from "pdfjs-dist";
 import HTMLFlipBook from "react-pageflip";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { PdfPage } from "./pdf-page";
 import { FLIPBOOK_DEFAULTS } from "./flipbook-defaults";
-import { useFlipbookPageWidth } from "./use-flipbook-page-width";
-import { FlipbookFrame } from "./flipbook-frame";
+import { isPagedSpread, isLastSpread, type FlipbookOrientation } from "./flipbook-spread";
 
 const RENDER_SCALE = 1.5;
 const JPEG_QUALITY = 0.85;
+
+const MIN_STACK_PX = 4;
+const MAX_STACK_PX = 16;
+
+function stackWidth(fraction: number): number {
+  const clamped = Math.min(1, Math.max(0, fraction));
+  return Math.round(MIN_STACK_PX + (MAX_STACK_PX - MIN_STACK_PX) * clamped);
+}
 
 // Renders a PDF (served from `src`, same access-gated API route the plain
 // iframe viewer already uses) as a page-turn flipbook. Pages are rasterized
@@ -23,6 +30,7 @@ export function PdfFlipbook({ src, title }: { src: string; title: string }) {
   const [aspect, setAspect] = useState<number | null>(null); // width / height
   const [pages, setPages] = useState<(string | null)[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
+  const [orientation, setOrientation] = useState<FlipbookOrientation>("portrait");
   const [error, setError] = useState<string | null>(null);
 
   const docRef = useRef<PDFDocumentProxy | null>(null);
@@ -31,7 +39,6 @@ export function PdfFlipbook({ src, title }: { src: string; title: string }) {
   const queueRef = useRef<number[]>([]);
   const renderingRef = useRef(false);
   const flipRef = useRef<{ pageFlip(): { flipPrev(): void; flipNext(): void } } | null>(null);
-  const [containerRef, pageWidth] = useFlipbookPageWidth();
 
   const renderPage = useCallback(async (pageNumber: number) => {
     const doc = docRef.current;
@@ -127,39 +134,41 @@ export function PdfFlipbook({ src, title }: { src: string; title: string }) {
     );
   }
 
-  const height = Math.round(pageWidth / aspect);
+  const spread = isPagedSpread(orientation, currentPage, numPages);
+  const progress = numPages > 1 ? currentPage / (numPages - 1) : 0;
+  const stackStyle = {
+    "--stack-left": `${stackWidth(progress)}px`,
+    "--stack-right": `${stackWidth(1 - progress)}px`,
+  } as CSSProperties;
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <div ref={containerRef} className="flex w-full max-w-full justify-center overflow-x-auto px-4">
-        <FlipbookFrame width={pageWidth} height={height} currentPage={currentPage} totalPages={numPages}>
-          <HTMLFlipBook
-            {...FLIPBOOK_DEFAULTS}
-            key={pageWidth}
-            ref={flipRef}
-            startPage={currentPage}
-            width={pageWidth}
-            height={height}
-            size="fixed"
-            // Required by IProps but irrelevant in "fixed" mode — page-flip's
-            // validateSettings overwrites all four to width/height anyway.
-            minWidth={pageWidth}
-            maxWidth={pageWidth}
-            minHeight={height}
-            maxHeight={height}
-            showCover={false}
-            maxShadowOpacity={0.5}
-            className="shadow-lg rounded-md flipbook-page-curve"
-            onFlip={(e: { data: number }) => {
-              setCurrentPage(e.data);
-              prioritize(e.data + 1);
-            }}
-          >
-            {pages.map((dataUrl, i) => (
-              <PdfPage key={i} dataUrl={dataUrl} pageNumber={i + 1} />
-            ))}
-          </HTMLFlipBook>
-        </FlipbookFrame>
+      <div className="flex w-full max-w-full justify-center overflow-x-auto px-4">
+        <HTMLFlipBook
+          {...FLIPBOOK_DEFAULTS}
+          ref={flipRef}
+          width={500}
+          height={Math.round(500 / aspect)}
+          size="stretch"
+          minWidth={280}
+          maxWidth={1000}
+          minHeight={Math.round(280 / aspect)}
+          maxHeight={Math.round(1000 / aspect)}
+          showCover
+          maxShadowOpacity={0.5}
+          className="shadow-lg rounded-md flipbook-page-curve flipbook-book"
+          style={stackStyle}
+          onFlip={(e: { data: number }) => {
+            setCurrentPage(e.data);
+            prioritize(e.data + 1);
+          }}
+          onChangeOrientation={(e: { data: FlipbookOrientation }) => setOrientation(e.data)}
+          onInit={(e: { data: { mode: FlipbookOrientation } }) => setOrientation(e.data.mode)}
+        >
+          {pages.map((dataUrl, i) => (
+            <PdfPage key={i} dataUrl={dataUrl} pageNumber={i + 1} />
+          ))}
+        </HTMLFlipBook>
       </div>
 
       <div className="flex items-center gap-4 text-sm text-muted">
@@ -173,12 +182,12 @@ export function PdfFlipbook({ src, title }: { src: string; title: string }) {
           <ChevronLeft className="h-4 w-4" />
         </button>
         <span>
-          Trang {currentPage + 1}/{numPages}
+          Trang {spread ? `${currentPage + 1}-${currentPage + 2}` : currentPage + 1}/{numPages}
         </span>
         <button
           type="button"
           onClick={() => flipRef.current?.pageFlip().flipNext()}
-          disabled={currentPage >= numPages - 1}
+          disabled={isLastSpread(orientation, currentPage, numPages)}
           className="flex h-8 w-8 items-center justify-center rounded-lg border border-border transition-colors hover:bg-surface-hover disabled:opacity-40"
           aria-label="Trang sau"
         >
