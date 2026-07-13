@@ -37,6 +37,11 @@ export default async function StudentLibraryPage({
       .filter((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel))
       .map((lg) => lg.libraryItemId)
   );
+  // "Học sinh" (grantedLevel null) never match levelGrants (Level-typed) —
+  // openToProspectiveStudents is their only other path to "unlocked", same
+  // rule as studentHasLibraryItemAccess (src/lib/access.ts), kept in sync
+  // here purely for this listing's badge.
+  const isHocSinh = student.grantedLevel === null;
 
   const listItems: StudentLibraryItem[] = items.map((item, index) => ({
     id: item.id,
@@ -45,7 +50,9 @@ export default async function StudentLibraryPage({
     description: item.description,
     type: item.type,
     coverImageUrl: item.coverImageUrl,
-    unlocked: grantedItemIds.has(item.id) || levelUnlockedItemIds.has(item.id),
+    unlocked:
+      grantedItemIds.has(item.id) ||
+      (isHocSinh ? item.openToProspectiveStudents : levelUnlockedItemIds.has(item.id)),
     pageCount: item.pageCount,
     href: `/dashboard/library/${item.id}`,
     gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],

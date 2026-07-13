@@ -420,6 +420,11 @@ model LibraryItem {
   // Admin-curated, independent of visibleToGuest: only checked by the guest
   // homepage's "Ebook nổi bật" section, same convention as Course.featuredOnHome.
   featuredOnHome    Boolean         @default(false)
+  // Continuous rule for "học sinh" (grantedLevel null) accounts, same
+  // convention as Course.openToProspectiveStudents — a dedicated on/off
+  // switch since LibraryLevelGrant (Level-typed) can never match a null
+  // grantedLevel. Checked in studentHasLibraryItemAccess (src/lib/access.ts).
+  openToProspectiveStudents Boolean @default(false)
   // VND, 0 = "không bán", same convention as Course.price.
   price             Int             @default(0)
   createdAt         DateTime        @default(now())

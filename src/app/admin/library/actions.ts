@@ -273,3 +273,9 @@ export async function revokeLibraryLevelAccessAction(grantId: string, libraryIte
   await prisma.libraryLevelGrant.delete({ where: { id: grantId } });
   revalidatePath(`/admin/library/${libraryItemId}`);
 }
+
+export async function setLibraryItemOpenToProspectiveStudentsAction(libraryItemId: string, open: boolean) {
+  await requireAdminPermission("MANAGE_LIBRARY");
+  await prisma.libraryItem.update({ where: { id: libraryItemId }, data: { openToProspectiveStudents: open } });
+  revalidatePath(`/admin/library/${libraryItemId}`);
+}

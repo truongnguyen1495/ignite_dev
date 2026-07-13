@@ -311,13 +311,19 @@ export async function requireCourseLessonAccess(lessonId: string) {
 // serves raw PDF bytes to an <iframe>, so it needs a JSON/plain error
 // response instead of a redirect on failure.
 export async function studentHasLibraryItemAccess(student: User, libraryItemId: string): Promise<boolean> {
-  const [grant, levelGrants] = await Promise.all([
+  const [grant, levelGrants, libraryItem] = await Promise.all([
     prisma.libraryAccessGrant.findUnique({
       where: { studentId_libraryItemId: { studentId: student.id, libraryItemId } },
     }),
     prisma.libraryLevelGrant.findMany({ where: { libraryItemId } }),
+    prisma.libraryItem.findUnique({ where: { id: libraryItemId }, select: { openToProspectiveStudents: true } }),
   ]);
   if (grant) return true;
+  // "Học sinh" (grantedLevel null) never match levelGrants (Level-typed) —
+  // same rule as Course.openToProspectiveStudents, see getCourseAccessLevel.
+  if (student.grantedLevel === null) {
+    return libraryItem?.openToProspectiveStudents ?? false;
+  }
   return levelGrants.some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel));
 }
 
