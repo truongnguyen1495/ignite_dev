@@ -6,6 +6,7 @@ import HTMLFlipBook from "react-pageflip";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { PdfPage } from "./pdf-page";
 import { FLIPBOOK_DEFAULTS } from "./flipbook-defaults";
+import { useFlipbookPageWidth } from "./use-flipbook-page-width";
 
 const RENDER_SCALE = 1.5;
 const JPEG_QUALITY = 0.85;
@@ -29,6 +30,8 @@ export function PdfFlipbook({ src, title }: { src: string; title: string }) {
   const queueRef = useRef<number[]>([]);
   const renderingRef = useRef(false);
   const flipRef = useRef<{ pageFlip(): { flipPrev(): void; flipNext(): void } } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const pageWidth = useFlipbookPageWidth(containerRef);
 
   const renderPage = useCallback(async (pageNumber: number) => {
     const doc = docRef.current;
@@ -124,22 +127,25 @@ export function PdfFlipbook({ src, title }: { src: string; title: string }) {
     );
   }
 
-  const width = 500;
-  const height = Math.round(width / aspect);
+  const height = Math.round(pageWidth / aspect);
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className="flex w-full max-w-full justify-center overflow-x-auto">
+      <div ref={containerRef} className="flex w-full max-w-full justify-center overflow-x-auto">
         <HTMLFlipBook
           {...FLIPBOOK_DEFAULTS}
+          key={pageWidth}
           ref={flipRef}
-          width={width}
+          startPage={currentPage}
+          width={pageWidth}
           height={height}
-          size="stretch"
-          minWidth={280}
-          maxWidth={1000}
-          minHeight={Math.round(280 / aspect)}
-          maxHeight={Math.round(1000 / aspect)}
+          size="fixed"
+          // Required by IProps but irrelevant in "fixed" mode — page-flip's
+          // validateSettings overwrites all four to width/height anyway.
+          minWidth={pageWidth}
+          maxWidth={pageWidth}
+          minHeight={height}
+          maxHeight={height}
           showCover={false}
           maxShadowOpacity={0.5}
           className="shadow-lg"

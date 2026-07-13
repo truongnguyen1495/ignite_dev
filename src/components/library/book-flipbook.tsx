@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import type { BookPageData } from "@/lib/library-book-elements";
 import { BookPage } from "./book-page";
 import { FLIPBOOK_DEFAULTS } from "./flipbook-defaults";
+import { useFlipbookPageWidth } from "./use-flipbook-page-width";
 
 type PagesResponse = {
   pages: BookPageData[];
@@ -23,6 +24,8 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
   const [currentPage, setCurrentPage] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const flipRef = useRef<{ pageFlip(): { flipPrev(): void; flipNext(): void } } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const pageWidth = useFlipbookPageWidth(containerRef);
 
   useEffect(() => {
     let cancelled = false;
@@ -56,22 +59,25 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
 
   const { pages, bookWidth, bookHeight } = data;
   const aspect = bookWidth / bookHeight;
-  const width = 500;
-  const height = Math.round(width / aspect);
+  const height = Math.round(pageWidth / aspect);
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className="flex w-full max-w-full justify-center overflow-x-auto">
+      <div ref={containerRef} className="flex w-full max-w-full justify-center overflow-x-auto">
         <HTMLFlipBook
           {...FLIPBOOK_DEFAULTS}
+          key={pageWidth}
           ref={flipRef}
-          width={width}
+          startPage={currentPage}
+          width={pageWidth}
           height={height}
-          size="stretch"
-          minWidth={280}
-          maxWidth={1000}
-          minHeight={Math.round(280 / aspect)}
-          maxHeight={Math.round(1000 / aspect)}
+          size="fixed"
+          // Required by IProps but irrelevant in "fixed" mode — page-flip's
+          // validateSettings overwrites all four to width/height anyway.
+          minWidth={pageWidth}
+          maxWidth={pageWidth}
+          minHeight={height}
+          maxHeight={height}
           showCover={false}
           maxShadowOpacity={0.5}
           className="shadow-lg"
