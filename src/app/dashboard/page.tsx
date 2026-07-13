@@ -3,6 +3,7 @@ import { Lock, Unlock, AlertTriangle } from "lucide-react";
 import { requireLeveledStudent } from "@/lib/access";
 import { ORDERED_LEVELS, LEVEL_NAMES, hasLevelAccess } from "@/lib/levels";
 import { LevelBadge } from "@/components/ui/level-badge";
+import { getDictionary } from "@/lib/i18n/get-locale";
 
 export default async function StudentDashboardPage({
   searchParams,
@@ -11,16 +12,17 @@ export default async function StudentDashboardPage({
 }) {
   const student = await requireLeveledStudent();
   const { denied } = await searchParams;
+  const { t } = await getDictionary();
 
   return (
     <div className="space-y-6">
       {denied && (
         <p className="flex items-center gap-2 rounded-lg border border-danger/30 bg-danger-bg px-4 py-3 text-sm text-danger">
           <AlertTriangle className="h-4 w-4" />
-          Bạn không có quyền truy cập nội dung đó.
+          {t.dashboardLevelsPage.accessDenied}
         </p>
       )}
-      <h1 className="text-2xl font-semibold text-foreground">5 Cấp Đào Tạo</h1>
+      <h1 className="text-2xl font-semibold text-foreground">{t.dashboardLevelsPage.title}</h1>
       <div className="grid gap-4 sm:grid-cols-2">
         {ORDERED_LEVELS.map((level) => {
           const unlocked = hasLevelAccess(student.grantedLevel, level);
@@ -44,7 +46,7 @@ export default async function StudentDashboardPage({
                 )}
               </div>
               <p className="mt-2 text-sm text-muted">
-                {unlocked ? "Đã mở khóa" : "Chưa được cấp quyền"}
+                {unlocked ? t.dashboardLevelsPage.unlocked : t.dashboardLevelsPage.locked}
               </p>
             </div>
           );

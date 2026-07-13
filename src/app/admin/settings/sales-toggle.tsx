@@ -3,22 +3,19 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { useLocale } from "@/components/i18n/locale-provider";
 import { setSalesEnabledAction } from "./actions";
 
 export function SalesToggle({ salesEnabled }: { salesEnabled: boolean }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const { t } = useLocale();
 
   return (
     <div className="flex items-center justify-between gap-4">
       <div>
-        <p className="text-sm font-medium text-foreground">Bán khóa học / thư viện</p>
-        <p className="text-sm text-muted">
-          Bật/tắt toàn bộ tính năng bán hàng — nút &quot;Mua ngay&quot;, trang &quot;Đơn hàng của tôi&quot;
-          của học viên, và trang &quot;Đơn hàng&quot; của admin đều ẩn đi khi tắt. Chỉ bật sau khi đã điền
-          đầy đủ thông tin chuyển khoản bên dưới. Nếu đang có đơn chờ xác nhận, phải bật lại công tắc này
-          mới xử lý được.
-        </p>
+        <p className="text-sm font-medium text-foreground">{t.settingsPage.salesTitle}</p>
+        <p className="text-sm text-muted">{t.settingsPage.salesDescription}</p>
       </div>
       <button
         type="button"

@@ -15,9 +15,11 @@ import { requireActiveStudent, isChatEnabled, isSalesEnabled, getAdminPermission
 import { prisma } from "@/lib/prisma";
 import { getStudentChatInbox } from "@/lib/chat";
 import { LEVEL_LABELS, hasLevelAccess } from "@/lib/levels";
+import { getDictionary } from "@/lib/i18n/get-locale";
 import { Sidebar, SidebarProvider, SidebarToggle, type NavItem } from "@/components/ui/sidebar";
 import { BrandLogo } from "@/components/brand-logo";
 import { LogoutButton } from "@/components/logout-button";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { LevelUpWatcher } from "./level-up-watcher";
 import { HocSinhNav, type HocSinhNavItem } from "./hoc-sinh-nav";
@@ -30,6 +32,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const student = await requireActiveStudent();
+  const { t } = await getDictionary();
 
   const [announcements, reads, chatEnabled, salesEnabled, adminPermissions] = await Promise.all([
     prisma.announcement.findMany({ select: { id: true, minLevel: true, visibleToStudents: true } }),
@@ -64,22 +67,22 @@ export default async function DashboardLayout({
   // hiện có, xem nhánh bên dưới.
   if (!isLeveled) {
     const hocSinhNavItems: HocSinhNavItem[] = [
-      { href: "/dashboard/home", label: "Trang chủ", icon: <Home className="h-4 w-4" />, exact: true },
-      { href: "/dashboard/announcements", label: "Bản tin", icon: <Megaphone className="h-4 w-4" /> },
-      { href: "/dashboard/courses", label: "Khóa học độc quyền", icon: <Video className="h-4 w-4" /> },
-      { href: "/dashboard/library", label: "Thư viện", icon: <Library className="h-4 w-4" /> },
+      { href: "/dashboard/home", label: t.hocSinhNav.home, icon: <Home className="h-4 w-4" />, exact: true },
+      { href: "/dashboard/announcements", label: t.hocSinhNav.announcements, icon: <Megaphone className="h-4 w-4" /> },
+      { href: "/dashboard/courses", label: t.hocSinhNav.exclusiveCourses, icon: <Video className="h-4 w-4" /> },
+      { href: "/dashboard/library", label: t.hocSinhNav.library, icon: <Library className="h-4 w-4" /> },
       {
         href: "/dashboard/level-up",
-        label: "Tham gia hệ thống 5 cấp",
+        label: t.hocSinhNav.joinFiveLevel,
         icon: <ArrowUpCircle className="h-4 w-4" />,
       },
-      { href: "/dashboard/profile", label: "Thông tin cá nhân", icon: <UserCircle className="h-4 w-4" /> },
+      { href: "/dashboard/profile", label: t.hocSinhNav.profile, icon: <UserCircle className="h-4 w-4" /> },
     ];
     return (
       <div className="min-h-screen bg-background">
         <header className="border-b border-border bg-surface">
           <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 px-4 pt-4 sm:px-8">
-            <BrandLogo subtitle="Học sinh" />
+            <BrandLogo subtitle={t.brandSubtitle.hocSinh} />
             <div className="flex flex-wrap items-center gap-3 text-sm">
               {hasAdminAccess && (
                 <Link
@@ -87,7 +90,7 @@ export default async function DashboardLayout({
                   className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-primary/50 hover:text-foreground"
                 >
                   <ShieldCheck className="h-3.5 w-3.5" />
-                  Vào trang Admin
+                  {t.dashboardNav.goToAdmin}
                 </Link>
               )}
               <span className="flex min-w-0 items-center gap-2 rounded-full border border-border py-1 pl-1 pr-3">
@@ -107,14 +110,15 @@ export default async function DashboardLayout({
               {salesEnabled && (
                 <Link
                   href="/dashboard/orders"
-                  title="Đơn hàng của tôi"
+                  title={t.dashboardNav.myOrders}
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary-hover"
                 >
                   <ShoppingCart className="h-4 w-4" />
-                  <span className="sr-only">Đơn hàng của tôi</span>
+                  <span className="sr-only">{t.dashboardNav.myOrders}</span>
                 </Link>
               )}
-              <LogoutButton />
+              <LanguageSwitcher />
+              <LogoutButton label={t.common.logout} />
             </div>
           </div>
           <HocSinhNav items={hocSinhNavItems} />
@@ -125,12 +129,12 @@ export default async function DashboardLayout({
   }
 
   const NAV_ITEMS: NavItem[] = [
-    { href: "/dashboard", label: "5 Cấp đào tạo", icon: <LayoutDashboard className={iconClass} />, exact: true },
-    { href: "/dashboard/courses", label: "Khóa học độc quyền", icon: <Video className={iconClass} /> },
-    { href: "/dashboard/library", label: "Thư viện", icon: <Library className={iconClass} /> },
+    { href: "/dashboard", label: t.dashboardNav.fiveLevelTraining, icon: <LayoutDashboard className={iconClass} />, exact: true },
+    { href: "/dashboard/courses", label: t.dashboardNav.exclusiveCourses, icon: <Video className={iconClass} /> },
+    { href: "/dashboard/library", label: t.dashboardNav.library, icon: <Library className={iconClass} /> },
     {
       href: "/dashboard/announcements",
-      label: "Bản tin",
+      label: t.dashboardNav.announcements,
       icon: <Megaphone className={iconClass} />,
       badge: unreadAnnouncementCount,
     },
@@ -138,14 +142,14 @@ export default async function DashboardLayout({
       ? [
           {
             href: "/dashboard/chat",
-            label: "Nhắn tin",
+            label: t.dashboardNav.chat,
             icon: <MessageCircle className={iconClass} />,
             badge: unreadChatCount,
           },
         ]
       : []),
-    { href: "/dashboard/level-up", label: "Xin lên cấp", icon: <ArrowUpCircle className={iconClass} /> },
-    { href: "/dashboard/profile", label: "Thông tin cá nhân", icon: <UserCircle className={iconClass} /> },
+    { href: "/dashboard/level-up", label: t.dashboardNav.levelUp, icon: <ArrowUpCircle className={iconClass} /> },
+    { href: "/dashboard/profile", label: t.dashboardNav.profile, icon: <UserCircle className={iconClass} /> },
   ];
 
   return (
@@ -155,7 +159,7 @@ export default async function DashboardLayout({
         level={student.grantedLevel!}
         label={LEVEL_LABELS[student.grantedLevel!]}
       />
-      <Sidebar items={NAV_ITEMS} brand={<BrandLogo subtitle="Học viên" />} />
+      <Sidebar items={NAV_ITEMS} brand={<BrandLogo subtitle={t.brandSubtitle.hocVien} />} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-8 sm:py-4">
           <SidebarToggle />
@@ -166,7 +170,7 @@ export default async function DashboardLayout({
                 className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-primary/50 hover:text-foreground"
               >
                 <ShieldCheck className="h-3.5 w-3.5" />
-                Vào trang Admin
+                {t.dashboardNav.goToAdmin}
               </Link>
             )}
             <span className="flex min-w-0 items-center gap-2 rounded-full border border-border py-1 pl-1 pr-3">
@@ -186,14 +190,15 @@ export default async function DashboardLayout({
             {salesEnabled && (
               <Link
                 href="/dashboard/orders"
-                title="Đơn hàng của tôi"
+                title={t.dashboardNav.myOrders}
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary-hover"
               >
                 <ShoppingCart className="h-4 w-4" />
-                <span className="sr-only">Đơn hàng của tôi</span>
+                <span className="sr-only">{t.dashboardNav.myOrders}</span>
               </Link>
             )}
-            <LogoutButton />
+            <LanguageSwitcher />
+            <LogoutButton label={t.common.logout} />
           </div>
         </header>
         <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">

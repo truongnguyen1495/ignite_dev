@@ -19,9 +19,11 @@ import {
 import { requireAnyAdminAccess, isChatEnabled, isSalesEnabled } from "@/lib/access";
 import { getAdminSupportInbox } from "@/lib/chat";
 import { getAdminGuestChatInbox } from "@/lib/guest-chat";
+import { getDictionary } from "@/lib/i18n/get-locale";
 import { Sidebar, SidebarProvider, SidebarToggle, type NavItem } from "@/components/ui/sidebar";
 import { BrandLogo } from "@/components/brand-logo";
 import { LogoutButton } from "@/components/logout-button";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import type { AdminPermissionKind } from "@prisma/client";
 
 const iconClass = "h-4 w-4";
@@ -33,6 +35,7 @@ export default async function AdminLayout({
 }) {
   const { user: admin, isSuperAdmin, permissions } = await requireAnyAdminAccess();
   const canManage = (permission: AdminPermissionKind) => isSuperAdmin || permissions.has(permission);
+  const { t } = await getDictionary();
 
   // Live unread count needs a DB read, so NAV_ITEMS moves inside the async
   // body (unlike a purely static nav) — same reasoning as the "Nhắn tin"
@@ -52,35 +55,35 @@ export default async function AdminLayout({
   // full or limited — the rest only show up if requireAnyAdminAccess granted
   // that specific slice (or the caller is a full Super Admin).
   const ALL_NAV_ITEMS: { item: NavItem; permission?: AdminPermissionKind }[] = [
-    { item: { href: "/admin", label: "Tổng quan", icon: <LayoutDashboard className={iconClass} />, exact: true } },
+    { item: { href: "/admin", label: t.adminNav.overview, icon: <LayoutDashboard className={iconClass} />, exact: true } },
     {
       item: {
         href: "/admin/prospective-students",
-        label: "Học sinh",
+        label: t.adminNav.prospectiveStudents,
         icon: <UserPlus className={iconClass} />,
       },
       permission: "MANAGE_PROSPECTIVE_STUDENTS",
     },
     {
-      item: { href: "/admin/courses", label: "Khóa học độc quyền", icon: <Crown className={iconClass} /> },
+      item: { href: "/admin/courses", label: t.adminNav.exclusiveCourses, icon: <Crown className={iconClass} /> },
       permission: "MANAGE_COURSES",
     },
     {
-      item: { href: "/admin/library", label: "Thư viện", icon: <Library className={iconClass} /> },
+      item: { href: "/admin/library", label: t.adminNav.library, icon: <Library className={iconClass} /> },
       permission: "MANAGE_LIBRARY",
     },
     {
-      item: { href: "/admin/orders", label: "Đơn hàng", icon: <Receipt className={iconClass} /> },
+      item: { href: "/admin/orders", label: t.adminNav.orders, icon: <Receipt className={iconClass} /> },
       permission: "MANAGE_ORDERS",
     },
     {
-      item: { href: "/admin/announcements", label: "Bản tin", icon: <Megaphone className={iconClass} /> },
+      item: { href: "/admin/announcements", label: t.adminNav.announcements, icon: <Megaphone className={iconClass} /> },
       permission: "MANAGE_ANNOUNCEMENTS",
     },
     {
       item: {
         href: "/admin/chat",
-        label: "Hỗ trợ học viên",
+        label: t.adminNav.support,
         icon: <MessageCircle className={iconClass} />,
         badge: unreadSupportCount,
       },
@@ -103,16 +106,16 @@ export default async function AdminLayout({
   // back to flat top-level entries instead of losing access to the page.
   const studentChildren: NavItem[] = [
     ...(canManage("MANAGE_LESSONS_QUIZZES")
-      ? [{ href: "/admin/lessons", label: "Bài học", icon: <BookOpen className={iconClass} /> }]
+      ? [{ href: "/admin/lessons", label: t.adminNav.lessons, icon: <BookOpen className={iconClass} /> }]
       : []),
     ...(canManage("MANAGE_RESULTS")
-      ? [{ href: "/admin/results", label: "Kết quả", icon: <ClipboardList className={iconClass} /> }]
+      ? [{ href: "/admin/results", label: t.adminNav.results, icon: <ClipboardList className={iconClass} /> }]
       : []),
     ...(canManage("MANAGE_LEVEL_UP_REQUESTS")
       ? [
           {
             href: "/admin/level-up-requests",
-            label: "Yêu cầu lên cấp",
+            label: t.adminNav.levelUpRequests,
             icon: <ArrowUpCircle className={iconClass} />,
           },
         ]
@@ -122,7 +125,7 @@ export default async function AdminLayout({
   if (canManage("MANAGE_STUDENTS")) {
     NAV_ITEMS.splice(1, 0, {
       href: "/admin/students",
-      label: "Học viên",
+      label: t.adminNav.students,
       icon: <Users className={iconClass} />,
       children: studentChildren.length > 0 ? studentChildren : undefined,
     });
@@ -134,8 +137,8 @@ export default async function AdminLayout({
   // permissions at all) stay Super-Admin only — a limited admin must never
   // see, let alone reach, the pages that could grant itself more access.
   if (isSuperAdmin) {
-    NAV_ITEMS.push({ href: "/admin/admins", label: "Quản lý Admin", icon: <UserCog className={iconClass} /> });
-    NAV_ITEMS.push({ href: "/admin/settings", label: "Cài đặt", icon: <Settings className={iconClass} /> });
+    NAV_ITEMS.push({ href: "/admin/admins", label: t.adminNav.adminManagement, icon: <UserCog className={iconClass} /> });
+    NAV_ITEMS.push({ href: "/admin/settings", label: t.adminNav.settings, icon: <Settings className={iconClass} /> });
   }
 
   return (
@@ -143,7 +146,7 @@ export default async function AdminLayout({
       <Sidebar
         items={NAV_ITEMS}
         variant="navy"
-        brand={<BrandLogo subtitle="Quản trị viên" variant="navy" />}
+        brand={<BrandLogo subtitle={t.brandSubtitle.admin} variant="navy" />}
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-8 sm:py-4">
@@ -155,17 +158,18 @@ export default async function AdminLayout({
                 className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-primary/50 hover:text-foreground"
               >
                 <GraduationCap className="h-3.5 w-3.5" />
-                Về trang học viên
+                {t.adminNav.backToStudentPage}
               </Link>
             )}
             <span className="flex min-w-0 items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs text-muted">
               <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-primary" />
               <span className="truncate">{admin.name}</span>
               <span className="hidden shrink-0 text-foreground sm:inline">
-                ({isSuperAdmin ? "Super Admin" : "Admin"})
+                ({isSuperAdmin ? t.common.superAdmin : t.common.admin})
               </span>
             </span>
-            <LogoutButton />
+            <LanguageSwitcher />
+            <LogoutButton label={t.common.logout} />
           </div>
         </header>
         <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ConfirmDialogProvider } from "@/components/ui/confirm-dialog";
 import { ToastProvider } from "@/components/ui/toast";
+import { LocaleProvider } from "@/components/i18n/locale-provider";
+import { getLocale } from "@/lib/i18n/get-locale";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,20 +21,23 @@ export const metadata: Metadata = {
   description: "Hệ thống đào tạo nội bộ 5 cấp",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { locale, bilingualEnabled } = await getLocale();
   return (
     <html
-      lang="vi"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <ToastProvider>
-          <ConfirmDialogProvider>{children}</ConfirmDialogProvider>
-        </ToastProvider>
+        <LocaleProvider initialLocale={locale} bilingualEnabled={bilingualEnabled}>
+          <ToastProvider>
+            <ConfirmDialogProvider>{children}</ConfirmDialogProvider>
+          </ToastProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

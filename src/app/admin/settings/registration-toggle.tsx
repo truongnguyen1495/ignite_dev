@@ -3,20 +3,19 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { useLocale } from "@/components/i18n/locale-provider";
 import { setRegistrationEnabledAction } from "./actions";
 
 export function RegistrationToggle({ registrationEnabled }: { registrationEnabled: boolean }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const { t } = useLocale();
 
   return (
     <div className="flex items-center justify-between gap-4">
       <div>
-        <p className="text-sm font-medium text-foreground">Đăng ký tài khoản mới</p>
-        <p className="text-sm text-muted">
-          Bật/tắt cho phép người dùng mới tự đăng ký tài khoản tại trang đăng ký. Khi tắt, tài khoản mới chỉ
-          có thể được Admin tạo thủ công.
-        </p>
+        <p className="text-sm font-medium text-foreground">{t.settingsPage.registrationTitle}</p>
+        <p className="text-sm text-muted">{t.settingsPage.registrationDescription}</p>
       </div>
       <button
         type="button"

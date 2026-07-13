@@ -6,6 +6,7 @@ import { getGuestCourseItems } from "@/lib/guest-courses";
 import { GuestCourseList } from "@/app/guest/courses/course-list";
 import { GuestLibraryList, type GuestLibraryItem } from "@/app/guest/library/library-list";
 import { formatDateVN } from "@/lib/date";
+import { getDictionary } from "@/lib/i18n/get-locale";
 
 // Same reasoning as guest/page.tsx: reads admin-toggleable featured/visible
 // flags, must not be statically prerendered.
@@ -25,6 +26,7 @@ const EBOOK_GRADIENTS = [
 // tham gia hệ thống 5 cấp.
 export default async function StudentHomePage() {
   const student = await requireActiveStudent();
+  const { t } = await getDictionary();
 
   const [latestAnnouncements, featuredCourses, featuredEbooks] = await Promise.all([
     prisma.announcement.findMany({
@@ -54,11 +56,10 @@ export default async function StudentHomePage() {
     <div className="space-y-12">
       <section className="rounded-2xl border border-border bg-surface p-8 text-center sm:p-12">
         <h1 className="text-3xl font-bold text-foreground sm:text-4xl">
-          Chào mừng trở lại, <span className="text-primary">{student.name}</span>
+          {t.dashboardHomePage.welcomeBack} <span className="text-primary">{student.name}</span>
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-sm text-muted sm:text-base">
-          Bạn đang là học sinh — khám phá bản tin và khóa học độc quyền, hoặc xin tham gia hệ
-          thống đào tạo 5 cấp để mở khóa toàn bộ lộ trình.
+          {t.dashboardHomePage.hocSinhIntro}
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Link
@@ -66,19 +67,19 @@ export default async function StudentHomePage() {
             className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
           >
             <ArrowUpCircle className="h-4 w-4" />
-            Tham gia hệ thống đào tạo 5 cấp
+            {t.dashboardHomePage.joinFiveLevel}
           </Link>
         </div>
       </section>
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Bản tin mới nhất</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t.dashboardHomePage.latestAnnouncements}</h2>
           <Link
             href="/dashboard/announcements"
             className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
           >
-            Xem tất cả
+            {t.dashboardHomePage.viewAll}
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -112,18 +113,18 @@ export default async function StudentHomePage() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted">Chưa có bản tin nào.</p>
+          <p className="text-sm text-muted">{t.dashboardHomePage.noAnnouncements}</p>
         )}
       </section>
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Khóa học nổi bật</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t.dashboardHomePage.featuredCourses}</h2>
           <Link
             href="/dashboard/courses"
             className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
           >
-            Xem tất cả
+            {t.dashboardHomePage.viewAll}
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -132,12 +133,12 @@ export default async function StudentHomePage() {
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Ebook nổi bật</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t.dashboardHomePage.featuredEbooks}</h2>
           <Link
             href="/dashboard/library"
             className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
           >
-            Xem tất cả
+            {t.dashboardHomePage.viewAll}
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>

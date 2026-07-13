@@ -204,6 +204,15 @@ export async function isRegistrationEnabled(): Promise<boolean> {
   return settings?.registrationEnabled ?? true;
 }
 
+// Master switch for the bilingual UI, toggled from /admin/settings — same
+// fresh-from-DB convention as isChatEnabled. When off, src/lib/i18n/get-locale.ts
+// always resolves "vi" regardless of a visitor's saved language cookie, and
+// the language switcher renders nothing.
+export async function isBilingualEnabled(): Promise<boolean> {
+  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
+  return settings?.bilingualEnabled ?? false;
+}
+
 // Master kill switch for the whole sales feature, toggled from
 // /admin/settings — defaults off (bank info starts empty). When off, this
 // hides the "Mua ngay" button, both nav entries ("Đơn hàng của tôi" /

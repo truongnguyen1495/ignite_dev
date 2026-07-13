@@ -1,7 +1,7 @@
 import { LogOut } from "lucide-react";
 import { signOut } from "@/lib/auth";
 
-export function LogoutButton() {
+export function LogoutButton({ label = "Đăng xuất" }: { label?: string }) {
   return (
     <form
       action={async () => {
@@ -11,11 +11,11 @@ export function LogoutButton() {
     >
       <button
         type="submit"
-        title="Đăng xuất"
+        title={label}
         className="flex items-center gap-2 rounded-lg border border-border px-2.5 py-2 text-sm font-medium text-muted transition-colors hover:border-danger/30 hover:text-danger sm:px-3"
       >
         <LogOut className="h-4 w-4" />
-        <span className="hidden sm:inline">Đăng xuất</span>
+        <span className="hidden sm:inline">{label}</span>
       </button>
     </form>
   );

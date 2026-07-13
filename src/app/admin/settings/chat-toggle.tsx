@@ -3,19 +3,19 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { useLocale } from "@/components/i18n/locale-provider";
 import { setChatEnabledAction } from "./actions";
 
 export function ChatToggle({ chatEnabled }: { chatEnabled: boolean }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const { t } = useLocale();
 
   return (
     <div className="flex items-center justify-between gap-4">
       <div>
-        <p className="text-sm font-medium text-foreground">Tính năng chat</p>
-        <p className="text-sm text-muted">
-          Bật/tắt nhắn tin hỗ trợ, nhắn tin trực tiếp, chat nhóm cho học viên và admin, và chat hỗ trợ cho khách chưa đăng nhập.
-        </p>
+        <p className="text-sm font-medium text-foreground">{t.settingsPage.chatTitle}</p>
+        <p className="text-sm text-muted">{t.settingsPage.chatDescription}</p>
       </div>
       <button
         type="button"

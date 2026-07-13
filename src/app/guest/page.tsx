@@ -3,6 +3,7 @@ import { ArrowRight, Megaphone, UserPlus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getGuestCourseItems } from "@/lib/guest-courses";
 import { formatDateVN } from "@/lib/date";
+import { getDictionary } from "@/lib/i18n/get-locale";
 import { GuestCourseList } from "./courses/course-list";
 import { GuestLibraryList, type GuestLibraryItem } from "./library/library-list";
 
@@ -20,6 +21,7 @@ const EBOOK_GRADIENTS = [
 ];
 
 export default async function GuestHomePage() {
+  const { t } = await getDictionary();
   const [latestAnnouncements, featuredCourses, featuredEbooks] = await Promise.all([
     prisma.announcement.findMany({
       where: { visibleToGuest: true, visibleToStudents: true },
@@ -50,31 +52,28 @@ export default async function GuestHomePage() {
     <div className="space-y-12">
       <section className="rounded-2xl border border-border bg-surface p-8 text-center sm:p-12">
         <h1 className="text-3xl font-bold text-foreground sm:text-4xl">
-          Chào mừng đến với <span className="text-primary">LMS IGNITE</span>
+          {t.guestHomePage.welcomeTitle} <span className="text-primary">LMS IGNITE</span>
         </h1>
-        <p className="mx-auto mt-3 max-w-xl text-sm text-muted sm:text-base">
-          Nền tảng đào tạo theo lộ trình 5 cấp — khám phá bản tin và khóa học độc quyền ngay,
-          không cần đăng nhập. Đăng ký để mở khóa toàn bộ nội dung.
-        </p>
+        <p className="mx-auto mt-3 max-w-xl text-sm text-muted sm:text-base">{t.guestHomePage.intro}</p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/register"
             className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
           >
             <UserPlus className="h-4 w-4" />
-            Đăng ký ngay
+            {t.guestHomePage.registerNow}
           </Link>
         </div>
       </section>
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Bản tin mới nhất</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t.guestHomePage.latestAnnouncements}</h2>
           <Link
             href="/guest/announcements"
             className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
           >
-            Xem tất cả
+            {t.guestHomePage.viewAll}
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -108,18 +107,18 @@ export default async function GuestHomePage() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted">Chưa có bản tin công khai nào.</p>
+          <p className="text-sm text-muted">{t.guestHomePage.noAnnouncements}</p>
         )}
       </section>
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Khóa học nổi bật</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t.guestHomePage.featuredCourses}</h2>
           <Link
             href="/guest/courses"
             className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
           >
-            Xem tất cả
+            {t.guestHomePage.viewAll}
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -128,12 +127,12 @@ export default async function GuestHomePage() {
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Ebook nổi bật</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t.guestHomePage.featuredEbooks}</h2>
           <Link
             href="/guest/library"
             className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
           >
-            Xem tất cả
+            {t.guestHomePage.viewAll}
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>

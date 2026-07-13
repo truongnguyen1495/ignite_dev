@@ -282,6 +282,11 @@ model Settings {
   // Never hides /admin/orders or a student's own order history, only new
   // purchases.
   salesEnabled        Boolean  @default(false)
+  // Master switch for the bilingual (Tiếng Việt/English) UI — toggled from
+  // /admin/settings (see isBilingualEnabled in src/lib/access.ts). When
+  // false, every area always renders Vietnamese regardless of a visitor's
+  // saved language cookie, and the language switcher is hidden.
+  bilingualEnabled    Boolean  @default(false)
   bankName            String?
   bankAccountNumber   String?
   bankAccountHolder   String?

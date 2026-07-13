@@ -25,6 +25,16 @@ export async function setRegistrationEnabledAction(registrationEnabled: boolean)
   revalidatePath("/admin/settings");
 }
 
+export async function setBilingualEnabledAction(bilingualEnabled: boolean) {
+  await requireActiveSuperAdmin();
+  await prisma.settings.upsert({
+    where: { id: 1 },
+    update: { bilingualEnabled },
+    create: { id: 1, bilingualEnabled },
+  });
+  revalidatePath("/admin/settings");
+}
+
 export async function setSalesEnabledAction(salesEnabled: boolean) {
   await requireActiveSuperAdmin();
   await prisma.settings.upsert({

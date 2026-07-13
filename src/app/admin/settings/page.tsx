@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { requireActiveSuperAdmin } from "@/lib/access";
+import { getDictionary } from "@/lib/i18n/get-locale";
 import { ChatToggle } from "./chat-toggle";
 import { RegistrationToggle } from "./registration-toggle";
 import { LanguageToggle } from "./language-toggle";
@@ -13,10 +14,11 @@ import { BankInfoForm } from "./bank-info-form";
 export default async function SettingsPage() {
   await requireActiveSuperAdmin();
   const settings = await prisma.settings.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
+  const { t } = await getDictionary();
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Cài đặt" />
+      <PageHeader title={t.settingsPage.title} />
       <Card className="max-w-lg">
         <ChatToggle chatEnabled={settings.chatEnabled} />
       </Card>
@@ -24,7 +26,7 @@ export default async function SettingsPage() {
         <RegistrationToggle registrationEnabled={settings.registrationEnabled} />
       </Card>
       <Card className="max-w-lg">
-        <LanguageToggle />
+        <LanguageToggle bilingualEnabled={settings.bilingualEnabled} />
       </Card>
       <Card className="max-w-lg">
         <SalesToggle salesEnabled={settings.salesEnabled} />
@@ -45,8 +47,8 @@ export default async function SettingsPage() {
           <UserCog className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-foreground">Quản lý Admin</p>
-          <p className="text-xs text-muted">Cấp/thu hồi quyền admin cho tài khoản, xem toàn bộ thông tin từng admin.</p>
+          <p className="text-sm font-medium text-foreground">{t.settingsPage.adminManagementTitle}</p>
+          <p className="text-xs text-muted">{t.settingsPage.adminManagementDescription}</p>
         </div>
         <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
       </Link>
