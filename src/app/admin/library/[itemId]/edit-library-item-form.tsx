@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
+import { PenTool } from "lucide-react";
 import { updateLibraryItemAction } from "../actions";
 import { CoverImageInput } from "@/components/ui/cover-image-input";
 import { LibraryFileInput } from "../library-file-input";
@@ -8,7 +10,7 @@ import { Input, Select, Textarea } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { BackLink } from "@/components/ui/back-link";
-import type { LibraryItemType } from "@prisma/client";
+import type { LibraryItemType, LibraryItemFormat } from "@prisma/client";
 
 export function EditLibraryItemForm({
   libraryItemId,
@@ -16,6 +18,7 @@ export function EditLibraryItemForm({
   author,
   description,
   type,
+  format,
   coverImageUrl,
   filePath,
   pageCount,
@@ -31,8 +34,9 @@ export function EditLibraryItemForm({
   author: string | null;
   description: string | null;
   type: LibraryItemType;
+  format: LibraryItemFormat;
   coverImageUrl: string | null;
-  filePath: string;
+  filePath: string | null;
   pageCount: number | null;
   order: number;
   price: number;
@@ -86,11 +90,21 @@ export function EditLibraryItemForm({
             defaultValue={coverImageUrl ?? ""}
             onChange={() => setIsDirty(true)}
           />
-          <LibraryFileInput
-            defaultPath={filePath}
-            defaultPageCount={pageCount}
-            onChange={() => setIsDirty(true)}
-          />
+          {format === "PDF" ? (
+            <LibraryFileInput
+              defaultPath={filePath ?? ""}
+              defaultPageCount={pageCount}
+              onChange={() => setIsDirty(true)}
+            />
+          ) : (
+            <Link
+              href={`/admin/library/${libraryItemId}/editor`}
+              className="flex items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover"
+            >
+              <PenTool className="h-4 w-4" />
+              Mở trình soạn thảo ({pageCount ?? 0} trang)
+            </Link>
+          )}
           <Input id="order" name="order" type="number" defaultValue={order} label="Thứ tự hiển thị" />
 
           {canManageOrders && (

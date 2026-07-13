@@ -5,29 +5,10 @@ import type { PDFDocumentProxy, PDFDocumentLoadingTask } from "pdfjs-dist";
 import HTMLFlipBook from "react-pageflip";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { PdfPage } from "./pdf-page";
+import { FLIPBOOK_DEFAULTS } from "./flipbook-defaults";
 
 const RENDER_SCALE = 1.5;
 const JPEG_QUALITY = 0.85;
-
-// react-pageflip's IProps marks every FlipSetting field as required even
-// though its README documents most of these as having defaults applied at
-// runtime — these mirror those documented defaults so only the fields we
-// actually care about need overriding below.
-const FLIPBOOK_DEFAULTS = {
-  startPage: 0,
-  drawShadow: true,
-  flippingTime: 1000,
-  usePortrait: true,
-  startZIndex: 0,
-  autoSize: true,
-  mobileScrollSupport: true,
-  clickEventForward: true,
-  useMouseEvents: true,
-  swipeDistance: 30,
-  showPageCorners: true,
-  disableFlipByClick: false,
-  style: {},
-};
 
 // Renders a PDF (served from `src`, same access-gated API route the plain
 // iframe viewer already uses) as a page-turn flipbook. Pages are rasterized

@@ -352,7 +352,14 @@ export async function getLibraryItemAccessLevel(
     prisma.libraryLevelGrant.findMany({ where: { libraryItemId } }),
     prisma.libraryItem.findUnique({
       where: { id: libraryItemId },
-      select: { openToProspectiveStudents: true, isFree: true, visibleToGuest: true, previewFilePath: true },
+      select: {
+        openToProspectiveStudents: true,
+        isFree: true,
+        visibleToGuest: true,
+        previewFilePath: true,
+        format: true,
+        guestPreviewPages: true,
+      },
     }),
   ]);
   // isFree is a blanket "everyone gets full access" switch, same convention
@@ -364,7 +371,14 @@ export async function getLibraryItemAccessLevel(
       ? (libraryItem?.openToProspectiveStudents ?? false)
       : levelGrants.some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel));
   if (isFullViaLevel) return "full";
-  if (libraryItem?.visibleToGuest && libraryItem.previewFilePath) return "trial";
+  // PDF trial reads previewFilePath (a physically truncated copy);
+  // INTERACTIVE trial has no separate asset — /api/library/[itemId]/pages
+  // slices to guestPreviewPages rows at query time instead.
+  const hasTrialContent =
+    libraryItem?.format === "INTERACTIVE"
+      ? (libraryItem.guestPreviewPages ?? 0) > 0
+      : !!libraryItem?.previewFilePath;
+  if (libraryItem?.visibleToGuest && hasTrialContent) return "trial";
   return "none";
 }
 
@@ -450,12 +464,13 @@ export async function requireGuestLibraryItemAccess(libraryItemId: string) {
   // visibleToStudents doubles as a master hide switch here too: an item
   // hidden from students is hidden from guests too, regardless of
   // visibleToGuest — same convention as requireGuestAnnouncementAccess.
-  if (
-    !libraryItem ||
-    !libraryItem.visibleToGuest ||
-    !libraryItem.previewFilePath ||
-    !libraryItem.visibleToStudents
-  ) {
+  // Trial content check is format-aware, same rule as getLibraryItemAccessLevel
+  // above: PDF needs previewFilePath, INTERACTIVE just needs guestPreviewPages set.
+  const hasTrialContent =
+    libraryItem?.format === "INTERACTIVE"
+      ? (libraryItem.guestPreviewPages ?? 0) > 0
+      : !!libraryItem?.previewFilePath;
+  if (!libraryItem || !libraryItem.visibleToGuest || !hasTrialContent || !libraryItem.visibleToStudents) {
     redirect("/guest/library?denied=1");
   }
   return { libraryItem };

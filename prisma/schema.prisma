@@ -46,6 +46,15 @@ enum LibraryItemType {
   DOCUMENT
 }
 
+// Discriminates how a LibraryItem is authored/served — PDF (uploaded file,
+// today's only path) vs INTERACTIVE (pages composed in the admin editor,
+// see LibraryBookPage). Independent of LibraryItemType (BOOK/DOCUMENT),
+// which is about the item's physical form, not its content source.
+enum LibraryItemFormat {
+  PDF
+  INTERACTIVE
+}
+
 enum ChatThreadKind {
   SUPPORT
   DIRECT
@@ -421,9 +430,23 @@ model LibraryItem {
   author            String?
   description       String?         @db.Text
   type              LibraryItemType @default(BOOK)
+  // Defaults to PDF so every existing row keeps behaving exactly as before.
+  // INTERACTIVE items have no filePath/previewFilePath — see LibraryBookPage
+  // and requireGuestLibraryItemAccess/getLibraryItemAccessLevel in
+  // src/lib/access.ts for the format-aware branches.
+  format            LibraryItemFormat @default(PDF)
   coverImageUrl     String?
-  filePath          String
+  // Only set (and required, enforced at the action layer, not by the
+  // schema) when format is PDF — INTERACTIVE items have no uploaded file.
+  filePath          String?
+  // "N trang" for list views either way — for INTERACTIVE items this is
+  // just pages.length, kept in sync on every saveLibraryBookPagesAction.
   pageCount         Int?
+  // Fixed design-pixel canvas size for an INTERACTIVE item, chosen once in
+  // the editor and not resizable after (every element's x/y/width/height in
+  // LibraryBookPage.elements is relative to this). Null for PDF items.
+  bookWidth         Int?
+  bookHeight        Int?
   previewFilePath   String?
   guestPreviewPages Int?
   order             Int             @default(0)
@@ -453,8 +476,30 @@ model LibraryItem {
   grants      LibraryAccessGrant[]
   levelGrants LibraryLevelGrant[]
   orderItems  OrderItem[]
+  bookPages   LibraryBookPage[]
 
   @@index([type, order])
+}
+
+// One row per page of an INTERACTIVE-format LibraryItem, composed in the
+// admin editor (src/app/admin/library/[itemId]/editor). `elements` is a
+// JSON array of positioned items (text/image/shape/button/video/audio),
+// validated by the shared zod schema in src/lib/library-book-elements.ts —
+// not enforced at the DB layer. Saved via saveLibraryBookPagesAction as a
+// full delete-and-recreate transaction (see setCourseGuestAccessAction for
+// the same pattern), so `order` is simply the array index at save time.
+model LibraryBookPage {
+  id                 String      @id @default(cuid())
+  libraryItemId      String
+  libraryItem        LibraryItem @relation(fields: [libraryItemId], references: [id], onDelete: Cascade)
+  order              Int
+  backgroundColor    String?
+  backgroundImageUrl String?
+  elements           Json
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  @@index([libraryItemId, order])
 }
 
 model LibraryAccessGrant {

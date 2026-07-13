@@ -15,7 +15,7 @@ export function LibraryItemGuestAccessForm({
   featuredOnHome,
 }: {
   libraryItemId: string;
-  filePath: string;
+  filePath: string | null;
   pageCount: number | null;
   guestPreviewPages: number | null;
   visibleToGuest: boolean;
@@ -39,7 +39,7 @@ export function LibraryItemGuestAccessForm({
 
       <form action={formAction} onChange={() => setIsDirty(true)} className="space-y-4">
         <input type="hidden" name="libraryItemId" value={libraryItemId} />
-        <input type="hidden" name="filePath" value={filePath} />
+        <input type="hidden" name="filePath" value={filePath ?? ""} />
 
         <label className="flex items-center gap-2 text-sm text-foreground">
           <input
@@ -61,7 +61,7 @@ export function LibraryItemGuestAccessForm({
             max={pageCount ?? undefined}
             defaultValue={guestPreviewPages ?? 5}
             label="Số trang cho khách đọc thử"
-            hint={pageCount ? `File có ${pageCount} trang.` : "Chưa có file PDF."}
+            hint={pageCount ? `Mục này có ${pageCount} trang.` : "Chưa có nội dung."}
           />
         )}
 

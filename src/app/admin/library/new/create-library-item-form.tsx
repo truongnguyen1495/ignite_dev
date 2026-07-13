@@ -18,6 +18,7 @@ export function CreateLibraryItemForm({
   const [isFree, setIsFree] = useState(false);
   const [visibleToGuest, setVisibleToGuest] = useState(false);
   const [pageCount, setPageCount] = useState<number | null>(null);
+  const [format, setFormat] = useState<"PDF" | "INTERACTIVE">("PDF");
 
   return (
     <form action={formAction} className="space-y-4">
@@ -29,7 +30,66 @@ export function CreateLibraryItemForm({
       </Select>
       <Textarea id="description" name="description" rows={3} label="Mô tả (tùy chọn)" />
       <CoverImageInput alt="Ảnh bìa sách/tài liệu" />
-      <LibraryFileInput onChange={({ pageCount }) => setPageCount(pageCount)} />
+
+      <div className="space-y-1.5">
+        <p className="text-sm font-medium text-foreground">Nguồn nội dung</p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-surface-hover">
+            <input
+              type="radio"
+              name="format"
+              value="PDF"
+              checked={format === "PDF"}
+              onChange={() => setFormat("PDF")}
+              className="mt-0.5 accent-primary"
+            />
+            <span>
+              <span className="block font-medium text-foreground">Tải file PDF lên</span>
+              <span className="block text-xs text-muted">Đọc bằng trình xem PDF/flipbook như hiện tại.</span>
+            </span>
+          </label>
+          <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-surface-hover">
+            <input
+              type="radio"
+              name="format"
+              value="INTERACTIVE"
+              checked={format === "INTERACTIVE"}
+              onChange={() => setFormat("INTERACTIVE")}
+              className="mt-0.5 accent-primary"
+            />
+            <span>
+              <span className="block font-medium text-foreground">Soạn bằng trình soạn thảo</span>
+              <span className="block text-xs text-muted">
+                Tạo trang với ảnh/chữ/video/audio ngay trong hệ thống — mở trình soạn thảo sau khi tạo.
+              </span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      {format === "PDF" ? (
+        <LibraryFileInput onChange={({ pageCount }) => setPageCount(pageCount)} />
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            id="bookWidth"
+            name="bookWidth"
+            type="number"
+            min={200}
+            defaultValue={800}
+            label="Chiều rộng trang (px)"
+          />
+          <Input
+            id="bookHeight"
+            name="bookHeight"
+            type="number"
+            min={200}
+            defaultValue={1131}
+            label="Chiều cao trang (px)"
+          />
+        </div>
+      )}
+
       <Input id="order" name="order" type="number" defaultValue={0} label="Thứ tự hiển thị" />
 
       {canManageOrders && (
@@ -87,10 +147,16 @@ export function CreateLibraryItemForm({
           name="guestPreviewPages"
           type="number"
           min={1}
-          max={pageCount ?? undefined}
+          max={format === "PDF" ? (pageCount ?? undefined) : undefined}
           defaultValue={5}
           label="Số trang cho khách đọc thử"
-          hint={pageCount ? `File có ${pageCount} trang.` : "Tải file PDF lên trước để biết tổng số trang."}
+          hint={
+            format === "PDF"
+              ? pageCount
+                ? `File có ${pageCount} trang.`
+                : "Tải file PDF lên trước để biết tổng số trang."
+              : "Soạn xong trang trong trình soạn thảo rồi chỉnh lại số này nếu cần."
+          }
         />
       )}
 
@@ -102,7 +168,7 @@ export function CreateLibraryItemForm({
       {error && <p className="text-sm text-danger">{error}</p>}
 
       <Button type="submit" disabled={pending} isLoading={pending}>
-        {pending ? "Đang tạo..." : "Tạo mục thư viện"}
+        {pending ? "Đang tạo..." : format === "INTERACTIVE" ? "Tạo và mở trình soạn thảo" : "Tạo mục thư viện"}
       </Button>
     </form>
   );

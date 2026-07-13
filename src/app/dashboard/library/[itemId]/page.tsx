@@ -1,6 +1,7 @@
 import { requireLibraryItemAccess } from "@/lib/access";
 import { BackLink } from "@/components/ui/back-link";
 import { PdfReader } from "@/components/library/pdf-reader";
+import { BookReader } from "@/components/library/book-reader";
 
 export default async function LibraryItemReaderPage({
   params,
@@ -24,7 +25,11 @@ export default async function LibraryItemReaderPage({
         )}
       </div>
 
-      <PdfReader src={`/api/library/${itemId}/${isTrial ? "preview" : "file"}`} title={libraryItem.title} />
+      {libraryItem.format === "INTERACTIVE" ? (
+        <BookReader itemId={itemId} title={libraryItem.title} />
+      ) : (
+        <PdfReader src={`/api/library/${itemId}/${isTrial ? "preview" : "file"}`} title={libraryItem.title} />
+      )}
     </div>
   );
 }

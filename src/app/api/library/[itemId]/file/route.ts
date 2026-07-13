@@ -22,7 +22,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ item
   }
 
   const libraryItem = await prisma.libraryItem.findUnique({ where: { id: itemId } });
-  if (!libraryItem) {
+  if (!libraryItem || !libraryItem.filePath) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 

@@ -1,6 +1,7 @@
 import { requireGuestLibraryItemAccess } from "@/lib/access";
 import { BackLink } from "@/components/ui/back-link";
 import { PdfReader } from "@/components/library/pdf-reader";
+import { BookReader } from "@/components/library/book-reader";
 
 // See src/app/guest/courses/page.tsx — forces per-request rendering instead
 // of a build-time static snapshot of the (admin-toggleable) guest flags.
@@ -27,7 +28,11 @@ export default async function GuestLibraryItemPage({
         )}
       </div>
 
-      <PdfReader src={`/api/library/${itemId}/preview`} title={libraryItem.title} />
+      {libraryItem.format === "INTERACTIVE" ? (
+        <BookReader itemId={itemId} title={libraryItem.title} />
+      ) : (
+        <PdfReader src={`/api/library/${itemId}/preview`} title={libraryItem.title} />
+      )}
     </div>
   );
 }

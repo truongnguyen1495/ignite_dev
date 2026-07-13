@@ -59,6 +59,7 @@ export default async function EditLibraryItemPage({
         author={item.author}
         description={item.description}
         type={item.type}
+        format={item.format}
         coverImageUrl={item.coverImageUrl}
         filePath={item.filePath}
         pageCount={item.pageCount}
