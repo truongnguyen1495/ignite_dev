@@ -28,7 +28,10 @@ const textElementSchema = baseElementSchema.extend({
 
 const imageElementSchema = baseElementSchema.extend({
   type: z.literal("image"),
-  url: z.string().min(1),
+  // Allowed empty: a freshly-added element has no file yet — the renderer
+  // shows an "Ảnh" placeholder for it until the admin uploads one, and the
+  // page must still be saveable in that in-progress state.
+  url: z.string(),
   alt: z.string().optional(),
 });
 
@@ -49,12 +52,14 @@ const buttonElementSchema = baseElementSchema.extend({
 
 const videoElementSchema = baseElementSchema.extend({
   type: z.literal("video"),
-  youtubeId: z.string().min(1),
+  // Allowed empty — see imageElementSchema's url comment above.
+  youtubeId: z.string(),
 });
 
 const audioElementSchema = baseElementSchema.extend({
   type: z.literal("audio"),
-  url: z.string().min(1),
+  // Allowed empty — see imageElementSchema's url comment above.
+  url: z.string(),
 });
 
 export const bookElementSchema = z.discriminatedUnion("type", [

@@ -70,7 +70,7 @@ export function EditorCanvas({
           }}
         >
           <div className="h-full w-full">
-            <BookElementRenderer element={element} isActive />
+            <BookElementRenderer element={element} isActive editable />
           </div>
         </Rnd>
       ))}

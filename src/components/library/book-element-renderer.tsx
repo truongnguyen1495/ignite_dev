@@ -12,7 +12,21 @@ import type { BookElement } from "@/lib/library-book-elements";
 // inactive page shows an inert thumbnail/placeholder instead — simpler and
 // more reliable than trying to pause a YouTube iframe via postMessage, and a
 // nice side effect is only the current page's video ever actually loads.
-export function BookElementRenderer({ element, isActive = true }: { element: BookElement; isActive?: boolean }) {
+//
+// `editable` (editor-canvas.tsx only) adds a transparent overlay on top of
+// the video iframe. A cross-origin iframe swallows every mouse event that
+// lands on it, so without this overlay react-rnd's drag handlers (bound to
+// the element's wrapper div) never fire and the video can't be moved/resized
+// in the editor.
+export function BookElementRenderer({
+  element,
+  isActive = true,
+  editable = false,
+}: {
+  element: BookElement;
+  isActive?: boolean;
+  editable?: boolean;
+}) {
   switch (element.type) {
     case "text":
       return (
@@ -76,13 +90,16 @@ export function BookElementRenderer({ element, isActive = true }: { element: Boo
         );
       }
       return (
-        <iframe
-          className="h-full w-full rounded-md"
-          src={`https://www.youtube.com/embed/${element.youtubeId}`}
-          title="YouTube video"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-        />
+        <div className="relative h-full w-full">
+          <iframe
+            className="h-full w-full rounded-md"
+            src={`https://www.youtube.com/embed/${element.youtubeId}`}
+            title="YouTube video"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+          {editable && <div className="absolute inset-0" />}
+        </div>
       );
     case "audio":
       if (!element.url) {
