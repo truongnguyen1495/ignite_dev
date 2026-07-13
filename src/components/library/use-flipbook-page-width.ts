@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type RefObject } from "react";
+import { useCallback, useEffect, useState, type RefCallback } from "react";
 
 const DESIRED_MAX_PAGE_WIDTH = 900;
 const MIN_PAGE_WIDTH = 240;
@@ -20,27 +20,40 @@ function solvePageWidth(containerWidth: number): number {
   return Math.max(MIN_PAGE_WIDTH, Math.round(width));
 }
 
-// Tracks `containerRef`'s rendered width and resolves it to a single-page
-// width for react-pageflip's `size="fixed"` mode. Rounded to the nearest 10px
-// so ordinary sub-pixel resize churn doesn't force a remount — changing
-// react-pageflip's width/size requires a full remount (its width/size props
-// are only read once, at construction; see BookFlipbook/PdfFlipbook, which
-// key the <HTMLFlipBook> on this value for that reason).
-export function useFlipbookPageWidth(containerRef: RefObject<HTMLElement | null>): number {
+// Tracks the rendered width of whatever element the returned ref callback is
+// attached to, resolved to a single-page width for react-pageflip's
+// `size="fixed"` mode. Rounded to the nearest 10px so ordinary sub-pixel
+// resize churn doesn't force a remount — changing react-pageflip's
+// width/size requires a full remount (its width/size props are only read
+// once, at construction; see BookFlipbook/PdfFlipbook, which key the
+// <HTMLFlipBook> on this value for that reason).
+//
+// Uses a callback ref (not useRef+useEffect) on purpose: both callers mount
+// their measured container only after an async data load finishes (they
+// show a loading state first), so a plain useRef's `.current` is still null
+// when a useEffect keyed on the ref object would run — refs are stable
+// objects, so that effect never reruns once the element actually shows up,
+// leaving the width stuck at the initial default forever. A callback ref
+// fires exactly when the node mounts, however late that is.
+export function useFlipbookPageWidth(): [RefCallback<HTMLElement>, number] {
+  const [node, setNode] = useState<HTMLElement | null>(null);
   const [width, setWidth] = useState(500);
 
+  const containerRef = useCallback<RefCallback<HTMLElement>>((el) => {
+    setNode(el);
+  }, []);
+
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
+    if (!node) return;
     const observer = new ResizeObserver((entries) => {
       const containerWidth = entries[0]?.contentRect.width;
       if (!containerWidth) return;
       const rounded = Math.round(solvePageWidth(containerWidth) / 10) * 10;
       setWidth((prev) => (prev === rounded ? prev : rounded));
     });
-    observer.observe(el);
+    observer.observe(node);
     return () => observer.disconnect();
-  }, [containerRef]);
+  }, [node]);
 
-  return width;
+  return [containerRef, width];
 }

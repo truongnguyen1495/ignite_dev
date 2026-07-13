@@ -30,8 +30,7 @@ export function PdfFlipbook({ src, title }: { src: string; title: string }) {
   const queueRef = useRef<number[]>([]);
   const renderingRef = useRef(false);
   const flipRef = useRef<{ pageFlip(): { flipPrev(): void; flipNext(): void } } | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const pageWidth = useFlipbookPageWidth(containerRef);
+  const [containerRef, pageWidth] = useFlipbookPageWidth();
 
   const renderPage = useCallback(async (pageNumber: number) => {
     const doc = docRef.current;

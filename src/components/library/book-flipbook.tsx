@@ -24,8 +24,7 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
   const [currentPage, setCurrentPage] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const flipRef = useRef<{ pageFlip(): { flipPrev(): void; flipNext(): void } } | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const pageWidth = useFlipbookPageWidth(containerRef);
+  const [containerRef, pageWidth] = useFlipbookPageWidth();
 
   useEffect(() => {
     let cancelled = false;
