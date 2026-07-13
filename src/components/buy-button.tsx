@@ -5,19 +5,11 @@ import { useRouter } from "next/navigation";
 import { ShoppingCart } from "lucide-react";
 import type { OrderItemKind } from "@prisma/client";
 import { createOrderAction } from "@/app/dashboard/orders/actions";
-import { formatVND } from "@/lib/currency";
 
-export function BuyButton({
-  kind,
-  itemId,
-  price,
-  originalPrice,
-}: {
-  kind: OrderItemKind;
-  itemId: string;
-  price: number;
-  originalPrice?: number | null;
-}) {
+// Price display lives with the caller (course-list.tsx/library-list.tsx),
+// not in here — this is just the action button, so callers can lay out
+// price + button relative to each other however their card design needs.
+export function BuyButton({ kind, itemId }: { kind: OrderItemKind; itemId: string }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | undefined>();
   const router = useRouter();
@@ -38,12 +30,6 @@ export function BuyButton({
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <div className="flex flex-col items-end leading-tight">
-        <span className="text-sm font-semibold text-primary">{formatVND(price)}</span>
-        {originalPrice != null && (
-          <span className="text-[10px] text-muted line-through">{formatVND(originalPrice)}</span>
-        )}
-      </div>
       <button
         type="button"
         onClick={onClick}

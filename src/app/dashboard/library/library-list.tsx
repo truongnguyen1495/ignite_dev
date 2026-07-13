@@ -7,6 +7,7 @@ import type { LibraryItemType } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
 import { BuyButton } from "@/components/buy-button";
+import { PriceBlock } from "@/components/price-block";
 import { getPricing } from "@/lib/pricing";
 
 const STORAGE_KEY = "student-library-view";
@@ -100,25 +101,23 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
                   {item.description && (
                     <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{item.description}</p>
                   )}
-                  <div className="mt-auto flex flex-nowrap items-center justify-between gap-2 pt-4">
-                    <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
-                      {item.pageCount ? `${item.pageCount} trang` : "—"}
-                    </span>
-                    {item.unlocked ? (
-                      <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
-                        Đọc
-                        <ArrowRight className="h-3.5 w-3.5" />
+                  <div className="mt-auto space-y-3 pt-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
+                        {item.pageCount ? `${item.pageCount} trang` : "—"}
                       </span>
-                    ) : (
-                      purchasable &&
-                        pricing.forSale && (
-                          <BuyButton
-                            kind="LIBRARY_ITEM"
-                            itemId={item.id}
-                            price={pricing.chargeAmount}
-                            originalPrice={pricing.originalPrice}
-                          />
-                        )
+                      {item.unlocked && (
+                        <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
+                          Đọc
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </span>
+                      )}
+                    </div>
+                    {purchasable && (
+                      <div className="flex items-center justify-between gap-3 border-t border-dark-border pt-3">
+                        <PriceBlock price={pricing.chargeAmount} originalPrice={pricing.originalPrice} />
+                        <BuyButton kind="LIBRARY_ITEM" itemId={item.id} />
+                      </div>
                     )}
                   </div>
                 </div>
@@ -168,19 +167,17 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
                 <div className="hidden shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300 md:flex">
                   {item.pageCount ? `${item.pageCount} trang` : "—"}
                 </div>
-                {item.unlocked ? (
-                  <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />
-                ) : (
-                  purchasable &&
-                        pricing.forSale && (
-                          <BuyButton
-                            kind="LIBRARY_ITEM"
-                            itemId={item.id}
-                            price={pricing.chargeAmount}
-                            originalPrice={pricing.originalPrice}
-                          />
-                        )
-                )}
+                <div className="flex shrink-0 items-center gap-3">
+                  {purchasable && (
+                    <>
+                      <PriceBlock price={pricing.chargeAmount} originalPrice={pricing.originalPrice} />
+                      <BuyButton kind="LIBRARY_ITEM" itemId={item.id} />
+                    </>
+                  )}
+                  {item.unlocked && (
+                    <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />
+                  )}
+                </div>
               </div>
             );
             return item.unlocked ? (

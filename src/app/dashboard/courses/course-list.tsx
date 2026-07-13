@@ -6,6 +6,7 @@ import { BookOpen, Lock, Video, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
 import { BuyButton } from "@/components/buy-button";
+import { PriceBlock } from "@/components/price-block";
 import { getPricing } from "@/lib/pricing";
 import type { CourseAccessLevel } from "@/lib/access";
 
@@ -125,27 +126,25 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                       <ProgressBar course={course} />
                     </div>
                   )}
-                  <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-4">
-                    <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
-                      <BookOpen className="h-3.5 w-3.5" />
-                      {course.totalLessons} bài học
-                    </span>
-                    <div className="flex shrink-0 items-center gap-2">
+                  <div className="mt-auto space-y-3 pt-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
+                        <BookOpen className="h-3.5 w-3.5" />
+                        {course.totalLessons} bài học
+                      </span>
                       {clickable && (
-                        <span className="flex items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
-                          Vào học
+                        <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
+                          {course.accessLevel === "trial" ? "Vào học thử" : "Vào học"}
                           <ArrowRight className="h-3.5 w-3.5" />
                         </span>
                       )}
-                      {purchasable && (
-                        <BuyButton
-                          kind="COURSE"
-                          itemId={course.id}
-                          price={pricing.chargeAmount}
-                          originalPrice={pricing.originalPrice}
-                        />
-                      )}
                     </div>
+                    {purchasable && (
+                      <div className="flex items-center justify-between gap-3 border-t border-dark-border pt-3">
+                        <PriceBlock price={pricing.chargeAmount} originalPrice={pricing.originalPrice} />
+                        <BuyButton kind="COURSE" itemId={course.id} />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -197,14 +196,12 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                   <BookOpen className="h-3.5 w-3.5" />
                   {course.totalLessons} bài học
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 items-center gap-3">
                   {purchasable && (
-                    <BuyButton
-                      kind="COURSE"
-                      itemId={course.id}
-                      price={pricing.chargeAmount}
-                      originalPrice={pricing.originalPrice}
-                    />
+                    <>
+                      <PriceBlock price={pricing.chargeAmount} originalPrice={pricing.originalPrice} />
+                      <BuyButton kind="COURSE" itemId={course.id} />
+                    </>
                   )}
                   {clickable && <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />}
                 </div>
