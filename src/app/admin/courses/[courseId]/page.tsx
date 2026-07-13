@@ -72,6 +72,53 @@ export default async function EditCoursePage({
         lessons={course.lessons}
       />
 
+      <Card padding="lg" className="space-y-3">
+        <h2 className="text-sm font-semibold text-foreground">
+          Học sinh được cấp quyền ({hocSinhGrants.length})
+        </h2>
+        <p className="text-xs text-muted">
+          Học sinh (tài khoản chưa xếp cấp) không thuộc thang 5 cấp nên không dùng được luật &ldquo;Cấp quyền
+          theo cấp&rdquo; ở dưới — dùng công tắc bên dưới để mở cho tất cả, hoặc cấp riêng từng người.
+        </p>
+        {!course.hiddenFromGuest && (
+          <p className="rounded-lg border border-warning/40 bg-warning-bg px-3 py-2 text-xs text-warning">
+            Khóa học này đang <span className="font-semibold">không bị ẩn khỏi khách</span> (mục &ldquo;Cấp
+            quyền học thử cho khách&rdquo; bên dưới danh sách bài học) nên mọi học sinh đều xem được các bài{" "}
+            <span className="font-semibold">học thử</span> đã tick ở đó, giống trang khách, dù công tắc dưới
+            đây đang tắt và chưa cấp quyền riêng cho ai. Bật công tắc hoặc cấp quyền riêng để họ xem được
+            full.
+          </p>
+        )}
+        <ToggleOpenToProspectiveStudents courseId={course.id} open={course.openToProspectiveStudents} />
+        {hocSinhGrants.length === 0 ? (
+          <p className="text-sm text-muted">Chưa cấp quyền riêng cho học sinh nào.</p>
+        ) : (
+          <ul className="space-y-2">
+            {hocSinhGrants.map((grant) => (
+              <li
+                key={grant.id}
+                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background p-3 text-sm"
+              >
+                <div>
+                  <p className="text-foreground">{grant.student.name}</p>
+                  <p className="text-muted">{grant.student.email}</p>
+                </div>
+                <RevokeAccessButton grantId={grant.id} courseId={course.id} />
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {ungrantedHocSinh.length > 0 && (
+          <GrantAccessForm
+            courseId={course.id}
+            students={ungrantedHocSinh}
+            placeholder="Chọn học sinh..."
+            submitLabel="Cấp quyền"
+          />
+        )}
+      </Card>
+
       <Card padding="lg" className="space-y-5">
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-foreground">
@@ -126,53 +173,6 @@ export default async function EditCoursePage({
           )}
           <GrantLevelAccessForm courseId={course.id} />
         </div>
-      </Card>
-
-      <Card padding="lg" className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">
-          Học sinh được cấp quyền ({hocSinhGrants.length})
-        </h2>
-        <p className="text-xs text-muted">
-          Học sinh (tài khoản chưa xếp cấp) không thuộc thang 5 cấp nên không dùng được luật &ldquo;Cấp quyền
-          theo cấp&rdquo; ở trên — dùng công tắc bên dưới để mở cho tất cả, hoặc cấp riêng từng người.
-        </p>
-        {!course.hiddenFromGuest && (
-          <p className="rounded-lg border border-warning/40 bg-warning-bg px-3 py-2 text-xs text-warning">
-            Khóa học này đang <span className="font-semibold">không bị ẩn khỏi khách</span> (mục &ldquo;Cấp
-            quyền học thử cho khách&rdquo; bên dưới danh sách bài học) nên mọi học sinh đều xem được các bài{" "}
-            <span className="font-semibold">học thử</span> đã tick ở đó, giống trang khách, dù công tắc dưới
-            đây đang tắt và chưa cấp quyền riêng cho ai. Bật công tắc hoặc cấp quyền riêng để họ xem được
-            full.
-          </p>
-        )}
-        <ToggleOpenToProspectiveStudents courseId={course.id} open={course.openToProspectiveStudents} />
-        {hocSinhGrants.length === 0 ? (
-          <p className="text-sm text-muted">Chưa cấp quyền riêng cho học sinh nào.</p>
-        ) : (
-          <ul className="space-y-2">
-            {hocSinhGrants.map((grant) => (
-              <li
-                key={grant.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background p-3 text-sm"
-              >
-                <div>
-                  <p className="text-foreground">{grant.student.name}</p>
-                  <p className="text-muted">{grant.student.email}</p>
-                </div>
-                <RevokeAccessButton grantId={grant.id} courseId={course.id} />
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {ungrantedHocSinh.length > 0 && (
-          <GrantAccessForm
-            courseId={course.id}
-            students={ungrantedHocSinh}
-            placeholder="Chọn học sinh..."
-            submitLabel="Cấp quyền"
-          />
-        )}
       </Card>
 
       <Card padding="lg" className="space-y-3">
