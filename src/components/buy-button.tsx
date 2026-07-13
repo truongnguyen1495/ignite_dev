@@ -38,6 +38,12 @@ export function BuyButton({
 
   return (
     <div className="flex flex-col items-end gap-1">
+      <div className="flex flex-col items-end leading-tight">
+        <span className="text-sm font-semibold text-primary">{formatVND(price)}</span>
+        {originalPrice != null && (
+          <span className="text-[10px] text-muted line-through">{formatVND(originalPrice)}</span>
+        )}
+      </div>
       <button
         type="button"
         onClick={onClick}
@@ -45,17 +51,7 @@ export function BuyButton({
         className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
       >
         <ShoppingCart className="h-3.5 w-3.5" />
-        {pending ? (
-          "Đang xử lý..."
-        ) : (
-          <span className="flex items-baseline gap-1">
-            Mua ngay ·
-            {originalPrice != null && (
-              <span className="text-[10px] line-through opacity-70">{formatVND(originalPrice)}</span>
-            )}
-            {formatVND(price)}
-          </span>
-        )}
+        {pending ? "Đang xử lý..." : "Mua ngay"}
       </button>
       {error && <p className="text-xs text-danger">{error}</p>}
     </div>

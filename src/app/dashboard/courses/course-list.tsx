@@ -99,7 +99,7 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
           {courses.map((course) => {
             const clickable = course.accessLevel !== "none";
             const pricing = getPricing(course);
-            const purchasable = !clickable && course.salesEnabled && pricing.forSale;
+            const purchasable = course.accessLevel !== "full" && course.salesEnabled && pricing.forSale;
             const card = (
               <div
                 className={`flex h-full flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors ${
@@ -125,27 +125,27 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                       <ProgressBar course={course} />
                     </div>
                   )}
-                  <div className="mt-auto flex flex-nowrap items-center justify-between gap-2 pt-4">
+                  <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-4">
                     <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
                       <BookOpen className="h-3.5 w-3.5" />
                       {course.totalLessons} bài học
                     </span>
-                    {clickable ? (
-                      <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
-                        Vào học
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </span>
-                    ) : (
-                      purchasable &&
-                        pricing.forSale && (
-                          <BuyButton
-                            kind="COURSE"
-                            itemId={course.id}
-                            price={pricing.chargeAmount}
-                            originalPrice={pricing.originalPrice}
-                          />
-                        )
-                    )}
+                    <div className="flex shrink-0 items-center gap-2">
+                      {clickable && (
+                        <span className="flex items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
+                          Vào học
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </span>
+                      )}
+                      {purchasable && (
+                        <BuyButton
+                          kind="COURSE"
+                          itemId={course.id}
+                          price={pricing.chargeAmount}
+                          originalPrice={pricing.originalPrice}
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -166,7 +166,7 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
           {courses.map((course) => {
             const clickable = course.accessLevel !== "none";
             const pricing = getPricing(course);
-            const purchasable = !clickable && course.salesEnabled && pricing.forSale;
+            const purchasable = course.accessLevel !== "full" && course.salesEnabled && pricing.forSale;
             const row = (
               <div
                 className={`flex items-center gap-4 rounded-xl border border-dark-border bg-dark-surface p-3 transition-colors ${
@@ -197,19 +197,17 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                   <BookOpen className="h-3.5 w-3.5" />
                   {course.totalLessons} bài học
                 </div>
-                {clickable ? (
-                  <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />
-                ) : (
-                  purchasable &&
-                        pricing.forSale && (
-                          <BuyButton
-                            kind="COURSE"
-                            itemId={course.id}
-                            price={pricing.chargeAmount}
-                            originalPrice={pricing.originalPrice}
-                          />
-                        )
-                )}
+                <div className="flex shrink-0 items-center gap-2">
+                  {purchasable && (
+                    <BuyButton
+                      kind="COURSE"
+                      itemId={course.id}
+                      price={pricing.chargeAmount}
+                      originalPrice={pricing.originalPrice}
+                    />
+                  )}
+                  {clickable && <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />}
+                </div>
               </div>
             );
             return clickable ? (
