@@ -214,23 +214,27 @@ body {
      through as a bright crack splitting the book in two once shadow was
      added on both sides of it. A book with only one page currently on
      screen (the cover, or an odd last page) has no real seam, so callers
-     only render this alongside a genuine two-page spread.
+     only render this alongside a genuine two-page spread, and fade it to
+     opacity 0 while react-pageflip's state is anything but "read" (see
+     FlipbookState) — this shadow doesn't itself animate with the page
+     turning in 3D, so left on throughout a flip it just sits there static
+     while the page curls past it.
+
+     A z-index-based approach (put this below the actively-turning page's
+     z-index, above resting pages, and let the turning page cover it as it
+     swings over) looks appealing and was tried, but doesn't work:
+     react-pageflip's root element has `transform: translateZ(0)` (see
+     below), which makes it establish its own stacking context — so no
+     z-index inside it can ever be reordered relative to a sibling element
+     outside it, regardless of the numbers used. Confirmed by swapping the
+     gradient for an opaque magenta block and watching it stay on top
+     through an entire flip. The JS onChangeState fade is the only
+     approach that actually works here.
    - .stf__item's own border-radius: rounded on every corner by default (a
      lone page/cover reads as one card), but the spine-side corners go
      square while part of a real spread — otherwise two independently
      rounded pages read as separate cards shoved together instead of one
      continuous open book.
-
-   Both edge effects (.flipbook-page-curve and .flipbook-gutter) sit at
-   z-index 4 — above a resting page (1) and the settling "bottom" page
-   during a flip (react-pageflip's startZIndex + 3 = 3), but below the
-   actively turning page (startZIndex + 5 = 5). That's deliberate: the
-   turning page then naturally covers these shadows as it swings over them
-   and reveals them again once it settles, instead of us tracking flip
-   state in JS to fade them — confirmed by screenshotting a real flip with
-   this z-index ordering; an earlier version instead toggled the gutter's
-   opacity on react-pageflip's onChangeState, which worked but looked
-   artificial next to the natural occlusion this gives for free.
 
    Both shadow effects are gradient-filled overlays, NOT box-shadow:
    react-pageflip's own stylesheet sets `transform-style: preserve-3d` on
@@ -287,8 +291,9 @@ body {
   left: 50%;
   transform: translateX(-50%);
   width: 10%;
-  z-index: 4;
+  z-index: 6;
   pointer-events: none;
+  transition: opacity 220ms ease;
   background: linear-gradient(
     to right,
     rgba(15, 23, 42, 0) 0%,
