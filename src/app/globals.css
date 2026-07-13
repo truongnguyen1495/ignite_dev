@@ -217,22 +217,36 @@ body {
      directly. Scoped under .flipbook-spread (added by BookFlipbook/
      PdfFlipbook only while a real two-page spread is showing) since a
      single page shown alone — the cover, or an odd last page — still gets
-     a --left or --right class but has no neighbor to fake a seam against. */
+     a --left or --right class but has no neighbor to fake a seam against.
+   - .stf__item's own border-radius: rounded on every corner by default (a
+     lone page/cover reads as one card), but the spine-side corners go
+     square while part of a real spread — otherwise two independently
+     rounded pages read as separate cards shoved together instead of one
+     continuous open book. */
 .flipbook-page-curve {
   box-shadow:
     inset 10px 0 14px -12px rgba(15, 23, 42, 0.35),
     inset -10px 0 14px -12px rgba(15, 23, 42, 0.35);
 }
 
+.stf__item {
+  border-radius: 6px;
+  overflow: hidden;
+}
 .flipbook-spread .stf__item.--left {
   box-shadow: inset -26px 0 28px -22px rgba(15, 23, 42, 0.5);
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }
 .flipbook-spread .stf__item.--right {
   box-shadow: inset 26px 0 28px -22px rgba(15, 23, 42, 0.5);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
 .flipbook-book {
   position: relative;
+  border: 1px solid rgba(15, 23, 42, 0.08);
 }
 .flipbook-book::before,
 .flipbook-book::after {

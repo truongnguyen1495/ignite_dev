@@ -156,7 +156,7 @@ export function PdfFlipbook({ src, title }: { src: string; title: string }) {
           maxHeight={Math.round(1000 / aspect)}
           showCover
           maxShadowOpacity={0.5}
-          className={`shadow-lg rounded-md flipbook-page-curve flipbook-book ${spread ? "flipbook-spread" : ""}`}
+          className={`shadow-lg flipbook-page-curve flipbook-book ${spread ? "flipbook-spread" : ""}`}
           style={stackStyle}
           onFlip={(e: { data: number }) => {
             setCurrentPage(e.data);
