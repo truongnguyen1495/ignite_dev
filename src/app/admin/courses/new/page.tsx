@@ -1,11 +1,12 @@
-import { requireAdminPermission, isSalesEnabled } from "@/lib/access";
+import { requireAdminPermission, hasAdminPermission, isSalesEnabled } from "@/lib/access";
 import { BackLink } from "@/components/ui/back-link";
 import { Card } from "@/components/ui/card";
 import { CreateCourseForm } from "./create-course-form";
 
 export default async function NewCoursePage() {
-  await requireAdminPermission("MANAGE_COURSES");
+  const admin = await requireAdminPermission("MANAGE_COURSES");
   const salesEnabled = await isSalesEnabled();
+  const canManageOrders = await hasAdminPermission(admin, "MANAGE_ORDERS");
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <div>
@@ -13,7 +14,7 @@ export default async function NewCoursePage() {
         <h1 className="mt-2 text-2xl font-semibold text-foreground">Thêm khóa học</h1>
       </div>
       <Card>
-        <CreateCourseForm salesEnabled={salesEnabled} />
+        <CreateCourseForm salesEnabled={salesEnabled} canManageOrders={canManageOrders} />
       </Card>
     </div>
   );

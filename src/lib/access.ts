@@ -140,6 +140,20 @@ export async function requireAnyAdminPermission(permissions: AdminPermissionKind
   return user;
 }
 
+// Non-redirecting check for a page that's already gated by one permission
+// (e.g. MANAGE_COURSES) but needs to know, in addition, whether the caller
+// also holds a second one (e.g. MANAGE_ORDERS) — to conditionally show/edit
+// a sub-section rather than denying the whole page. `user` must come from a
+// prior requireAdminPermission/requireRole call on this same request so the
+// SUPER_ADMIN short-circuit and DB lookup stay consistent with that gate.
+export async function hasAdminPermission(user: User, permission: AdminPermissionKind): Promise<boolean> {
+  if (user.role === "SUPER_ADMIN") {
+    return true;
+  }
+  const permissions = await getAdminPermissions(user.id);
+  return permissions.has(permission);
+}
+
 // Gate for the /admin layout itself: lets in a SUPER_ADMIN (full access) or
 // a STUDENT holding at least one admin permission (dual-role admin) —
 // anyone else (a plain student with zero permissions) is bounced back to

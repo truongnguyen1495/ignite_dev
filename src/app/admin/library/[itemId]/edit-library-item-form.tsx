@@ -24,6 +24,7 @@ export function EditLibraryItemForm({
   salePrice,
   isFree: initialIsFree,
   salesEnabled,
+  canManageOrders,
 }: {
   libraryItemId: string;
   title: string;
@@ -38,6 +39,7 @@ export function EditLibraryItemForm({
   salePrice: number | null;
   isFree: boolean;
   salesEnabled: boolean;
+  canManageOrders: boolean;
 }) {
   const [error, formAction, pending] = useActionState(updateLibraryItemAction, undefined);
   const [isDirty, setIsDirty] = useState(false);
@@ -91,59 +93,61 @@ export function EditLibraryItemForm({
           />
           <Input id="order" name="order" type="number" defaultValue={order} label="Thứ tự hiển thị" />
 
-          <div className="space-y-3 rounded-lg border border-border p-3">
-            <label className="flex items-center gap-2 text-sm text-foreground">
-              <input
-                type="checkbox"
-                name="isFree"
-                checked={isFree}
-                onChange={(e) => setIsFree(e.target.checked)}
-                className="h-4 w-4 accent-primary"
-              />
-              Miễn phí (cấp quyền xem đầy đủ cho toàn bộ học viên &amp; học sinh, không cần mua)
-            </label>
+          {canManageOrders && (
+            <div className="space-y-3 rounded-lg border border-border p-3">
+              <label className="flex items-center gap-2 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  name="isFree"
+                  checked={isFree}
+                  onChange={(e) => setIsFree(e.target.checked)}
+                  className="h-4 w-4 accent-primary"
+                />
+                Miễn phí (cấp quyền xem đầy đủ cho toàn bộ học viên &amp; học sinh, không cần mua)
+              </label>
 
-            {isFree ? (
-              <>
-                <input type="hidden" name="price" defaultValue={price} />
-                <input type="hidden" name="salePrice" defaultValue={salePrice ?? ""} />
-                <p className="text-xs text-muted">
-                  Đang miễn phí — mọi học viên &amp; học sinh tự động có toàn quyền xem, các phần cấp quyền
-                  riêng bên dưới sẽ tạm ẩn.
-                </p>
-              </>
-            ) : salesEnabled ? (
-              <>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  min={0}
-                  step={1000}
-                  defaultValue={price}
-                  label="Giá gốc (VNĐ)"
-                  hint="0 = không bán, chỉ cấp quyền thủ công như trước giờ."
-                />
-                <Input
-                  id="salePrice"
-                  name="salePrice"
-                  type="number"
-                  min={0}
-                  step={1000}
-                  defaultValue={salePrice ?? ""}
-                  label="Giá khuyến mãi (VNĐ, tùy chọn)"
-                  hint="Để trống nếu không giảm giá. Phải nhỏ hơn giá gốc."
-                />
-              </>
-            ) : (
-              // Tính năng bán hàng đang tắt — ẩn ô nhập giá nhưng vẫn gửi kèm
-              // giá trị hiện tại để lưu không vô tình reset giá về 0.
-              <>
-                <input type="hidden" name="price" defaultValue={price} />
-                <input type="hidden" name="salePrice" defaultValue={salePrice ?? ""} />
-              </>
-            )}
-          </div>
+              {isFree ? (
+                <>
+                  <input type="hidden" name="price" defaultValue={price} />
+                  <input type="hidden" name="salePrice" defaultValue={salePrice ?? ""} />
+                  <p className="text-xs text-muted">
+                    Đang miễn phí — mọi học viên &amp; học sinh tự động có toàn quyền xem, các phần cấp quyền
+                    riêng bên dưới sẽ tạm ẩn.
+                  </p>
+                </>
+              ) : salesEnabled ? (
+                <>
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    min={0}
+                    step={1000}
+                    defaultValue={price}
+                    label="Giá gốc (VNĐ)"
+                    hint="0 = không bán, chỉ cấp quyền thủ công như trước giờ."
+                  />
+                  <Input
+                    id="salePrice"
+                    name="salePrice"
+                    type="number"
+                    min={0}
+                    step={1000}
+                    defaultValue={salePrice ?? ""}
+                    label="Giá khuyến mãi (VNĐ, tùy chọn)"
+                    hint="Để trống nếu không giảm giá. Phải nhỏ hơn giá gốc."
+                  />
+                </>
+              ) : (
+                // Tính năng bán hàng đang tắt — ẩn ô nhập giá nhưng vẫn gửi kèm
+                // giá trị hiện tại để lưu không vô tình reset giá về 0.
+                <>
+                  <input type="hidden" name="price" defaultValue={price} />
+                  <input type="hidden" name="salePrice" defaultValue={salePrice ?? ""} />
+                </>
+              )}
+            </div>
+          )}
 
           {error && <p className="text-sm text-danger">{error}</p>}
 

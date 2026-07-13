@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireAdminPermission, isSalesEnabled } from "@/lib/access";
+import { requireAdminPermission, hasAdminPermission, isSalesEnabled } from "@/lib/access";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { EditLibraryItemForm } from "./edit-library-item-form";
 import { LibraryItemGuestAccessForm } from "./library-item-guest-access-form";
@@ -20,9 +20,10 @@ export default async function EditLibraryItemPage({
 }: {
   params: Promise<{ itemId: string }>;
 }) {
-  await requireAdminPermission("MANAGE_LIBRARY");
+  const admin = await requireAdminPermission("MANAGE_LIBRARY");
   const { itemId } = await params;
   const salesEnabled = await isSalesEnabled();
+  const canManageOrders = await hasAdminPermission(admin, "MANAGE_ORDERS");
 
   const item = await prisma.libraryItem.findUnique({
     where: { id: itemId },
@@ -66,6 +67,7 @@ export default async function EditLibraryItemPage({
         salePrice={item.salePrice}
         isFree={item.isFree}
         salesEnabled={salesEnabled}
+        canManageOrders={canManageOrders}
       />
 
       <LibraryItemGuestAccessForm

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Level } from "@prisma/client";
-import { requireAdminPermission } from "@/lib/access";
+import { requireAdminPermission, hasAdminPermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { parseYoutubeId } from "@/lib/youtube";
 
@@ -40,7 +40,8 @@ export async function createCourseAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireAdminPermission("MANAGE_COURSES");
+  const admin = await requireAdminPermission("MANAGE_COURSES");
+  const canManageOrders = await hasAdminPermission(admin, "MANAGE_ORDERS");
 
   const parsed = courseSchema.safeParse({
     title: formData.get("title"),
@@ -54,9 +55,18 @@ export async function createCourseAction(
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
   }
 
-  const pricing = resolvePricingFields(formData, parsed.data.price, parsed.data.salePrice);
-  if (typeof pricing === "string") {
-    return pricing;
+  // An admin without "Đơn hàng" can't set pricing at all — a brand-new
+  // course they create starts unsold (giá 0, không miễn phí) regardless of
+  // what the request body claims, since the form hides these fields for them.
+  let pricing: { price: number; salePrice: number | null; isFree: boolean };
+  if (canManageOrders) {
+    const resolved = resolvePricingFields(formData, parsed.data.price, parsed.data.salePrice);
+    if (typeof resolved === "string") {
+      return resolved;
+    }
+    pricing = { price: parsed.data.price, salePrice: resolved.salePrice, isFree: resolved.isFree };
+  } else {
+    pricing = { price: 0, salePrice: null, isFree: false };
   }
 
   const course = await prisma.course.create({
@@ -65,7 +75,7 @@ export async function createCourseAction(
       description: parsed.data.description ?? null,
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       order: parsed.data.order,
-      price: parsed.data.price,
+      price: pricing.price,
       salePrice: pricing.salePrice,
       isFree: pricing.isFree,
       hiddenFromGuest: formData.get("hiddenFromGuest") === "on",
@@ -85,7 +95,8 @@ export async function updateCourseAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireAdminPermission("MANAGE_COURSES");
+  const admin = await requireAdminPermission("MANAGE_COURSES");
+  const canManageOrders = await hasAdminPermission(admin, "MANAGE_ORDERS");
 
   const parsed = updateCourseSchema.safeParse({
     courseId: formData.get("courseId"),
@@ -102,9 +113,16 @@ export async function updateCourseAction(
 
   const { courseId } = parsed.data;
 
-  const pricing = resolvePricingFields(formData, parsed.data.price, parsed.data.salePrice);
-  if (typeof pricing === "string") {
-    return pricing;
+  // Without "Đơn hàng", pricing fields are left out of the update entirely —
+  // the form doesn't render them for this admin, and the DB keeps whatever
+  // an order-permitted admin set previously rather than being reset.
+  let pricing: { price?: number; salePrice?: number | null; isFree?: boolean } = {};
+  if (canManageOrders) {
+    const resolved = resolvePricingFields(formData, parsed.data.price, parsed.data.salePrice);
+    if (typeof resolved === "string") {
+      return resolved;
+    }
+    pricing = { price: parsed.data.price, salePrice: resolved.salePrice, isFree: resolved.isFree };
   }
 
   await prisma.course.update({
@@ -114,9 +132,7 @@ export async function updateCourseAction(
       description: parsed.data.description ?? null,
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       order: parsed.data.order,
-      price: parsed.data.price,
-      salePrice: pricing.salePrice,
-      isFree: pricing.isFree,
+      ...pricing,
     },
   });
 

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Level, LibraryItemType } from "@prisma/client";
-import { requireAdminPermission } from "@/lib/access";
+import { requireAdminPermission, hasAdminPermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { downloadLibraryFile, uploadLibraryFile, deleteLibraryFile } from "@/lib/library-storage";
 import { extractFirstPages } from "@/lib/library-pdf";
@@ -56,7 +56,8 @@ export async function createLibraryItemAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireAdminPermission("MANAGE_LIBRARY");
+  const admin = await requireAdminPermission("MANAGE_LIBRARY");
+  const canManageOrders = await hasAdminPermission(admin, "MANAGE_ORDERS");
 
   const parsed = libraryItemSchema.safeParse({
     title: formData.get("title"),
@@ -75,9 +76,18 @@ export async function createLibraryItemAction(
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
   }
 
-  const pricing = resolvePricingFields(formData, parsed.data.price, parsed.data.salePrice);
-  if (typeof pricing === "string") {
-    return pricing;
+  // Same "Đơn hàng"-gated pricing as admin/courses/actions.ts — an admin
+  // without it creates a new item that starts unsold, regardless of the
+  // request body, since the form hides these fields for them.
+  let pricing: { price: number; salePrice: number | null; isFree: boolean };
+  if (canManageOrders) {
+    const resolved = resolvePricingFields(formData, parsed.data.price, parsed.data.salePrice);
+    if (typeof resolved === "string") {
+      return resolved;
+    }
+    pricing = { price: parsed.data.price, salePrice: resolved.salePrice, isFree: resolved.isFree };
+  } else {
+    pricing = { price: 0, salePrice: null, isFree: false };
   }
 
   const visibleToGuest = formData.get("visibleToGuest") === "on";
@@ -98,7 +108,7 @@ export async function createLibraryItemAction(
       previewFilePath,
       guestPreviewPages: parsed.data.guestPreviewPages ?? null,
       order: parsed.data.order,
-      price: parsed.data.price,
+      price: pricing.price,
       salePrice: pricing.salePrice,
       isFree: pricing.isFree,
       visibleToGuest,
@@ -118,7 +128,8 @@ export async function updateLibraryItemAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireAdminPermission("MANAGE_LIBRARY");
+  const admin = await requireAdminPermission("MANAGE_LIBRARY");
+  const canManageOrders = await hasAdminPermission(admin, "MANAGE_ORDERS");
 
   const parsed = updateLibraryItemSchema.safeParse({
     libraryItemId: formData.get("libraryItemId"),
@@ -140,9 +151,15 @@ export async function updateLibraryItemAction(
 
   const { libraryItemId } = parsed.data;
 
-  const pricing = resolvePricingFields(formData, parsed.data.price, parsed.data.salePrice);
-  if (typeof pricing === "string") {
-    return pricing;
+  // Without "Đơn hàng", pricing fields are left out of the update entirely —
+  // same rule as updateCourseAction in admin/courses/actions.ts.
+  let pricing: { price?: number; salePrice?: number | null; isFree?: boolean } = {};
+  if (canManageOrders) {
+    const resolved = resolvePricingFields(formData, parsed.data.price, parsed.data.salePrice);
+    if (typeof resolved === "string") {
+      return resolved;
+    }
+    pricing = { price: parsed.data.price, salePrice: resolved.salePrice, isFree: resolved.isFree };
   }
 
   // visibleToGuest/guestPreviewPages/featuredOnHome are edited from the
@@ -173,9 +190,7 @@ export async function updateLibraryItemAction(
       pageCount: parsed.data.pageCount ?? null,
       previewFilePath,
       order: parsed.data.order,
-      price: parsed.data.price,
-      salePrice: pricing.salePrice,
-      isFree: pricing.isFree,
+      ...pricing,
     },
   });
 

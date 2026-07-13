@@ -7,7 +7,13 @@ import { LibraryFileInput } from "../library-file-input";
 import { Input, Select, Textarea } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 
-export function CreateLibraryItemForm({ salesEnabled }: { salesEnabled: boolean }) {
+export function CreateLibraryItemForm({
+  salesEnabled,
+  canManageOrders,
+}: {
+  salesEnabled: boolean;
+  canManageOrders: boolean;
+}) {
   const [error, formAction, pending] = useActionState(createLibraryItemAction, undefined);
   const [isFree, setIsFree] = useState(false);
   const [visibleToGuest, setVisibleToGuest] = useState(false);
@@ -26,41 +32,43 @@ export function CreateLibraryItemForm({ salesEnabled }: { salesEnabled: boolean 
       <LibraryFileInput onChange={({ pageCount }) => setPageCount(pageCount)} />
       <Input id="order" name="order" type="number" defaultValue={0} label="Thứ tự hiển thị" />
 
-      <div className="space-y-3 rounded-lg border border-border p-3">
-        <label className="flex items-center gap-2 text-sm text-foreground">
-          <input
-            type="checkbox"
-            name="isFree"
-            checked={isFree}
-            onChange={(e) => setIsFree(e.target.checked)}
-            className="h-4 w-4 accent-primary"
-          />
-          Miễn phí (cấp quyền xem đầy đủ cho toàn bộ học viên &amp; học sinh, không cần mua)
-        </label>
-        {!isFree && salesEnabled && (
-          <>
-            <Input
-              id="price"
-              name="price"
-              type="number"
-              min={0}
-              step={1000}
-              defaultValue={0}
-              label="Giá gốc (VNĐ)"
-              hint="0 = không bán, chỉ cấp quyền thủ công như trước giờ."
+      {canManageOrders && (
+        <div className="space-y-3 rounded-lg border border-border p-3">
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <input
+              type="checkbox"
+              name="isFree"
+              checked={isFree}
+              onChange={(e) => setIsFree(e.target.checked)}
+              className="h-4 w-4 accent-primary"
             />
-            <Input
-              id="salePrice"
-              name="salePrice"
-              type="number"
-              min={0}
-              step={1000}
-              label="Giá khuyến mãi (VNĐ, tùy chọn)"
-              hint="Để trống nếu không giảm giá. Phải nhỏ hơn giá gốc."
-            />
-          </>
-        )}
-      </div>
+            Miễn phí (cấp quyền xem đầy đủ cho toàn bộ học viên &amp; học sinh, không cần mua)
+          </label>
+          {!isFree && salesEnabled && (
+            <>
+              <Input
+                id="price"
+                name="price"
+                type="number"
+                min={0}
+                step={1000}
+                defaultValue={0}
+                label="Giá gốc (VNĐ)"
+                hint="0 = không bán, chỉ cấp quyền thủ công như trước giờ."
+              />
+              <Input
+                id="salePrice"
+                name="salePrice"
+                type="number"
+                min={0}
+                step={1000}
+                label="Giá khuyến mãi (VNĐ, tùy chọn)"
+                hint="Để trống nếu không giảm giá. Phải nhỏ hơn giá gốc."
+              />
+            </>
+          )}
+        </div>
+      )}
 
       <label className="flex items-center gap-2 text-sm text-foreground">
         <input
