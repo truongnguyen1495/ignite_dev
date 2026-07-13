@@ -20,6 +20,7 @@ export default async function CoursesPage() {
     include: {
       _count: { select: { lessons: true, grants: true } },
       levelGrants: { select: { minLevel: true }, orderBy: { minLevel: "asc" } },
+      lessons: { where: { visibleToGuest: true }, select: { id: true } },
     },
   });
 
@@ -31,7 +32,8 @@ export default async function CoursesPage() {
     lessonsCount: course._count.lessons,
     grantsCount: course._count.grants,
     levelGrants: course.levelGrants.map((lg) => lg.minLevel),
-    visibleToGuest: course.visibleToGuest,
+    hiddenFromGuest: course.hiddenFromGuest,
+    guestTrialLessonsCount: course.lessons.length,
     gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
   }));
 

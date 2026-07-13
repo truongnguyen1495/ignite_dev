@@ -251,7 +251,7 @@ export async function requireQuizAccess(quizId: string) {
 // backfill, since this is re-evaluated on every visit.
 //
 // "trial" is a third tier that only exists for "học sinh" (grantedLevel
-// null): a course already open to anonymous guests (visibleToGuest) is at
+// null): a course not hidden from anonymous guests (!hiddenFromGuest) is at
 // least as open to a signed-in học sinh — but only the same subset of
 // lessons a guest gets (CourseLesson.visibleToGuest), not the whole course.
 // A học sinh only reaches "full" once explicitly granted, same as anyone
@@ -266,13 +266,13 @@ export async function getCourseAccessLevel(student: User, courseId: string): Pro
     prisma.courseLevelGrant.findMany({ where: { courseId } }),
     prisma.course.findUnique({
       where: { id: courseId },
-      select: { openToProspectiveStudents: true, visibleToGuest: true },
+      select: { openToProspectiveStudents: true, hiddenFromGuest: true },
     }),
   ]);
   if (grant) return "full";
   if (student.grantedLevel === null) {
     if (course?.openToProspectiveStudents) return "full";
-    if (course?.visibleToGuest) return "trial";
+    if (course && !course.hiddenFromGuest) return "trial";
     return "none";
   }
   return levelGrants.some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel)) ? "full" : "none";
@@ -362,15 +362,15 @@ export async function requireGuestAnnouncementAccess(announcementId: string) {
 
 export async function requireGuestCourseAccess(courseId: string) {
   const course = await prisma.course.findUnique({ where: { id: courseId } });
-  if (!course || !course.visibleToGuest) {
+  if (!course || course.hiddenFromGuest) {
     redirect("/guest/courses?denied=1");
   }
   return { course };
 }
 
-// A lesson needs BOTH flags: the parent course opted into guest access, and
-// the lesson itself is opted in too — the course-level flag alone isn't
-// enough. This is how an admin exposes a course to guests while still
+// A lesson needs BOTH: the parent course isn't hidden from guests, and the
+// lesson itself is opted into visibleToGuest — the course-level flag alone
+// isn't enough. This is how an admin exposes a course to guests while still
 // holding back specific lessons (e.g. ones gated behind payment that
 // doesn't exist yet), independent of any student-facing access rule.
 export async function requireGuestCourseLessonAccess(lessonId: string) {
@@ -378,7 +378,7 @@ export async function requireGuestCourseLessonAccess(lessonId: string) {
     where: { id: lessonId },
     include: { course: true },
   });
-  if (!lesson || !lesson.course.visibleToGuest || !lesson.visibleToGuest) {
+  if (!lesson || lesson.course.hiddenFromGuest || !lesson.visibleToGuest) {
     redirect("/guest/courses?denied=1");
   }
   return { lesson };

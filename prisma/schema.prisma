@@ -298,8 +298,14 @@ model Course {
   description               String?  @db.Text
   coverImageUrl             String?
   order                     Int      @default(0)
-  visibleToGuest            Boolean  @default(false)
-  // Admin-curated, independent of visibleToGuest: only checked by the guest
+  // Master hide switch for the /guest/* public site: true removes the course
+  // from the guest listing and blocks direct access entirely, regardless of
+  // any CourseLesson.visibleToGuest flags below. Default false = listed. This
+  // is intentionally NOT what gates individual trial lessons — that's driven
+  // purely by CourseLesson.visibleToGuest now (see requireGuestCourseAccess /
+  // requireGuestCourseLessonAccess in src/lib/access.ts).
+  hiddenFromGuest           Boolean  @default(false)
+  // Admin-curated, independent of hiddenFromGuest: only checked by the guest
   // homepage's "Khóa học nổi bật" section, which shows exactly the courses
   // opted in here rather than just the first few by `order`.
   featuredOnHome            Boolean  @default(false)
@@ -331,9 +337,10 @@ model CourseLesson {
   youtubeId      String?
   order          Int      @default(0)
   // Independent of student access entirely — only gates the /guest/* public
-  // view, and only takes effect when the parent Course is also
-  // visibleToGuest. Lets an admin expose a course to guests while still
-  // holding back specific lessons (e.g. payment-gated ones not built yet).
+  // view, and only takes effect when the parent Course isn't hiddenFromGuest.
+  // This is now the primary "which lessons can guests try" control (set via
+  // the "Cấp quyền học thử cho khách" form on the course edit page), no
+  // longer a secondary opt-in nested under a course-level visibility flag.
   visibleToGuest Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

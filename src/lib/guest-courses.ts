@@ -24,7 +24,9 @@ export async function getGuestCourseItems({
   onlyFeatured = false,
 }: { onlyFeatured?: boolean } = {}): Promise<GuestCourseItem[]> {
   const courses = await prisma.course.findMany({
-    where: onlyFeatured ? { visibleToGuest: true, featuredOnHome: true } : { visibleToGuest: true },
+    where: onlyFeatured
+      ? { hiddenFromGuest: false, featuredOnHome: true }
+      : { hiddenFromGuest: false },
     orderBy: { order: "asc" },
     include: {
       lessons: {

@@ -12,6 +12,7 @@ import {
   ToggleOpenToProspectiveStudents,
 } from "./access-grants";
 import { CourseLessonsSection } from "./course-lessons-section";
+import { CourseGuestAccessForm } from "./course-guest-access-form";
 import { Card } from "@/components/ui/card";
 
 export default async function EditCoursePage({
@@ -60,11 +61,16 @@ export default async function EditCoursePage({
         order={course.order}
         price={course.price}
         salesEnabled={salesEnabled}
-        visibleToGuest={course.visibleToGuest}
         featuredOnHome={course.featuredOnHome}
       />
 
       <CourseLessonsSection courseId={course.id} lessons={course.lessons} />
+
+      <CourseGuestAccessForm
+        courseId={course.id}
+        hiddenFromGuest={course.hiddenFromGuest}
+        lessons={course.lessons}
+      />
 
       <Card padding="lg" className="space-y-5">
         <div className="space-y-3">
@@ -130,12 +136,13 @@ export default async function EditCoursePage({
           Học sinh (tài khoản chưa xếp cấp) không thuộc thang 5 cấp nên không dùng được luật &ldquo;Cấp quyền
           theo cấp&rdquo; ở trên — dùng công tắc bên dưới để mở cho tất cả, hoặc cấp riêng từng người.
         </p>
-        {course.visibleToGuest && (
+        {!course.hiddenFromGuest && (
           <p className="rounded-lg border border-warning/40 bg-warning-bg px-3 py-2 text-xs text-warning">
-            Khóa học này đang <span className="font-semibold">hiển thị cho khách</span> (mục &ldquo;Hiện cho
-            khách&rdquo; ở form phía trên) nên mọi học sinh đều xem được các bài{" "}
-            <span className="font-semibold">học thử</span> giống trang khách, dù công tắc dưới đây đang tắt
-            và chưa cấp quyền riêng cho ai. Bật công tắc hoặc cấp quyền riêng để họ xem được full.
+            Khóa học này đang <span className="font-semibold">không bị ẩn khỏi khách</span> (mục &ldquo;Cấp
+            quyền học thử cho khách&rdquo; bên dưới danh sách bài học) nên mọi học sinh đều xem được các bài{" "}
+            <span className="font-semibold">học thử</span> đã tick ở đó, giống trang khách, dù công tắc dưới
+            đây đang tắt và chưa cấp quyền riêng cho ai. Bật công tắc hoặc cấp quyền riêng để họ xem được
+            full.
           </p>
         )}
         <ToggleOpenToProspectiveStudents courseId={course.id} open={course.openToProspectiveStudents} />

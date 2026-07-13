@@ -18,7 +18,8 @@ export type AdminCourseItem = {
   lessonsCount: number;
   grantsCount: number;
   levelGrants: Level[];
-  visibleToGuest: boolean;
+  hiddenFromGuest: boolean;
+  guestTrialLessonsCount: number;
   gradient: string;
 };
 
@@ -41,10 +42,12 @@ function Thumbnail({ course, className }: { course: AdminCourseItem; className: 
 // course: which levels are auto-granted, and whether any students were
 // granted individually as an exception on top of that.
 function AccessBadges({ course }: { course: AdminCourseItem }) {
-  const hasAnyGrant = course.visibleToGuest || course.levelGrants.length > 0 || course.grantsCount > 0;
+  const hasGuestTrial = !course.hiddenFromGuest && course.guestTrialLessonsCount > 0;
+  const hasAnyGrant = hasGuestTrial || course.levelGrants.length > 0 || course.grantsCount > 0;
   return (
     <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-      {course.visibleToGuest && <Badge color="info">Công khai</Badge>}
+      {course.hiddenFromGuest && <Badge color="muted">Ẩn khỏi khách</Badge>}
+      {hasGuestTrial && <Badge color="info">Có bài học thử</Badge>}
       {course.levelGrants.map((level) => (
         <Badge key={level} color="primary">
           {LEVEL_LABELS[level]} trở lên

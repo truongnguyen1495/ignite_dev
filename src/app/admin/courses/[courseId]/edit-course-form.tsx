@@ -16,7 +16,6 @@ export function EditCourseForm({
   order,
   price,
   salesEnabled,
-  visibleToGuest,
   featuredOnHome,
 }: {
   courseId: string;
@@ -26,7 +25,6 @@ export function EditCourseForm({
   order: number;
   price: number;
   salesEnabled: boolean;
-  visibleToGuest: boolean;
   featuredOnHome: boolean;
 }) {
   const [error, formAction, pending] = useActionState(updateCourseAction, undefined);
@@ -96,15 +94,6 @@ export function EditCourseForm({
             // giá trị hiện tại để lưu không vô tình reset giá về 0.
             <input type="hidden" name="price" defaultValue={price} />
           )}
-          <label className="flex items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              name="visibleToGuest"
-              defaultChecked={visibleToGuest}
-              className="h-4 w-4 accent-primary"
-            />
-            Hiển thị công khai cho khách (không cần đăng nhập)
-          </label>
           <label className="flex items-center gap-2 text-sm text-foreground">
             <input
               type="checkbox"

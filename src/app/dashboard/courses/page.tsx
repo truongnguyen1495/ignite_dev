@@ -57,7 +57,7 @@ export default async function StudentCoursesPage() {
     if (grantedCourseIds.has(course.id)) {
       accessLevel = "full";
     } else if (isHocSinh) {
-      accessLevel = course.openToProspectiveStudents ? "full" : course.visibleToGuest ? "trial" : "none";
+      accessLevel = course.openToProspectiveStudents ? "full" : !course.hiddenFromGuest ? "trial" : "none";
     } else {
       accessLevel = levelUnlockedCourseIds.has(course.id) ? "full" : "none";
     }

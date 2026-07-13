@@ -40,7 +40,7 @@ export async function createCourseAction(
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       order: parsed.data.order,
       price: parsed.data.price,
-      visibleToGuest: formData.get("visibleToGuest") === "on",
+      hiddenFromGuest: formData.get("hiddenFromGuest") === "on",
       featuredOnHome: formData.get("featuredOnHome") === "on",
     },
   });
@@ -81,7 +81,6 @@ export async function updateCourseAction(
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       order: parsed.data.order,
       price: parsed.data.price,
-      visibleToGuest: formData.get("visibleToGuest") === "on",
       featuredOnHome: formData.get("featuredOnHome") === "on",
     },
   });
@@ -204,8 +203,8 @@ export async function deleteCourseLessonAction(lessonId: string, courseId: strin
 }
 
 // Independent of student access — only controls whether this lesson shows
-// up under /guest/*, and only takes effect when the parent Course is also
-// visibleToGuest (see requireGuestCourseLessonAccess in src/lib/access.ts).
+// up under /guest/*, and only takes effect when the parent Course isn't
+// hiddenFromGuest (see requireGuestCourseLessonAccess in src/lib/access.ts).
 export async function setCourseLessonGuestVisibilityAction(
   lessonId: string,
   courseId: string,
@@ -214,6 +213,38 @@ export async function setCourseLessonGuestVisibilityAction(
   await requireAdminPermission("MANAGE_COURSES");
   await prisma.courseLesson.update({ where: { id: lessonId }, data: { visibleToGuest } });
   revalidatePath(`/admin/courses/${courseId}`);
+}
+
+// Backs the "Cấp quyền học thử cho khách" form on the course edit page: one
+// submit sets the course-level hide switch and replaces the full set of
+// trial lessons in a single transaction, rather than juggling per-lesson
+// toggles for a bulk change. Unchecking every lesson here doesn't hide the
+// course itself (that's hiddenFromGuest's job) — it just leaves the course
+// listed with nothing guests can actually open, i.e. effectively locked.
+export async function setCourseGuestAccessAction(
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  await requireAdminPermission("MANAGE_COURSES");
+
+  const courseId = formData.get("courseId");
+  if (typeof courseId !== "string" || !courseId) {
+    return "Thiếu mã khóa học.";
+  }
+  const hiddenFromGuest = formData.get("hiddenFromGuest") === "on";
+  const trialLessonIds = formData.getAll("trialLessonIds").filter((v): v is string => typeof v === "string");
+
+  await prisma.$transaction([
+    prisma.course.update({ where: { id: courseId }, data: { hiddenFromGuest } }),
+    prisma.courseLesson.updateMany({ where: { courseId }, data: { visibleToGuest: false } }),
+    prisma.courseLesson.updateMany({
+      where: { courseId, id: { in: trialLessonIds } },
+      data: { visibleToGuest: true },
+    }),
+  ]);
+
+  revalidatePath(`/admin/courses/${courseId}`);
+  return undefined;
 }
 
 export async function grantCourseAccessAction(courseId: string, studentId: string) {

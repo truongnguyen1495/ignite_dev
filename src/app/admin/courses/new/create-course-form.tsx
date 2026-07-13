@@ -27,10 +27,16 @@ export function CreateCourseForm({ salesEnabled }: { salesEnabled: boolean }) {
           hint="0 = không bán, chỉ cấp quyền thủ công như trước giờ."
         />
       )}
-      <label className="flex items-center gap-2 text-sm text-foreground">
-        <input type="checkbox" name="visibleToGuest" className="h-4 w-4 accent-primary" />
-        Hiển thị công khai cho khách (không cần đăng nhập)
-      </label>
+      <div>
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <input type="checkbox" name="hiddenFromGuest" className="h-4 w-4 accent-primary" />
+          Không công khai cho khách (ẩn hoàn toàn khỏi trang khách)
+        </label>
+        <p className="mt-1 text-xs text-muted">
+          Chọn bài học nào cho khách học thử sau khi tạo khóa học, ở phần &quot;Cấp quyền học thử cho
+          khách&quot; trên trang chỉnh sửa.
+        </p>
+      </div>
       <label className="flex items-center gap-2 text-sm text-foreground">
         <input type="checkbox" name="featuredOnHome" className="h-4 w-4 accent-primary" />
         Hiện trong mục &quot;Khóa học nổi bật&quot; ở trang chủ khách
