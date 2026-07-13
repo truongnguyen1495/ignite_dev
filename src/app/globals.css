@@ -209,11 +209,26 @@ body {
      simulating a stack of page edges. Sized via the --stack-left/
      --stack-right custom properties (set inline, per reading progress) so
      this doesn't need to know react-pageflip's actual rendered width —
-     "stretch" sizing picks that dynamically and isn't easily read from JS. */
+     "stretch" sizing picks that dynamically and isn't easily read from JS.
+   - .flipbook-spread .stf__item.--left/--right: the "gutter" shadow where
+     two open pages meet in the middle — react-pageflip tags whichever page
+     element is currently the left/right half of a spread with --left/
+     --right itself, so this targets the true inner edge of each page
+     directly. Scoped under .flipbook-spread (added by BookFlipbook/
+     PdfFlipbook only while a real two-page spread is showing) since a
+     single page shown alone — the cover, or an odd last page — still gets
+     a --left or --right class but has no neighbor to fake a seam against. */
 .flipbook-page-curve {
   box-shadow:
     inset 10px 0 14px -12px rgba(15, 23, 42, 0.35),
     inset -10px 0 14px -12px rgba(15, 23, 42, 0.35);
+}
+
+.flipbook-spread .stf__item.--left {
+  box-shadow: inset -26px 0 28px -22px rgba(15, 23, 42, 0.5);
+}
+.flipbook-spread .stf__item.--right {
+  box-shadow: inset 26px 0 28px -22px rgba(15, 23, 42, 0.5);
 }
 
 .flipbook-book {

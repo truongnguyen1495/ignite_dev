@@ -89,7 +89,7 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
           maxHeight={Math.round(1000 / aspect)}
           showCover
           maxShadowOpacity={0.5}
-          className="shadow-lg rounded-md flipbook-page-curve flipbook-book"
+          className={`shadow-lg rounded-md flipbook-page-curve flipbook-book ${spread ? "flipbook-spread" : ""}`}
           style={stackStyle}
           onFlip={(e: { data: number }) => setCurrentPage(e.data)}
           onChangeOrientation={(e: { data: FlipbookOrientation }) => setOrientation(e.data)}
