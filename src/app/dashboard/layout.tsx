@@ -11,7 +11,7 @@ import {
   Home,
   Receipt,
 } from "lucide-react";
-import { requireActiveStudent, isChatEnabled, getAdminPermissions } from "@/lib/access";
+import { requireActiveStudent, isChatEnabled, isSalesEnabled, getAdminPermissions } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { getStudentChatInbox } from "@/lib/chat";
 import { LEVEL_LABELS, hasLevelAccess } from "@/lib/levels";
@@ -31,13 +31,14 @@ export default async function DashboardLayout({
 }) {
   const student = await requireActiveStudent();
 
-  const [announcements, reads, chatEnabled, adminPermissions] = await Promise.all([
+  const [announcements, reads, chatEnabled, salesEnabled, adminPermissions] = await Promise.all([
     prisma.announcement.findMany({ select: { id: true, minLevel: true, visibleToStudents: true } }),
     prisma.announcementRead.findMany({
       where: { studentId: student.id },
       select: { announcementId: true },
     }),
     isChatEnabled(),
+    isSalesEnabled(),
     getAdminPermissions(student.id),
   ]);
   const hasAdminAccess = adminPermissions.size > 0;
@@ -67,7 +68,9 @@ export default async function DashboardLayout({
       { href: "/dashboard/announcements", label: "Bản tin", icon: <Megaphone className="h-4 w-4" /> },
       { href: "/dashboard/courses", label: "Khóa học độc quyền", icon: <Video className="h-4 w-4" /> },
       { href: "/dashboard/library", label: "Thư viện", icon: <Library className="h-4 w-4" /> },
-      { href: "/dashboard/orders", label: "Đơn hàng của tôi", icon: <Receipt className="h-4 w-4" /> },
+      ...(salesEnabled
+        ? [{ href: "/dashboard/orders", label: "Đơn hàng của tôi", icon: <Receipt className="h-4 w-4" /> }]
+        : []),
       {
         href: "/dashboard/level-up",
         label: "Tham gia hệ thống 5 cấp",
@@ -118,7 +121,9 @@ export default async function DashboardLayout({
     { href: "/dashboard", label: "5 Cấp đào tạo", icon: <LayoutDashboard className={iconClass} />, exact: true },
     { href: "/dashboard/courses", label: "Khóa học độc quyền", icon: <Video className={iconClass} /> },
     { href: "/dashboard/library", label: "Thư viện", icon: <Library className={iconClass} /> },
-    { href: "/dashboard/orders", label: "Đơn hàng của tôi", icon: <Receipt className={iconClass} /> },
+    ...(salesEnabled
+      ? [{ href: "/dashboard/orders", label: "Đơn hàng của tôi", icon: <Receipt className={iconClass} /> }]
+      : []),
     {
       href: "/dashboard/announcements",
       label: "Bản tin",

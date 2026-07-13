@@ -190,14 +190,22 @@ export async function isRegistrationEnabled(): Promise<boolean> {
   return settings?.registrationEnabled ?? true;
 }
 
-// Master kill switch for the "Mua ngay" buy flow, toggled from
-// /admin/settings — defaults off (bank info starts empty). Never hides
-// /admin/orders or a student's own order history, only new purchases; see
-// createOrderAction in src/app/dashboard/orders/actions.ts, the other
-// place this is checked (defense-in-depth, not just hiding the UI button).
+// Master kill switch for the whole sales feature, toggled from
+// /admin/settings — defaults off (bank info starts empty). When off, this
+// hides the "Mua ngay" button, both nav entries ("Đơn hàng của tôi" /
+// "Đơn hàng"), and blocks /dashboard/orders* and /admin/orders outright
+// (see requireSalesEnabled below) — by explicit user request, even for
+// admins, so a pending order left over from before the toggle was flipped
+// off can't be confirmed/cancelled until sales are turned back on.
 export async function isSalesEnabled(): Promise<boolean> {
   const settings = await prisma.settings.findUnique({ where: { id: 1 } });
   return settings?.salesEnabled ?? false;
+}
+
+export async function requireSalesEnabled(redirectTo: string): Promise<void> {
+  if (!(await isSalesEnabled())) {
+    redirect(redirectTo);
+  }
 }
 
 export async function requireLevelAccess(requestedLevel: Level): Promise<User> {

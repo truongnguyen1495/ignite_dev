@@ -16,7 +16,7 @@ import {
   UserCog,
   Receipt,
 } from "lucide-react";
-import { requireAnyAdminAccess, isChatEnabled } from "@/lib/access";
+import { requireAnyAdminAccess, isChatEnabled, isSalesEnabled } from "@/lib/access";
 import { getAdminSupportInbox } from "@/lib/chat";
 import { getAdminGuestChatInbox } from "@/lib/guest-chat";
 import { Sidebar, SidebarProvider, SidebarToggle, type NavItem } from "@/components/ui/sidebar";
@@ -39,6 +39,8 @@ export default async function AdminLayout({
   // badge in dashboard/layout.tsx.
   const chatEnabled = await isChatEnabled();
   const canManageChat = chatEnabled && canManage("MANAGE_CHAT");
+  const salesEnabled = await isSalesEnabled();
+  const canManageOrders = salesEnabled && canManage("MANAGE_ORDERS");
   const [supportThreads, guestThreads] = canManageChat
     ? await Promise.all([getAdminSupportInbox(admin.id), getAdminGuestChatInbox(admin.id)])
     : [[], []];
@@ -86,9 +88,12 @@ export default async function AdminLayout({
     },
   ];
 
-  const NAV_ITEMS: NavItem[] = ALL_NAV_ITEMS.filter(
-    ({ permission }) => !permission || (permission === "MANAGE_CHAT" ? canManageChat : canManage(permission))
-  ).map(({ item }) => item);
+  const NAV_ITEMS: NavItem[] = ALL_NAV_ITEMS.filter(({ permission }) => {
+    if (!permission) return true;
+    if (permission === "MANAGE_CHAT") return canManageChat;
+    if (permission === "MANAGE_ORDERS") return canManageOrders;
+    return canManage(permission);
+  }).map(({ item }) => item);
 
   // "Bài học" / "Kết quả" / "Yêu cầu lên cấp" nest under "Học viên" so the
   // sidebar reads shorter, per user request — collapsed by default, the

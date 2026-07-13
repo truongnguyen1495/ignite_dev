@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { requireActiveStudent } from "@/lib/access";
+import { requireActiveStudent, requireSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { BackLink } from "@/components/ui/back-link";
 import { Card } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { formatOrderCode, ORDER_STATUS_LABELS, ORDER_STATUS_BADGE_COLOR } from "
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ orderId: string }> }) {
   const student = await requireActiveStudent();
+  await requireSalesEnabled("/dashboard");
   const { orderId } = await params;
 
   const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });

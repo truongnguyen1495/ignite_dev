@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { requireActiveStudent } from "@/lib/access";
+import { requireActiveStudent, requireSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { formatDateVN } from "@/lib/date";
 
 export default async function OrdersPage() {
   const student = await requireActiveStudent();
+  await requireSalesEnabled("/dashboard");
   const orders = await prisma.order.findMany({
     where: { studentId: student.id },
     include: { items: true },

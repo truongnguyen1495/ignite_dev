@@ -14,8 +14,10 @@ export function SalesToggle({ salesEnabled }: { salesEnabled: boolean }) {
       <div>
         <p className="text-sm font-medium text-foreground">Bán khóa học / thư viện</p>
         <p className="text-sm text-muted">
-          Bật/tắt nút &quot;Mua ngay&quot; cho học viên. Chỉ bật sau khi đã điền đầy đủ thông tin chuyển
-          khoản bên dưới — không ảnh hưởng tới đơn hàng cũ hay trang quản lý đơn hàng.
+          Bật/tắt toàn bộ tính năng bán hàng — nút &quot;Mua ngay&quot;, trang &quot;Đơn hàng của tôi&quot;
+          của học viên, và trang &quot;Đơn hàng&quot; của admin đều ẩn đi khi tắt. Chỉ bật sau khi đã điền
+          đầy đủ thông tin chuyển khoản bên dưới. Nếu đang có đơn chờ xác nhận, phải bật lại công tắc này
+          mới xử lý được.
         </p>
       </div>
       <button

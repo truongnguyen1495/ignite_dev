@@ -1,4 +1,4 @@
-import { requireAdminPermission } from "@/lib/access";
+import { requireAdminPermission, requireSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatDateVN } from "@/lib/date";
@@ -6,6 +6,7 @@ import { OrdersList, type OrderListItem } from "./orders-list";
 
 export default async function AdminOrdersPage() {
   await requireAdminPermission("MANAGE_ORDERS");
+  await requireSalesEnabled("/admin/settings");
 
   const orders = await prisma.order.findMany({
     include: { student: { select: { name: true, email: true } }, items: true },
