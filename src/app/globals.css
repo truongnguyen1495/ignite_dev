@@ -200,43 +200,53 @@ body {
 }
 
 /* Flipbook "real book" chrome (see BookFlipbook/PdfFlipbook, applied
-   directly to react-pageflip's own root element via its className prop,
-   plus a sibling .flipbook-gutter div rendered alongside it).
+   directly to react-pageflip's own root element via its className prop).
    react-pageflip renders one flat page image with no sense of the pages
    behind it, so these fake the rest of a bound book:
    - .flipbook-page-curve: a soft vignette on both outer edges of the
      current page/spread, like light catching a slightly curved sheet.
-   - .flipbook-gutter: the "gutter" shadow where two open pages meet in the
-     middle. This is a single element centered on the whole book (not two
-     per-page overlays meeting at the seam) on purpose — react-pageflip's
-     two page elements don't always abut at an exact pixel boundary, and
-     with two separate overlays any sub-pixel gap between them showed
-     through as a bright crack splitting the book in two once shadow was
-     added on both sides of it. A book with only one page currently on
-     screen (the cover, or an odd last page) has no real seam, so callers
-     only render this alongside a genuine two-page spread, and fade it to
-     opacity 0 while react-pageflip's state is anything but "read" (see
-     FlipbookState) — this shadow doesn't itself animate with the page
-     turning in 3D, so left on throughout a flip it just sits there static
-     while the page curls past it.
+   - .flipbook-spread .stf__item.--left/--right::after: the "gutter" shadow
+     where two open pages meet in the middle. Attached to each page's own
+     element (react-pageflip tags whichever page is currently the left/
+     right half of a spread with a --left/--right class of its own) rather
+     than a separate overlay floating above the book, so it turns *with*
+     the page in react-pageflip's 3D page-turn animation instead of
+     sitting there static while the page curls past it — confirmed by
+     screenshotting a real flip and watching the shadow tilt and move with
+     the turning page.
 
-     A z-index-based approach (put this below the actively-turning page's
-     z-index, above resting pages, and let the turning page cover it as it
-     swings over) looks appealing and was tried, but doesn't work:
-     react-pageflip's root element has `transform: translateZ(0)` (see
-     below), which makes it establish its own stacking context — so no
-     z-index inside it can ever be reordered relative to a sibling element
-     outside it, regardless of the numbers used. Confirmed by swapping the
-     gradient for an opaque magenta block and watching it stay on top
-     through an entire flip. The JS onChangeState fade is the only
-     approach that actually works here.
+     Two earlier approaches were tried and rejected:
+     - A single overlay div centered on the whole book, at a fixed
+       position — didn't move with the flip, read as detached from the
+       actual page motion (confirmed by swapping it for an opaque magenta
+       block and watching it stay static and on top through an entire
+       flip; a z-index arrangement meant to let the turning page cover it
+       doesn't work either, since react-pageflip's root element has
+       `transform: translateZ(0)` and thus establishes its own stacking
+       context — no z-index inside it can ever be reordered against a
+       sibling element outside it).
+     - The obvious per-page version of *this* approach, but with the
+       gradient peaking at 100% (the true page edge): react-pageflip's two
+       page elements don't always abut at an exact pixel boundary, and any
+       sub-pixel gap right at that peak showed through as a bright crack
+       splitting the book in two. Inset the peak to 82% instead — so the
+       last sliver before the true edge is already faded near-transparent,
+       and a gap there just isn't noticeable — confirmed with a 4x-scale
+       screenshot at deliberately fractional page dimensions chosen to
+       provoke the gap.
+
+     A single page currently on screen (the cover, or an odd last page) has
+     no real seam, so this is scoped under .flipbook-spread (added by
+     BookFlipbook/PdfFlipbook only while a genuine two-page spread is
+     showing) even though that lone page still carries a --left or --right
+     class of its own.
    - .stf__item's own border-radius: rounded on every corner by default (a
      lone page/cover reads as one card), but the spine-side corners go
      square while part of a real spread — otherwise two independently
      rounded pages read as separate cards shoved together instead of one
      continuous open book.
 
-   Both shadow effects are gradient-filled overlays, NOT box-shadow:
+   Both effects are gradient-filled overlays, NOT box-shadow:
    react-pageflip's own stylesheet sets `transform-style: preserve-3d` on
    every .stf__item (needed for its page-turn animation) and `transform:
    translateZ(0)` on its root element (forcing its own GPU layer), and
@@ -272,6 +282,7 @@ body {
 }
 
 .stf__item {
+  position: relative;
   border-radius: 6px;
   overflow: hidden;
 }
@@ -283,23 +294,22 @@ body {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
-
-.flipbook-gutter {
+.flipbook-spread .stf__item.--left::after,
+.flipbook-spread .stf__item.--right::after {
+  content: "";
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 10%;
-  z-index: 6;
+  width: 14%;
   pointer-events: none;
-  transition: opacity 220ms ease;
-  background: linear-gradient(
-    to right,
-    rgba(15, 23, 42, 0) 0%,
-    rgba(15, 23, 42, 0.28) 50%,
-    rgba(15, 23, 42, 0) 100%
-  );
+}
+.flipbook-spread .stf__item.--left::after {
+  right: 0;
+  background: linear-gradient(to right, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.32) 82%, rgba(15, 23, 42, 0) 100%);
+}
+.flipbook-spread .stf__item.--right::after {
+  left: 0;
+  background: linear-gradient(to left, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.32) 82%, rgba(15, 23, 42, 0) 100%);
 }
 
 .flipbook-book {

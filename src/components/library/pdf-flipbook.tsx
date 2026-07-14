@@ -6,7 +6,7 @@ import HTMLFlipBook from "react-pageflip";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { PdfPage } from "./pdf-page";
 import { FLIPBOOK_DEFAULTS } from "./flipbook-defaults";
-import { isPagedSpread, isLastSpread, type FlipbookOrientation, type FlipbookState } from "./flipbook-spread";
+import { isPagedSpread, isLastSpread, type FlipbookOrientation } from "./flipbook-spread";
 
 const RENDER_SCALE = 1.5;
 const JPEG_QUALITY = 0.85;
@@ -23,7 +23,6 @@ export function PdfFlipbook({ src, title }: { src: string; title: string }) {
   const [pages, setPages] = useState<(string | null)[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [orientation, setOrientation] = useState<FlipbookOrientation>("portrait");
-  const [flipState, setFlipState] = useState<FlipbookState>("read");
   const [error, setError] = useState<string | null>(null);
 
   const docRef = useRef<PDFDocumentProxy | null>(null);
@@ -151,13 +150,11 @@ export function PdfFlipbook({ src, title }: { src: string; title: string }) {
           }}
           onChangeOrientation={(e: { data: FlipbookOrientation }) => setOrientation(e.data)}
           onInit={(e: { data: { mode: FlipbookOrientation } }) => setOrientation(e.data.mode)}
-          onChangeState={(e: { data: FlipbookState }) => setFlipState(e.data)}
         >
           {pages.map((dataUrl, i) => (
             <PdfPage key={i} dataUrl={dataUrl} pageNumber={i + 1} />
           ))}
         </HTMLFlipBook>
-        <div className="flipbook-gutter" style={{ opacity: spread && flipState === "read" ? 1 : 0 }} aria-hidden />
       </div>
 
       <div className="flex items-center gap-4 text-sm text-muted">
