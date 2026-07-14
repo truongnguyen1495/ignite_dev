@@ -131,13 +131,25 @@ export function FlipbookChrome({
     </div>
   );
 
+  // A *definite* height here (not just max-height) matters, not just
+  // styling: flexbox only actually shrinks a flex-1 child (bookBand) down
+  // to "whatever's left after siblings" when the container itself has a
+  // definite size to distribute — with max-height alone, the column's own
+  // preferred size is still driven by its children's natural content size,
+  // so a book whose own width-driven sizing (see book-flipbook.tsx/
+  // pdf-flipbook.tsx + useAvailableHeight) wants to render taller than the
+  // toolbar+thumbnails budget just overflows *past* them instead of being
+  // constrained to fit — visually reads as the book overlapping/hiding the
+  // mode toggle above the reader and the toolbar/thumbnail rail below it,
+  // confirmed from real screenshots of a short browser window doing exactly
+  // that. overflow-hidden is a safety net for any residual rounding.
   return (
     <div
       ref={containerRef}
       className={
         isFullscreen
           ? "flex h-full w-full flex-col items-center justify-center gap-3 bg-background p-6"
-          : "flex max-h-[75vh] w-full flex-col items-center gap-3"
+          : "flex h-[75vh] w-full flex-col items-center gap-3 overflow-hidden"
       }
     >
       {bookBand}
