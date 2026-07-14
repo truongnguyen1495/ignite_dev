@@ -13,8 +13,13 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 // still animating — visible as garbled, overlapping page content). Debouncing
 // means a remount only ever happens once the layout has actually settled
 // (window resize, fullscreen toggle, thumbnail-rail toggle finishing), never
-// mid-animation, since a real flip settles well before this fires again.
-const COMMIT_DEBOUNCE_MS = 250;
+// mid-animation. Must exceed FLIPBOOK_DEFAULTS.flippingTime (1000ms) — a
+// shorter debounce (250ms was tried first) still lands a remount inside an
+// active flip whenever the resize is triggered early in that flip's own
+// 1000ms animation (e.g. toggling the thumbnail rail right after clicking
+// next-page), reproducing the exact same garbled-page-content glitch this
+// hook exists to prevent.
+const COMMIT_DEBOUNCE_MS = 1200;
 
 // Measures an element's real rendered height via ResizeObserver — used to
 // cap the flipbook's width from JS (see book-flipbook.tsx/pdf-flipbook.tsx)
