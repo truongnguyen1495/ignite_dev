@@ -317,3 +317,15 @@ body {
 .flipbook-book {
   border: 1px solid rgba(15, 23, 42, 0.08);
 }
+
+/* Hides the scrollbar track/thumb while keeping the element scrollable —
+   used on the flipbook thumbnail rail (see flipbook-thumbnail-rail.tsx),
+   which already scrolls the current page into view on its own, so the
+   native bar is just visual clutter under the reader. */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* legacy Edge/IE */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge (Chromium) */
+}

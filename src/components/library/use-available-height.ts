@@ -2,6 +2,20 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 
+// How long a new measurement has to stay put before it's actually committed
+// to state. Committing every ResizeObserver tick immediately (the naive
+// version) forced a flipbook remount (see book-flipbook.tsx/pdf-flipbook.tsx
+// — react-pageflip only reads sizing props once, at construction) on *every*
+// sub-pixel layout jitter, including jitter that happens to land mid-flip
+// (confirmed: showing the thumbnail rail was enough to nudge the measured
+// height right onto a rounding boundary on some books, remounting
+// react-pageflip's whole DOM tree while its own page-turn CSS transform was
+// still animating — visible as garbled, overlapping page content). Debouncing
+// means a remount only ever happens once the layout has actually settled
+// (window resize, fullscreen toggle, thumbnail-rail toggle finishing), never
+// mid-animation, since a real flip settles well before this fires again.
+const COMMIT_DEBOUNCE_MS = 250;
+
 // Measures an element's real rendered height via ResizeObserver — used to
 // cap the flipbook's width from JS (see book-flipbook.tsx/pdf-flipbook.tsx)
 // rather than trusting CSS height alone. react-pageflip's own wrapper box
@@ -18,6 +32,8 @@ export function useAvailableHeight(ref: RefObject<HTMLElement | null>): number |
   // per-render effect below can tell "still the same node, nothing to do"
   // from "a different/newly-mounted node, move the observer onto it".
   const observedElRef = useRef<HTMLElement | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastCommittedRef = useRef<number | null>(null);
 
   // No dependency array is deliberate: `ref` (the object) never changes
   // identity, so a `[ref]`-gated effect only ever runs once — if `ref.current`
@@ -41,7 +57,27 @@ export function useAvailableHeight(ref: RefObject<HTMLElement | null>): number |
     if (!observerRef.current) {
       observerRef.current = new ResizeObserver((entries) => {
         const h = entries[0]?.contentRect.height;
-        if (h) setHeight(h);
+        if (!h) return;
+        // Sub-pixel noise (layout rounding between renders, not a real size
+        // change) shouldn't even restart the debounce timer, or a steady
+        // trickle of 0.3px-apart measurements could keep deferring the
+        // commit forever.
+        if (lastCommittedRef.current !== null && Math.abs(h - lastCommittedRef.current) < 2) return;
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        // The very first measurement applies immediately — nothing to
+        // debounce against yet, and the caller is usually showing a loading
+        // spinner until this resolves (see the `availableHeight === null`
+        // branch in book-flipbook.tsx/pdf-flipbook.tsx), so there's no
+        // mid-animation remount risk to protect against on first mount.
+        if (lastCommittedRef.current === null) {
+          lastCommittedRef.current = h;
+          setHeight(h);
+          return;
+        }
+        debounceTimerRef.current = setTimeout(() => {
+          lastCommittedRef.current = h;
+          setHeight(h);
+        }, COMMIT_DEBOUNCE_MS);
       });
     }
     if (observedElRef.current) observerRef.current.unobserve(observedElRef.current);
@@ -50,7 +86,10 @@ export function useAvailableHeight(ref: RefObject<HTMLElement | null>): number |
   });
 
   useEffect(() => {
-    return () => observerRef.current?.disconnect();
+    return () => {
+      observerRef.current?.disconnect();
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
   }, []);
 
   return height;

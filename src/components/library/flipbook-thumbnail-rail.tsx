@@ -33,7 +33,7 @@ export function FlipbookThumbnailRail({
   if (count <= 1) return null;
 
   return (
-    <div className="flex w-full max-w-full items-start gap-0.5 overflow-x-auto px-4 py-1">
+    <div className="no-scrollbar flex w-full max-w-full items-start gap-0.5 overflow-x-auto px-4 py-1">
       {Array.from({ length: count }, (_, i) => (
         <button
           key={i}
