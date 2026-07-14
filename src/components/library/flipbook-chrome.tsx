@@ -92,6 +92,16 @@ export function FlipbookChrome({
   // natural size, defeating the whole "fill remaining space" point.
   const bookBand = <div className="flex min-h-0 w-full flex-1 items-center justify-center">{bookArea}</div>;
 
+  // On a tall book (or a small/short browser window), this whole block can
+  // end up taller than the viewport — the *page* scrolls, not this block,
+  // since max-h-[75vh] bounds it against the full viewport height without
+  // knowing how much room the title/description above it already used. If
+  // the toolbar just scrolled away with the rest of the page, a reader
+  // mid-book would lose every control until they scrolled back up — sticky
+  // keeps it pinned near the top of the viewport instead, regardless of
+  // where the book/thumbnails have scrolled to.
+  const stickyToolbar = <div className="sticky top-3 z-30">{toolbar}</div>;
+
   if (!hasBackground) {
     return (
       <div
@@ -103,30 +113,35 @@ export function FlipbookChrome({
         }
       >
         {bookBand}
-        {toolbar}
+        {stickyToolbar}
         {thumbnailRail}
       </div>
     );
   }
 
-  // With a backdrop image, the reader becomes a full "reading nook" scene —
-  // the image fills the whole frame with generous room above/below the book
-  // (not a tight card hugging it), and the toolbar floats as a dark
-  // translucent pill over the top of it, matching the reference layout the
-  // admin/user asked to mirror (image-viewer-style chrome: dark floating
-  // controls over a full-bleed backdrop, book centered within).
+  // With a backdrop image, the reader becomes a full "reading nook" scene:
+  // the toolbar is its own solid dark bar docked above the image (never
+  // overlapping it — an earlier version floated the toolbar as a pill *over*
+  // the image and the user correctly called that out against a reference
+  // screenshot: real examples keep controls in a dedicated strip, never
+  // competing with whatever graphic sits underneath), then the image fills
+  // the rest of the frame edge-to-edge (bg-cover, deliberately cropping to
+  // fill rather than letterboxing to the image's own shape — also settled
+  // by the same reference: the backdrop reads as full-bleed wallpaper, not
+  // a bordered photo), with the book centered on top of it.
   return (
-    <div
-      ref={containerRef}
-      className={[
-        "flex w-full flex-col items-center gap-4 bg-cover bg-center px-4 py-6 sm:py-10",
-        isFullscreen ? "h-full justify-center" : "max-h-[75vh] rounded-2xl",
-      ].join(" ")}
-      style={{ backgroundImage: `url(${backgroundImageUrl})` }}
-    >
-      <div className="rounded-full bg-black/45 px-3 py-1.5 shadow-lg backdrop-blur-md">{toolbar}</div>
-      {bookBand}
-      <div className="rounded-xl bg-black/35 px-2 py-2 backdrop-blur-md">{thumbnailRail}</div>
+    <div ref={containerRef} className={isFullscreen ? "flex h-full w-full flex-col" : "flex w-full flex-col overflow-hidden rounded-2xl"}>
+      <div className="sticky top-0 z-30 flex items-center justify-center bg-slate-800 px-4 py-2.5">{toolbar}</div>
+      <div
+        className={[
+          "flex flex-1 flex-col items-center gap-4 bg-cover bg-center px-4 py-6 sm:py-10",
+          isFullscreen ? "justify-center" : "max-h-[75vh]",
+        ].join(" ")}
+        style={{ backgroundImage: `url(${backgroundImageUrl})` }}
+      >
+        {bookBand}
+        <div className="rounded-xl bg-black/35 px-2 py-2 backdrop-blur-md">{thumbnailRail}</div>
+      </div>
     </div>
   );
 }
