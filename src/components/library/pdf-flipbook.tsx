@@ -238,8 +238,14 @@ export function PdfFlipbook({
       bookArea={
         <div
           ref={zoom.wrapperRef}
+          // overflow-y-hidden isn't decorative — see the matching comment in
+          // book-flipbook.tsx: overflow-x-auto alone silently forces
+          // overflow-y to auto too (CSS overflow spec), which only became a
+          // visible scrollbar once the book grew tall enough for
+          // react-pageflip's own box to occasionally exceed this band by a
+          // sub-pixel amount.
           className={`relative flex h-full w-full max-w-full justify-center px-4 ${
-            zoom.zoomed ? "overflow-hidden" : "overflow-x-auto"
+            zoom.zoomed ? "overflow-hidden" : "overflow-x-auto overflow-y-hidden"
           }`}
         >
           <div className="w-full" style={{ transform: zoom.transform, transition: zoom.transition }}>

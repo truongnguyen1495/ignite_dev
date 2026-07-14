@@ -121,8 +121,17 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
       bookArea={
         <div
           ref={zoom.wrapperRef}
+          // overflow-y-hidden isn't decorative — per the CSS overflow spec, a
+          // computed overflow-y of visible gets forced to auto whenever
+          // overflow-x isn't visible, so overflow-x-auto alone silently
+          // opts this div into a vertical scrollbar too. Invisible while the
+          // book stayed small; became a real visible scrollbar once sizing
+          // grew the book close to this band's height (any sub-pixel
+          // rounding slop in react-pageflip's own box was enough to trigger
+          // it). Explicit overflow-y-hidden clips that harmless slop instead
+          // of scrolling it.
           className={`relative flex h-full w-full max-w-full justify-center px-4 ${
-            zoom.zoomed ? "overflow-hidden" : "overflow-x-auto"
+            zoom.zoomed ? "overflow-hidden" : "overflow-x-auto overflow-y-hidden"
           }`}
         >
           <div className="w-full" style={{ transform: zoom.transform, transition: zoom.transition }}>
