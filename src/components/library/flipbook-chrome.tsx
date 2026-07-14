@@ -3,6 +3,7 @@
 import type { ReactNode, RefObject } from "react";
 import { FlipbookToolbar } from "./flipbook-toolbar";
 import { FlipbookThumbnailRail } from "./flipbook-thumbnail-rail";
+import { useAutoHideControls } from "./use-auto-hide-controls";
 
 // Shared outer chrome for both BookFlipbook and PdfFlipbook: the optional
 // backdrop image, the fullscreen container (containerRef gets passed to
@@ -114,7 +115,21 @@ export function FlipbookChrome({
   // mid-book would lose every control until they scrolled back up — sticky
   // keeps it pinned near the top of the viewport instead, regardless of
   // where the book/thumbnails have scrolled to.
-  const stickyToolbar = <div className="sticky top-3 z-30">{toolbar}</div>;
+  //
+  // In fullscreen specifically, the toolbar also auto-hides after a couple
+  // seconds of no mouse movement (video-player style) and fades back in the
+  // instant the mouse moves — pointer-events-none while faded out so the
+  // invisible bar can't eat clicks meant for the page underneath it.
+  const controlsVisible = useAutoHideControls(isFullscreen);
+  const stickyToolbar = (
+    <div
+      className={`sticky top-3 z-30 transition-opacity duration-300 ${
+        controlsVisible ? "opacity-100" : "pointer-events-none opacity-0"
+      }`}
+    >
+      {toolbar}
+    </div>
+  );
 
   return (
     <div
