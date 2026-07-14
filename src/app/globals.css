@@ -314,8 +314,22 @@ body {
   background: linear-gradient(to left, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.22) 88%, rgba(15, 23, 42, 0) 100%);
 }
 
+/* react-pageflip's own UI class sets `width: 100%; max-width: {maxWidth*2}px`
+   directly on this root element (see node_modules/page-flip/src/UI/UI.ts,
+   `if (setting.autoSize) { inBlock.style.width = '100%'; inBlock.style.maxWidth
+   = ... }`) but never sets an auto margin. While `maxWidth` (see
+   use-available-height.ts) never actually constrained anything below 100%
+   — capped at a generous constant — this was invisible. Once maxWidth
+   started reflecting the *real* available height (so the book stops
+   overlapping the toolbar/mode-toggle on short screens), it routinely caps
+   the book narrower than its full-width parent, and a width-capped
+   block-level element with no margin defaults to the *left* edge of its
+   container, not centered — confirmed by reading react-pageflip's actual
+   sizing code, not guessed. margin-inline: auto centers it whenever it's
+   narrower than the space justify-center already reserves for it. */
 .flipbook-book {
   border: 1px solid rgba(15, 23, 42, 0.08);
+  margin-inline: auto;
 }
 
 /* Hides the scrollbar track/thumb while keeping the element scrollable —
