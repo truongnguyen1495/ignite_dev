@@ -11,6 +11,7 @@ import { FLIPBOOK_DEFAULTS } from "./flipbook-defaults";
 import { useFlipbookZoom } from "./use-flipbook-zoom";
 import { useFullscreen } from "./use-fullscreen";
 import { useFlipbookSound } from "./use-flipbook-sound";
+import { useAvailableHeight } from "./use-available-height";
 import { isPagedSpread, isLastSpread, withBlankPad, type FlipbookOrientation } from "./flipbook-spread";
 
 type PagesResponse = {
@@ -53,6 +54,7 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen(containerRef);
   const zoom = useFlipbookZoom();
   const { muted, toggleMuted, playFlipSound } = useFlipbookSound();
+  const availableHeight = useAvailableHeight(zoom.wrapperRef);
 
   // See withBlankPad in flipbook-spread.ts — must run every render (hooks
   // can't be conditional), so it's fine that `data` may still be null here
@@ -96,6 +98,17 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
   const canPrev = currentPage > 0;
   const canNext = !isLastSpread(orientation, currentPage, totalPages);
 
+  // react-pageflip's own wrapper box sizes itself from *width* alone (a
+  // CSS padding-bottom-percentage trick — see use-available-height.ts'
+  // comment), completely ignoring how much height its real parent actually
+  // has. A single page's rendered height always equals its rendered width
+  // divided by `aspect`, regardless of portrait vs. landscape spread (a
+  // spread just places two pages side by side at the same height, it
+  // doesn't stack them) — so capping *width* to `availableHeight * aspect`
+  // is what actually keeps the book from rendering taller than the real
+  // space below the toolbar and above the thumbnail rail.
+  const maxWidth = availableHeight ? Math.max(280, Math.min(1600, Math.floor(availableHeight * aspect))) : 1600;
+
   return (
     <FlipbookChrome
       containerRef={containerRef}
@@ -138,40 +151,59 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
           }`}
         >
           <div className="w-full" style={{ transform: zoom.transform, transition: zoom.transition }}>
-            <HTMLFlipBook
-              {...FLIPBOOK_DEFAULTS}
-              ref={flipRef}
-              width={500}
-              height={Math.round(500 / aspect)}
-              size="stretch"
-              minWidth={280}
-              maxWidth={1600}
-              minHeight={Math.round(280 / aspect)}
-              maxHeight={Math.round(1600 / aspect)}
-              showCover
-              maxShadowOpacity={0.5}
-              className={`shadow-lg flipbook-page-curve flipbook-book ${spread ? "flipbook-spread" : ""}`}
-              onFlip={(e: { data: number }) => {
-                setCurrentPage(e.data);
-                playFlipSound();
-              }}
-              onChangeOrientation={(e: { data: FlipbookOrientation }) => setOrientation(e.data)}
-              onInit={(e: { data: { mode: FlipbookOrientation } }) => setOrientation(e.data.mode)}
-            >
-              {pages.map((page, i) => (
-                <BookPage
-                  key={i}
-                  page={page}
-                  bookWidth={bookWidth}
-                  bookHeight={bookHeight}
-                  // A landscape spread shows two pages on screen at once (see
-                  // isPagedSpread) — both need live video/audio, not just the
-                  // one currentPage tracks, or the right-hand page's iframe
-                  // never mounts and its video/audio placeholder stays inert.
-                  isActive={i === currentPage || (spread && i === currentPage + 1)}
-                />
-              ))}
-            </HTMLFlipBook>
+            {availableHeight === null ? (
+              // react-pageflip only reads its sizing props once, at the
+              // moment it first constructs its internal instance (see
+              // use-available-height.ts) — mounting it before the real
+              // available space is known would bake in the wrong maxWidth
+              // permanently, so it waits one tick for a real measurement
+              // instead of a placeholder-then-correct flash.
+              <div className="flex h-40 items-center justify-center">
+                <Loader2 className="h-5 w-5 animate-spin text-muted" />
+              </div>
+            ) : (
+              <HTMLFlipBook
+                {...FLIPBOOK_DEFAULTS}
+                // Remounts (fresh instance, correct sizing baked in) only
+                // when the space genuinely changes enough to matter —
+                // fullscreen toggle, thumbnail-rail toggle, a real window
+                // resize — not on every sub-pixel ResizeObserver tick.
+                key={Math.round(maxWidth / 20)}
+                ref={flipRef}
+                width={500}
+                height={Math.round(500 / aspect)}
+                size="stretch"
+                minWidth={280}
+                maxWidth={maxWidth}
+                minHeight={Math.round(280 / aspect)}
+                maxHeight={Math.round(maxWidth / aspect)}
+                startPage={currentPage}
+                showCover
+                maxShadowOpacity={0.5}
+                className={`shadow-lg flipbook-page-curve flipbook-book ${spread ? "flipbook-spread" : ""}`}
+                onFlip={(e: { data: number }) => {
+                  setCurrentPage(e.data);
+                  playFlipSound();
+                }}
+                onChangeOrientation={(e: { data: FlipbookOrientation }) => setOrientation(e.data)}
+                onInit={(e: { data: { mode: FlipbookOrientation } }) => setOrientation(e.data.mode)}
+              >
+                {pages.map((page, i) => (
+                  <BookPage
+                    key={i}
+                    page={page}
+                    bookWidth={bookWidth}
+                    bookHeight={bookHeight}
+                    // A landscape spread shows two pages on screen at once
+                    // (see isPagedSpread) — both need live video/audio, not
+                    // just the one currentPage tracks, or the right-hand
+                    // page's iframe never mounts and its video/audio
+                    // placeholder stays inert.
+                    isActive={i === currentPage || (spread && i === currentPage + 1)}
+                  />
+                ))}
+              </HTMLFlipBook>
+            )}
           </div>
           {zoom.overlayHandlers && (
             <div

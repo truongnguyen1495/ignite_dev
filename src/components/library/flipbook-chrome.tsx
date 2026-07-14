@@ -100,7 +100,7 @@ export function FlipbookChrome({
 
   // On a tall book (or a small/short browser window), this whole block can
   // end up taller than the viewport — the *page* scrolls, not this block,
-  // since max-h-[75vh] bounds it against the full viewport height without
+  // since h-[75vh] bounds it against the full viewport height without
   // knowing how much room the title/description above it already used. If
   // the toolbar just scrolled away with the rest of the page, a reader
   // mid-book would lose every control until they scrolled back up — sticky
@@ -108,6 +108,17 @@ export function FlipbookChrome({
   // where the book/thumbnails have scrolled to.
   const stickyToolbar = <div className="sticky top-3 z-30">{toolbar}</div>;
 
+  // A *definite* height here (not just max-height) matters, not just
+  // styling: flexbox only actually shrinks a flex-1 child (bookBand) down
+  // to "whatever's left after siblings" when the container itself has a
+  // definite size to distribute — with max-height alone, the column's own
+  // preferred size is still driven by its children's natural content size,
+  // so a book whose own width-driven sizing (see book-flipbook.tsx/
+  // pdf-flipbook.tsx) wants to render taller than the toolbar+thumbnails
+  // budget just overflows *past* them instead of being constrained to fit —
+  // visually reads as the book overlapping/hiding behind the toolbar and
+  // thumbnail rail, confirmed from a real screenshot of a wide spread doing
+  // exactly that. overflow-hidden is a safety net for any residual rounding.
   if (!hasBackground) {
     return (
       <div
@@ -115,7 +126,7 @@ export function FlipbookChrome({
         className={
           isFullscreen
             ? "flex h-full w-full flex-col items-center justify-center gap-3 bg-background p-6"
-            : "flex max-h-[75vh] w-full flex-col items-center gap-3"
+            : "flex h-[75vh] w-full flex-col items-center gap-3 overflow-hidden"
         }
       >
         {bookBand}
@@ -140,7 +151,7 @@ export function FlipbookChrome({
       ref={containerRef}
       className={[
         "flex w-full flex-col items-center gap-4 bg-cover bg-center px-4 pb-6 pt-3 sm:pb-10",
-        isFullscreen ? "h-full justify-center" : "max-h-[75vh] rounded-2xl",
+        isFullscreen ? "h-full justify-center" : "h-[75vh] overflow-hidden rounded-2xl",
       ].join(" ")}
       style={{ backgroundImage: `url(${backgroundImageUrl})` }}
     >
