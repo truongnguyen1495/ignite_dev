@@ -1,6 +1,17 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Maximize2, Minimize2, ZoomIn, ZoomOut } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Maximize2,
+  Minimize2,
+  Volume2,
+  VolumeX,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
 
 // Same "variant prop" pattern as Sidebar/BrandLogo's navy/light split — a
 // "dark" bar floating over an admin-set background image (see FlipbookChrome)
@@ -37,6 +48,8 @@ export function FlipbookToolbar({
   onToggleZoom,
   isFullscreen,
   onToggleFullscreen,
+  muted,
+  onToggleMuted,
   variant = "light",
 }: {
   pageLabel: string;
@@ -50,6 +63,8 @@ export function FlipbookToolbar({
   onToggleZoom: () => void;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
+  muted: boolean;
+  onToggleMuted: () => void;
   variant?: "light" | "dark";
 }) {
   const c = VARIANT_CLASSES[variant];
@@ -87,6 +102,16 @@ export function FlipbookToolbar({
         className={c.btn}
       >
         {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+      </button>
+      <button
+        type="button"
+        onClick={onToggleMuted}
+        aria-pressed={!muted}
+        aria-label={muted ? "Bật âm thanh lật trang" : "Tắt âm thanh lật trang"}
+        title={muted ? "Bật âm thanh lật trang" : "Tắt âm thanh lật trang"}
+        className={c.btn}
+      >
+        {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
       </button>
     </div>
   );

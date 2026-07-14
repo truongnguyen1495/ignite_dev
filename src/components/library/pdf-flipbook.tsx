@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PDFDocumentProxy, PDFDocumentLoadingTask } from "pdfjs-dist";
 import HTMLFlipBook from "react-pageflip";
 import { Loader2 } from "lucide-react";
@@ -9,12 +9,37 @@ import { FlipbookChrome } from "./flipbook-chrome";
 import { FLIPBOOK_DEFAULTS } from "./flipbook-defaults";
 import { useFlipbookZoom } from "./use-flipbook-zoom";
 import { useFullscreen } from "./use-fullscreen";
+import { useFlipbookSound } from "./use-flipbook-sound";
 import { isPagedSpread, isLastSpread, type FlipbookOrientation } from "./flipbook-spread";
 
 const RENDER_SCALE = 1.5;
 const JPEG_QUALITY = 0.85;
 
-type PageFlipHandle = { pageFlip(): { flipPrev(): void; flipNext(): void; flip(page: number): void } };
+// turnToPage jumps instantly (no page-turn animation) — used for
+// first/last/thumbnail-click "go to page" actions, since animating a flip
+// through every intervening page (what .flip() does) can take a very long
+// time on a book with hundreds of pages. flipPrev/flipNext stay animated —
+// those are literal single-page turns where the animation is the point.
+type PageFlipHandle = {
+  pageFlip(): { flipPrev(): void; flipNext(): void; turnToPage(page: number): void };
+};
+
+// One "slot" the flipbook actually renders — either a real PDF page (1-based
+// `realPage`, matching pdfjs's own numbering) or the blank filler inserted
+// right after the cover when `numPages` is odd (see withBlankPad's comment
+// in flipbook-spread.ts for why it goes there and not at the very end). A
+// PDF file can't have a page literally inserted into it, so this mapping is
+// display-only — pdfjs/the render queue never know the blank slot exists.
+type DisplaySlot = { blank: true } | { blank: false; realPage: number };
+
+function buildDisplaySlots(numPages: number): DisplaySlot[] {
+  if (numPages % 2 === 0) {
+    return Array.from({ length: numPages }, (_, i) => ({ blank: false, realPage: i + 1 }));
+  }
+  const slots: DisplaySlot[] = [{ blank: false, realPage: 1 }, { blank: true }];
+  for (let p = 2; p <= numPages; p++) slots.push({ blank: false, realPage: p });
+  return slots;
+}
 
 // Renders a PDF (served from `src`, same access-gated API route the plain
 // iframe viewer already uses) as a page-turn flipbook. Pages are rasterized
@@ -47,6 +72,9 @@ export function PdfFlipbook({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen(containerRef);
   const zoom = useFlipbookZoom();
+  const { muted, toggleMuted, playFlipSound } = useFlipbookSound();
+
+  const displaySlots = useMemo(() => (numPages ? buildDisplaySlots(numPages) : []), [numPages]);
 
   const renderPage = useCallback(async (pageNumber: number) => {
     const doc = docRef.current;
@@ -142,13 +170,28 @@ export function PdfFlipbook({
     );
   }
 
-  const spread = isPagedSpread(orientation, currentPage, numPages);
+  const totalDisplayPages = displaySlots.length;
+  const spread = isPagedSpread(orientation, currentPage, totalDisplayPages);
   const canPrev = currentPage > 0;
-  const canNext = !isLastSpread(orientation, currentPage, numPages);
+  const canNext = !isLastSpread(orientation, currentPage, totalDisplayPages);
 
-  function jumpTo(pageIndex: number) {
-    flipRef.current?.pageFlip().flip(pageIndex);
-    prioritize(pageIndex + 1);
+  // Prefetches whichever *real* PDF page(s) sit at/near a given display
+  // index — a blank slot has nothing to rasterize, so it forwards to its
+  // neighbor instead of no-op'ing (the neighbor is what actually becomes
+  // visible right after the blank page in a spread).
+  function prioritizeDisplayIndex(displayIndex: number) {
+    const slot = displaySlots[displayIndex];
+    if (slot && !slot.blank) {
+      prioritize(slot.realPage);
+      return;
+    }
+    const next = displaySlots[displayIndex + 1];
+    if (next && !next.blank) prioritize(next.realPage);
+  }
+
+  function jumpTo(displayIndex: number) {
+    flipRef.current?.pageFlip().turnToPage(displayIndex);
+    prioritizeDisplayIndex(displayIndex);
   }
 
   return (
@@ -156,7 +199,9 @@ export function PdfFlipbook({
       containerRef={containerRef}
       backgroundImageUrl={backgroundImageUrl}
       isFullscreen={isFullscreen}
-      pageLabel={`Trang ${spread ? `${currentPage + 1}-${currentPage + 2}` : currentPage + 1}/${numPages}`}
+      pageLabel={`Trang ${
+        spread ? `${currentPage + 1}-${currentPage + 2}` : currentPage + 1
+      }/${totalDisplayPages}`}
       onFirst={() => jumpTo(0)}
       onPrev={() => {
         flipRef.current?.pageFlip().flipPrev();
@@ -164,33 +209,40 @@ export function PdfFlipbook({
       onNext={() => {
         flipRef.current?.pageFlip().flipNext();
       }}
-      onLast={() => jumpTo(numPages - 1)}
+      onLast={() => jumpTo(totalDisplayPages - 1)}
       canPrev={canPrev}
       canNext={canNext}
       zoomed={zoom.zoomed}
       onToggleZoom={zoom.toggleZoom}
       onToggleFullscreen={() => void toggleFullscreen()}
-      thumbnailCount={numPages}
+      muted={muted}
+      onToggleMuted={toggleMuted}
+      thumbnailCount={totalDisplayPages}
       currentPage={currentPage}
       onSelectPage={jumpTo}
-      renderThumbnail={(i) =>
-        pages[i] ? (
+      renderThumbnail={(i) => {
+        const slot = displaySlots[i];
+        if (!slot || slot.blank) {
+          return <div className="h-16 w-12 bg-white" />;
+        }
+        const dataUrl = pages[slot.realPage - 1];
+        return dataUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={pages[i]!} alt={`Trang ${i + 1}`} className="h-16 w-auto bg-white object-contain" />
+          <img src={dataUrl} alt={`Trang ${i + 1}`} className="h-16 w-auto bg-white object-contain" />
         ) : (
           <div className="flex h-16 w-12 items-center justify-center bg-white">
             <Loader2 className="h-3 w-3 animate-spin text-muted" />
           </div>
-        )
-      }
+        );
+      }}
       bookArea={
         <div
           ref={zoom.wrapperRef}
-          className={`relative flex w-full max-w-full justify-center px-4 ${
+          className={`relative flex h-full w-full max-w-full justify-center px-4 ${
             zoom.zoomed ? "overflow-hidden" : "overflow-x-auto"
           }`}
         >
-          <div style={{ transform: zoom.transform, transition: zoom.transition }}>
+          <div className="w-full" style={{ transform: zoom.transform, transition: zoom.transition }}>
             <HTMLFlipBook
               {...FLIPBOOK_DEFAULTS}
               ref={flipRef}
@@ -198,22 +250,27 @@ export function PdfFlipbook({
               height={Math.round(500 / aspect)}
               size="stretch"
               minWidth={280}
-              maxWidth={1000}
+              maxWidth={1600}
               minHeight={Math.round(280 / aspect)}
-              maxHeight={Math.round(1000 / aspect)}
+              maxHeight={Math.round(1600 / aspect)}
               showCover
               maxShadowOpacity={0.5}
               className={`shadow-lg flipbook-page-curve flipbook-book ${spread ? "flipbook-spread" : ""}`}
               onFlip={(e: { data: number }) => {
                 setCurrentPage(e.data);
-                prioritize(e.data + 1);
+                playFlipSound();
+                prioritizeDisplayIndex(e.data);
               }}
               onChangeOrientation={(e: { data: FlipbookOrientation }) => setOrientation(e.data)}
               onInit={(e: { data: { mode: FlipbookOrientation } }) => setOrientation(e.data.mode)}
             >
-              {pages.map((dataUrl, i) => (
-                <PdfPage key={i} dataUrl={dataUrl} pageNumber={i + 1} />
-              ))}
+              {displaySlots.map((slot, i) =>
+                slot.blank ? (
+                  <PdfPage key={i} dataUrl={null} pageNumber={i + 1} blank />
+                ) : (
+                  <PdfPage key={i} dataUrl={pages[slot.realPage - 1]} pageNumber={i + 1} />
+                )
+              )}
             </HTMLFlipBook>
           </div>
           {zoom.overlayHandlers && (
