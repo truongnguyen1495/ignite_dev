@@ -47,6 +47,7 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
   const [currentPage, setCurrentPage] = useState(0);
   const [orientation, setOrientation] = useState<FlipbookOrientation>("portrait");
   const [error, setError] = useState<string | null>(null);
+  const [showThumbnails, setShowThumbnails] = useState(true);
   const flipRef = useRef<PageFlipHandle | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen(containerRef);
@@ -112,6 +113,8 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
       onToggleFullscreen={() => void toggleFullscreen()}
       muted={muted}
       onToggleMuted={toggleMuted}
+      showThumbnails={showThumbnails}
+      onToggleThumbnails={() => setShowThumbnails((v) => !v)}
       thumbnailCount={totalPages}
       currentPage={currentPage}
       onSelectPage={(i) => flipRef.current?.pageFlip().turnToPage(i)}

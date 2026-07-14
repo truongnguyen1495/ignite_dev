@@ -27,6 +27,8 @@ export function FlipbookChrome({
   onToggleFullscreen,
   muted,
   onToggleMuted,
+  showThumbnails,
+  onToggleThumbnails,
   thumbnailCount,
   currentPage,
   onSelectPage,
@@ -48,6 +50,8 @@ export function FlipbookChrome({
   onToggleFullscreen: () => void;
   muted: boolean;
   onToggleMuted: () => void;
+  showThumbnails: boolean;
+  onToggleThumbnails: () => void;
   thumbnailCount: number;
   currentPage: number;
   onSelectPage: (index: number) => void;
@@ -70,11 +74,13 @@ export function FlipbookChrome({
       onToggleFullscreen={onToggleFullscreen}
       muted={muted}
       onToggleMuted={onToggleMuted}
+      showThumbnails={showThumbnails}
+      onToggleThumbnails={onToggleThumbnails}
       variant={hasBackground ? "dark" : "light"}
     />
   );
 
-  const thumbnailRail = (
+  const thumbnailRail = showThumbnails && (
     <FlipbookThumbnailRail
       count={thumbnailCount}
       currentPage={currentPage}
@@ -119,29 +125,30 @@ export function FlipbookChrome({
     );
   }
 
-  // With a backdrop image, the reader becomes a full "reading nook" scene:
-  // the toolbar is its own solid dark bar docked above the image (never
-  // overlapping it — an earlier version floated the toolbar as a pill *over*
-  // the image and the user correctly called that out against a reference
-  // screenshot: real examples keep controls in a dedicated strip, never
-  // competing with whatever graphic sits underneath), then the image fills
-  // the rest of the frame edge-to-edge (bg-cover, deliberately cropping to
-  // fill rather than letterboxing to the image's own shape — also settled
-  // by the same reference: the backdrop reads as full-bleed wallpaper, not
-  // a bordered photo), with the book centered on top of it.
+  // With a backdrop image, the whole reader — toolbar included — sits
+  // inside *one* continuous scene: the image is the frame the book and
+  // toolbar both live inside, not two stacked blocks with a hard seam
+  // between them (an earlier version split the toolbar into its own opaque
+  // bar above the image; the user pointed back at the same reference and
+  // clarified the ask was specifically about "cách bố trí hình nền với
+  // sách" — the background-and-book composition as a whole — so the
+  // toolbar goes back to floating over the backdrop, but now as a wide
+  // translucent bar (not the earlier narrow pill) that reads as part of the
+  // same scene rather than competing with it.
   return (
-    <div ref={containerRef} className={isFullscreen ? "flex h-full w-full flex-col" : "flex w-full flex-col overflow-hidden rounded-2xl"}>
-      <div className="sticky top-0 z-30 flex items-center justify-center bg-slate-800 px-4 py-2.5">{toolbar}</div>
-      <div
-        className={[
-          "flex flex-1 flex-col items-center gap-4 bg-cover bg-center px-4 py-6 sm:py-10",
-          isFullscreen ? "justify-center" : "max-h-[75vh]",
-        ].join(" ")}
-        style={{ backgroundImage: `url(${backgroundImageUrl})` }}
-      >
-        {bookBand}
-        <div className="rounded-xl bg-black/35 px-2 py-2 backdrop-blur-md">{thumbnailRail}</div>
+    <div
+      ref={containerRef}
+      className={[
+        "flex w-full flex-col items-center gap-4 bg-cover bg-center px-4 pb-6 pt-3 sm:pb-10",
+        isFullscreen ? "h-full justify-center" : "max-h-[75vh] rounded-2xl",
+      ].join(" ")}
+      style={{ backgroundImage: `url(${backgroundImageUrl})` }}
+    >
+      <div className="sticky top-3 z-30 w-full rounded-xl bg-black/40 px-4 py-2 shadow-lg backdrop-blur-sm">
+        {toolbar}
       </div>
+      {bookBand}
+      {thumbnailRail && <div className="rounded-xl bg-black/35 px-2 py-2 backdrop-blur-md">{thumbnailRail}</div>}
     </div>
   );
 }

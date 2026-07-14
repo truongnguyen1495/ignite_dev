@@ -5,6 +5,7 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  LayoutGrid,
   Maximize2,
   Minimize2,
   Volume2,
@@ -50,6 +51,8 @@ export function FlipbookToolbar({
   onToggleFullscreen,
   muted,
   onToggleMuted,
+  showThumbnails,
+  onToggleThumbnails,
   variant = "light",
 }: {
   pageLabel: string;
@@ -65,6 +68,8 @@ export function FlipbookToolbar({
   onToggleFullscreen: () => void;
   muted: boolean;
   onToggleMuted: () => void;
+  showThumbnails: boolean;
+  onToggleThumbnails: () => void;
   variant?: "light" | "dark";
 }) {
   const c = VARIANT_CLASSES[variant];
@@ -84,6 +89,16 @@ export function FlipbookToolbar({
         <ChevronsRight className="h-4 w-4" />
       </button>
       <span className={`mx-1 h-5 w-px ${c.divider}`} />
+      <button
+        type="button"
+        onClick={onToggleThumbnails}
+        aria-pressed={showThumbnails}
+        aria-label={showThumbnails ? "Ẩn danh sách trang" : "Hiện danh sách trang"}
+        title={showThumbnails ? "Ẩn danh sách trang" : "Hiện danh sách trang"}
+        className={`${c.btn} ${showThumbnails ? c.btnActive : ""}`}
+      >
+        <LayoutGrid className="h-4 w-4" />
+      </button>
       <button
         type="button"
         onClick={onToggleZoom}

@@ -62,6 +62,7 @@ export function PdfFlipbook({
   const [currentPage, setCurrentPage] = useState(0);
   const [orientation, setOrientation] = useState<FlipbookOrientation>("portrait");
   const [error, setError] = useState<string | null>(null);
+  const [showThumbnails, setShowThumbnails] = useState(true);
 
   const docRef = useRef<PDFDocumentProxy | null>(null);
   const loadingTaskRef = useRef<PDFDocumentLoadingTask | null>(null);
@@ -217,6 +218,8 @@ export function PdfFlipbook({
       onToggleFullscreen={() => void toggleFullscreen()}
       muted={muted}
       onToggleMuted={toggleMuted}
+      showThumbnails={showThumbnails}
+      onToggleThumbnails={() => setShowThumbnails((v) => !v)}
       thumbnailCount={totalDisplayPages}
       currentPage={currentPage}
       onSelectPage={jumpTo}
