@@ -229,11 +229,13 @@ body {
        gradient peaking at 100% (the true page edge): react-pageflip's two
        page elements don't always abut at an exact pixel boundary, and any
        sub-pixel gap right at that peak showed through as a bright crack
-       splitting the book in two. Inset the peak to 82% instead — so the
+       splitting the book in two. Inset the peak to 88% instead — so the
        last sliver before the true edge is already faded near-transparent,
        and a gap there just isn't noticeable — confirmed with a 4x-scale
        screenshot at deliberately fractional page dimensions chosen to
-       provoke the gap.
+       provoke the gap. Width/opacity (6%, 0.22) were also toned down from
+       an initial pass (14%, 0.32) that read as a flat, heavy gray band
+       rather than a soft shadow.
 
      A single page currently on screen (the cover, or an odd last page) has
      no real seam, so this is scoped under .flipbook-spread (added by
@@ -300,16 +302,16 @@ body {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 14%;
+  width: 6%;
   pointer-events: none;
 }
 .flipbook-spread .stf__item.--left::after {
   right: 0;
-  background: linear-gradient(to right, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.32) 82%, rgba(15, 23, 42, 0) 100%);
+  background: linear-gradient(to right, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.22) 88%, rgba(15, 23, 42, 0) 100%);
 }
 .flipbook-spread .stf__item.--right::after {
   left: 0;
-  background: linear-gradient(to left, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.32) 82%, rgba(15, 23, 42, 0) 100%);
+  background: linear-gradient(to left, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.22) 88%, rgba(15, 23, 42, 0) 100%);
 }
 
 .flipbook-book {
