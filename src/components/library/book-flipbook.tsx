@@ -82,7 +82,17 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
           onInit={(e: { data: { mode: FlipbookOrientation } }) => setOrientation(e.data.mode)}
         >
           {pages.map((page, i) => (
-            <BookPage key={i} page={page} bookWidth={bookWidth} bookHeight={bookHeight} isActive={i === currentPage} />
+            <BookPage
+              key={i}
+              page={page}
+              bookWidth={bookWidth}
+              bookHeight={bookHeight}
+              // A landscape spread shows two pages on screen at once (see
+              // isPagedSpread) — both need live video/audio, not just the
+              // one currentPage tracks, or the right-hand page's iframe
+              // never mounts and its video/audio placeholder stays inert.
+              isActive={i === currentPage || (spread && i === currentPage + 1)}
+            />
           ))}
         </HTMLFlipBook>
       </div>
