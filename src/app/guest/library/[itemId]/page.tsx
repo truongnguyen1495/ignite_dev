@@ -31,7 +31,11 @@ export default async function GuestLibraryItemPage({
       {libraryItem.format === "INTERACTIVE" ? (
         <BookReader itemId={itemId} title={libraryItem.title} />
       ) : (
-        <PdfReader src={`/api/library/${itemId}/preview`} title={libraryItem.title} />
+        <PdfReader
+          src={`/api/library/${itemId}/preview`}
+          title={libraryItem.title}
+          backgroundImageUrl={libraryItem.backgroundImageUrl}
+        />
       )}
     </div>
   );

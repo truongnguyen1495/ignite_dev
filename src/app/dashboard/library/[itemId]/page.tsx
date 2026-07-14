@@ -28,7 +28,11 @@ export default async function LibraryItemReaderPage({
       {libraryItem.format === "INTERACTIVE" ? (
         <BookReader itemId={itemId} title={libraryItem.title} />
       ) : (
-        <PdfReader src={`/api/library/${itemId}/${isTrial ? "preview" : "file"}`} title={libraryItem.title} />
+        <PdfReader
+          src={`/api/library/${itemId}/${isTrial ? "preview" : "file"}`}
+          title={libraryItem.title}
+          backgroundImageUrl={libraryItem.backgroundImageUrl}
+        />
       )}
     </div>
   );

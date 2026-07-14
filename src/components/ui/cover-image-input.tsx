@@ -36,6 +36,7 @@ export function CoverImageInput({
   defaultValue = "",
   onChange,
   onUploadingChange,
+  enforceRatio = true,
 }: {
   name?: string;
   label?: string;
@@ -47,6 +48,10 @@ export function CoverImageInput({
   // submits before the hidden input's value actually updates, silently
   // saving the old (often empty) cover URL instead of the new one.
   onUploadingChange?: (uploading: boolean) => void;
+  // Off for non-thumbnail uses (e.g. a flipbook reader's backdrop image) —
+  // the 16:9 warning text is specific to card thumbnails and would be
+  // misleading for an image that's meant to fill an arbitrary frame.
+  enforceRatio?: boolean;
 }) {
   const [url, setUrl] = useState(defaultValue);
   const [uploading, setUploading] = useState(false);
@@ -73,9 +78,11 @@ export function CoverImageInput({
     onUploadingChange?.(true);
     setError(null);
     setWarning(null);
-    const isCorrectRatio = await checkAspectRatio(file);
-    if (!isCorrectRatio) {
-      setWarning("Ảnh không đúng tỉ lệ 16:9 — vẫn tải lên được nhưng sẽ bị cắt cho khớp khung hiển thị.");
+    if (enforceRatio) {
+      const isCorrectRatio = await checkAspectRatio(file);
+      if (!isCorrectRatio) {
+        setWarning("Ảnh không đúng tỉ lệ 16:9 — vẫn tải lên được nhưng sẽ bị cắt cho khớp khung hiển thị.");
+      }
     }
     try {
       const formData = new FormData();

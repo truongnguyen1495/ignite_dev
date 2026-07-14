@@ -1,38 +1,13 @@
 import { Plus, Copy, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import type { BookPageData } from "@/lib/library-book-elements";
-import { BookElementRenderer } from "@/components/library/book-element-renderer";
+import { BookPageThumbnail } from "@/components/library/book-page-thumbnail";
 
 const THUMB_WIDTH = 96;
 
 function Thumbnail({ page, bookWidth, bookHeight }: { page: BookPageData; bookWidth: number; bookHeight: number }) {
-  const scale = THUMB_WIDTH / bookWidth;
-  const height = Math.round(bookHeight * scale);
   return (
-    <div
-      className="relative overflow-hidden rounded border border-border bg-white"
-      style={{ width: THUMB_WIDTH, height }}
-    >
-      {page.backgroundColor && (
-        <div className="absolute inset-0" style={{ backgroundColor: page.backgroundColor }} />
-      )}
-      {page.backgroundImageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={page.backgroundImageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
-      )}
-      <div
-        className="absolute left-0 top-0 origin-top-left"
-        style={{ width: bookWidth, height: bookHeight, transform: `scale(${scale})` }}
-      >
-        {page.elements.map((element) => (
-          <div
-            key={element.id}
-            className="absolute"
-            style={{ left: element.x, top: element.y, width: element.width, height: element.height }}
-          >
-            <BookElementRenderer element={element} isActive={false} />
-          </div>
-        ))}
-      </div>
+    <div className="overflow-hidden rounded border border-border">
+      <BookPageThumbnail page={page} bookWidth={bookWidth} bookHeight={bookHeight} width={THUMB_WIDTH} />
     </div>
   );
 }

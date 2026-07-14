@@ -436,6 +436,11 @@ model LibraryItem {
   // src/lib/access.ts for the format-aware branches.
   format            LibraryItemFormat @default(PDF)
   coverImageUrl     String?
+  // Admin-uploaded backdrop rendered behind the flipbook reader (both PDF
+  // and INTERACTIVE formats) — purely decorative "reading nook" background,
+  // independent of coverImageUrl (which is the small thumbnail used on
+  // listing cards).
+  backgroundImageUrl String?
   // Only set (and required, enforced at the action layer, not by the
   // schema) when format is PDF — INTERACTIVE items have no uploaded file.
   filePath          String?

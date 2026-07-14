@@ -12,7 +12,15 @@ type Mode = "plain" | "flipbook";
 // access-gated API route either way (/api/library/[itemId]/file or
 // /preview) — switching modes never changes what the visitor is allowed to
 // read, only how it's displayed.
-export function PdfReader({ src, title }: { src: string; title: string }) {
+export function PdfReader({
+  src,
+  title,
+  backgroundImageUrl,
+}: {
+  src: string;
+  title: string;
+  backgroundImageUrl?: string | null;
+}) {
   const [mode, setMode] = useState<Mode>("plain");
 
   return (
@@ -43,7 +51,7 @@ export function PdfReader({ src, title }: { src: string; title: string }) {
       {mode === "plain" ? (
         <iframe src={src} className="h-[80vh] w-full rounded-xl border border-border" title={title} />
       ) : (
-        <PdfFlipbook src={src} title={title} />
+        <PdfFlipbook src={src} title={title} backgroundImageUrl={backgroundImageUrl} />
       )}
     </div>
   );
