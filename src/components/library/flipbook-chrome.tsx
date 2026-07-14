@@ -57,7 +57,15 @@ export function FlipbookChrome({
   onSelectPage: (index: number) => void;
   renderThumbnail: (index: number) => ReactNode;
 }) {
-  const hasBackground = !!backgroundImageUrl;
+  // Rendering a per-book backdrop image here turned into a long back-and-forth
+  // (floating pill vs. a docked bar vs. one continuous scene, plus the
+  // sizing fixes that came with it) that ended up costing more than it was
+  // worth — the user asked to drop it from the reader entirely. `backgroundImageUrl`
+  // is intentionally left unused (still accepted as a prop so the callers
+  // don't need edits, and the admin upload field / stored URL stay intact
+  // in case this gets revisited later) — every book now always gets the
+  // plain light chrome below, regardless of whether one is set.
+  void backgroundImageUrl;
 
   const toolbar = (
     <FlipbookToolbar
@@ -76,7 +84,7 @@ export function FlipbookChrome({
       onToggleMuted={onToggleMuted}
       showThumbnails={showThumbnails}
       onToggleThumbnails={onToggleThumbnails}
-      variant={hasBackground ? "dark" : "light"}
+      variant="light"
     />
   );
 
@@ -108,47 +116,18 @@ export function FlipbookChrome({
   // where the book/thumbnails have scrolled to.
   const stickyToolbar = <div className="sticky top-3 z-30">{toolbar}</div>;
 
-  if (!hasBackground) {
-    return (
-      <div
-        ref={containerRef}
-        className={
-          isFullscreen
-            ? "flex h-full w-full flex-col items-center justify-center gap-3 bg-background p-6"
-            : "flex max-h-[75vh] w-full flex-col items-center gap-3"
-        }
-      >
-        {bookBand}
-        {stickyToolbar}
-        {thumbnailRail}
-      </div>
-    );
-  }
-
-  // With a backdrop image, the whole reader — toolbar included — sits
-  // inside *one* continuous scene: the image is the frame the book and
-  // toolbar both live inside, not two stacked blocks with a hard seam
-  // between them (an earlier version split the toolbar into its own opaque
-  // bar above the image; the user pointed back at the same reference and
-  // clarified the ask was specifically about "cách bố trí hình nền với
-  // sách" — the background-and-book composition as a whole — so the
-  // toolbar goes back to floating over the backdrop, but now as a wide
-  // translucent bar (not the earlier narrow pill) that reads as part of the
-  // same scene rather than competing with it.
   return (
     <div
       ref={containerRef}
-      className={[
-        "flex w-full flex-col items-center gap-4 bg-cover bg-center px-4 pb-6 pt-3 sm:pb-10",
-        isFullscreen ? "h-full justify-center" : "max-h-[75vh] rounded-2xl",
-      ].join(" ")}
-      style={{ backgroundImage: `url(${backgroundImageUrl})` }}
+      className={
+        isFullscreen
+          ? "flex h-full w-full flex-col items-center justify-center gap-3 bg-background p-6"
+          : "flex max-h-[75vh] w-full flex-col items-center gap-3"
+      }
     >
-      <div className="sticky top-3 z-30 w-full rounded-xl bg-black/40 px-4 py-2 shadow-lg backdrop-blur-sm">
-        {toolbar}
-      </div>
       {bookBand}
-      {thumbnailRail && <div className="rounded-xl bg-black/35 px-2 py-2 backdrop-blur-md">{thumbnailRail}</div>}
+      {stickyToolbar}
+      {thumbnailRail}
     </div>
   );
 }
