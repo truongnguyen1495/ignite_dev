@@ -15,8 +15,11 @@ export default async function GuestCoursePage({
   const { courseId } = await params;
   const { course } = await requireGuestCourseAccess(courseId);
 
+  // A free course opens every lesson to guests (see requireGuestCourseLessonAccess
+  // in src/lib/access.ts) — the first lesson by order, not just the first one
+  // opted into visibleToGuest.
   const firstLesson = await prisma.courseLesson.findFirst({
-    where: { courseId, visibleToGuest: true },
+    where: course.isFree ? { courseId } : { courseId, visibleToGuest: true },
     orderBy: [{ order: "asc" }, { createdAt: "asc" }],
     select: { id: true },
   });

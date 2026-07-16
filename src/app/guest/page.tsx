@@ -2,27 +2,20 @@ import Link from "next/link";
 import { ArrowRight, Megaphone, UserPlus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getGuestCourseItems } from "@/lib/guest-courses";
+import { getGuestLibraryItems } from "@/lib/guest-library";
 import { formatDateVN } from "@/lib/date";
 import { getDictionary } from "@/lib/i18n/get-locale";
 import { GuestCourseList } from "./courses/course-list";
-import { GuestLibraryList, type GuestLibraryItem } from "./library/library-list";
+import { GuestLibraryList } from "./library/library-list";
 
 // See src/app/guest/courses/page.tsx — forces per-request rendering instead
 // of a build-time static snapshot of the (admin-toggleable) guest flags this
 // page reads.
 export const dynamic = "force-dynamic";
 
-const EBOOK_GRADIENTS = [
-  "from-[var(--primary)] to-[var(--info)]",
-  "from-[var(--level-3)] to-[var(--primary)]",
-  "from-[var(--level-4)] to-[var(--warning)]",
-  "from-[var(--info)] to-[var(--level-3)]",
-  "from-[var(--level-5)] to-[var(--level-4)]",
-];
-
 export default async function GuestHomePage() {
   const { t } = await getDictionary();
-  const [latestAnnouncements, featuredCourses, featuredEbooks] = await Promise.all([
+  const [latestAnnouncements, featuredCourses, featuredEbookItems] = await Promise.all([
     prisma.announcement.findMany({
       where: { visibleToGuest: true, visibleToStudents: true },
       orderBy: { publishedAt: "desc" },
@@ -31,23 +24,8 @@ export default async function GuestHomePage() {
     // Admin-curated via Course.featuredOnHome — not just "the first few".
     getGuestCourseItems({ onlyFeatured: true }),
     // Admin-curated via LibraryItem.featuredOnHome, same convention as courses.
-    prisma.libraryItem.findMany({
-      where: { visibleToGuest: true, featuredOnHome: true, previewFilePath: { not: null } },
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-    }),
+    getGuestLibraryItems({ onlyFeatured: true }),
   ]);
-
-  const featuredEbookItems: GuestLibraryItem[] = featuredEbooks.map((item, index) => ({
-    id: item.id,
-    title: item.title,
-    author: item.author,
-    description: item.description,
-    type: item.type,
-    coverImageUrl: item.coverImageUrl,
-    guestPreviewPages: item.guestPreviewPages,
-    gradient: EBOOK_GRADIENTS[index % EBOOK_GRADIENTS.length],
-    isFree: item.isFree,
-  }));
 
   return (
     <div className="space-y-12">

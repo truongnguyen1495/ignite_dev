@@ -1,5 +1,7 @@
 import "server-only";
+import type { User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getCourseAccessLevel } from "@/lib/access";
 
 export type GuestCourseItem = {
   id: string;
@@ -11,6 +13,12 @@ export type GuestCourseItem = {
   href: string;
   gradient: string;
   isFree: boolean;
+  // True when this specific course is fully unlocked — via isFree for an
+  // anonymous guest, or the real access level (grant/level rule/isFree) for
+  // a logged-in student's home teaser. Distinct from isFree so the UI can
+  // still show "Miễn phí" specifically vs a plain "Đã mở khóa" for access
+  // granted some other way.
+  fullyUnlocked: boolean;
 };
 
 const BANNER_GRADIENTS = [
@@ -21,9 +29,17 @@ const BANNER_GRADIENTS = [
   "from-[var(--level-5)] to-[var(--level-4)]",
 ];
 
+// `student` switches this from the anonymous /guest/courses catalog to a
+// logged-in student's home-page "featured" teaser: hrefs point into
+// /dashboard/courses (their own, access-checked routes) instead of
+// /guest/courses, and "fully unlocked" is decided by their real access level
+// (getCourseAccessLevel — grant, level rule, or isFree) instead of just
+// isFree. Both call sites share this one function so the two catalogs can
+// never drift apart the way they did before (see git history).
 export async function getGuestCourseItems({
   onlyFeatured = false,
-}: { onlyFeatured?: boolean } = {}): Promise<GuestCourseItem[]> {
+  student,
+}: { onlyFeatured?: boolean; student?: User } = {}): Promise<GuestCourseItem[]> {
   const courses = await prisma.course.findMany({
     where: onlyFeatured
       ? { hiddenFromGuest: false, featuredOnHome: true }
@@ -37,25 +53,35 @@ export async function getGuestCourseItems({
     },
   });
 
-  return courses.map((course, index) => {
-    const visibleLessons = course.lessons.filter((l) => l.visibleToGuest);
-    const firstLessonId = visibleLessons[0]?.id;
-    const href = firstLessonId
-      ? `/guest/courses/${course.id}/lessons/${firstLessonId}`
-      : `/guest/courses/${course.id}`;
-    // Some lessons still locked behind login → this is a trial, not full access.
-    const hasLockedLessons = visibleLessons.length < course.lessons.length;
+  const basePath = student ? "/dashboard/courses" : "/guest/courses";
 
-    return {
-      id: course.id,
-      title: course.title,
-      description: course.description,
-      coverImageUrl: course.coverImageUrl,
-      totalLessons: course.lessons.length,
-      ctaLabel: hasLockedLessons ? "Vào học thử" : "Vào học",
-      href,
-      gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
-      isFree: course.isFree,
-    };
-  });
+  return Promise.all(
+    courses.map(async (course, index) => {
+      const fullyUnlocked = student
+        ? (await getCourseAccessLevel(student, course.id)) === "full"
+        : course.isFree;
+      // A fully-unlocked course opens every lesson — every lesson counts as
+      // "visible" instead of only the ones opted into visibleToGuest (see
+      // requireGuestCourseLessonAccess/requireCourseLessonAccess in
+      // src/lib/access.ts, which apply the same rule).
+      const visibleLessons = fullyUnlocked ? course.lessons : course.lessons.filter((l) => l.visibleToGuest);
+      const firstLessonId = visibleLessons[0]?.id;
+      const href = firstLessonId ? `${basePath}/${course.id}/lessons/${firstLessonId}` : `${basePath}/${course.id}`;
+      // Some lessons still locked behind login → this is a trial, not full access.
+      const hasLockedLessons = visibleLessons.length < course.lessons.length;
+
+      return {
+        id: course.id,
+        title: course.title,
+        description: course.description,
+        coverImageUrl: course.coverImageUrl,
+        totalLessons: course.lessons.length,
+        ctaLabel: hasLockedLessons ? "Vào học thử" : "Vào học",
+        href,
+        gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
+        isFree: course.isFree,
+        fullyUnlocked,
+      };
+    })
+  );
 }

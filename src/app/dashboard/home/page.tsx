@@ -3,8 +3,9 @@ import { ArrowRight, ArrowUpCircle, Megaphone } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireActiveStudent } from "@/lib/access";
 import { getGuestCourseItems } from "@/lib/guest-courses";
+import { getGuestLibraryItems } from "@/lib/guest-library";
 import { GuestCourseList } from "@/app/guest/courses/course-list";
-import { GuestLibraryList, type GuestLibraryItem } from "@/app/guest/library/library-list";
+import { GuestLibraryList } from "@/app/guest/library/library-list";
 import { formatDateVN } from "@/lib/date";
 import { getDictionary } from "@/lib/i18n/get-locale";
 
@@ -12,46 +13,27 @@ import { getDictionary } from "@/lib/i18n/get-locale";
 // flags, must not be statically prerendered.
 export const dynamic = "force-dynamic";
 
-const EBOOK_GRADIENTS = [
-  "from-[var(--primary)] to-[var(--info)]",
-  "from-[var(--level-3)] to-[var(--primary)]",
-  "from-[var(--level-4)] to-[var(--warning)]",
-  "from-[var(--info)] to-[var(--level-3)]",
-  "from-[var(--level-5)] to-[var(--level-4)]",
-];
-
 // "Trang chủ" for a "học sinh" (no cấp) account — kế thừa bố cục trang
 // /guest (cùng 3 khối: bản tin/khóa học/ebook nổi bật, cùng component),
 // chỉ bỏ nút "Đăng ký ngay" (đã có tài khoản) và thay bằng lối vào yêu cầu
-// tham gia hệ thống 5 cấp.
+// tham gia hệ thống 5 cấp. Unlike the guest version, this passes `student`
+// into getGuestCourseItems/getGuestLibraryItems so "nổi bật" reflects this
+// học sinh's real access (a grant, a level rule, or isFree) instead of
+// always showing the guest-style trial teaser — hrefs point into their own
+// /dashboard/courses and /dashboard/library routes accordingly.
 export default async function StudentHomePage() {
   const student = await requireActiveStudent();
   const { t } = await getDictionary();
 
-  const [latestAnnouncements, featuredCourses, featuredEbooks] = await Promise.all([
+  const [latestAnnouncements, featuredCourses, featuredEbookItems] = await Promise.all([
     prisma.announcement.findMany({
       where: { visibleToGuest: true, visibleToStudents: true },
       orderBy: { publishedAt: "desc" },
       take: 6,
     }),
-    getGuestCourseItems({ onlyFeatured: true }),
-    prisma.libraryItem.findMany({
-      where: { visibleToGuest: true, featuredOnHome: true, previewFilePath: { not: null } },
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-    }),
+    getGuestCourseItems({ onlyFeatured: true, student }),
+    getGuestLibraryItems({ onlyFeatured: true, student }),
   ]);
-
-  const featuredEbookItems: GuestLibraryItem[] = featuredEbooks.map((item, index) => ({
-    id: item.id,
-    title: item.title,
-    author: item.author,
-    description: item.description,
-    type: item.type,
-    coverImageUrl: item.coverImageUrl,
-    guestPreviewPages: item.guestPreviewPages,
-    gradient: EBOOK_GRADIENTS[index % EBOOK_GRADIENTS.length],
-    isFree: item.isFree,
-  }));
 
   return (
     <div className="space-y-12">

@@ -26,14 +26,18 @@ export default async function GuestCourseLessonPage({
     orderBy: [{ order: "asc" }, { createdAt: "asc" }],
   });
 
+  // A free course opens every lesson to guests (see requireGuestCourseLessonAccess
+  // in src/lib/access.ts) — treat every sibling as visible instead of only
+  // the ones opted into visibleToGuest.
+  const isFullyOpen = lesson.course.isFree;
   const currentIndex = siblingLessons.findIndex((l) => l.id === lessonId);
   const totalLessons = siblingLessons.length;
   const prevCandidate = currentIndex > 0 ? siblingLessons[currentIndex - 1] : null;
   const nextCandidate =
     currentIndex >= 0 && currentIndex < totalLessons - 1 ? siblingLessons[currentIndex + 1] : null;
   // Prev/next navigation only follows lessons a guest can actually open.
-  const prevLesson = prevCandidate?.visibleToGuest ? prevCandidate : null;
-  const nextLesson = nextCandidate?.visibleToGuest ? nextCandidate : null;
+  const prevLesson = isFullyOpen || prevCandidate?.visibleToGuest ? prevCandidate : null;
+  const nextLesson = isFullyOpen || nextCandidate?.visibleToGuest ? nextCandidate : null;
 
   return (
     <div className="rounded-2xl border border-dark-border bg-dark-surface-raised p-4 sm:p-6">
@@ -112,7 +116,7 @@ export default async function GuestCourseLessonPage({
               {siblingLessons.map((l, index) => {
                 const isCurrent = l.id === lessonId;
 
-                if (!l.visibleToGuest) {
+                if (!isFullyOpen && !l.visibleToGuest) {
                   return (
                     <li key={l.id}>
                       <Link

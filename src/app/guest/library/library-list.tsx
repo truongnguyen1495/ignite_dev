@@ -1,19 +1,10 @@
 import Link from "next/link";
 import { BookOpen, ChevronRight, FileText } from "lucide-react";
 import type { LibraryItemType } from "@prisma/client";
+import type { GuestLibraryItem } from "@/lib/guest-library";
 import { Badge } from "@/components/ui/badge";
 
-export type GuestLibraryItem = {
-  id: string;
-  title: string;
-  author: string | null;
-  description: string | null;
-  type: LibraryItemType;
-  coverImageUrl: string | null;
-  guestPreviewPages: number | null;
-  gradient: string;
-  isFree: boolean;
-};
+export type { GuestLibraryItem };
 
 const TYPE_ICON: Record<LibraryItemType, typeof BookOpen> = {
   BOOK: BookOpen,
@@ -32,7 +23,7 @@ export function GuestLibraryList({ items }: { items: GuestLibraryItem[] }) {
         return (
           <Link
             key={item.id}
-            href={`/guest/library/${item.id}`}
+            href={item.href}
             className="flex h-full flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors hover:border-primary/60"
           >
             <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-dark-surface-raised">
@@ -48,9 +39,9 @@ export function GuestLibraryList({ items }: { items: GuestLibraryItem[] }) {
               )}
             </div>
             <div className="flex flex-1 flex-col p-5">
-              {item.isFree && (
+              {(item.isFree || item.fullyUnlocked) && (
                 <div className="mb-2">
-                  <Badge color="success">Miễn phí</Badge>
+                  <Badge color="success">{item.isFree ? "Miễn phí" : "Đã mở khóa"}</Badge>
                 </div>
               )}
               <p className="font-semibold text-dark-foreground">{item.title}</p>
@@ -60,10 +51,14 @@ export function GuestLibraryList({ items }: { items: GuestLibraryItem[] }) {
               )}
               <div className="mt-auto flex flex-nowrap items-center justify-between gap-2 pt-4">
                 <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
-                  {item.guestPreviewPages ? `Xem thử ${item.guestPreviewPages} trang` : "Xem thử"}
+                  {item.fullyUnlocked
+                    ? "Đọc toàn bộ"
+                    : item.guestPreviewPages
+                      ? `Xem thử ${item.guestPreviewPages} trang`
+                      : "Xem thử"}
                 </span>
                 <span className="flex shrink-0 items-center gap-0.5 whitespace-nowrap text-xs font-medium text-indigo-400">
-                  Đọc thử
+                  {item.fullyUnlocked ? "Đọc ngay" : "Đọc thử"}
                   <ChevronRight className="h-3.5 w-3.5" />
                 </span>
               </div>

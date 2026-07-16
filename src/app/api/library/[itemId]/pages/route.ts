@@ -36,9 +36,15 @@ export async function GET(_request: Request, { params }: { params: Promise<{ ite
       // convention as /file.
       accessLevel = "full";
     }
+  } else if (!libraryItem.visibleToGuest || !libraryItem.visibleToStudents) {
+    accessLevel = "none";
+  } else if (libraryItem.isFree) {
+    // Free items open every page to guests too, same as a logged-in
+    // student gets via getLibraryItemAccessLevel — not just the sliced
+    // guestPreviewPages trial.
+    accessLevel = "full";
   } else {
-    const hasTrialContent = libraryItem.visibleToGuest && (libraryItem.guestPreviewPages ?? 0) > 0;
-    accessLevel = hasTrialContent && libraryItem.visibleToStudents ? "trial" : "none";
+    accessLevel = (libraryItem.guestPreviewPages ?? 0) > 0 ? "trial" : "none";
   }
 
   if (accessLevel === "none") {

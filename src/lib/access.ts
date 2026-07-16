@@ -485,32 +485,49 @@ export async function requireGuestCourseAccess(courseId: string) {
 // isn't enough. This is how an admin exposes a course to guests while still
 // holding back specific lessons (e.g. ones gated behind payment that
 // doesn't exist yet), independent of any student-facing access rule.
+//
+// A free course (Course.isFree) is the one exception to the per-lesson
+// visibleToGuest gate: "Miễn phí" means every lesson opens for guests too,
+// same as it does for học viên/học sinh (getCourseAccessLevel above) —
+// hiddenFromGuest still applies, since that's the separate "don't show this
+// course to guests at all" switch, not overridden by isFree.
 export async function requireGuestCourseLessonAccess(lessonId: string) {
   const lesson = await prisma.courseLesson.findUnique({
     where: { id: lessonId },
     include: { course: true },
   });
-  if (!lesson || lesson.course.hiddenFromGuest || !lesson.visibleToGuest) {
+  if (!lesson || lesson.course.hiddenFromGuest) {
+    redirect("/guest/courses?denied=1");
+  }
+  if (!lesson.course.isFree && !lesson.visibleToGuest) {
     redirect("/guest/courses?denied=1");
   }
   return { lesson };
 }
 
-// Guests only ever get the truncated preview, never libraryItem.filePath —
-// this gate exists purely to decide whether that preview can be shown at
-// all, so it also requires a previewFilePath to actually exist.
+// Guests normally only ever get the truncated preview, never
+// libraryItem.filePath — this gate exists purely to decide whether that
+// preview can be shown at all, so it also requires a previewFilePath to
+// actually exist. A free item (LibraryItem.isFree) is the one exception:
+// "Miễn phí" means guests read the full file/pages too (see the isFree
+// branches in /api/library/[itemId]/file and /pages), so no trial content
+// needs to exist for them to pass this gate — visibleToGuest still applies,
+// same "is this even in the guest area" switch as always.
 export async function requireGuestLibraryItemAccess(libraryItemId: string) {
   const libraryItem = await prisma.libraryItem.findUnique({ where: { id: libraryItemId } });
+  if (!libraryItem || !libraryItem.visibleToGuest || !libraryItem.visibleToStudents) {
+    redirect("/guest/library?denied=1");
+  }
   // visibleToStudents doubles as a master hide switch here too: an item
   // hidden from students is hidden from guests too, regardless of
   // visibleToGuest — same convention as requireGuestAnnouncementAccess.
   // Trial content check is format-aware, same rule as getLibraryItemAccessLevel
   // above: PDF needs previewFilePath, INTERACTIVE just needs guestPreviewPages set.
   const hasTrialContent =
-    libraryItem?.format === "INTERACTIVE"
+    libraryItem.format === "INTERACTIVE"
       ? (libraryItem.guestPreviewPages ?? 0) > 0
-      : !!libraryItem?.previewFilePath;
-  if (!libraryItem || !libraryItem.visibleToGuest || !hasTrialContent || !libraryItem.visibleToStudents) {
+      : !!libraryItem.previewFilePath;
+  if (!libraryItem.isFree && !hasTrialContent) {
     redirect("/guest/library?denied=1");
   }
   return { libraryItem };

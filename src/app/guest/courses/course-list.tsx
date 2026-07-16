@@ -31,9 +31,9 @@ export function GuestCourseList({ courses }: { courses: GuestCourseItem[] }) {
             )}
           </div>
           <div className="flex flex-1 flex-col p-5">
-            {course.isFree && (
+            {(course.isFree || course.fullyUnlocked) && (
               <div className="mb-2">
-                <Badge color="success">Miễn phí</Badge>
+                <Badge color="success">{course.isFree ? "Miễn phí" : "Đã mở khóa"}</Badge>
               </div>
             )}
             <p className="font-semibold text-dark-foreground">{course.title}</p>

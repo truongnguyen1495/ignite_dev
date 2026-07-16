@@ -21,10 +21,14 @@ export default async function GuestLibraryItemPage({
         <BackLink href="/guest/library">Thư viện</BackLink>
         <h1 className="mt-2 text-2xl font-semibold text-foreground">{libraryItem.title}</h1>
         {libraryItem.author && <p className="mt-1 text-sm text-muted">{libraryItem.author}</p>}
-        {libraryItem.guestPreviewPages && (
-          <p className="mt-1 text-sm text-muted">
-            Bản xem thử — {libraryItem.guestPreviewPages} trang đầu. Đăng ký để đọc toàn bộ.
-          </p>
+        {libraryItem.isFree ? (
+          <p className="mt-1 text-sm text-muted">Miễn phí — đọc toàn bộ, không cần đăng nhập.</p>
+        ) : (
+          libraryItem.guestPreviewPages && (
+            <p className="mt-1 text-sm text-muted">
+              Bản xem thử — {libraryItem.guestPreviewPages} trang đầu. Đăng ký để đọc toàn bộ.
+            </p>
+          )
         )}
       </div>
 
@@ -32,7 +36,7 @@ export default async function GuestLibraryItemPage({
         <BookReader itemId={itemId} title={libraryItem.title} />
       ) : (
         <PdfReader
-          src={`/api/library/${itemId}/preview`}
+          src={`/api/library/${itemId}/${libraryItem.isFree ? "file" : "preview"}`}
           title={libraryItem.title}
           backgroundImageUrl={libraryItem.backgroundImageUrl}
         />
