@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isChatEnabled } from "@/lib/access";
 import { uploadChatAttachment } from "@/lib/chat-storage";
+import { matchesDeclaredMimeType } from "@/lib/file-signature";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_TYPES = new Set([
@@ -49,8 +50,21 @@ export async function POST(request: Request) {
   }
 
   try {
-    const path = `${user.id}/${crypto.randomUUID()}-${file.name}`;
+    // Storage key never embeds the raw client-supplied filename — only a
+    // sanitized extension, same convention as uploadLessonImage in
+    // src/lib/supabase-storage.ts. The human-readable name is preserved
+    // separately (returned as `name` below, stored as ChatMessage.attachmentName),
+    // so nothing is lost — this just closes off any "../" traversal in file.name
+    // from ever reaching the storage path.
+    const ext = file.name.split(".").pop()?.replace(/[^a-zA-Z0-9]/g, "").slice(0, 10) || "bin";
+    const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
     const bytes = new Uint8Array(await file.arrayBuffer());
+    // file.type is a client-supplied multipart header — never trust it
+    // alone, even though this bucket is private (the download route later
+    // serves it back under this same declared content type).
+    if (!matchesDeclaredMimeType(bytes, file.type)) {
+      return NextResponse.json({ error: "Nội dung tệp không khớp với định dạng đã khai báo." }, { status: 400 });
+    }
     await uploadChatAttachment(bytes, path, file.type);
     return NextResponse.json({ path, name: file.name, mime: file.type, size: file.size });
   } catch (error) {

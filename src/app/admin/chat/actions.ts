@@ -71,7 +71,7 @@ export async function markThreadReadAction(threadId: string): Promise<void> {
 export async function searchStudentsForSupportAction(
   query: string
 ): Promise<{ id: string; name: string; username: string | null }[]> {
-  await requireAdminPermission("MANAGE_CHAT");
+  const admin = await requireAdminPermission("MANAGE_CHAT");
   const trimmed = query.trim();
   if (trimmed.length < 2) return [];
   return prisma.user.findMany({
@@ -79,6 +79,9 @@ export async function searchStudentsForSupportAction(
       role: "STUDENT",
       adminOnly: false,
       status: "ACTIVE",
+      // A non-Super-Admin must not discover an Admin Manager through this
+      // picker either — same boundary as admin/students/page.tsx.
+      ...(admin.role === "SUPER_ADMIN" ? {} : { isAdminManager: false }),
       OR: [
         { name: { contains: trimmed, mode: "insensitive" } },
         { username: { contains: trimmed, mode: "insensitive" } },

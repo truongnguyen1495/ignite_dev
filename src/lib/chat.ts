@@ -59,6 +59,15 @@ export type NewMessageInput = {
 // after the caller has already run its own access check (this function does
 // no authorization itself, by design, since each action's check differs).
 export async function sendChatMessage(threadId: string, senderId: string, input: NewMessageInput): Promise<void> {
+  // /api/chat/upload-attachment always scopes an attachment's storage path
+  // to `${uploaderId}/...` — this function is the one place every
+  // sendXxxMessageAction funnels through, so it's the single spot to reject
+  // a client-supplied attachmentPath that doesn't belong to this sender
+  // (someone else's file, or a guessed/leaked key), rather than trusting it
+  // outright the way a bare Zod string schema would.
+  if (input.attachmentPath && !input.attachmentPath.startsWith(`${senderId}/`)) {
+    throw new Error("Attachment path does not belong to sender");
+  }
   const body = input.body?.trim() || null;
   const preview = buildMessagePreview(body, !!input.attachmentPath);
   await prisma.$transaction([

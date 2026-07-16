@@ -1,5 +1,20 @@
 import { z } from "zod";
 
+// Only allow schemes a "button" element can safely open in a new tab —
+// blocks javascript:/data:/vbscript: etc, which would otherwise let anyone
+// holding MANAGE_LIBRARY (including a limited admin or Admin Manager, not
+// just Super Admin) plant a script that runs in the reader's origin for
+// every student/guest who clicks the button. Client-side validation alone
+// (the editor's property panel) isn't enough — a direct server-action call
+// bypasses it.
+const SAFE_HREF_RE = /^(https?:\/\/|mailto:|tel:|\/)/i;
+
+// Same 11-char YouTube video ID format src/lib/youtube.ts's parseYoutubeId
+// extracts — the editor only ever calls that helper before saving, but this
+// is the server-side backstop for a direct action call. Empty is allowed:
+// a freshly-added element has no video yet (see videoElementSchema below).
+const YOUTUBE_ID_RE = /^[a-zA-Z0-9_-]{11}$/;
+
 // Shared shape for every element type an admin can place on a page in the
 // interactive-book editor (src/app/admin/library/[itemId]/editor) — the
 // single source of truth for both the save action's validation and every
@@ -45,7 +60,11 @@ const shapeElementSchema = baseElementSchema.extend({
 const buttonElementSchema = baseElementSchema.extend({
   type: z.literal("button"),
   label: z.string().min(1),
-  href: z.string().min(1),
+  // Allowed empty — see imageElementSchema's url comment above (a freshly
+  // added button has no link yet, see createDefaultElement below).
+  href: z.string().refine((v) => v === "" || SAFE_HREF_RE.test(v), {
+    message: "Link phải bắt đầu bằng http://, https://, mailto: hoặc tel:.",
+  }),
   bgColor: z.string().default("#3b82f6"),
   textColor: z.string().default("#ffffff"),
 });
@@ -53,7 +72,9 @@ const buttonElementSchema = baseElementSchema.extend({
 const videoElementSchema = baseElementSchema.extend({
   type: z.literal("video"),
   // Allowed empty — see imageElementSchema's url comment above.
-  youtubeId: z.string(),
+  youtubeId: z.string().refine((v) => v === "" || YOUTUBE_ID_RE.test(v), {
+    message: "youtubeId không hợp lệ.",
+  }),
 });
 
 const audioElementSchema = baseElementSchema.extend({
@@ -105,7 +126,7 @@ export function createDefaultElement(type: BookElementType, id: string): BookEle
     case "shape":
       return { ...base, width: 160, height: 160, type: "shape", kind: "rectangle", fill: "#3b82f6", borderRadius: 0 };
     case "button":
-      return { ...base, width: 160, height: 48, type: "button", label: "Bấm vào đây", href: "#", bgColor: "#3b82f6", textColor: "#ffffff" };
+      return { ...base, width: 160, height: 48, type: "button", label: "Bấm vào đây", href: "", bgColor: "#3b82f6", textColor: "#ffffff" };
     case "video":
       return { ...base, width: 320, height: 180, type: "video", youtubeId: "" };
     case "audio":

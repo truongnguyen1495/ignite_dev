@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getAdminPermissions, hasFullAdminAccess } from "@/lib/access";
 import { uploadLibraryFile } from "@/lib/library-storage";
 import { getPdfPageCount } from "@/lib/library-pdf";
+import { matchesDeclaredMimeType } from "@/lib/file-signature";
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024;
 
@@ -42,6 +43,12 @@ export async function POST(request: Request) {
 
   try {
     const bytes = Buffer.from(await file.arrayBuffer());
+    // file.type is a client-supplied multipart header — never trust it
+    // alone. Check the actual leading bytes before this reaches the PDF
+    // parser or gets stored as a "PDF" any student/guest may later open.
+    if (!matchesDeclaredMimeType(bytes, "application/pdf")) {
+      return NextResponse.json({ error: "Nội dung file không phải PDF hợp lệ." }, { status: 400 });
+    }
     const pageCount = await getPdfPageCount(bytes);
     const path = `${crypto.randomUUID()}.pdf`;
     await uploadLibraryFile(bytes, path);

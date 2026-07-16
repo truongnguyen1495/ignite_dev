@@ -29,6 +29,13 @@ export default async function EditStudentPage({
   if (!student || student.role !== "STUDENT" || student.adminOnly) {
     notFound();
   }
+  // A non-Super-Admin (even a full-access Admin Manager) must not even view
+  // another Admin Manager's student record here, let alone edit/lock/delete
+  // it — same boundary as admin/admins/[adminId]/page.tsx and the mutation
+  // actions in ../actions.ts.
+  if (admin.role !== "SUPER_ADMIN" && student.isAdminManager) {
+    notFound();
+  }
 
   // Editing/locking/deleting an existing account each need their own
   // permission, decided by which the target actually is right now (a

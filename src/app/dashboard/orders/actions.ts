@@ -2,7 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import type { OrderItemKind } from "@prisma/client";
-import { requireActiveStudent, isSalesEnabled, getCourseAccessLevel, studentHasLibraryItemAccess } from "@/lib/access";
+import {
+  requireActiveStudent,
+  isSalesEnabled,
+  requireSalesEnabled,
+  getCourseAccessLevel,
+  studentHasLibraryItemAccess,
+} from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { getPricing } from "@/lib/pricing";
 
@@ -90,6 +96,7 @@ export async function createOrderAction(kind: OrderItemKind, itemId: string): Pr
 // walk that back (see cancelOrderAction in admin/orders/actions.ts).
 export async function cancelMyOrderAction(orderId: string) {
   const student = await requireActiveStudent();
+  await requireSalesEnabled("/dashboard/orders");
   await prisma.order.updateMany({
     where: { id: orderId, studentId: student.id, status: "PENDING" },
     data: { status: "CANCELLED", cancelledAt: new Date() },

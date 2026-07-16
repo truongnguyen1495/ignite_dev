@@ -14,6 +14,7 @@ export default async function StudentsPage() {
   // a limited admin may see this list without being able to do any of them.
   // Computed once here to decide which action buttons each row renders.
   const isFullAdmin = hasFullAdminAccess(admin);
+  const isSuperAdmin = admin.role === "SUPER_ADMIN";
   const granted = isFullAdmin ? null : await getAdminPermissions(admin.id);
   const canLock = isFullAdmin || !!granted?.has("LOCK_STUDENTS");
   const canDelete = isFullAdmin || !!granted?.has("DELETE_STUDENTS");
@@ -24,7 +25,15 @@ export default async function StudentsPage() {
   // since approving one admits them into this Học viên roster.
   const [students, pendingRequests, approvedJoinRequests] = await Promise.all([
     prisma.user.findMany({
-      where: { role: "STUDENT", adminOnly: false, grantedLevel: { not: null } },
+      where: {
+        role: "STUDENT",
+        adminOnly: false,
+        grantedLevel: { not: null },
+        // A non-Super-Admin (even a full-access Admin Manager) must not
+        // even see another Admin Manager here — same boundary as
+        // admin/admins/page.tsx and the mutation actions in ./actions.ts.
+        ...(isSuperAdmin ? {} : { isAdminManager: false }),
+      },
       orderBy: { createdAt: "desc" },
     }),
     prisma.levelUpRequest.findMany({

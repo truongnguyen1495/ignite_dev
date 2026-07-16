@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getAdminPermissions, hasFullAdminAccess } from "@/lib/access";
 import { uploadLessonImage } from "@/lib/supabase-storage";
+import { matchesDeclaredMimeType } from "@/lib/file-signature";
 import type { AdminPermissionKind } from "@prisma/client";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -48,6 +49,14 @@ export async function POST(request: Request) {
   }
   if (file.size > MAX_FILE_BYTES) {
     return NextResponse.json({ error: "Ảnh vượt quá giới hạn 5MB." }, { status: 400 });
+  }
+  // file.type is a client-supplied multipart header — never trust it alone.
+  // Check the actual leading bytes match the declared format before this
+  // reaches the public lesson-images bucket, which serves content back out
+  // under that same declared type.
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (!matchesDeclaredMimeType(bytes, file.type)) {
+    return NextResponse.json({ error: "Nội dung file không khớp với định dạng ảnh đã khai báo." }, { status: 400 });
   }
 
   try {
