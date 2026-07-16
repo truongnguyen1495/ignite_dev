@@ -73,27 +73,31 @@ enum OrderItemKind {
 }
 
 model User {
-  id              String        @id @default(cuid())
-  email           String        @unique
-  passwordHash    String
-  name            String
-  username        String?       @unique
-  dateOfBirth     DateTime?     @db.Date
-  phoneNumber     String?       @unique
-  role            Role
-  status          AccountStatus @default(ACTIVE)
+  id                  String        @id @default(cuid())
+  email               String        @unique
+  // Nullable because a Google-first-time-created account (see the `signIn`
+  // callback in src/lib/auth.ts) never sets a password — it can only ever
+  // authenticate via Google. The Credentials provider's authorize() guards
+  // this with a null check before bcrypt.compare.
+  passwordHash        String?
+  name                String
+  username            String?       @unique
+  dateOfBirth         DateTime?     @db.Date
+  phoneNumber         String?       @unique
+  role                Role
+  status              AccountStatus @default(ACTIVE)
   // Null means "no cấp" — a self-registered account not (yet) on the 5-level
   // ladder, restricted to exclusive courses/library/announcements/profile
   // (see requireLeveledStudent in src/lib/access.ts, the single choke point
   // that walls the level ladder, lessons/quizzes, and chat off from these
   // accounts). Admins can also set this directly via the student forms.
-  grantedLevel    Level?
+  grantedLevel        Level?
   // A STUDENT account created purely to be a limited admin (see
   // requireAnyAdminAccess/requireActiveStudent in src/lib/access.ts) — blocked
   // from /dashboard and excluded from student rosters/pickers, unlike a
   // regular dual-role admin (a real student additionally granted an
   // AdminPermission) which keeps studying as normal.
-  adminOnly       Boolean       @default(false)
+  adminOnly           Boolean       @default(false)
   // Middle tier between STUDENT-with-permissions and SUPER_ADMIN: a real học
   // viên (adminOnly false, grantedLevel set) that a Super Admin designated to
   // hold every content permission SUPER_ADMIN holds (see hasFullAdminAccess
@@ -104,16 +108,31 @@ model User {
   // can violate it afterward (demoting back to "học sinh", flipping adminOnly
   // true) clears both this and canManageAdmins in the same update so the flag
   // never survives on an ineligible account.
-  isAdminManager  Boolean       @default(false)
+  isAdminManager      Boolean       @default(false)
   // Separate from isAdminManager itself: an Admin Manager only reaches
   // /admin/admins (creating/editing other admins' permissions) if a Super
   // Admin explicitly also grants this — not implied by isAdminManager alone.
   // Meaningless when isAdminManager is false.
-  canManageAdmins Boolean       @default(false)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  canManageAdmins     Boolean       @default(false)
+  // Brute-force lockout, separate from the permanent admin-set `status:
+  // LOCKED` above — auto-locks after too many wrong passwords in a row (see
+  // src/lib/auth.ts authorize()), reset on the next successful login.
+  failedLoginAttempts Int           @default(0)
+  lockedUntil         DateTime?
+  // Null = not yet verified. Only enforced at login when
+  // Settings.emailVerificationEnabled is on (see the authorize() check in
+  // src/lib/auth.ts) — every pre-existing row is backfilled to non-null in
+  // the same migration that adds this column, so turning the toggle on never
+  // retroactively locks out an account that existed before it did. A
+  // Google-first-time-created account is stamped verified immediately
+  // (Google already proved ownership of the address).
+  emailVerified       DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 
   quizAttempts            QuizAttempt[]
+  emailVerificationTokens EmailVerificationToken[] @relation("EmailVerificationTokens")
+  passwordResetTokens     PasswordResetToken[]     @relation("PasswordResetTokens")
   levelUpRequests         LevelUpRequest[]         @relation("StudentRequests")
   reviewedRequests        LevelUpRequest[]         @relation("ReviewerActions")
   courseGrants            CourseAccessGrant[]      @relation("CourseGrants")
@@ -294,29 +313,74 @@ model LevelUpRequest {
 }
 
 model Settings {
-  id                  Int      @id @default(1)
-  passPercentage      Int      @default(80)
-  chatEnabled         Boolean  @default(true)
+  id                       Int      @id @default(1)
+  passPercentage           Int      @default(80)
+  chatEnabled              Boolean  @default(true)
   // Master switch for public self-registration at /register — toggled from
   // /admin/settings (see isRegistrationEnabled in src/lib/access.ts). When
   // false, new signups are rejected; existing accounts are unaffected.
-  registrationEnabled Boolean  @default(true)
+  registrationEnabled      Boolean  @default(true)
   // Master switch for the "Mua ngay" buy flow (see isSalesEnabled in
   // src/lib/access.ts) — defaults off since bank info below starts empty;
   // Super Admin turns it on once bankName/bankAccountNumber are filled in.
   // Never hides /admin/orders or a student's own order history, only new
   // purchases.
-  salesEnabled        Boolean  @default(false)
+  salesEnabled             Boolean  @default(false)
   // Master switch for the bilingual (Tiếng Việt/English) UI — toggled from
   // /admin/settings (see isBilingualEnabled in src/lib/access.ts). When
   // false, every area always renders Vietnamese regardless of a visitor's
   // saved language cookie, and the language switcher is hidden.
-  bilingualEnabled    Boolean  @default(false)
-  bankName            String?
-  bankAccountNumber   String?
-  bankAccountHolder   String?
-  bankQrImageUrl      String?
-  updatedAt           DateTime @updatedAt
+  bilingualEnabled         Boolean  @default(false)
+  // Master switch for requiring email verification before login — toggled
+  // from /admin/settings (see isEmailVerificationEnabled in src/lib/access.ts).
+  // Defaults off so nothing changes until a Super Admin opts in (needs a
+  // working RESEND_API_KEY configured first). When off, authorize() never
+  // checks User.emailVerified at all.
+  emailVerificationEnabled Boolean  @default(false)
+  // Master switch for the "Đăng nhập bằng Google" button and the Google
+  // OAuth flow itself (see isGoogleLoginEnabled in src/lib/access.ts and the
+  // signIn callback in src/lib/auth.ts). Defaults off so nothing changes
+  // until a Super Admin opts in (needs GOOGLE_CLIENT_ID/SECRET configured
+  // first). A brand-new account is only auto-created on first Google
+  // sign-in if registrationEnabled is ALSO on — reuses that existing switch
+  // rather than adding a second "who can register" toggle.
+  googleLoginEnabled       Boolean  @default(false)
+  bankName                 String?
+  bankAccountNumber        String?
+  bankAccountHolder        String?
+  bankQrImageUrl           String?
+  updatedAt                DateTime @updatedAt
+}
+
+// One-time link token emailed on registration (and by the "Gửi lại email
+// xác thực" resend action) — consumed and deleted the moment /api/verify-email
+// accepts it. A user can hold more than one live row at once (each resend
+// creates a new one instead of reusing/extending the old one); verifying
+// with any of them deletes all of the user's rows, not just the one used.
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation("EmailVerificationTokens", fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// Same shape and lifecycle as EmailVerificationToken, separate table because
+// the two flows are conceptually distinct (proving address ownership vs.
+// authorizing a credential change) even though the code that issues/consumes
+// them is structurally identical.
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation("PasswordResetTokens", fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // Exclusive courses: a second, independent content track (no Level, no

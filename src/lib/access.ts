@@ -244,6 +244,21 @@ export async function isRegistrationEnabled(): Promise<boolean> {
   return settings?.registrationEnabled ?? true;
 }
 
+// Master switch for requiring email verification before login, toggled from
+// /admin/settings — same fresh-from-DB convention as isChatEnabled. When
+// off, src/lib/auth.ts's authorize() never checks User.emailVerified.
+export async function isEmailVerificationEnabled(): Promise<boolean> {
+  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
+  return settings?.emailVerificationEnabled ?? false;
+}
+
+// Master switch for the "Đăng nhập bằng Google" button/flow, toggled from
+// /admin/settings — same fresh-from-DB convention as isChatEnabled.
+export async function isGoogleLoginEnabled(): Promise<boolean> {
+  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
+  return settings?.googleLoginEnabled ?? false;
+}
+
 // Master switch for the bilingual UI, toggled from /admin/settings — same
 // fresh-from-DB convention as isChatEnabled. When off, src/lib/i18n/get-locale.ts
 // always resolves "vi" regardless of a visitor's saved language cookie, and
@@ -322,29 +337,58 @@ export async function requireQuizAccess(quizId: string) {
 // openToProspectiveStudents for học sinh specifically.
 export type CourseAccessLevel = "none" | "trial" | "full";
 
-export async function getCourseAccessLevel(student: User, courseId: string): Promise<CourseAccessLevel> {
-  const [grant, levelGrants, course] = await Promise.all([
-    prisma.courseAccessGrant.findUnique({
-      where: { studentId_courseId: { studentId: student.id, courseId } },
-    }),
-    prisma.courseLevelGrant.findMany({ where: { courseId } }),
-    prisma.course.findUnique({
-      where: { id: courseId },
-      select: { openToProspectiveStudents: true, hiddenFromGuest: true, isFree: true },
+// Batched sibling of getCourseAccessLevel below — 3 queries total regardless
+// of courseIds.length, instead of 3 *per course*. Added after a real
+// connection-pool timeout was reproduced on /dashboard/home (DATABASE_URL's
+// connection_limit=1 couldn't keep up with getGuestCourseItems/
+// getGuestLibraryItems firing one getCourseAccessLevel/getLibraryItemAccessLevel
+// per featured item, each doing its own 3-query Promise.all, all concurrently).
+// getCourseAccessLevel itself is now a thin single-id wrapper around this, so
+// the access-level business rule only lives in one place.
+export async function getCourseAccessLevels(
+  student: User,
+  courseIds: string[]
+): Promise<Map<string, CourseAccessLevel>> {
+  if (courseIds.length === 0) return new Map();
+
+  const [grants, levelGrants, courses] = await Promise.all([
+    prisma.courseAccessGrant.findMany({ where: { studentId: student.id, courseId: { in: courseIds } } }),
+    prisma.courseLevelGrant.findMany({ where: { courseId: { in: courseIds } } }),
+    prisma.course.findMany({
+      where: { id: { in: courseIds } },
+      select: { id: true, openToProspectiveStudents: true, hiddenFromGuest: true, isFree: true },
     }),
   ]);
-  // isFree is a blanket "everyone gets full access" switch, checked before
-  // any grant/level logic — distinct from price = 0 ("không bán", still
-  // admin-grant-only).
-  if (course?.isFree) return "full";
-  if (grant) return "full";
-  const isFullViaLevel =
-    student.grantedLevel === null
-      ? (course?.openToProspectiveStudents ?? false)
-      : levelGrants.some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel));
-  if (isFullViaLevel) return "full";
-  if (course && !course.hiddenFromGuest) return "trial";
-  return "none";
+
+  const grantedCourseIds = new Set(grants.map((g) => g.courseId));
+  const levelGrantsByCourse = new Map<string, typeof levelGrants>();
+  for (const lg of levelGrants) {
+    const list = levelGrantsByCourse.get(lg.courseId);
+    if (list) list.push(lg);
+    else levelGrantsByCourse.set(lg.courseId, [lg]);
+  }
+
+  const result = new Map<string, CourseAccessLevel>();
+  for (const course of courses) {
+    // isFree is a blanket "everyone gets full access" switch, checked before
+    // any grant/level logic — distinct from price = 0 ("không bán", still
+    // admin-grant-only).
+    if (course.isFree || grantedCourseIds.has(course.id)) {
+      result.set(course.id, "full");
+      continue;
+    }
+    const isFullViaLevel =
+      student.grantedLevel === null
+        ? course.openToProspectiveStudents
+        : (levelGrantsByCourse.get(course.id) ?? []).some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel));
+    result.set(course.id, isFullViaLevel ? "full" : !course.hiddenFromGuest ? "trial" : "none");
+  }
+  return result;
+}
+
+export async function getCourseAccessLevel(student: User, courseId: string): Promise<CourseAccessLevel> {
+  const levels = await getCourseAccessLevels(student, [courseId]);
+  return levels.get(courseId) ?? "none";
 }
 
 export async function requireCourseAccess(courseId: string) {
@@ -381,18 +425,23 @@ export async function requireCourseLessonAccess(lessonId: string) {
 // not the full file. Mirrors getCourseAccessLevel exactly.
 export type LibraryAccessLevel = "none" | "trial" | "full";
 
-export async function getLibraryItemAccessLevel(
+// Batched sibling of getLibraryItemAccessLevel below — same reasoning as
+// getCourseAccessLevels above (3 queries total instead of 3 per item).
+export async function getLibraryItemAccessLevels(
   student: User,
-  libraryItemId: string
-): Promise<LibraryAccessLevel> {
-  const [grant, levelGrants, libraryItem] = await Promise.all([
-    prisma.libraryAccessGrant.findUnique({
-      where: { studentId_libraryItemId: { studentId: student.id, libraryItemId } },
+  libraryItemIds: string[]
+): Promise<Map<string, LibraryAccessLevel>> {
+  if (libraryItemIds.length === 0) return new Map();
+
+  const [grants, levelGrants, libraryItems] = await Promise.all([
+    prisma.libraryAccessGrant.findMany({
+      where: { studentId: student.id, libraryItemId: { in: libraryItemIds } },
     }),
-    prisma.libraryLevelGrant.findMany({ where: { libraryItemId } }),
-    prisma.libraryItem.findUnique({
-      where: { id: libraryItemId },
+    prisma.libraryLevelGrant.findMany({ where: { libraryItemId: { in: libraryItemIds } } }),
+    prisma.libraryItem.findMany({
+      where: { id: { in: libraryItemIds } },
       select: {
+        id: true,
         openToProspectiveStudents: true,
         isFree: true,
         visibleToGuest: true,
@@ -402,24 +451,47 @@ export async function getLibraryItemAccessLevel(
       },
     }),
   ]);
-  // isFree is a blanket "everyone gets full access" switch, same convention
-  // as Course.isFree — checked before any grant/level logic.
-  if (libraryItem?.isFree) return "full";
-  if (grant) return "full";
-  const isFullViaLevel =
-    student.grantedLevel === null
-      ? (libraryItem?.openToProspectiveStudents ?? false)
-      : levelGrants.some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel));
-  if (isFullViaLevel) return "full";
-  // PDF trial reads previewFilePath (a physically truncated copy);
-  // INTERACTIVE trial has no separate asset — /api/library/[itemId]/pages
-  // slices to guestPreviewPages rows at query time instead.
-  const hasTrialContent =
-    libraryItem?.format === "INTERACTIVE"
-      ? (libraryItem.guestPreviewPages ?? 0) > 0
-      : !!libraryItem?.previewFilePath;
-  if (libraryItem?.visibleToGuest && hasTrialContent) return "trial";
-  return "none";
+
+  const grantedItemIds = new Set(grants.map((g) => g.libraryItemId));
+  const levelGrantsByItem = new Map<string, typeof levelGrants>();
+  for (const lg of levelGrants) {
+    const list = levelGrantsByItem.get(lg.libraryItemId);
+    if (list) list.push(lg);
+    else levelGrantsByItem.set(lg.libraryItemId, [lg]);
+  }
+
+  const result = new Map<string, LibraryAccessLevel>();
+  for (const item of libraryItems) {
+    // isFree is a blanket "everyone gets full access" switch, same convention
+    // as Course.isFree — checked before any grant/level logic.
+    if (item.isFree || grantedItemIds.has(item.id)) {
+      result.set(item.id, "full");
+      continue;
+    }
+    const isFullViaLevel =
+      student.grantedLevel === null
+        ? item.openToProspectiveStudents
+        : (levelGrantsByItem.get(item.id) ?? []).some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel));
+    if (isFullViaLevel) {
+      result.set(item.id, "full");
+      continue;
+    }
+    // PDF trial reads previewFilePath (a physically truncated copy);
+    // INTERACTIVE trial has no separate asset — /api/library/[itemId]/pages
+    // slices to guestPreviewPages rows at query time instead.
+    const hasTrialContent =
+      item.format === "INTERACTIVE" ? (item.guestPreviewPages ?? 0) > 0 : !!item.previewFilePath;
+    result.set(item.id, item.visibleToGuest && hasTrialContent ? "trial" : "none");
+  }
+  return result;
+}
+
+export async function getLibraryItemAccessLevel(
+  student: User,
+  libraryItemId: string
+): Promise<LibraryAccessLevel> {
+  const levels = await getLibraryItemAccessLevels(student, [libraryItemId]);
+  return levels.get(libraryItemId) ?? "none";
 }
 
 // Exported (unlike studentHasCourseAccess) because /api/library/[itemId]/file

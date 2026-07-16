@@ -3,10 +3,12 @@
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
-import { Prisma } from "@prisma/client";
+import { Prisma, type User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { isRegistrationEnabled } from "@/lib/access";
+import { isRegistrationEnabled, isEmailVerificationEnabled } from "@/lib/access";
 import { phoneNumberSchema, dateOfBirthSchema } from "@/lib/validation";
+import { createEmailVerificationToken } from "@/lib/verification-tokens";
+import { sendVerificationEmail } from "@/lib/email";
 
 const registerSchema = z
   .object({
@@ -61,9 +63,11 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+  const verificationRequired = await isEmailVerificationEnabled();
 
+  let user: User;
   try {
-    await prisma.user.create({
+    user = await prisma.user.create({
       data: {
         name: parsed.data.name,
         email: parsed.data.email,
@@ -76,6 +80,11 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
         // No cấp — not on the 5-level ladder until an admin approves a join
         // request from /dashboard/level-up (see requireLeveledStudent).
         grantedLevel: null,
+        // Only left unverified when the toggle is actually on — otherwise
+        // this account should never be retroactively affected if the
+        // toggle gets turned on later (same reasoning as the pre-existing
+        // rows backfilled in the migration that added this column).
+        emailVerified: verificationRequired ? null : new Date(),
       },
     });
   } catch (e) {
@@ -91,6 +100,19 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
       return { fieldErrors: { email: "Email này đã được sử dụng." } };
     }
     throw e;
+  }
+
+  if (verificationRequired) {
+    try {
+      const token = await createEmailVerificationToken(user.id);
+      await sendVerificationEmail(user.email, token);
+    } catch (e) {
+      // The account was created successfully either way — a failed send
+      // (e.g. Resend misconfigured) shouldn't block registration. The user
+      // can still ask for a new link from /login/unverified.
+      console.error("Failed to send verification email:", e);
+    }
+    redirect("/register/success?verify=1");
   }
 
   redirect("/register/success");

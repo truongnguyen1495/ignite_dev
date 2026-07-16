@@ -2,6 +2,7 @@ import { requireActiveStudent } from "@/lib/access";
 import { toDateOnlyISOString } from "@/lib/date";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { ProfileForm } from "./profile-form";
+import { SetPasswordForm } from "./set-password-form";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 
@@ -26,6 +27,13 @@ export default async function ProfilePage() {
           grantedLevelLabel={student.grantedLevel ? LEVEL_LABELS[student.grantedLevel] : "Học sinh"}
         />
       </Card>
+
+      {!student.passwordHash && (
+        <Card>
+          <h2 className="mb-4 text-sm font-semibold text-foreground">Đặt mật khẩu</h2>
+          <SetPasswordForm />
+        </Card>
+      )}
     </div>
   );
 }

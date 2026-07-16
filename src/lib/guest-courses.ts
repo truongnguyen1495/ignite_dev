@@ -1,7 +1,7 @@
 import "server-only";
 import type { User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getCourseAccessLevel } from "@/lib/access";
+import { getCourseAccessLevels } from "@/lib/access";
 
 export type GuestCourseItem = {
   id: string;
@@ -55,33 +55,36 @@ export async function getGuestCourseItems({
 
   const basePath = student ? "/dashboard/courses" : "/guest/courses";
 
-  return Promise.all(
-    courses.map(async (course, index) => {
-      const fullyUnlocked = student
-        ? (await getCourseAccessLevel(student, course.id)) === "full"
-        : course.isFree;
-      // A fully-unlocked course opens every lesson — every lesson counts as
-      // "visible" instead of only the ones opted into visibleToGuest (see
-      // requireGuestCourseLessonAccess/requireCourseLessonAccess in
-      // src/lib/access.ts, which apply the same rule).
-      const visibleLessons = fullyUnlocked ? course.lessons : course.lessons.filter((l) => l.visibleToGuest);
-      const firstLessonId = visibleLessons[0]?.id;
-      const href = firstLessonId ? `${basePath}/${course.id}/lessons/${firstLessonId}` : `${basePath}/${course.id}`;
-      // Some lessons still locked behind login → this is a trial, not full access.
-      const hasLockedLessons = visibleLessons.length < course.lessons.length;
+  // Batched (3 queries total) instead of one getCourseAccessLevel call per
+  // course — a per-course Promise.all fan-out here once blew through
+  // DATABASE_URL's connection_limit=1 on /dashboard/home's featured teaser.
+  const accessLevels = student
+    ? await getCourseAccessLevels(student, courses.map((course) => course.id))
+    : null;
 
-      return {
-        id: course.id,
-        title: course.title,
-        description: course.description,
-        coverImageUrl: course.coverImageUrl,
-        totalLessons: course.lessons.length,
-        ctaLabel: hasLockedLessons ? "Vào học thử" : "Vào học",
-        href,
-        gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
-        isFree: course.isFree,
-        fullyUnlocked,
-      };
-    })
-  );
+  return courses.map((course, index) => {
+    const fullyUnlocked = student ? accessLevels!.get(course.id) === "full" : course.isFree;
+    // A fully-unlocked course opens every lesson — every lesson counts as
+    // "visible" instead of only the ones opted into visibleToGuest (see
+    // requireGuestCourseLessonAccess/requireCourseLessonAccess in
+    // src/lib/access.ts, which apply the same rule).
+    const visibleLessons = fullyUnlocked ? course.lessons : course.lessons.filter((l) => l.visibleToGuest);
+    const firstLessonId = visibleLessons[0]?.id;
+    const href = firstLessonId ? `${basePath}/${course.id}/lessons/${firstLessonId}` : `${basePath}/${course.id}`;
+    // Some lessons still locked behind login → this is a trial, not full access.
+    const hasLockedLessons = visibleLessons.length < course.lessons.length;
+
+    return {
+      id: course.id,
+      title: course.title,
+      description: course.description,
+      coverImageUrl: course.coverImageUrl,
+      totalLessons: course.lessons.length,
+      ctaLabel: hasLockedLessons ? "Vào học thử" : "Vào học",
+      href,
+      gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
+      isFree: course.isFree,
+      fullyUnlocked,
+    };
+  });
 }

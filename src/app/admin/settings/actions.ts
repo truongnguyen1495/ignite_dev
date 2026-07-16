@@ -25,6 +25,26 @@ export async function setRegistrationEnabledAction(registrationEnabled: boolean)
   revalidatePath("/admin/settings");
 }
 
+export async function setEmailVerificationEnabledAction(emailVerificationEnabled: boolean) {
+  await requireActiveSuperAdmin();
+  await prisma.settings.upsert({
+    where: { id: 1 },
+    update: { emailVerificationEnabled },
+    create: { id: 1, emailVerificationEnabled },
+  });
+  revalidatePath("/admin/settings");
+}
+
+export async function setGoogleLoginEnabledAction(googleLoginEnabled: boolean) {
+  await requireActiveSuperAdmin();
+  await prisma.settings.upsert({
+    where: { id: 1 },
+    update: { googleLoginEnabled },
+    create: { id: 1, googleLoginEnabled },
+  });
+  revalidatePath("/admin/settings");
+}
+
 export async function setBilingualEnabledAction(bilingualEnabled: boolean) {
   await requireActiveSuperAdmin();
   await prisma.settings.upsert({

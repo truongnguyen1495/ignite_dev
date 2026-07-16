@@ -71,6 +71,12 @@ export const dictionaries = {
         "Bật/tắt cho phép người dùng mới tự đăng ký tài khoản tại trang đăng ký. Khi tắt, tài khoản mới chỉ có thể được Admin tạo thủ công.",
       bilingualTitle: "Song ngữ (Tiếng Việt - English)",
       bilingualDescription: "Cho phép học viên và admin chuyển đổi giao diện giữa tiếng Việt và tiếng Anh.",
+      emailVerificationTitle: "Bắt buộc xác thực email",
+      emailVerificationDescription:
+        "Bật/tắt yêu cầu học viên xác thực email (bấm liên kết gửi qua Resend) trước khi đăng nhập được. Khi tắt, tài khoản mới dùng được ngay sau khi đăng ký.",
+      googleLoginTitle: "Đăng nhập bằng Google",
+      googleLoginDescription:
+        "Bật/tắt nút \"Đăng nhập bằng Google\" ở trang đăng nhập. Lần đầu đăng nhập bằng một email Google chưa từng có tài khoản sẽ tự tạo tài khoản mới nếu \"Đăng ký tài khoản mới\" ở trên cũng đang bật.",
       salesTitle: "Bán khóa học / thư viện",
       salesDescription:
         'Bật/tắt toàn bộ tính năng bán hàng — nút "Mua ngay", trang "Đơn hàng của tôi" của học viên, và trang "Đơn hàng" của admin đều ẩn đi khi tắt. Chỉ bật sau khi đã điền đầy đủ thông tin chuyển khoản bên dưới. Nếu đang có đơn chờ xác nhận, phải bật lại công tắc này mới xử lý được.',
@@ -174,6 +180,12 @@ export const dictionaries = {
         "Allow new users to self-register an account on the registration page. When off, new accounts can only be created manually by an Admin.",
       bilingualTitle: "Bilingual (Tiếng Việt - English)",
       bilingualDescription: "Let students and admins switch the interface between Vietnamese and English.",
+      emailVerificationTitle: "Require email verification",
+      emailVerificationDescription:
+        "Require students to verify their email (via a link sent through Resend) before they can log in. When off, new accounts work immediately after registering.",
+      googleLoginTitle: "Google sign-in",
+      googleLoginDescription:
+        'Turn the "Sign in with Google" button on the login page on or off. The first time an unrecognized Google email signs in, a new account is auto-created only if "New account registration" above is also on.',
       salesTitle: "Course / library sales",
       salesDescription:
         'Turn the whole sales feature on or off — the "Buy Now" button, a student\'s "My Orders" page, and the admin "Orders" page all hide when off. Only turn on after filling in the bank transfer details below. If there\'s a pending order, this switch must be back on to process it.',

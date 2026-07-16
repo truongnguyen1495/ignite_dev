@@ -1,7 +1,7 @@
 import "server-only";
 import type { User, LibraryItemType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getLibraryItemAccessLevel } from "@/lib/access";
+import { getLibraryItemAccessLevels } from "@/lib/access";
 
 export type GuestLibraryItem = {
   id: string;
@@ -62,24 +62,27 @@ export async function getGuestLibraryItems({
 
   const basePath = student ? "/dashboard/library" : "/guest/library";
 
-  return Promise.all(
-    items.map(async (item, index) => {
-      const fullyUnlocked = student
-        ? (await getLibraryItemAccessLevel(student, item.id)) === "full"
-        : item.isFree;
-      return {
-        id: item.id,
-        title: item.title,
-        author: item.author,
-        description: item.description,
-        type: item.type,
-        coverImageUrl: item.coverImageUrl,
-        guestPreviewPages: item.guestPreviewPages,
-        href: `${basePath}/${item.id}`,
-        gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
-        isFree: item.isFree,
-        fullyUnlocked,
-      };
-    })
-  );
+  // Batched (3 queries total) instead of one getLibraryItemAccessLevel call
+  // per item — a per-item Promise.all fan-out here once blew through
+  // DATABASE_URL's connection_limit=1 on /dashboard/home's featured teaser.
+  const accessLevels = student
+    ? await getLibraryItemAccessLevels(student, items.map((item) => item.id))
+    : null;
+
+  return items.map((item, index) => {
+    const fullyUnlocked = student ? accessLevels!.get(item.id) === "full" : item.isFree;
+    return {
+      id: item.id,
+      title: item.title,
+      author: item.author,
+      description: item.description,
+      type: item.type,
+      coverImageUrl: item.coverImageUrl,
+      guestPreviewPages: item.guestPreviewPages,
+      href: `${basePath}/${item.id}`,
+      gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
+      isFree: item.isFree,
+      fullyUnlocked,
+    };
+  });
 }

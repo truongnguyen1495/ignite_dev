@@ -9,6 +9,8 @@ import { ChatToggle } from "./chat-toggle";
 import { RegistrationToggle } from "./registration-toggle";
 import { LanguageToggle } from "./language-toggle";
 import { SalesToggle } from "./sales-toggle";
+import { EmailVerificationToggle } from "./email-verification-toggle";
+import { GoogleLoginToggle } from "./google-login-toggle";
 import { BankInfoForm } from "./bank-info-form";
 
 export default async function SettingsPage() {
@@ -30,6 +32,12 @@ export default async function SettingsPage() {
       </Card>
       <Card className="max-w-lg">
         <SalesToggle salesEnabled={settings.salesEnabled} />
+      </Card>
+      <Card className="max-w-lg">
+        <EmailVerificationToggle emailVerificationEnabled={settings.emailVerificationEnabled} />
+      </Card>
+      <Card className="max-w-lg">
+        <GoogleLoginToggle googleLoginEnabled={settings.googleLoginEnabled} />
       </Card>
       <Card className="max-w-lg">
         <BankInfoForm
