@@ -10,6 +10,7 @@ export type GuestCourseItem = {
   ctaLabel: string;
   href: string;
   gradient: string;
+  isFree: boolean;
 };
 
 const BANNER_GRADIENTS = [
@@ -54,6 +55,7 @@ export async function getGuestCourseItems({
       ctaLabel: hasLockedLessons ? "Vào học thử" : "Vào học",
       href,
       gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
+      isFree: course.isFree,
     };
   });
 }

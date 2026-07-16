@@ -73,29 +73,30 @@ export function EditCourseForm({
           />
           <Input id="order" name="order" type="number" defaultValue={order} label="Thứ tự hiển thị" />
 
-          {canManageOrders && (
-            <div className="space-y-3 rounded-lg border border-border p-3">
-              <label className="flex items-center gap-2 text-sm text-foreground">
-                <input
-                  type="checkbox"
-                  name="isFree"
-                  checked={isFree}
-                  onChange={(e) => setIsFree(e.target.checked)}
-                  className="h-4 w-4 accent-primary"
-                />
-                Miễn phí (cấp quyền xem đầy đủ cho toàn bộ học viên &amp; học sinh, không cần mua)
-              </label>
+          <div className="space-y-3 rounded-lg border border-border p-3">
+            <label className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="checkbox"
+                name="isFree"
+                checked={isFree}
+                onChange={(e) => setIsFree(e.target.checked)}
+                className="h-4 w-4 accent-primary"
+              />
+              Miễn phí (cấp quyền xem đầy đủ cho toàn bộ học viên &amp; học sinh, không cần mua)
+            </label>
 
-              {isFree ? (
-                <>
-                  <input type="hidden" name="price" defaultValue={price} />
-                  <input type="hidden" name="salePrice" defaultValue={salePrice ?? ""} />
-                  <p className="text-xs text-muted">
-                    Đang miễn phí — mọi học viên &amp; học sinh tự động có toàn quyền xem, các phần cấp quyền
-                    riêng bên dưới sẽ tạm ẩn.
-                  </p>
-                </>
-              ) : salesEnabled ? (
+            {isFree && (
+              <p className="text-xs text-muted">
+                Đang miễn phí — mọi học viên &amp; học sinh tự động có toàn quyền xem, các phần cấp quyền
+                riêng bên dưới sẽ tạm ẩn.
+              </p>
+            )}
+
+            {/* Giá gốc/giá khuyến mãi là chuyện tiền bạc, riêng với quyền quản lý
+                khóa học — chỉ admin có quyền "Đơn hàng" mới thấy/sửa được, dù
+                Miễn phí ở trên đã mở cho mọi admin quản lý khóa học. */}
+            {canManageOrders &&
+              (!isFree && salesEnabled ? (
                 <>
                   <Input
                     id="price"
@@ -119,15 +120,15 @@ export function EditCourseForm({
                   />
                 </>
               ) : (
-                // Tính năng bán hàng đang tắt — ẩn ô nhập giá nhưng vẫn gửi kèm
-                // giá trị hiện tại để lưu không vô tình reset giá về 0.
+                // Miễn phí đang bật, hoặc tính năng bán hàng đang tắt — ẩn ô
+                // nhập giá nhưng vẫn gửi kèm giá trị hiện tại để lưu không vô
+                // tình reset giá về 0.
                 <>
                   <input type="hidden" name="price" defaultValue={price} />
                   <input type="hidden" name="salePrice" defaultValue={salePrice ?? ""} />
                 </>
-              )}
-            </div>
-          )}
+              ))}
+          </div>
 
           {error && <p className="text-sm text-danger">{error}</p>}
 

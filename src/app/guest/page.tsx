@@ -46,6 +46,7 @@ export default async function GuestHomePage() {
     coverImageUrl: item.coverImageUrl,
     guestPreviewPages: item.guestPreviewPages,
     gradient: EBOOK_GRADIENTS[index % EBOOK_GRADIENTS.length],
+    isFree: item.isFree,
   }));
 
   return (

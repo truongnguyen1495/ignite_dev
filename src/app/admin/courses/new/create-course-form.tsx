@@ -23,43 +23,44 @@ export function CreateCourseForm({
       <CoverImageInput alt="Ảnh bìa khóa học" />
       <Input id="order" name="order" type="number" defaultValue={0} label="Thứ tự hiển thị" />
 
-      {canManageOrders && (
-        <div className="space-y-3 rounded-lg border border-border p-3">
-          <label className="flex items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              name="isFree"
-              checked={isFree}
-              onChange={(e) => setIsFree(e.target.checked)}
-              className="h-4 w-4 accent-primary"
+      <div className="space-y-3 rounded-lg border border-border p-3">
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <input
+            type="checkbox"
+            name="isFree"
+            checked={isFree}
+            onChange={(e) => setIsFree(e.target.checked)}
+            className="h-4 w-4 accent-primary"
+          />
+          Miễn phí (cấp quyền xem đầy đủ cho toàn bộ học viên &amp; học sinh, không cần mua)
+        </label>
+        {/* Giá gốc/giá khuyến mãi là chuyện tiền bạc, riêng với quyền quản lý
+            khóa học — chỉ admin có quyền "Đơn hàng" mới thấy/sửa được, dù
+            Miễn phí ở trên đã mở cho mọi admin quản lý khóa học. */}
+        {canManageOrders && !isFree && salesEnabled && (
+          <>
+            <Input
+              id="price"
+              name="price"
+              type="number"
+              min={0}
+              step={1000}
+              defaultValue={0}
+              label="Giá gốc (VNĐ)"
+              hint="0 = không bán, chỉ cấp quyền thủ công như trước giờ."
             />
-            Miễn phí (cấp quyền xem đầy đủ cho toàn bộ học viên &amp; học sinh, không cần mua)
-          </label>
-          {!isFree && salesEnabled && (
-            <>
-              <Input
-                id="price"
-                name="price"
-                type="number"
-                min={0}
-                step={1000}
-                defaultValue={0}
-                label="Giá gốc (VNĐ)"
-                hint="0 = không bán, chỉ cấp quyền thủ công như trước giờ."
-              />
-              <Input
-                id="salePrice"
-                name="salePrice"
-                type="number"
-                min={0}
-                step={1000}
-                label="Giá khuyến mãi (VNĐ, tùy chọn)"
-                hint="Để trống nếu không giảm giá. Phải nhỏ hơn giá gốc."
-              />
-            </>
-          )}
-        </div>
-      )}
+            <Input
+              id="salePrice"
+              name="salePrice"
+              type="number"
+              min={0}
+              step={1000}
+              label="Giá khuyến mãi (VNĐ, tùy chọn)"
+              hint="Để trống nếu không giảm giá. Phải nhỏ hơn giá gốc."
+            />
+          </>
+        )}
+      </div>
       <div>
         <label className="flex items-center gap-2 text-sm text-foreground">
           <input type="checkbox" name="hiddenFromGuest" className="h-4 w-4 accent-primary" />

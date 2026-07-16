@@ -55,9 +55,12 @@ export async function createCourseAction(
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
   }
 
-  // An admin without "Đơn hàng" can't set pricing at all — a brand-new
-  // course they create starts unsold (giá 0, không miễn phí) regardless of
-  // what the request body claims, since the form hides these fields for them.
+  // "Miễn phí" is available to any admin who can manage courses at all —
+  // only giá gốc/giá khuyến mãi stay behind "Đơn hàng" (MANAGE_ORDERS), since
+  // those are a money concern rather than content availability. An admin
+  // without "Đơn hàng" still creates at giá 0 (form hides the price fields
+  // for them), but their isFree tick is honored either way.
+  const isFree = formData.get("isFree") === "on";
   let pricing: { price: number; salePrice: number | null; isFree: boolean };
   if (canManageOrders) {
     const resolved = resolvePricingFields(formData, parsed.data.price, parsed.data.salePrice);
@@ -66,7 +69,7 @@ export async function createCourseAction(
     }
     pricing = { price: parsed.data.price, salePrice: resolved.salePrice, isFree: resolved.isFree };
   } else {
-    pricing = { price: 0, salePrice: null, isFree: false };
+    pricing = { price: 0, salePrice: null, isFree };
   }
 
   const course = await prisma.course.create({
@@ -113,16 +116,21 @@ export async function updateCourseAction(
 
   const { courseId } = parsed.data;
 
-  // Without "Đơn hàng", pricing fields are left out of the update entirely —
-  // the form doesn't render them for this admin, and the DB keeps whatever
-  // an order-permitted admin set previously rather than being reset.
-  let pricing: { price?: number; salePrice?: number | null; isFree?: boolean } = {};
+  // "Miễn phí" is always honored, even for an admin without "Đơn hàng" — see
+  // the comment on the same branch in createCourseAction above. Giá gốc/giá
+  // khuyến mãi stay out of the update entirely for such an admin (the form
+  // doesn't render them), so the DB keeps whatever an order-permitted admin
+  // set previously rather than being reset.
+  const isFree = formData.get("isFree") === "on";
+  let pricing: { price?: number; salePrice?: number | null; isFree?: boolean };
   if (canManageOrders) {
     const resolved = resolvePricingFields(formData, parsed.data.price, parsed.data.salePrice);
     if (typeof resolved === "string") {
       return resolved;
     }
     pricing = { price: parsed.data.price, salePrice: resolved.salePrice, isFree: resolved.isFree };
+  } else {
+    pricing = { isFree };
   }
 
   await prisma.course.update({

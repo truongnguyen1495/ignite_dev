@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BookOpen, ChevronRight, Video } from "lucide-react";
 import type { GuestCourseItem } from "@/lib/guest-courses";
+import { Badge } from "@/components/ui/badge";
 
 export type { GuestCourseItem };
 
@@ -30,6 +31,11 @@ export function GuestCourseList({ courses }: { courses: GuestCourseItem[] }) {
             )}
           </div>
           <div className="flex flex-1 flex-col p-5">
+            {course.isFree && (
+              <div className="mb-2">
+                <Badge color="success">Miễn phí</Badge>
+              </div>
+            )}
             <p className="font-semibold text-dark-foreground">{course.title}</p>
             {course.description && (
               <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{course.description}</p>

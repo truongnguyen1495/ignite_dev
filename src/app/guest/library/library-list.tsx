@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BookOpen, ChevronRight, FileText } from "lucide-react";
 import type { LibraryItemType } from "@prisma/client";
+import { Badge } from "@/components/ui/badge";
 
 export type GuestLibraryItem = {
   id: string;
@@ -11,6 +12,7 @@ export type GuestLibraryItem = {
   coverImageUrl: string | null;
   guestPreviewPages: number | null;
   gradient: string;
+  isFree: boolean;
 };
 
 const TYPE_ICON: Record<LibraryItemType, typeof BookOpen> = {
@@ -46,6 +48,11 @@ export function GuestLibraryList({ items }: { items: GuestLibraryItem[] }) {
               )}
             </div>
             <div className="flex flex-1 flex-col p-5">
+              {item.isFree && (
+                <div className="mb-2">
+                  <Badge color="success">Miễn phí</Badge>
+                </div>
+              )}
               <p className="font-semibold text-dark-foreground">{item.title}</p>
               {item.author && <p className="mt-0.5 text-sm text-dark-muted">{item.author}</p>}
               {item.description && (

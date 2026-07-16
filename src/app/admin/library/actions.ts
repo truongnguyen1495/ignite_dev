@@ -92,9 +92,10 @@ export async function createLibraryItemAction(
     return "Cần tải lên file PDF.";
   }
 
-  // Same "Đơn hàng"-gated pricing as admin/courses/actions.ts — an admin
-  // without it creates a new item that starts unsold, regardless of the
-  // request body, since the form hides these fields for them.
+  // "Miễn phí" is available to any admin who can manage library items at
+  // all — only giá gốc/giá khuyến mãi stay behind "Đơn hàng" (MANAGE_ORDERS),
+  // same split as admin/courses/actions.ts.
+  const isFree = formData.get("isFree") === "on";
   let pricing: { price: number; salePrice: number | null; isFree: boolean };
   if (canManageOrders) {
     const resolved = resolvePricingFields(formData, parsed.data.price, parsed.data.salePrice);
@@ -103,7 +104,7 @@ export async function createLibraryItemAction(
     }
     pricing = { price: parsed.data.price, salePrice: resolved.salePrice, isFree: resolved.isFree };
   } else {
-    pricing = { price: 0, salePrice: null, isFree: false };
+    pricing = { price: 0, salePrice: null, isFree };
   }
 
   const visibleToGuest = formData.get("visibleToGuest") === "on";
@@ -203,15 +204,19 @@ export async function updateLibraryItemAction(
 
   const { libraryItemId } = parsed.data;
 
-  // Without "Đơn hàng", pricing fields are left out of the update entirely —
-  // same rule as updateCourseAction in admin/courses/actions.ts.
-  let pricing: { price?: number; salePrice?: number | null; isFree?: boolean } = {};
+  // "Miễn phí" is always honored, even without "Đơn hàng" — giá gốc/giá
+  // khuyến mãi stay out of the update entirely for such an admin (the form
+  // doesn't render them), same rule as updateCourseAction above.
+  const isFree = formData.get("isFree") === "on";
+  let pricing: { price?: number; salePrice?: number | null; isFree?: boolean };
   if (canManageOrders) {
     const resolved = resolvePricingFields(formData, parsed.data.price, parsed.data.salePrice);
     if (typeof resolved === "string") {
       return resolved;
     }
     pricing = { price: parsed.data.price, salePrice: resolved.salePrice, isFree: resolved.isFree };
+  } else {
+    pricing = { isFree };
   }
 
   // format is fixed after creation (never trust a submitted value for it) —
