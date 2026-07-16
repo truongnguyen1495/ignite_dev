@@ -44,7 +44,10 @@ export default async function DashboardLayout({
     isSalesEnabled(),
     getAdminPermissions(student.id),
   ]);
-  const hasAdminAccess = adminPermissions.size > 0;
+  // An Admin Manager's full content access bypasses the AdminPermission
+  // table entirely (see hasFullAdminAccess in src/lib/access.ts), so its size
+  // alone would miss them here.
+  const hasAdminAccess = adminPermissions.size > 0 || student.isAdminManager;
   const isLeveled = student.grantedLevel !== null;
   const chatInbox = chatEnabled && isLeveled ? await getStudentChatInbox(student) : null;
   const readIds = new Set(reads.map((r) => r.announcementId));

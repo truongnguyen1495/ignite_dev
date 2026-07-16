@@ -7,6 +7,7 @@ export const dictionaries = {
     common: {
       admin: "Admin",
       superAdmin: "Super Admin",
+      adminManager: "Admin Manager",
       logout: "Đăng xuất",
       switchToEnglish: "Chuyển sang tiếng Anh",
       switchToVietnamese: "Chuyển sang tiếng Việt",
@@ -109,6 +110,7 @@ export const dictionaries = {
     common: {
       admin: "Admin",
       superAdmin: "Super Admin",
+      adminManager: "Admin Manager",
       logout: "Log out",
       switchToEnglish: "Switch to English",
       switchToVietnamese: "Switch to Vietnamese",

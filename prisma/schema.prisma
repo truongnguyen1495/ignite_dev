@@ -73,29 +73,45 @@ enum OrderItemKind {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  passwordHash String
-  name         String
-  username     String?       @unique
-  dateOfBirth  DateTime?     @db.Date
-  phoneNumber  String?       @unique
-  role         Role
-  status       AccountStatus @default(ACTIVE)
+  id              String        @id @default(cuid())
+  email           String        @unique
+  passwordHash    String
+  name            String
+  username        String?       @unique
+  dateOfBirth     DateTime?     @db.Date
+  phoneNumber     String?       @unique
+  role            Role
+  status          AccountStatus @default(ACTIVE)
   // Null means "no cấp" — a self-registered account not (yet) on the 5-level
   // ladder, restricted to exclusive courses/library/announcements/profile
   // (see requireLeveledStudent in src/lib/access.ts, the single choke point
   // that walls the level ladder, lessons/quizzes, and chat off from these
   // accounts). Admins can also set this directly via the student forms.
-  grantedLevel Level?
+  grantedLevel    Level?
   // A STUDENT account created purely to be a limited admin (see
   // requireAnyAdminAccess/requireActiveStudent in src/lib/access.ts) — blocked
   // from /dashboard and excluded from student rosters/pickers, unlike a
   // regular dual-role admin (a real student additionally granted an
   // AdminPermission) which keeps studying as normal.
-  adminOnly    Boolean       @default(false)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  adminOnly       Boolean       @default(false)
+  // Middle tier between STUDENT-with-permissions and SUPER_ADMIN: a real học
+  // viên (adminOnly false, grantedLevel set) that a Super Admin designated to
+  // hold every content permission SUPER_ADMIN holds (see hasFullAdminAccess
+  // in src/lib/access.ts), short-circuiting the AdminPermission table just
+  // like SUPER_ADMIN does. Excludes /admin/settings (feature toggles), which
+  // stays SUPER_ADMIN-only regardless of this flag. Eligibility is only
+  // checked when this is set (setAdminManagerAction) — every write path that
+  // can violate it afterward (demoting back to "học sinh", flipping adminOnly
+  // true) clears both this and canManageAdmins in the same update so the flag
+  // never survives on an ineligible account.
+  isAdminManager  Boolean       @default(false)
+  // Separate from isAdminManager itself: an Admin Manager only reaches
+  // /admin/admins (creating/editing other admins' permissions) if a Super
+  // Admin explicitly also grants this — not implied by isAdminManager alone.
+  // Meaningless when isAdminManager is false.
+  canManageAdmins Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   quizAttempts            QuizAttempt[]
   levelUpRequests         LevelUpRequest[]         @relation("StudentRequests")
@@ -425,58 +441,58 @@ model CourseLevelGrant {
 // paths point at objects in a private Supabase bucket, never a public URL —
 // everything is served through our own authenticated route handlers.
 model LibraryItem {
-  id                String          @id @default(cuid())
-  title             String
-  author            String?
-  description       String?         @db.Text
-  type              LibraryItemType @default(BOOK)
+  id                        String            @id @default(cuid())
+  title                     String
+  author                    String?
+  description               String?           @db.Text
+  type                      LibraryItemType   @default(BOOK)
   // Defaults to PDF so every existing row keeps behaving exactly as before.
   // INTERACTIVE items have no filePath/previewFilePath — see LibraryBookPage
   // and requireGuestLibraryItemAccess/getLibraryItemAccessLevel in
   // src/lib/access.ts for the format-aware branches.
-  format            LibraryItemFormat @default(PDF)
-  coverImageUrl     String?
+  format                    LibraryItemFormat @default(PDF)
+  coverImageUrl             String?
   // Admin-uploaded backdrop rendered behind the flipbook reader (both PDF
   // and INTERACTIVE formats) — purely decorative "reading nook" background,
   // independent of coverImageUrl (which is the small thumbnail used on
   // listing cards).
-  backgroundImageUrl String?
+  backgroundImageUrl        String?
   // Only set (and required, enforced at the action layer, not by the
   // schema) when format is PDF — INTERACTIVE items have no uploaded file.
-  filePath          String?
+  filePath                  String?
   // "N trang" for list views either way — for INTERACTIVE items this is
   // just pages.length, kept in sync on every saveLibraryBookPagesAction.
-  pageCount         Int?
+  pageCount                 Int?
   // Fixed design-pixel canvas size for an INTERACTIVE item, chosen once in
   // the editor and not resizable after (every element's x/y/width/height in
   // LibraryBookPage.elements is relative to this). Null for PDF items.
-  bookWidth         Int?
-  bookHeight        Int?
-  previewFilePath   String?
-  guestPreviewPages Int?
-  order             Int             @default(0)
-  visibleToGuest    Boolean         @default(false)
+  bookWidth                 Int?
+  bookHeight                Int?
+  previewFilePath           String?
+  guestPreviewPages         Int?
+  order                     Int               @default(0)
+  visibleToGuest            Boolean           @default(false)
   // Master hide switch, same convention as Announcement.visibleToStudents:
   // false pulls the item from student and guest access alike (overriding
   // visibleToGuest and any grants) without deleting it or touching grants.
   // Defaults true so existing rows keep showing up unchanged.
-  visibleToStudents Boolean         @default(true)
+  visibleToStudents         Boolean           @default(true)
   // Admin-curated, independent of visibleToGuest: only checked by the guest
   // homepage's "Ebook nổi bật" section, same convention as Course.featuredOnHome.
-  featuredOnHome    Boolean         @default(false)
+  featuredOnHome            Boolean           @default(false)
   // Continuous rule for "học sinh" (grantedLevel null) accounts, same
   // convention as Course.openToProspectiveStudents — a dedicated on/off
   // switch since LibraryLevelGrant (Level-typed) can never match a null
   // grantedLevel. Checked in studentHasLibraryItemAccess (src/lib/access.ts).
-  openToProspectiveStudents Boolean @default(false)
+  openToProspectiveStudents Boolean           @default(false)
   // VND, 0 = "không bán", same convention as Course.price.
-  price             Int             @default(0)
+  price                     Int               @default(0)
   // Optional discounted price, same convention as Course.salePrice.
-  salePrice         Int?
+  salePrice                 Int?
   // Master "free for everyone" switch, same convention as Course.isFree.
-  isFree            Boolean         @default(false)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  isFree                    Boolean           @default(false)
+  createdAt                 DateTime          @default(now())
+  updatedAt                 DateTime          @updatedAt
 
   grants      LibraryAccessGrant[]
   levelGrants LibraryLevelGrant[]

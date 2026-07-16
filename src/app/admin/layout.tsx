@@ -33,8 +33,8 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user: admin, isSuperAdmin, permissions } = await requireAnyAdminAccess();
-  const canManage = (permission: AdminPermissionKind) => isSuperAdmin || permissions.has(permission);
+  const { user: admin, isSuperAdmin, isAdminManager, canManageAdmins, permissions } = await requireAnyAdminAccess();
+  const canManage = (permission: AdminPermissionKind) => isSuperAdmin || isAdminManager || permissions.has(permission);
   const { t } = await getDictionary();
 
   // Live unread count needs a DB read, so NAV_ITEMS moves inside the async
@@ -133,11 +133,14 @@ export default async function AdminLayout({
     NAV_ITEMS.splice(1, 0, ...studentChildren);
   }
 
-  // Admin management and Settings (which together control who has admin
-  // permissions at all) stay Super-Admin only — a limited admin must never
-  // see, let alone reach, the pages that could grant itself more access.
-  if (isSuperAdmin) {
+  // Admin management needs its own explicit canManageAdmins grant even for
+  // an Admin Manager (see requireAdminManagementAccess in src/lib/access.ts)
+  // — isAdminManager alone isn't enough. Settings (feature toggles) stays
+  // Super-Admin only no matter what, so an Admin Manager never sees it.
+  if (isSuperAdmin || (isAdminManager && canManageAdmins)) {
     NAV_ITEMS.push({ href: "/admin/admins", label: t.adminNav.adminManagement, icon: <UserCog className={iconClass} /> });
+  }
+  if (isSuperAdmin) {
     NAV_ITEMS.push({ href: "/admin/settings", label: t.adminNav.settings, icon: <Settings className={iconClass} /> });
   }
 
@@ -165,7 +168,7 @@ export default async function AdminLayout({
               <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-primary" />
               <span className="truncate">{admin.name}</span>
               <span className="hidden shrink-0 text-foreground sm:inline">
-                ({isSuperAdmin ? t.common.superAdmin : t.common.admin})
+                ({isSuperAdmin ? t.common.superAdmin : isAdminManager ? t.common.adminManager : t.common.admin})
               </span>
             </span>
             <LanguageSwitcher />

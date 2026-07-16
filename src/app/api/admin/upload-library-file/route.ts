@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getAdminPermissions } from "@/lib/access";
+import { getAdminPermissions, hasFullAdminAccess } from "@/lib/access";
 import { uploadLibraryFile } from "@/lib/library-storage";
 import { getPdfPageCount } from "@/lib/library-pdf";
 
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   if (!user || user.status !== "ACTIVE") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  if (user.role !== "SUPER_ADMIN") {
+  if (!hasFullAdminAccess(user)) {
     const permissions = await getAdminPermissions(user.id);
     if (!permissions.has("MANAGE_LIBRARY")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });

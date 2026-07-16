@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireActiveSuperAdmin } from "@/lib/access";
+import { requireAdminManagementAccess } from "@/lib/access";
 import { BackLink } from "@/components/ui/back-link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,10 +9,11 @@ import { LEVEL_LABELS } from "@/lib/levels";
 import { formatDateTimeVN } from "@/lib/date";
 import { ADMIN_PERMISSION_LABELS } from "@/lib/admin-permissions";
 import { AdminPermissionEditor } from "./admin-permission-editor";
+import { AdminManagerEditor } from "./admin-manager-editor";
 import { ToggleAdminStatusButton, DeleteAdminAccountButton } from "./danger-actions";
 
 export default async function AdminDetailPage({ params }: { params: Promise<{ adminId: string }> }) {
-  await requireActiveSuperAdmin();
+  const { isSuperAdmin } = await requireAdminManagementAccess();
   const { adminId } = await params;
 
   const admin = await prisma.user.findUnique({
@@ -27,6 +28,13 @@ export default async function AdminDetailPage({ params }: { params: Promise<{ ad
   if (!admin || admin.role !== "STUDENT") {
     notFound();
   }
+  // An Admin Manager (canManageAdmins) must never even view another Admin
+  // Manager's detail page, not just be blocked from acting on it — same
+  // boundary enforced server-side in every action in ./actions.ts.
+  if (!isSuperAdmin && admin.isAdminManager) {
+    notFound();
+  }
+  const isEligibleForAdminManager = !admin.adminOnly && admin.grantedLevel !== null;
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
@@ -34,6 +42,7 @@ export default async function AdminDetailPage({ params }: { params: Promise<{ ad
         <BackLink href="/admin/admins">Quay lại</BackLink>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <h1 className="text-xl font-semibold text-foreground">{admin.name}</h1>
+          {admin.isAdminManager && <Badge color="primary">Admin Manager</Badge>}
           <Badge color={admin.adminOnly ? "warning" : "muted"}>
             {admin.adminOnly ? "Chỉ admin" : "Học viên + Admin"}
           </Badge>
@@ -73,8 +82,31 @@ export default async function AdminDetailPage({ params }: { params: Promise<{ ad
         </dl>
       </Card>
 
+      {isSuperAdmin && isEligibleForAdminManager && (
+        <Card className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Admin Manager</h2>
+            <p className="text-xs text-muted">
+              Cấp toàn bộ quyền nội dung như Super Admin (trừ Cài đặt), tùy chọn kèm quyền Quản lý Admin để cấp lại
+              quyền cho admin khác.
+            </p>
+          </div>
+          <AdminManagerEditor
+            adminId={admin.id}
+            initialIsAdminManager={admin.isAdminManager}
+            initialCanManageAdmins={admin.canManageAdmins}
+          />
+        </Card>
+      )}
+
       <Card className="space-y-4">
         <h2 className="text-sm font-semibold text-foreground">Quyền admin</h2>
+        {admin.isAdminManager && (
+          <p className="text-xs text-muted">
+            Tài khoản này đã là Admin Manager nên có toàn bộ quyền bên dưới — các lựa chọn ở đây không giới hạn thêm
+            gì, chỉ ảnh hưởng nếu Admin Manager bị thu hồi sau này.
+          </p>
+        )}
         <AdminPermissionEditor
           adminId={admin.id}
           initialAdminOnly={admin.adminOnly}

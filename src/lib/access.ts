@@ -81,6 +81,17 @@ export async function requireActiveSuperAdmin(): Promise<User> {
   return requireRole("SUPER_ADMIN");
 }
 
+// SUPER_ADMIN and an Admin Manager (a STUDENT designated by a Super Admin —
+// see User.isAdminManager in schema.prisma) hold the exact same content
+// permissions, short-circuiting the AdminPermission table the same way.
+// The two things Admin Manager does NOT get are /admin/settings
+// (requireActiveSuperAdmin gates that directly) and /admin/admins (gated
+// separately below by requireAdminManagementAccess, since that needs its own
+// canManageAdmins grant on top of isAdminManager).
+export function hasFullAdminAccess(user: User): boolean {
+  return user.role === "SUPER_ADMIN" || user.isAdminManager;
+}
+
 // Same "fresh from DB, cached per request" shape as requireRole, but without
 // pinning a role — used by the permission helpers below, which need to
 // branch on role themselves rather than being redirected away by requireRole.
@@ -108,11 +119,12 @@ export const getAdminPermissions = cache(async (userId: string): Promise<Set<Adm
 });
 
 // Gate for an individual admin page/action scoped to one feature area.
-// SUPER_ADMIN always passes, regardless of the AdminPermission table — that
-// table only ever describes a STUDENT's limited slice of /admin.
+// SUPER_ADMIN (and an Admin Manager — see hasFullAdminAccess) always passes,
+// regardless of the AdminPermission table — that table only ever describes
+// a STUDENT's limited slice of /admin.
 export async function requireAdminPermission(permission: AdminPermissionKind): Promise<User> {
   const user = await requireActiveUser();
-  if (user.role === "SUPER_ADMIN") {
+  if (hasFullAdminAccess(user)) {
     return user;
   }
   const permissions = await getAdminPermissions(user.id);
@@ -130,7 +142,7 @@ export async function requireAdminPermission(permission: AdminPermissionKind): P
 // separate.
 export async function requireAnyAdminPermission(permissions: AdminPermissionKind[]): Promise<User> {
   const user = await requireActiveUser();
-  if (user.role === "SUPER_ADMIN") {
+  if (hasFullAdminAccess(user)) {
     return user;
   }
   const granted = await getAdminPermissions(user.id);
@@ -147,7 +159,7 @@ export async function requireAnyAdminPermission(permissions: AdminPermissionKind
 // prior requireAdminPermission/requireRole call on this same request so the
 // SUPER_ADMIN short-circuit and DB lookup stay consistent with that gate.
 export async function hasAdminPermission(user: User, permission: AdminPermissionKind): Promise<boolean> {
-  if (user.role === "SUPER_ADMIN") {
+  if (hasFullAdminAccess(user)) {
     return true;
   }
   const permissions = await getAdminPermissions(user.id);
@@ -169,17 +181,45 @@ export async function hasAdminPermission(user: User, permission: AdminPermission
 export async function requireAnyAdminAccess(): Promise<{
   user: User;
   isSuperAdmin: boolean;
+  isAdminManager: boolean;
+  canManageAdmins: boolean;
   permissions: Set<AdminPermissionKind>;
 }> {
   const user = await requireActiveUser();
   if (user.role === "SUPER_ADMIN") {
-    return { user, isSuperAdmin: true, permissions: new Set() };
+    return { user, isSuperAdmin: true, isAdminManager: false, canManageAdmins: false, permissions: new Set() };
+  }
+  if (user.isAdminManager) {
+    return {
+      user,
+      isSuperAdmin: false,
+      isAdminManager: true,
+      canManageAdmins: user.canManageAdmins,
+      permissions: new Set(),
+    };
   }
   const permissions = await getAdminPermissions(user.id);
   if (permissions.size === 0 && !user.adminOnly) {
     redirect("/dashboard");
   }
-  return { user, isSuperAdmin: false, permissions };
+  return { user, isSuperAdmin: false, isAdminManager: false, canManageAdmins: false, permissions };
+}
+
+// Gate for /admin/admins specifically (creating admin accounts, granting/
+// revoking their AdminPermission rows) — narrower than requireAnyAdminAccess
+// on purpose: an Admin Manager's isAdminManager flag alone is NOT enough
+// here, since "manage other admins" is a separate, explicitly-grantable
+// capability (canManageAdmins) per Super Admin's decision, same spirit as
+// DEMOTE_STUDENTS being separate from plain MANAGE_STUDENTS above.
+export async function requireAdminManagementAccess(): Promise<{ user: User; isSuperAdmin: boolean }> {
+  const user = await requireActiveUser();
+  if (user.role === "SUPER_ADMIN") {
+    return { user, isSuperAdmin: true };
+  }
+  if (user.isAdminManager && user.canManageAdmins) {
+    return { user, isSuperAdmin: false };
+  }
+  redirect("/admin?denied=1");
 }
 
 // Master kill switch for the whole chat feature, toggled from

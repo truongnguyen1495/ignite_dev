@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Eye } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireAdminPermission, getAdminPermissions } from "@/lib/access";
+import { requireAdminPermission, getAdminPermissions, hasFullAdminAccess } from "@/lib/access";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatDateVN } from "@/lib/date";
@@ -12,10 +12,10 @@ export default async function ProspectiveStudentsPage() {
   // Locking/deleting an existing học sinh each need their own permission —
   // MANAGE_PROSPECTIVE_STUDENTS above only covers viewing + creating. See
   // the same split on the Học viên list page (admin/students/page.tsx).
-  const isSuperAdmin = admin.role === "SUPER_ADMIN";
-  const granted = isSuperAdmin ? null : await getAdminPermissions(admin.id);
-  const canLock = isSuperAdmin || !!granted?.has("LOCK_PROSPECTIVE_STUDENTS");
-  const canDelete = isSuperAdmin || !!granted?.has("DELETE_PROSPECTIVE_STUDENTS");
+  const isFullAdmin = hasFullAdminAccess(admin);
+  const granted = isFullAdmin ? null : await getAdminPermissions(admin.id);
+  const canLock = isFullAdmin || !!granted?.has("LOCK_PROSPECTIVE_STUDENTS");
+  const canDelete = isFullAdmin || !!granted?.has("DELETE_PROSPECTIVE_STUDENTS");
 
   // "Học sinh" — self-registered (or admin-created) accounts not yet on
   // the 5-level ladder. Kept as its own page/permission, independent of

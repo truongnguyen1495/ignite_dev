@@ -68,3 +68,10 @@ export const ADMIN_PERMISSION_LABELS: Record<AdminPermissionKind, string> = {
   MANAGE_ANNOUNCEMENTS: "Bản tin",
   MANAGE_ORDERS: "Đơn hàng",
 };
+
+// Every AdminPermissionKind value, derived from ADMIN_PERMISSION_LABELS
+// (a Record<AdminPermissionKind, string>, so TS enforces it stays exhaustive
+// as the enum grows) rather than hand-maintained — this is what an Admin
+// Manager's or SUPER_ADMIN's "effective permissions" resolve to in
+// setAccountPermissionsAction, since both hold every permission that exists.
+export const ALL_ADMIN_PERMISSIONS = Object.keys(ADMIN_PERMISSION_LABELS) as AdminPermissionKind[];

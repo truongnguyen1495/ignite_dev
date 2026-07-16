@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Plus, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireActiveSuperAdmin } from "@/lib/access";
+import { requireAdminManagementAccess } from "@/lib/access";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,16 +12,26 @@ import { RevokeAllPermissionsButton } from "./revoke-all-permissions-button";
 import { RestorePermissionsButton } from "./restore-permissions-button";
 
 export default async function AdminsPage() {
-  await requireActiveSuperAdmin();
+  const { isSuperAdmin } = await requireAdminManagementAccess();
 
   const admins = await prisma.user.findMany({
-    where: { role: "STUDENT", adminPermissions: { some: {} } },
+    where: {
+      role: "STUDENT",
+      // An Admin Manager's full access never comes from AdminPermission rows
+      // (see hasFullAdminAccess in src/lib/access.ts) — isAdminManager alone
+      // must list them here too, or a designated Admin Manager with zero
+      // rows would be invisible on this page. An Admin Manager caller must
+      // not even see other Admin Managers, same boundary as the actions.
+      OR: [{ adminPermissions: { some: {} } }, { isAdminManager: true }],
+      ...(isSuperAdmin ? {} : { isAdminManager: false }),
+    },
     select: {
       id: true,
       name: true,
       email: true,
       status: true,
       adminOnly: true,
+      isAdminManager: true,
       createdAt: true,
       adminPermissions: { select: { permission: true, revokedAt: true } },
     },
@@ -66,6 +76,7 @@ export default async function AdminsPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <p className="truncate text-sm font-medium text-foreground">{admin.name}</p>
+                      {admin.isAdminManager && <Badge color="primary">Admin Manager</Badge>}
                       <Badge color={admin.adminOnly ? "warning" : "muted"}>
                         {admin.adminOnly ? "Chỉ admin" : "Học viên + Admin"}
                       </Badge>

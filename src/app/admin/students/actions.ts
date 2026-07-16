@@ -137,6 +137,15 @@ export async function updateStudentAction(
   if (password) {
     data.passwordHash = await bcrypt.hash(password, 10);
   }
+  // Demoting back to "học sinh" through this shared form must clear
+  // isAdminManager/canManageAdmins the same as demoteStudentAction below —
+  // an Admin Manager is by definition a real học viên (grantedLevel set),
+  // so losing that would otherwise leave the flag stale on an ineligible
+  // account.
+  if (current?.grantedLevel !== null && grantedLevel === null) {
+    data.isAdminManager = false;
+    data.canManageAdmins = false;
+  }
 
   try {
     await prisma.user.update({ where: { id: studentId, role: "STUDENT" }, data });
@@ -197,7 +206,9 @@ export async function demoteStudentAction(studentId: string) {
   await requireAdminPermission("DEMOTE_STUDENTS");
   await prisma.user.update({
     where: { id: studentId, role: "STUDENT" },
-    data: { grantedLevel: null },
+    // Clears isAdminManager/canManageAdmins too — see the comment on the
+    // equivalent branch in updateStudentAction above.
+    data: { grantedLevel: null, isAdminManager: false, canManageAdmins: false },
   });
   revalidatePath("/admin/students");
   revalidatePath("/admin/prospective-students");

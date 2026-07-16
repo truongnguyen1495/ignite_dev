@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireAdminPermission, getAdminPermissions } from "@/lib/access";
+import { requireAdminPermission, getAdminPermissions, hasFullAdminAccess } from "@/lib/access";
 import { PageHeader } from "@/components/ui/page-header";
 import { PendingJoinRequests } from "./pending-join-requests";
 import { StudentsTable, type StudentRow } from "./students-table";
@@ -13,11 +13,11 @@ export default async function StudentsPage() {
   // itself (which only covers viewing the list + creating new accounts), so
   // a limited admin may see this list without being able to do any of them.
   // Computed once here to decide which action buttons each row renders.
-  const isSuperAdmin = admin.role === "SUPER_ADMIN";
-  const granted = isSuperAdmin ? null : await getAdminPermissions(admin.id);
-  const canLock = isSuperAdmin || !!granted?.has("LOCK_STUDENTS");
-  const canDelete = isSuperAdmin || !!granted?.has("DELETE_STUDENTS");
-  const canDemote = isSuperAdmin || !!granted?.has("DEMOTE_STUDENTS");
+  const isFullAdmin = hasFullAdminAccess(admin);
+  const granted = isFullAdmin ? null : await getAdminPermissions(admin.id);
+  const canLock = isFullAdmin || !!granted?.has("LOCK_STUDENTS");
+  const canDelete = isFullAdmin || !!granted?.has("DELETE_STUDENTS");
+  const canDemote = isFullAdmin || !!granted?.has("DEMOTE_STUDENTS");
   // "Học sinh" (grantedLevel null) are a fully separate flow with their own
   // page and permission — see /admin/prospective-students. Their pending
   // "tham gia hệ thống đào tạo 5 cấp" requests are reviewed here instead,

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { userCanAccessChatThread, isChatEnabled, getAdminPermissions } from "@/lib/access";
+import { userCanAccessChatThread, isChatEnabled, hasAdminPermission } from "@/lib/access";
 import { downloadChatAttachment } from "@/lib/chat-storage";
 
 // Plain auth() + manual checks instead of the redirect-based requireXxx
@@ -30,8 +30,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ mess
   if (!message || !message.attachmentPath) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  const hasChatAdminPermission =
-    user.role === "STUDENT" && (await getAdminPermissions(user.id)).has("MANAGE_CHAT");
+  const hasChatAdminPermission = await hasAdminPermission(user, "MANAGE_CHAT");
   if (!userCanAccessChatThread(user, message.thread, hasChatAdminPermission)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

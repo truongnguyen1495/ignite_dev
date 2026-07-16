@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDateOnlyVN, formatDateTimeVN } from "@/lib/date";
-import { requireAnyAdminPermission, getAdminPermissions } from "@/lib/access";
+import { requireAnyAdminPermission, getAdminPermissions, hasFullAdminAccess } from "@/lib/access";
 import { EditStudentForm } from "./edit-student-form";
 import { DeleteStudentButton, ToggleStudentStatusButton, DemoteStudentButton } from "./danger-actions";
 import { LEVEL_LABELS, hasLevelAccess, levelRank } from "@/lib/levels";
@@ -35,13 +35,13 @@ export default async function EditStudentPage({
   // "học viên" with grantedLevel set, or a "học sinh") — MANAGE_STUDENTS/
   // MANAGE_PROSPECTIVE_STUDENTS (this page's own gate) only cover viewing +
   // creating. Demoting only ever applies to a học viên target.
-  const isSuperAdmin = admin.role === "SUPER_ADMIN";
+  const isFullAdmin = hasFullAdminAccess(admin);
   const isHocVien = student.grantedLevel !== null;
-  const granted = isSuperAdmin ? null : await getAdminPermissions(admin.id);
-  const canEdit = isSuperAdmin || !!granted?.has(isHocVien ? "EDIT_STUDENTS" : "EDIT_PROSPECTIVE_STUDENTS");
-  const canLock = isSuperAdmin || !!granted?.has(isHocVien ? "LOCK_STUDENTS" : "LOCK_PROSPECTIVE_STUDENTS");
-  const canDelete = isSuperAdmin || !!granted?.has(isHocVien ? "DELETE_STUDENTS" : "DELETE_PROSPECTIVE_STUDENTS");
-  const canDemote = isSuperAdmin || !!granted?.has("DEMOTE_STUDENTS");
+  const granted = isFullAdmin ? null : await getAdminPermissions(admin.id);
+  const canEdit = isFullAdmin || !!granted?.has(isHocVien ? "EDIT_STUDENTS" : "EDIT_PROSPECTIVE_STUDENTS");
+  const canLock = isFullAdmin || !!granted?.has(isHocVien ? "LOCK_STUDENTS" : "LOCK_PROSPECTIVE_STUDENTS");
+  const canDelete = isFullAdmin || !!granted?.has(isHocVien ? "DELETE_STUDENTS" : "DELETE_PROSPECTIVE_STUDENTS");
+  const canDemote = isFullAdmin || !!granted?.has("DEMOTE_STUDENTS");
 
   const [attempts, levelUpRequests, courseGrants, courseLevelGrants] = await Promise.all([
     prisma.quizAttempt.findMany({

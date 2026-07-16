@@ -1,10 +1,10 @@
-import { requireActiveSuperAdmin } from "@/lib/access";
+import { requireAdminManagementAccess } from "@/lib/access";
 import { BackLink } from "@/components/ui/back-link";
 import { PageHeader } from "@/components/ui/page-header";
 import { NewAdminPicker } from "./new-admin-picker";
 
 export default async function NewAdminPage() {
-  await requireActiveSuperAdmin();
+  await requireAdminManagementAccess();
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
