@@ -637,7 +637,10 @@ export function userCanAccessChatThread(
 }
 
 export async function requireOwnSupportThreadAccess() {
-  const student = await requireLeveledStudent();
+  // Deliberately requireActiveStudent, not requireLeveledStudent — a "học
+  // sinh" (grantedLevel null) can also reach admin support chat, unlike
+  // DIRECT/GROUP threads which stay leveled-only.
+  const student = await requireActiveStudent();
   await requireChatEnabled("/dashboard");
   const thread = await getOrCreateSupportThread(student.id);
   return { student, thread };
