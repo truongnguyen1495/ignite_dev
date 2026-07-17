@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, LifeBuoy, Users, Globe } from "lucide-react";
 import { requireAdminPermission, requireChatEnabled } from "@/lib/access";
-import { getAdminSupportInbox, getAdminGroupRooms } from "@/lib/chat";
+import { getAdminSupportInbox, getAdminGroupRooms, type AdminSupportInboxRow } from "@/lib/chat";
 import { getAdminGuestChatInbox } from "@/lib/guest-chat";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { PageHeader } from "@/components/ui/page-header";
@@ -16,6 +16,43 @@ function UnreadBadge({ count }: { count: number }) {
   );
 }
 
+function SupportThreadCard({
+  title,
+  emptyLabel,
+  threads,
+}: {
+  title: string;
+  emptyLabel: string;
+  threads: AdminSupportInboxRow[];
+}) {
+  return (
+    <Card className="space-y-2">
+      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+      {threads.length === 0 ? (
+        <p className="text-sm text-muted">{emptyLabel}</p>
+      ) : (
+        threads.map((thread) => (
+          <Link
+            key={thread.threadId}
+            href={`/admin/chat/${thread.threadId}`}
+            className="flex items-center gap-3 rounded-lg border border-border bg-background p-3 transition-colors hover:border-primary/50"
+          >
+            <LifeBuoy className="h-5 w-5 shrink-0 text-primary" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm text-foreground">{thread.student.name}</p>
+              {thread.lastMessagePreview && (
+                <p className="truncate text-xs text-muted">{thread.lastMessagePreview}</p>
+              )}
+            </div>
+            <UnreadBadge count={thread.unreadCount} />
+            <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
+          </Link>
+        ))
+      )}
+    </Card>
+  );
+}
+
 export default async function AdminChatPage() {
   const admin = await requireAdminPermission("MANAGE_CHAT");
   await requireChatEnabled("/admin");
@@ -24,6 +61,8 @@ export default async function AdminChatPage() {
     getAdminGroupRooms(admin.id),
     getAdminGuestChatInbox(admin.id),
   ]);
+  const hocSinhThreads = threads.filter((t) => t.student.grantedLevel === null);
+  const hocVienThreads = threads.filter((t) => t.student.grantedLevel !== null);
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
@@ -40,29 +79,17 @@ export default async function AdminChatPage() {
         }
       />
 
-      <Card className="space-y-2">
-        {threads.length === 0 ? (
-          <p className="text-sm text-muted">Chưa có học viên nào nhắn tin hỗ trợ.</p>
-        ) : (
-          threads.map((thread) => (
-            <Link
-              key={thread.threadId}
-              href={`/admin/chat/${thread.threadId}`}
-              className="flex items-center gap-3 rounded-lg border border-border bg-background p-3 transition-colors hover:border-primary/50"
-            >
-              <LifeBuoy className="h-5 w-5 shrink-0 text-primary" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-foreground">{thread.student.name}</p>
-                {thread.lastMessagePreview && (
-                  <p className="truncate text-xs text-muted">{thread.lastMessagePreview}</p>
-                )}
-              </div>
-              <UnreadBadge count={thread.unreadCount} />
-              <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
-            </Link>
-          ))
-        )}
-      </Card>
+      <SupportThreadCard
+        title="Hỗ trợ học sinh"
+        emptyLabel="Chưa có học sinh nào nhắn tin hỗ trợ."
+        threads={hocSinhThreads}
+      />
+
+      <SupportThreadCard
+        title="Hỗ trợ học viên"
+        emptyLabel="Chưa có học viên nào nhắn tin hỗ trợ."
+        threads={hocVienThreads}
+      />
 
       <Card className="space-y-2">
         <h2 className="text-sm font-semibold text-foreground">Khách (chưa đăng nhập)</h2>

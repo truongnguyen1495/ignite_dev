@@ -197,7 +197,7 @@ export async function getStudentChatInbox(student: User): Promise<StudentChatInb
 
 export type AdminSupportInboxRow = {
   threadId: string;
-  student: { id: string; name: string };
+  student: { id: string; name: string; grantedLevel: Level | null };
   lastMessagePreview: string | null;
   lastMessageAt: Date;
   unreadCount: number;
@@ -206,7 +206,7 @@ export type AdminSupportInboxRow = {
 export async function getAdminSupportInbox(adminId: string): Promise<AdminSupportInboxRow[]> {
   const threads = await prisma.chatThread.findMany({
     where: { kind: "SUPPORT" },
-    include: { supportStudent: { select: { id: true, name: true } } },
+    include: { supportStudent: { select: { id: true, name: true, grantedLevel: true } } },
     orderBy: { lastMessageAt: "desc" },
   });
   const unreadCounts = await getUnreadCounts(
