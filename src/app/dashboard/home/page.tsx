@@ -111,7 +111,7 @@ export default async function StudentHomePage() {
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
-        <GuestCourseList courses={featuredCourses} />
+        <GuestCourseList courses={featuredCourses} isLoggedIn />
       </section>
 
       <section className="space-y-4">
@@ -125,7 +125,7 @@ export default async function StudentHomePage() {
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
-        <GuestLibraryList items={featuredEbookItems} />
+        <GuestLibraryList items={featuredEbookItems} isLoggedIn />
       </section>
     </div>
   );

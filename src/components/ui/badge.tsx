@@ -24,7 +24,11 @@ export function Badge({
 }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${COLOR_CLASSES[color]}`}
+      // w-fit keeps this hugging its text even when a flex-col parent (the
+      // grid course/library cards, for instance) defaults to align-items:
+      // stretch — inline-flex alone only controls the badge's own children,
+      // not how the badge itself is sized within its parent flex container.
+      className={`inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-medium ${COLOR_CLASSES[color]}`}
     >
       {children}
     </span>

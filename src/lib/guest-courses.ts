@@ -27,6 +27,11 @@ export type GuestCourseItem = {
   price: number;
   salePrice: number | null;
   salesEnabled: boolean;
+  // Only populated (non-zero) for a logged-in student's home teaser — an
+  // anonymous guest has no completion data to show, so these stay 0 and the
+  // caller simply never renders a progress bar in that case.
+  completedCount: number;
+  progressPercent: number;
 };
 
 const BANNER_GRADIENTS = [
@@ -63,16 +68,30 @@ export async function getGuestCourseItems({
 
   const basePath = student ? "/dashboard/courses" : "/guest/courses";
 
-  // Batched (3 queries total) instead of one getCourseAccessLevel call per
+  // Batched (fixed query count) instead of one getCourseAccessLevel call per
   // course — a per-course Promise.all fan-out here once blew through
   // DATABASE_URL's connection_limit=1 on /dashboard/home's featured teaser.
-  const [accessLevels, salesEnabled] = await Promise.all([
+  const [accessLevels, salesEnabled, completions] = await Promise.all([
     student ? getCourseAccessLevels(student, courses.map((course) => course.id)) : Promise.resolve(null),
     isSalesEnabled(),
+    student
+      ? prisma.courseLessonCompletion.findMany({
+          where: { studentId: student.id, courseLesson: { courseId: { in: courses.map((c) => c.id) } } },
+          select: { courseLesson: { select: { courseId: true } } },
+        })
+      : Promise.resolve([]),
   ]);
+
+  const completedCountByCourse = new Map<string, number>();
+  for (const completion of completions) {
+    const courseId = completion.courseLesson.courseId;
+    completedCountByCourse.set(courseId, (completedCountByCourse.get(courseId) ?? 0) + 1);
+  }
 
   return courses.map((course, index) => {
     const fullyUnlocked = student ? accessLevels!.get(course.id) === "full" : course.isFree;
+    const completedCount = completedCountByCourse.get(course.id) ?? 0;
+    const totalLessons = course.lessons.length;
     // A fully-unlocked course opens every lesson — every lesson counts as
     // "visible" instead of only the ones opted into visibleToGuest (see
     // requireGuestCourseLessonAccess/requireCourseLessonAccess in
@@ -88,7 +107,7 @@ export async function getGuestCourseItems({
       title: course.title,
       description: course.description,
       coverImageUrl: course.coverImageUrl,
-      totalLessons: course.lessons.length,
+      totalLessons,
       ctaLabel: hasLockedLessons ? "Vào học thử" : "Vào học",
       href,
       gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
@@ -97,6 +116,8 @@ export async function getGuestCourseItems({
       price: course.price,
       salePrice: course.salePrice,
       salesEnabled,
+      completedCount,
+      progressPercent: totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0,
     };
   });
 }
