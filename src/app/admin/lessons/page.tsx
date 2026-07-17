@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Video, ClipboardList } from "lucide-react";
+import { Plus, Video, FileText, ClipboardList } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPermission } from "@/lib/access";
 import { ORDERED_LEVELS } from "@/lib/levels";
@@ -51,28 +51,26 @@ export default async function LessonsPage() {
               </span>
             }
           >
-            <ul className="mt-2 space-y-2">
+            <ul className="mt-2 space-y-2.5">
               {levelLessons.map((lesson) => (
                 <li
                   key={lesson.id}
-                  className="flex items-center gap-2 rounded-lg border border-border bg-surface p-3 hover:border-primary/50"
+                  className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3.5 transition-colors hover:border-primary/50 hover:bg-surface-hover"
                 >
-                  <Link href={`/admin/lessons/${lesson.id}`} className="flex min-w-0 flex-1 items-center gap-2">
-                    <span className="min-w-0">
-                      <span className="flex items-center gap-2">
-                        <span className="text-foreground">{lesson.title}</span>
-                        {lesson.youtubeId && <Video className="h-3.5 w-3.5 shrink-0 text-muted" />}
-                      </span>
-                      {lesson.description && (
-                        <span className="block truncate text-xs text-muted">{lesson.description}</span>
-                      )}
-                    </span>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    {lesson.youtubeId ? <Video className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                  </span>
+                  <Link href={`/admin/lessons/${lesson.id}`} className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-foreground">{lesson.title}</span>
+                    {lesson.description && (
+                      <span className="truncate text-xs text-muted">{lesson.description}</span>
+                    )}
                   </Link>
                   {lesson.quiz ? (
                     <Link
                       href={`/admin/quizzes/${lesson.quiz.id}`}
                       title="Soạn bài test"
-                      className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs text-muted transition-colors hover:bg-surface-hover hover:text-primary"
+                      className="flex shrink-0 items-center gap-1 rounded-full bg-success-bg px-2.5 py-1 text-xs font-medium text-success"
                     >
                       <ClipboardList className="h-3.5 w-3.5" />
                       Có bài test
@@ -82,7 +80,7 @@ export default async function LessonsPage() {
                       <button
                         type="submit"
                         title="Tạo và soạn bài test"
-                        className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs text-muted transition-colors hover:bg-surface-hover hover:text-primary"
+                        className="flex shrink-0 items-center gap-1 rounded-full bg-warning-bg px-2.5 py-1 text-xs font-medium text-warning"
                       >
                         <ClipboardList className="h-3.5 w-3.5" />
                         Chưa có bài test

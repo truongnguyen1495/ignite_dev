@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { createContext, useContext, useState } from "react";
 import { ChevronDown, Menu, X } from "lucide-react";
+
+type QueryCondition = { param: string; value: string };
 
 export type NavItem = {
   href: string;
@@ -21,7 +23,26 @@ export type NavItem = {
   // automatically when the active route is one of the children (see the
   // active-child check in Sidebar) so it never hides where you currently are.
   children?: NavItem[];
+  // "Học viên" (/admin/students) and "Học sinh" (/admin/prospective-students)
+  // share one detail route (/admin/students/[studentId]) for both kinds of
+  // account — plain prefix matching would always credit "Học viên", even
+  // when viewing a "học sinh" record. The "Học sinh" list link appends
+  // ?from=prospective so this item claims the shared route instead, and
+  // "Học viên" suppresses its own match for that same query — see isNavItemActive.
+  altActiveHrefPrefix?: string;
+  altActiveQuery?: QueryCondition;
+  suppressActiveQuery?: QueryCondition;
 };
+
+function isNavItemActive(item: NavItem, pathname: string, searchParams: URLSearchParams): boolean {
+  const baseActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+  const suppressed = item.suppressActiveQuery && searchParams.get(item.suppressActiveQuery.param) === item.suppressActiveQuery.value;
+  const altActive =
+    !!item.altActiveHrefPrefix &&
+    pathname.startsWith(item.altActiveHrefPrefix) &&
+    (!item.altActiveQuery || searchParams.get(item.altActiveQuery.param) === item.altActiveQuery.value);
+  return (baseActive && !suppressed) || altActive;
+}
 
 const SidebarContext = createContext<{ open: boolean; setOpen: (open: boolean) => void } | null>(
   null
@@ -71,6 +92,7 @@ export function Sidebar({
   variant?: "navy" | "light";
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { open, setOpen } = useSidebar();
   const navy = variant === "navy";
   // Explicit user toggles override the "expand while a child route is
@@ -103,7 +125,7 @@ export function Sidebar({
         <div className="px-6 py-6">{brand}</div>
         <nav className="flex-1 space-y-1 overflow-y-auto px-3">
           {items.map((item) => {
-            const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+            const active = isNavItemActive(item, pathname, searchParams);
             const hasChildren = !!item.children?.length;
             const childActive = hasChildren && item.children!.some((c) => pathname.startsWith(c.href));
             const expanded = expandOverrides[item.href] ?? childActive;

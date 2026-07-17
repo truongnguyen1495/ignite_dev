@@ -61,6 +61,11 @@ export default async function AdminLayout({
         href: "/admin/prospective-students",
         label: t.adminNav.prospectiveStudents,
         icon: <UserPlus className={iconClass} />,
+        // Claims the shared /admin/students/[studentId] detail route when
+        // linked to with ?from=prospective (see the "Học sinh" list page's
+        // "Xem chi tiết" link) — see NavItem's comment in sidebar.tsx.
+        altActiveHrefPrefix: "/admin/students",
+        altActiveQuery: { param: "from", value: "prospective" },
       },
       permission: "MANAGE_PROSPECTIVE_STUDENTS",
     },
@@ -128,6 +133,9 @@ export default async function AdminLayout({
       label: t.adminNav.students,
       icon: <Users className={iconClass} />,
       children: studentChildren.length > 0 ? studentChildren : undefined,
+      // See the "Học sinh" item's altActiveQuery above — don't also claim
+      // the shared detail route when it's actually a "học sinh" record.
+      suppressActiveQuery: { param: "from", value: "prospective" },
     });
   } else {
     NAV_ITEMS.splice(1, 0, ...studentChildren);

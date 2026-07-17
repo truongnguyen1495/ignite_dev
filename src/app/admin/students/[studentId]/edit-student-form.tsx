@@ -24,6 +24,7 @@ export function EditStudentForm({
   dateOfBirthLabel,
   canEdit,
   canDemote,
+  isHocVien,
 }: {
   studentId: string;
   name: string;
@@ -45,6 +46,13 @@ export function EditStudentForm({
   // Irrelevant (always shown) for a student who's already học sinh, since
   // re-selecting the same value isn't a demotion.
   canDemote: boolean;
+  // A "học sinh" (grantedLevel null) edit view hides the password reset
+  // field and the level dropdown entirely, per explicit user request —
+  // promoting a học sinh into the 5-level system is expected to go through
+  // the join-request approval queue (/admin/level-up-requests) instead of
+  // this shared form. grantedLevel is still submitted as a hidden NONE
+  // input so updateStudentAction's required field still validates.
+  isHocVien: boolean;
 }) {
   const [error, formAction, pending] = useActionState(updateStudentAction, undefined);
   const [isDirty, setIsDirty] = useState(false);
@@ -134,30 +142,36 @@ export function EditStudentForm({
             placeholder="0xxxxxxxxx hoặc +84xxxxxxxxx"
             disabled={!canEdit}
           />
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            label="Mật khẩu mới (để trống nếu không đổi)"
-            minLength={8}
-            disabled={!canEdit}
-          />
-          <Select
-            id="grantedLevel"
-            name="grantedLevel"
-            label="Cấp được cấp quyền"
-            defaultValue={grantedLevel ?? NO_LEVEL_VALUE}
-            disabled={!canEdit}
-          >
-            {ORDERED_LEVELS.map((level) => (
-              <option key={level} value={level}>
-                {LEVEL_LABELS[level]}
-              </option>
-            ))}
-            {(canDemote || grantedLevel === null) && (
-              <option value={NO_LEVEL_VALUE}>Học sinh (chưa tham gia đào tạo 5 cấp)</option>
-            )}
-          </Select>
+          {isHocVien ? (
+            <>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                label="Mật khẩu mới (để trống nếu không đổi)"
+                minLength={8}
+                disabled={!canEdit}
+              />
+              <Select
+                id="grantedLevel"
+                name="grantedLevel"
+                label="Cấp được cấp quyền"
+                defaultValue={grantedLevel ?? NO_LEVEL_VALUE}
+                disabled={!canEdit}
+              >
+                {ORDERED_LEVELS.map((level) => (
+                  <option key={level} value={level}>
+                    {LEVEL_LABELS[level]}
+                  </option>
+                ))}
+                {(canDemote || grantedLevel === null) && (
+                  <option value={NO_LEVEL_VALUE}>Học sinh (chưa tham gia đào tạo 5 cấp)</option>
+                )}
+              </Select>
+            </>
+          ) : (
+            <input type="hidden" name="grantedLevel" value={NO_LEVEL_VALUE} />
+          )}
           {error && <p className="text-sm text-danger">{error}</p>}
           {canEdit && (
             <Button

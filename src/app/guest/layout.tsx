@@ -5,6 +5,7 @@ import { isChatEnabled } from "@/lib/access";
 import { getDictionary } from "@/lib/i18n/get-locale";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { GuestChatWidget } from "./guest-chat-widget";
+import { GuestNav } from "./guest-nav";
 
 // Public shell for the /guest/* tree — deliberately outside SidebarProvider
 // and requireActiveStudent: no session is ever read here. middleware.ts's
@@ -36,36 +37,22 @@ export default async function GuestLayout({ children }: { children: React.ReactN
             </Link>
           </div>
         </div>
-        <nav className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-2 px-4 py-3 text-sm sm:px-8">
-          <Link
-            href="/guest"
-            className="flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
-          >
-            <Home className="h-4 w-4" />
-            {t.guestNav.home}
-          </Link>
-          <Link
-            href="/guest/announcements"
-            className="flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
-          >
-            <Megaphone className="h-4 w-4" />
-            {t.guestNav.announcements}
-          </Link>
-          <Link
-            href="/guest/courses"
-            className="flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
-          >
-            <Video className="h-4 w-4" />
-            {t.guestNav.exclusiveCourses}
-          </Link>
-          <Link
-            href="/guest/library"
-            className="flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
-          >
-            <Library className="h-4 w-4" />
-            {t.guestNav.library}
-          </Link>
-        </nav>
+        <GuestNav
+          items={[
+            { href: "/guest", label: t.guestNav.home, icon: <Home className="h-4 w-4" />, exact: true },
+            {
+              href: "/guest/announcements",
+              label: t.guestNav.announcements,
+              icon: <Megaphone className="h-4 w-4" />,
+            },
+            {
+              href: "/guest/courses",
+              label: t.guestNav.exclusiveCourses,
+              icon: <Video className="h-4 w-4" />,
+            },
+            { href: "/guest/library", label: t.guestNav.library, icon: <Library className="h-4 w-4" /> },
+          ]}
+        />
       </header>
       <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-8">{children}</main>
       {chatEnabled && <GuestChatWidget />}

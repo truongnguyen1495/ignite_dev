@@ -3,6 +3,8 @@ import { BookOpen, ChevronRight, FileText } from "lucide-react";
 import type { LibraryItemType } from "@prisma/client";
 import type { GuestLibraryItem } from "@/lib/guest-library";
 import { Badge } from "@/components/ui/badge";
+import { PriceBlock } from "@/components/price-block";
+import { getPricing } from "@/lib/pricing";
 
 export type { GuestLibraryItem };
 
@@ -20,6 +22,7 @@ export function GuestLibraryList({ items }: { items: GuestLibraryItem[] }) {
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((item) => {
         const Icon = TYPE_ICON[item.type];
+        const pricing = getPricing(item);
         return (
           <Link
             key={item.id}
@@ -39,10 +42,17 @@ export function GuestLibraryList({ items }: { items: GuestLibraryItem[] }) {
               )}
             </div>
             <div className="flex flex-1 flex-col p-5">
-              {(item.isFree || item.fullyUnlocked) && (
+              {item.isFree || item.fullyUnlocked ? (
                 <div className="mb-2">
                   <Badge color="success">{item.isFree ? "Miễn phí" : "Đã mở khóa"}</Badge>
                 </div>
+              ) : (
+                item.salesEnabled &&
+                pricing.forSale && (
+                  <div className="mb-2">
+                    <PriceBlock price={pricing.chargeAmount} originalPrice={pricing.originalPrice} />
+                  </div>
+                )
               )}
               <p className="font-semibold text-dark-foreground">{item.title}</p>
               {item.author && <p className="mt-0.5 text-sm text-dark-muted">{item.author}</p>}

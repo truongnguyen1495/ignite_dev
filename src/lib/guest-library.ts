@@ -1,7 +1,7 @@
 import "server-only";
 import type { User, LibraryItemType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getLibraryItemAccessLevels } from "@/lib/access";
+import { getLibraryItemAccessLevels, isSalesEnabled } from "@/lib/access";
 
 export type GuestLibraryItem = {
   id: string;
@@ -20,6 +20,11 @@ export type GuestLibraryItem = {
   // still show "Miễn phí" specifically vs a plain "Đã mở khóa" for access
   // granted some other way.
   fullyUnlocked: boolean;
+  // Only meaningful for display when the card isn't already free/unlocked
+  // and sales are actually on — same reasoning as GuestCourseItem's fields.
+  price: number;
+  salePrice: number | null;
+  salesEnabled: boolean;
 };
 
 const BANNER_GRADIENTS = [
@@ -65,9 +70,10 @@ export async function getGuestLibraryItems({
   // Batched (3 queries total) instead of one getLibraryItemAccessLevel call
   // per item — a per-item Promise.all fan-out here once blew through
   // DATABASE_URL's connection_limit=1 on /dashboard/home's featured teaser.
-  const accessLevels = student
-    ? await getLibraryItemAccessLevels(student, items.map((item) => item.id))
-    : null;
+  const [accessLevels, salesEnabled] = await Promise.all([
+    student ? getLibraryItemAccessLevels(student, items.map((item) => item.id)) : Promise.resolve(null),
+    isSalesEnabled(),
+  ]);
 
   return items.map((item, index) => {
     const fullyUnlocked = student ? accessLevels!.get(item.id) === "full" : item.isFree;
@@ -83,6 +89,9 @@ export async function getGuestLibraryItems({
       gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
       isFree: item.isFree,
       fullyUnlocked,
+      price: item.price,
+      salePrice: item.salePrice,
+      salesEnabled,
     };
   });
 }

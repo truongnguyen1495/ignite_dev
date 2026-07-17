@@ -65,7 +65,7 @@ export default async function ProspectiveStudentsPage() {
                   <td className="px-4 py-4 sm:px-6">
                     <div className="flex items-center justify-end gap-1">
                       <Link
-                        href={`/admin/students/${student.id}`}
+                        href={`/admin/students/${student.id}?from=prospective`}
                         title="Xem / sửa"
                         className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
                       >

@@ -1,7 +1,7 @@
 import "server-only";
 import type { User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getCourseAccessLevels } from "@/lib/access";
+import { getCourseAccessLevels, isSalesEnabled } from "@/lib/access";
 
 export type GuestCourseItem = {
   id: string;
@@ -19,6 +19,14 @@ export type GuestCourseItem = {
   // still show "Miễn phí" specifically vs a plain "Đã mở khóa" for access
   // granted some other way.
   fullyUnlocked: boolean;
+  // Only meaningful for display (a price/original-price row) when the card
+  // isn't already free/unlocked and sales are actually on — these teaser
+  // cards never offer an inline "Mua ngay", just a price so it isn't a
+  // silent gap next to the "Miễn phí"/"Đã mở khóa" badge (see PriceBlock's
+  // usage in GuestCourseList).
+  price: number;
+  salePrice: number | null;
+  salesEnabled: boolean;
 };
 
 const BANNER_GRADIENTS = [
@@ -58,9 +66,10 @@ export async function getGuestCourseItems({
   // Batched (3 queries total) instead of one getCourseAccessLevel call per
   // course — a per-course Promise.all fan-out here once blew through
   // DATABASE_URL's connection_limit=1 on /dashboard/home's featured teaser.
-  const accessLevels = student
-    ? await getCourseAccessLevels(student, courses.map((course) => course.id))
-    : null;
+  const [accessLevels, salesEnabled] = await Promise.all([
+    student ? getCourseAccessLevels(student, courses.map((course) => course.id)) : Promise.resolve(null),
+    isSalesEnabled(),
+  ]);
 
   return courses.map((course, index) => {
     const fullyUnlocked = student ? accessLevels!.get(course.id) === "full" : course.isFree;
@@ -85,6 +94,9 @@ export async function getGuestCourseItems({
       gradient: BANNER_GRADIENTS[index % BANNER_GRADIENTS.length],
       isFree: course.isFree,
       fullyUnlocked,
+      price: course.price,
+      salePrice: course.salePrice,
+      salesEnabled,
     };
   });
 }
