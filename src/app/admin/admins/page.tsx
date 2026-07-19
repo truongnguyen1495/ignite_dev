@@ -22,7 +22,14 @@ export default async function AdminsPage() {
       // must list them here too, or a designated Admin Manager with zero
       // rows would be invisible on this page. An Admin Manager caller must
       // not even see other Admin Managers, same boundary as the actions.
-      OR: [{ adminPermissions: { some: {} } }, { isAdminManager: true }],
+      //
+      // revokedAt: null (not just "some row exists") — once every permission
+      // is revoked (RemoveAdminRoleButton/RevokeAllPermissionsButton), the
+      // account drops off this list entirely rather than lingering with a
+      // "restore" row, per explicit user decision. It's still reachable via
+      // "Thêm admin" → search, and re-granting there reactivates the old
+      // revoked rows (see setAccountPermissionsAction).
+      OR: [{ adminPermissions: { some: { revokedAt: null } } }, { isAdminManager: true }],
       ...(isSuperAdmin ? {} : { isAdminManager: false }),
     },
     select: {
