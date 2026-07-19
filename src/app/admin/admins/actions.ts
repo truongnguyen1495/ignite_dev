@@ -149,7 +149,14 @@ export async function setAccountPermissionsAction(
       // only a Super Admin can reach this branch for an isAdminManager
       // target (assertManageableByCaller above already blocks an Admin
       // Manager caller from touching one).
-      data: adminOnly ? { adminOnly, isAdminManager: false, canManageAdmins: false } : { adminOnly },
+      //
+      // Granting at least one permission always clears hiddenFromAdminList —
+      // re-adding someone through "Thêm admin" must make them reappear in
+      // the list, even if they were previously removed from it.
+      data: {
+        ...(adminOnly ? { adminOnly, isAdminManager: false, canManageAdmins: false } : { adminOnly }),
+        ...(unique.length > 0 ? { hiddenFromAdminList: false } : {}),
+      },
     }),
     prisma.adminPermission.updateMany({
       where: { userId, revokedAt: null, permission: { notIn: unique } },
@@ -169,6 +176,37 @@ export async function setAccountPermissionsAction(
         ];
       }
       return [];
+    }),
+  ]);
+
+  revalidatePath("/admin/admins");
+  revalidatePath(`/admin/admins/${userId}`);
+  return undefined;
+}
+
+// Distinct from plain revoke-all (setAccountPermissionsAction(id, [], ...)):
+// that one intentionally keeps the row visible in the list with a Restore
+// option. This one is the dedicated "xóa khỏi danh sách admin" action — same
+// revoke-everything effect, plus hiddenFromAdminList so the row disappears
+// from /admin/admins entirely. Re-adding the account later through "Thêm
+// admin" clears the flag again (see setAccountPermissionsAction above).
+export async function removeFromAdminListAction(userId: string): Promise<string | undefined> {
+  const { isSuperAdmin } = await requireAdminManagementAccess();
+  const target = await prisma.user.findUnique({ where: { id: userId }, include: { adminPermissions: true } });
+  if (!target || target.role !== "STUDENT") {
+    return "Không tìm thấy tài khoản học viên này.";
+  }
+  const targetError = assertManageableByCaller(isSuperAdmin, target);
+  if (targetError) return targetError;
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: userId },
+      data: { isAdminManager: false, canManageAdmins: false, hiddenFromAdminList: true },
+    }),
+    prisma.adminPermission.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
     }),
   ]);
 

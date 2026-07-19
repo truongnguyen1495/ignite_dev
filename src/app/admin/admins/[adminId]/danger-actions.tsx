@@ -12,7 +12,7 @@ import {
   setAdminAccountStatusAction,
   deleteAdminAccountAction,
   convertAdminOnlyAccountAction,
-  setAccountPermissionsAction,
+  removeFromAdminListAction,
 } from "../actions";
 
 export function ToggleAdminStatusButton({ adminId, locked }: { adminId: string; locked: boolean }) {
@@ -40,9 +40,10 @@ export function ToggleAdminStatusButton({ adminId, locked }: { adminId: string; 
 // Only rendered for a real học viên (adminOnly false) — "xóa tài khoản
 // admin" here can never mean deleting the underlying student account (that
 // stays exclusively /admin/students' call), just stripping every trace of
-// admin capability so it goes back to being a plain học viên. Same effect
-// as the list page's RevokeAllPermissionsButton, surfaced here too so it's
-// discoverable from the Khu vực nguy hiểm card, not just the list icon.
+// admin capability so it goes back to being a plain học viên, AND removing
+// it from /admin/admins entirely (removeFromAdminListAction) — distinct
+// from the list page's plain revoke-all icon, which deliberately keeps the
+// row visible with a Restore option instead.
 export function RemoveAdminRoleButton({ adminId, adminName }: { adminId: string; adminName: string }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -51,14 +52,15 @@ export function RemoveAdminRoleButton({ adminId, adminName }: { adminId: string;
   const onClick = async () => {
     const ok = await confirm({
       title: `Xóa tài khoản admin của "${adminName}"?`,
-      description: "Tài khoản sẽ mất hết quyền admin và về lại làm học viên bình thường — cấp độ và dữ liệu học tập được giữ nguyên.",
+      description:
+        "Tài khoản sẽ mất hết quyền admin và không còn hiện trong danh sách Quản lý Admin nữa — về lại làm học viên bình thường, cấp độ và dữ liệu học tập được giữ nguyên. Muốn cấp lại thì tìm qua \"Thêm admin\".",
       confirmLabel: "Xóa tài khoản admin",
       tone: "danger",
     });
     if (!ok) return;
     startTransition(async () => {
-      await setAccountPermissionsAction(adminId, [], false);
-      router.refresh();
+      await removeFromAdminListAction(adminId);
+      router.push("/admin/admins");
     });
   };
 

@@ -10,6 +10,7 @@ import { ADMIN_PERMISSION_LABELS } from "@/lib/admin-permissions";
 import { formatDateVN } from "@/lib/date";
 import { RevokeAllPermissionsButton } from "./revoke-all-permissions-button";
 import { RestorePermissionsButton } from "./restore-permissions-button";
+import { RemoveFromAdminListButton } from "./remove-from-admin-list-button";
 
 export default async function AdminsPage() {
   const { isSuperAdmin } = await requireAdminManagementAccess();
@@ -22,14 +23,13 @@ export default async function AdminsPage() {
       // must list them here too, or a designated Admin Manager with zero
       // rows would be invisible on this page. An Admin Manager caller must
       // not even see other Admin Managers, same boundary as the actions.
-      //
-      // revokedAt: null (not just "some row exists") — once every permission
-      // is revoked (RemoveAdminRoleButton/RevokeAllPermissionsButton), the
-      // account drops off this list entirely rather than lingering with a
-      // "restore" row, per explicit user decision. It's still reachable via
-      // "Thêm admin" → search, and re-granting there reactivates the old
-      // revoked rows (see setAccountPermissionsAction).
-      OR: [{ adminPermissions: { some: { revokedAt: null } } }, { isAdminManager: true }],
+      OR: [{ adminPermissions: { some: {} } }, { isAdminManager: true }],
+      // Distinct from plain revoke-all (which intentionally keeps a row
+      // visible with a Restore option) — set only by the dedicated "xóa khỏi
+      // danh sách admin" action, and cleared the moment any permission is
+      // granted again (setAccountPermissionsAction), so a re-added admin
+      // reappears here automatically.
+      hiddenFromAdminList: false,
       ...(isSuperAdmin ? {} : { isAdminManager: false }),
     },
     select: {
@@ -123,6 +123,7 @@ export default async function AdminsPage() {
                     adminOnly={admin.adminOnly}
                   />
                 )}
+                <RemoveFromAdminListButton adminId={admin.id} adminName={admin.name} />
               </div>
             );
           })}

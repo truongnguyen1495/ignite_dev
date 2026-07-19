@@ -114,6 +114,13 @@ model User {
   // Admin explicitly also grants this — not implied by isAdminManager alone.
   // Meaningless when isAdminManager is false.
   canManageAdmins     Boolean       @default(false)
+  // Purely a /admin/admins list-visibility preference, independent of actual
+  // permission state — set by removeFromAdminListAction (a dedicated "xóa
+  // khỏi danh sách admin" action distinct from the plain revoke-all button,
+  // which intentionally leaves this false and keeps the row visible +
+  // restorable). Cleared back to false the moment any permission is granted
+  // again via setAccountPermissionsAction, so a re-added admin reappears.
+  hiddenFromAdminList Boolean       @default(false)
   // Brute-force lockout, separate from the permanent admin-set `status:
   // LOCKED` above — auto-locks after too many wrong passwords in a row (see
   // src/lib/auth.ts authorize()), reset on the next successful login.
