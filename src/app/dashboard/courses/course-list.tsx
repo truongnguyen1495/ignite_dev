@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { BookOpen, Lock, Video, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
@@ -38,8 +39,13 @@ function AccessBadge({ accessLevel, isFree }: { accessLevel: CourseAccessLevel; 
 function Thumbnail({ course, className }: { course: StudentCourseItem; className: string }) {
   if (course.coverImageUrl) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={course.coverImageUrl} alt={course.title} className={`${className} object-cover`} />
+      <Image
+        src={course.coverImageUrl}
+        alt={course.title}
+        fill
+        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+        className={`${className} object-cover`}
+      />
     );
   }
   return (

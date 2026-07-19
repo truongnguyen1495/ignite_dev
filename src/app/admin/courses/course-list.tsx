@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { BookOpen, Users, Video } from "lucide-react";
 import type { Level } from "@prisma/client";
 import { LEVEL_LABELS } from "@/lib/levels";
@@ -31,8 +32,13 @@ export type AdminCourseItem = {
 function Thumbnail({ course, className }: { course: AdminCourseItem; className: string }) {
   if (course.coverImageUrl) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={course.coverImageUrl} alt={course.title} className={`${className} object-cover`} />
+      <Image
+        src={course.coverImageUrl}
+        alt={course.title}
+        fill
+        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+        className={`${className} object-cover`}
+      />
     );
   }
   return (
@@ -135,7 +141,7 @@ export function CourseList({ courses }: { courses: AdminCourseItem[] }) {
               href={`/admin/courses/${course.id}`}
               className="flex items-center gap-4 rounded-xl border border-dark-border bg-dark-surface p-3 transition-colors hover:border-primary/60"
             >
-              <div className="aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-dark-surface-raised">
+              <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-dark-surface-raised">
                 <Thumbnail course={course} className="h-full w-full" />
               </div>
               <div className="min-w-0 flex-1">

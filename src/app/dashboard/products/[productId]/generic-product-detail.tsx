@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Package } from "lucide-react";
 import { BackLink } from "@/components/ui/back-link";
 import { getPricing } from "@/lib/pricing";
@@ -29,8 +30,7 @@ export function GenericProductDetail({ product }: { product: GenericProduct }) {
       <div className="overflow-hidden rounded-xl border border-dark-border bg-dark-surface">
         <div className="relative aspect-video w-full overflow-hidden bg-dark-surface-raised">
           {product.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={product.imageUrl} alt={product.title} className="h-full w-full object-cover" />
+            <Image src={product.imageUrl} alt={product.title} fill sizes="(min-width: 640px) 42rem, 100vw" className="object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--primary)] to-[var(--info)]">
               <Package className="h-12 w-12 text-white/90" />

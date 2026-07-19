@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Package, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getPricing } from "@/lib/pricing";
@@ -19,8 +20,13 @@ export type AdminProductItem = {
 function Thumbnail({ product, className }: { product: AdminProductItem; className: string }) {
   if (product.imageUrl) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={product.imageUrl} alt={product.title} className={`${className} object-cover`} />
+      <Image
+        src={product.imageUrl}
+        alt={product.title}
+        fill
+        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+        className={`${className} object-cover`}
+      />
     );
   }
   return (

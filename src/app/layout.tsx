@@ -21,14 +21,6 @@ export const metadata: Metadata = {
   description: "Hệ thống đào tạo nội bộ 5 cấp",
 };
 
-// getLocale() reads Settings.bilingualEnabled (an admin-toggleable flag) on
-// every render — without this, Next tries to statically prerender pages
-// that don't otherwise opt out (notably /_not-found), which both bakes in a
-// stale snapshot of the flag and makes the production build depend on the
-// DB being reachable at build time. Same reasoning as the force-dynamic
-// exports on the guest/home pages for their own admin-toggleable flags.
-export const dynamic = "force-dynamic";
-
 export default async function RootLayout({
   children,
 }: Readonly<{

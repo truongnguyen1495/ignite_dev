@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Megaphone } from "lucide-react";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
 
@@ -45,8 +46,9 @@ export function GuestAnnouncementList({ announcements }: { announcements: GuestA
               className="overflow-hidden rounded-lg border border-border bg-surface transition-colors hover:border-primary/50"
             >
               {a.coverImageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={a.coverImageUrl} alt="" className="aspect-video w-full object-cover" />
+                <div className="relative aspect-video w-full overflow-hidden">
+                  <Image src={a.coverImageUrl} alt="" fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="object-cover" />
+                </div>
               ) : (
                 <div className="flex aspect-video w-full items-center justify-center bg-faint-bg">
                   <Megaphone className="h-6 w-6 text-muted" />
@@ -68,12 +70,9 @@ export function GuestAnnouncementList({ announcements }: { announcements: GuestA
                 className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3 transition-colors hover:border-primary/50"
               >
                 {a.coverImageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={a.coverImageUrl}
-                    alt=""
-                    className="aspect-video w-20 shrink-0 rounded-md object-cover"
-                  />
+                  <div className="relative aspect-video w-20 shrink-0 overflow-hidden rounded-md">
+                    <Image src={a.coverImageUrl} alt="" fill sizes="80px" className="object-cover" />
+                  </div>
                 ) : (
                   <span className="flex aspect-video w-20 shrink-0 items-center justify-center rounded-md bg-faint-bg">
                     <Megaphone className="h-4 w-4 text-muted" />

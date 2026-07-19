@@ -32,7 +32,7 @@ export default async function DirectMessageThreadPage({
   ]);
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-8rem)] w-full max-w-2xl flex-col">
+    <div className="chat-shell-height mx-auto flex w-full max-w-2xl flex-col">
       <div className="mb-4">
         <BackLink href="/dashboard/chat/dm">Quay lại</BackLink>
         <h1 className="mt-2 text-xl font-semibold text-foreground">{otherUser?.name ?? "Học viên"}</h1>

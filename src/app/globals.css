@@ -343,3 +343,14 @@ body {
 .no-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Edge (Chromium) */
 }
+
+/* Chat shell height — 100vh first as a fallback for browsers that don't
+   understand dvh (that declaration is simply ignored by them), then 100dvh
+   overrides it where supported. dvh tracks the *actual* visible viewport as
+   mobile browser chrome (address bar) collapses/expands, unlike vh which is
+   fixed to the viewport size at load — fixes the chat input getting clipped
+   or the layout jumping when scrolling on iOS Safari/iPad. */
+.chat-shell-height {
+  height: calc(100vh - 8rem);
+  height: calc(100dvh - 8rem);
+}

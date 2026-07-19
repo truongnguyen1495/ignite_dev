@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Package, ArrowRight } from "lucide-react";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
 import { getPricing } from "@/lib/pricing";
@@ -23,8 +24,13 @@ export type StudentProductItem = {
 function Thumbnail({ product, className }: { product: StudentProductItem; className: string }) {
   if (product.imageUrl) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={product.imageUrl} alt={product.title} className={`${className} object-cover`} />
+      <Image
+        src={product.imageUrl}
+        alt={product.title}
+        fill
+        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+        className={`${className} object-cover`}
+      />
     );
   }
   return (

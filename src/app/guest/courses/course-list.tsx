@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { BookOpen, ChevronRight, Video } from "lucide-react";
 import type { GuestCourseItem } from "@/lib/guest-courses";
 import { Badge } from "@/components/ui/badge";
@@ -56,8 +57,13 @@ export function GuestCourseList({
           >
             <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-dark-surface-raised">
               {course.coverImageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={course.coverImageUrl} alt={course.title} className="h-full w-full object-cover" />
+                <Image
+                  src={course.coverImageUrl}
+                  alt={course.title}
+                  fill
+                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                  className="object-cover"
+                />
               ) : (
                 <div
                   className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${course.gradient}`}
