@@ -15,6 +15,7 @@ import {
   GraduationCap,
   UserCog,
   Receipt,
+  Package,
 } from "lucide-react";
 import { requireAnyAdminAccess, isChatEnabled, isSalesEnabled } from "@/lib/access";
 import { getAdminSupportInbox } from "@/lib/chat";
@@ -76,6 +77,10 @@ export default async function AdminLayout({
     {
       item: { href: "/admin/library", label: t.adminNav.library, icon: <Library className={iconClass} /> },
       permission: "MANAGE_LIBRARY",
+    },
+    {
+      item: { href: "/admin/products", label: t.adminNav.products, icon: <Package className={iconClass} /> },
+      permission: "MANAGE_PRODUCTS",
     },
     {
       item: { href: "/admin/orders", label: t.adminNav.orders, icon: <Receipt className={iconClass} /> },

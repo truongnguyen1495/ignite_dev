@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Home,
   ShoppingCart,
+  Package,
 } from "lucide-react";
 import { requireActiveStudent, isChatEnabled, isSalesEnabled, getAdminPermissions } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
@@ -137,6 +138,7 @@ export default async function DashboardLayout({
     { href: "/dashboard", label: t.dashboardNav.fiveLevelTraining, icon: <LayoutDashboard className={iconClass} />, exact: true },
     { href: "/dashboard/courses", label: t.dashboardNav.exclusiveCourses, icon: <Video className={iconClass} /> },
     { href: "/dashboard/library", label: t.dashboardNav.library, icon: <Library className={iconClass} /> },
+    { href: "/dashboard/products", label: t.dashboardNav.products, icon: <Package className={iconClass} /> },
     {
       href: "/dashboard/announcements",
       label: t.dashboardNav.announcements,

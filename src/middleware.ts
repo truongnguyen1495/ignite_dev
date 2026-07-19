@@ -35,5 +35,9 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*"],
+  // /product/:path* is a học-viên-only bespoke product landing page living
+  // outside /dashboard (see src/app/product/[slug]/page.tsx) — needs the
+  // same fast unauthenticated-bounce as everything else, even though it
+  // isn't nested under /dashboard's own layout/middleware coverage.
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/product/:path*"],
 };

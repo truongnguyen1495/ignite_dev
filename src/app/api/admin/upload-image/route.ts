@@ -17,6 +17,7 @@ const ALLOWED_PERMISSIONS: AdminPermissionKind[] = [
   "MANAGE_COURSES",
   "MANAGE_LIBRARY",
   "MANAGE_ANNOUNCEMENTS",
+  "MANAGE_PRODUCTS",
 ];
 
 // Plain auth() + role check instead of requireActiveSuperAdmin(): that

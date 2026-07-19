@@ -11,6 +11,7 @@ import type { AdminPermissionKind } from "@prisma/client";
 export const ORDERED_ADMIN_PERMISSIONS: AdminPermissionKind[] = [
   "MANAGE_COURSES",
   "MANAGE_LIBRARY",
+  "MANAGE_PRODUCTS",
   "MANAGE_CHAT",
   "MANAGE_ANNOUNCEMENTS",
   "MANAGE_ORDERS",
@@ -67,6 +68,7 @@ export const ADMIN_PERMISSION_LABELS: Record<AdminPermissionKind, string> = {
   MANAGE_RESULTS: "Kết quả bài test",
   MANAGE_ANNOUNCEMENTS: "Bản tin",
   MANAGE_ORDERS: "Đơn hàng",
+  MANAGE_PRODUCTS: "Sản phẩm",
 };
 
 // Every AdminPermissionKind value, derived from ADMIN_PERMISSION_LABELS

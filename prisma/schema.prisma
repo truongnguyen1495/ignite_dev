@@ -201,6 +201,11 @@ enum AdminPermissionKind {
   // — độc lập với MANAGE_COURSES/MANAGE_LIBRARY vì đây là nghiệp vụ tiền bạc,
   // không phải quản lý nội dung.
   MANAGE_ORDERS
+  // Catalog sản phẩm vật lý (/admin/products) — độc lập với MANAGE_COURSES/
+  // MANAGE_LIBRARY vì Product không phải nội dung số (không có access grant/
+  // level gating), chỉ hiển thị cho học viên (xem requireLeveledStudent() ở
+  // dashboard/products).
+  MANAGE_PRODUCTS
 }
 
 model AdminPermission {
@@ -496,6 +501,41 @@ model CourseLevelGrant {
 
   @@unique([courseId, minLevel])
   @@index([courseId])
+}
+
+// A separate, simpler catalog of physical products — not digital content,
+// so unlike Course/LibraryItem there is no access-grant/level-gating model
+// at all: every học viên sees every product, and that's the entire access
+// rule (see requireLeveledStudent() in dashboard/products/*). No lessons,
+// no grants, just a flat admin-managed catalog.
+model Product {
+  id          String   @id @default(cuid())
+  title       String
+  subtitle    String?
+  description String?  @db.Text
+  // e.g. "Package" — shown as a small tag on the catalog card.
+  badgeLabel  String?
+  imageUrl    String?
+  order       Int      @default(0)
+  // VND, same convention as Course/LibraryItem.
+  price       Int      @default(0)
+  salePrice   Int?
+  // Commission Volume — display-only figure for now; this app has no
+  // compensation-plan/downline logic, just shows the number next to price.
+  cv          Int      @default(0)
+  // Non-null only for the one product (today: "sanarey-aria") that gets a
+  // fully bespoke landing page instead of the generic detail view — see the
+  // branch in dashboard/products/[productId]/page.tsx. Every other product
+  // renders the plain fallback detail page.
+  slug        String?  @unique
+  // Only populated (and only ever read) when slug is set — the 3 lifestyle
+  // photos used by that bespoke landing page's "ai nên sử dụng" section.
+  // Left null for every ordinary product.
+  lifestyleImage1Url String?
+  lifestyleImage2Url String?
+  lifestyleImage3Url String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // Library of books/documents (PDFs) — access control mirrors Course exactly
