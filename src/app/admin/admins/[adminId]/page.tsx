@@ -10,7 +10,7 @@ import { formatDateTimeVN } from "@/lib/date";
 import { ADMIN_PERMISSION_LABELS } from "@/lib/admin-permissions";
 import { AdminPermissionEditor } from "./admin-permission-editor";
 import { AdminManagerEditor } from "./admin-manager-editor";
-import { ToggleAdminStatusButton, DeleteAdminAccountButton } from "./danger-actions";
+import { ToggleAdminStatusButton, DeleteAdminAccountButton, RemoveAdminRoleButton } from "./danger-actions";
 
 export default async function AdminDetailPage({ params }: { params: Promise<{ adminId: string }> }) {
   const { isSuperAdmin } = await requireAdminManagementAccess();
@@ -143,7 +143,11 @@ export default async function AdminDetailPage({ params }: { params: Promise<{ ad
         <h2 className="text-sm font-semibold text-foreground">Khu vực nguy hiểm</h2>
         <div className="flex flex-wrap items-center gap-3">
           <ToggleAdminStatusButton adminId={admin.id} locked={admin.status === "LOCKED"} />
-          {admin.adminOnly && <DeleteAdminAccountButton adminId={admin.id} adminName={admin.name} />}
+          {admin.adminOnly ? (
+            <DeleteAdminAccountButton adminId={admin.id} adminName={admin.name} />
+          ) : (
+            <RemoveAdminRoleButton adminId={admin.id} adminName={admin.name} />
+          )}
         </div>
       </Card>
     </div>

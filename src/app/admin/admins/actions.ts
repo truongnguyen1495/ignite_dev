@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireActiveSuperAdmin, requireAdminManagementAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
-import { Prisma, type AdminPermissionKind } from "@prisma/client";
+import { Prisma, type AdminPermissionKind, type Level } from "@prisma/client";
 
 export type AccountSearchResult = { id: string; name: string; email: string; username: string | null };
 
@@ -29,6 +29,12 @@ export async function searchAccountsForPermissionAction(query: string): Promise<
     where: {
       role: "STUDENT",
       status: "ACTIVE",
+      // Admin permission grants are for "học viên" only, not "học sinh"
+      // (grantedLevel null) — explicit policy decision. adminOnly accounts
+      // have grantedLevel null too but aren't found through this picker at
+      // all (they're created directly via createAdminAccountAction), so
+      // this filter only ever excludes real học sinh here.
+      grantedLevel: { not: null },
       // An Admin Manager must not even find another Admin Manager in this
       // picker — same boundary as assertManageableByCaller below.
       ...(isSuperAdmin ? {} : { isAdminManager: false }),
@@ -121,6 +127,17 @@ export async function setAccountPermissionsAction(
   if (targetError) return targetError;
 
   const unique = Array.from(new Set(permissions));
+
+  // Granting (not revoking) admin permission is "học viên" only — a "học
+  // sinh" (grantedLevel null, adminOnly false) must go through
+  // convertAdminOnlyAccountAction/the join-request flow to become a real
+  // học viên first, not be handed admin capability while still no-cấp.
+  // Only blocks a non-empty grant; reducing an existing (grandfathered)
+  // set down to zero must still always be allowed.
+  if (unique.length > 0 && !target.adminOnly && target.grantedLevel === null) {
+    return "Chỉ có thể cấp quyền admin cho học viên đã có cấp — tài khoản này đang là học sinh (chưa xếp cấp).";
+  }
+
   const existingByPermission = new Map(target.adminPermissions.map((p) => [p.permission, p]));
 
   await prisma.$transaction([
@@ -221,6 +238,52 @@ export async function deleteAdminAccountAction(userId: string) {
   }
   await prisma.user.delete({ where: { id: userId, role: "STUDENT", adminOnly: true } });
   revalidatePath("/admin/admins");
+  redirect("/admin/admins");
+}
+
+// The other option offered alongside deleteAdminAccountAction when an
+// adminOnly (no real student identity) account is removed from admin duty —
+// instead of deleting the row outright, turns it into a genuine "học sinh"
+// or "học viên" account. Always strips every trace of admin capability in
+// the same update (explicit user decision: converting means becoming a
+// normal student, not staying a dual-role admin), same soft-revoke
+// convention as setAccountPermissionsAction above.
+export async function convertAdminOnlyAccountAction(
+  userId: string,
+  target: "HOC_SINH" | "HOC_VIEN",
+  level?: Level
+): Promise<string | undefined> {
+  const { isSuperAdmin } = await requireAdminManagementAccess();
+  const account = await prisma.user.findUnique({ where: { id: userId, role: "STUDENT" } });
+  if (!account) return "Không tìm thấy tài khoản này.";
+  if (!account.adminOnly) {
+    return "Tài khoản này đã là học viên/học sinh thật — không cần chuyển đổi.";
+  }
+  const targetError = assertManageableByCaller(isSuperAdmin, account);
+  if (targetError) return targetError;
+  if (target === "HOC_VIEN" && !level) {
+    return "Cần chọn cấp độ cho học viên.";
+  }
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: userId },
+      data: {
+        adminOnly: false,
+        isAdminManager: false,
+        canManageAdmins: false,
+        grantedLevel: target === "HOC_VIEN" ? level : null,
+      },
+    }),
+    prisma.adminPermission.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    }),
+  ]);
+
+  revalidatePath("/admin/admins");
+  revalidatePath("/admin/students");
+  revalidatePath("/admin/prospective-students");
   redirect("/admin/admins");
 }
 
