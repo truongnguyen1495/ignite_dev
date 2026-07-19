@@ -2,30 +2,28 @@
 
 import { useRef, useState } from "react";
 
-// Synthesizes a short "page swoosh" on every flip via the Web Audio API —
-// no MP3 asset to source/license, works fully offline. The AudioContext is
-// created lazily on the first real call (always inside a click/keypress
-// handler here), which doubles as satisfying the browser's "audio needs a
-// user gesture" autoplay policy.
+// Plays public/flipsound.ogg on every flip. The <audio> element is created
+// lazily on the first real call (always inside a click/keypress handler
+// here, since page flips are user-triggered), satisfying the browser's
+// "audio needs a user gesture" autoplay policy.
+//
+// .ogg has no playback support in Safari (desktop or iOS) — audio.play()
+// rejects there, in which case we fall back to a synthesized "page swoosh"
+// via the Web Audio API instead of leaving Safari/iPad silent.
 export function useFlipbookSound() {
   const [muted, setMuted] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
 
-  function getContext(): AudioContext | null {
-    if (typeof window === "undefined") return null;
+  function playFallbackSwoosh() {
+    if (typeof window === "undefined") return;
     if (!ctxRef.current) {
       const AudioContextCtor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (!AudioContextCtor) return null;
+      if (!AudioContextCtor) return;
       ctxRef.current = new AudioContextCtor();
     }
-    if (ctxRef.current.state === "suspended") void ctxRef.current.resume();
-    return ctxRef.current;
-  }
-
-  function playFlipSound() {
-    if (muted) return;
-    const ctx = getContext();
-    if (!ctx) return;
+    const ctx = ctxRef.current;
+    if (ctx.state === "suspended") void ctx.resume();
 
     const duration = 0.22;
     const bufferSize = Math.round(ctx.sampleRate * duration);
@@ -52,6 +50,17 @@ export function useFlipbookSound() {
     gain.connect(ctx.destination);
     noise.start(now);
     noise.stop(now + duration);
+  }
+
+  function playFlipSound() {
+    if (muted) return;
+    if (typeof window === "undefined") return;
+    if (!audioRef.current) {
+      audioRef.current = new Audio("/flipsound.ogg");
+    }
+    const audio = audioRef.current;
+    audio.currentTime = 0;
+    audio.play().catch(() => playFallbackSwoosh());
   }
 
   return { muted, toggleMuted: () => setMuted((m) => !m), playFlipSound };
