@@ -39,6 +39,7 @@ export function EditProductForm({
 }) {
   const [error, formAction, pending] = useActionState(updateProductAction, undefined);
   const [isDirty, setIsDirty] = useState(false);
+  const [slugValue, setSlugValue] = useState(slug ?? "");
   const wasPending = useRef(false);
 
   useEffect(() => {
@@ -104,35 +105,56 @@ export function EditProductForm({
         <div>
           <p className="text-sm font-medium text-foreground">Landing page riêng (tùy chọn)</p>
           <p className="mt-1 text-xs text-muted">
-            Chỉ điền nếu sản phẩm này có trang giới thiệu riêng được dựng thủ công (vd: SANAREY Aria).
-            Để trống với sản phẩm thông thường — trang chi tiết mặc định sẽ được dùng.
+            Chỉ điền nếu sản phẩm này có trang giới thiệu riêng được dựng thủ công (vd: SANAREY Aria, Activa,
+            Simetra, BR-9). Để trống với sản phẩm thông thường — trang chi tiết mặc định sẽ được dùng. Ảnh đời sống
+            bên dưới chỉ áp dụng cho slug sanarey-aria — các landing page khác dùng ảnh dựng sẵn trong code.
           </p>
         </div>
-        <Input id="slug" name="slug" defaultValue={slug ?? ""} label="Slug" hint="Vd: sanarey-aria — phải khớp với slug đã lập trình sẵn." />
-        <CoverImageInput
-          name="lifestyleImage1Url"
-          alt="Ảnh đời sống 1"
-          label="Ảnh đời sống 1"
-          defaultValue={lifestyleImage1Url ?? ""}
-          onChange={() => setIsDirty(true)}
-          enforceRatio={false}
+        <Input
+          id="slug"
+          name="slug"
+          defaultValue={slug ?? ""}
+          label="Slug"
+          hint="Vd: sanarey-aria — phải khớp với slug đã lập trình sẵn."
+          onChange={(e) => setSlugValue(e.target.value)}
         />
-        <CoverImageInput
-          name="lifestyleImage2Url"
-          alt="Ảnh đời sống 2"
-          label="Ảnh đời sống 2"
-          defaultValue={lifestyleImage2Url ?? ""}
-          onChange={() => setIsDirty(true)}
-          enforceRatio={false}
-        />
-        <CoverImageInput
-          name="lifestyleImage3Url"
-          alt="Ảnh đời sống 3"
-          label="Ảnh đời sống 3"
-          defaultValue={lifestyleImage3Url ?? ""}
-          onChange={() => setIsDirty(true)}
-          enforceRatio={false}
-        />
+        {slugValue.trim() === "sanarey-aria" ? (
+          <>
+            <CoverImageInput
+              name="lifestyleImage1Url"
+              alt="Ảnh đời sống 1"
+              label="Ảnh đời sống 1"
+              defaultValue={lifestyleImage1Url ?? ""}
+              onChange={() => setIsDirty(true)}
+              enforceRatio={false}
+            />
+            <CoverImageInput
+              name="lifestyleImage2Url"
+              alt="Ảnh đời sống 2"
+              label="Ảnh đời sống 2"
+              defaultValue={lifestyleImage2Url ?? ""}
+              onChange={() => setIsDirty(true)}
+              enforceRatio={false}
+            />
+            <CoverImageInput
+              name="lifestyleImage3Url"
+              alt="Ảnh đời sống 3"
+              label="Ảnh đời sống 3"
+              defaultValue={lifestyleImage3Url ?? ""}
+              onChange={() => setIsDirty(true)}
+              enforceRatio={false}
+            />
+          </>
+        ) : (
+          // Only the Aria landing page reads these — hidden (not removed)
+          // for every other slug so saving the form can't silently wipe out
+          // a value that happens to be stored from before.
+          <>
+            <input type="hidden" name="lifestyleImage1Url" value={lifestyleImage1Url ?? ""} />
+            <input type="hidden" name="lifestyleImage2Url" value={lifestyleImage2Url ?? ""} />
+            <input type="hidden" name="lifestyleImage3Url" value={lifestyleImage3Url ?? ""} />
+          </>
+        )}
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}
