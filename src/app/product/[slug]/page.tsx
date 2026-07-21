@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { AriaLandingPage } from "@/components/product-landing/aria-landing";
 import { ActivaLandingPage } from "@/components/product-landing/activa-landing";
 import { SimetraLandingPage } from "@/components/product-landing/simetra-landing";
+import { Br9LandingPage } from "@/components/product-landing/br9-landing";
 
 // Deliberately outside /dashboard entirely — a bespoke landing page needs
 // its own full-bleed nav/hero with no sidebar/header squeezing it, which
@@ -12,10 +13,10 @@ import { SimetraLandingPage } from "@/components/product-landing/simetra-landing
 // học-viên-only page is: requireLeveledStudent() redirects khách/học sinh
 // away exactly as it would under /dashboard.
 //
-// Three bespoke templates exist today ("sanarey-aria", "sanarey-activa",
-// "sanarey-simetra") — explicit one-off scope decision, not meant to
-// generalize into a CMS-driven template system yet. Any other slug 404s
-// rather than silently rendering nothing.
+// Four bespoke templates exist today ("sanarey-aria", "sanarey-activa",
+// "sanarey-simetra", "sanarey-br9") — explicit one-off scope decision, not
+// meant to generalize into a CMS-driven template system yet. Any other slug
+// 404s rather than silently rendering nothing.
 export default async function ProductLandingPage({
   params,
 }: {
@@ -62,6 +63,19 @@ export default async function ProductLandingPage({
   if (product.slug === "sanarey-simetra") {
     return (
       <SimetraLandingPage
+        product={{
+          id: product.id,
+          price: product.price,
+          salePrice: product.salePrice,
+          cv: product.cv,
+        }}
+      />
+    );
+  }
+
+  if (product.slug === "sanarey-br9") {
+    return (
+      <Br9LandingPage
         product={{
           id: product.id,
           price: product.price,
