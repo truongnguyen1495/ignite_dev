@@ -107,6 +107,40 @@ export function FlipbookChrome({
   // natural size, defeating the whole "fill remaining space" point.
   const bookBand = <div className="flex min-h-0 w-full flex-1 items-center justify-center">{bookArea}</div>;
 
+  // In fullscreen specifically, the toolbar also auto-hides after a couple
+  // seconds of no mouse movement (video-player style) and fades back in the
+  // instant the mouse moves — pointer-events-none while faded out so the
+  // invisible bar can't eat clicks meant for the page underneath it.
+  const controlsVisible = useAutoHideControls(isFullscreen);
+
+  if (isFullscreen) {
+    // Real video players (YouTube etc.) float their controls *over* the
+    // content instead of reserving a layout row for them — the content
+    // always gets the full frame, controls just dim in on top temporarily.
+    // The old approach kept the toolbar/thumbnails as normal flex siblings
+    // even in fullscreen, just fading their opacity when auto-hidden; that
+    // left their full layout height reserved-but-invisible once hidden — a
+    // dead gap between the book and where the (invisible) controls still
+    // sat, confirmed via direct layout measurement on a real device report.
+    // Making them `absolute` here removes them from the flex flow entirely,
+    // so bookBand's flex-1 (and the ResizeObserver height it feeds — see
+    // use-available-height.ts) always resolves against the *full* fullscreen
+    // frame, regardless of whether the controls are currently shown.
+    return (
+      <div ref={containerRef} className="relative flex h-full w-full items-center justify-center bg-background">
+        <div className="flex h-full w-full items-center justify-center p-6">{bookArea}</div>
+        <div
+          className={`absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-3 bg-gradient-to-t from-background via-background/90 to-transparent px-6 pb-4 pt-12 transition-opacity duration-300 ${
+            controlsVisible ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
+        >
+          {toolbar}
+          {thumbnailRail}
+        </div>
+      </div>
+    );
+  }
+
   // On a tall book (or a small/short browser window), this whole block can
   // end up taller than the viewport — the *page* scrolls, not this block,
   // since max-h-[75vh] bounds it against the full viewport height without
@@ -114,21 +148,12 @@ export function FlipbookChrome({
   // the toolbar just scrolled away with the rest of the page, a reader
   // mid-book would lose every control until they scrolled back up — sticky
   // keeps it pinned near the top of the viewport instead, regardless of
-  // where the book/thumbnails have scrolled to.
-  //
-  // In fullscreen specifically, the toolbar also auto-hides after a couple
-  // seconds of no mouse movement (video-player style) and fades back in the
-  // instant the mouse moves — pointer-events-none while faded out so the
-  // invisible bar can't eat clicks meant for the page underneath it.
-  const controlsVisible = useAutoHideControls(isFullscreen);
+  // where the book/thumbnails have scrolled to. (controlsVisible is always
+  // true here — useAutoHideControls only fades outside fullscreen — so this
+  // stays a plain always-visible bar, unaffected by the fullscreen change
+  // above.)
   const stickyToolbar = (
-    <div
-      className={`sticky top-3 z-30 transition-opacity duration-300 ${
-        controlsVisible ? "opacity-100" : "pointer-events-none opacity-0"
-      }`}
-    >
-      {toolbar}
-    </div>
+    <div className="sticky top-3 z-30">{toolbar}</div>
   );
 
   // A *definite* height here (not just max-height) matters, not just
@@ -146,11 +171,7 @@ export function FlipbookChrome({
   return (
     <div
       ref={containerRef}
-      className={
-        isFullscreen
-          ? "flex h-full w-full flex-col items-center justify-center gap-3 bg-background p-6"
-          : "flex h-[75vh] supports-[height:100dvh]:h-[75dvh] w-full flex-col items-center gap-3 overflow-hidden"
-      }
+      className="flex h-[75vh] supports-[height:100dvh]:h-[75dvh] w-full flex-col items-center gap-3 overflow-hidden"
     >
       {bookBand}
       {stickyToolbar}
