@@ -299,7 +299,16 @@ export function PdfFlipbook({
                 startPage={currentPage}
                 showCover
                 maxShadowOpacity={0.5}
-                className={`shadow-lg flipbook-page-curve flipbook-book ${spread ? "flipbook-spread" : ""}`}
+                // "stf__parent" is included here on purpose, not just cosmetic
+                // classes — react-pageflip's own engine adds that class
+                // imperatively (outside React's tracking) when it first
+                // constructs itself. Whenever `spread` changes, React
+                // re-renders this className and, not knowing about that
+                // imperative class, would otherwise wipe it out — losing the
+                // stacking-context/touch-action CSS it depends on. Naming it
+                // here too means React's own diffing always keeps it,
+                // regardless of what the engine did on its own.
+                className={`stf__parent shadow-lg flipbook-page-curve flipbook-book ${spread ? "flipbook-spread" : ""}`}
                 onFlip={(e: { data: number }) => {
                   setCurrentPage(e.data);
                   playFlipSound();
