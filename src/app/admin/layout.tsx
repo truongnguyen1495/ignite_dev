@@ -25,6 +25,7 @@ import { Sidebar, SidebarProvider, SidebarToggle, type NavItem } from "@/compone
 import { BrandLogo } from "@/components/brand-logo";
 import { LogoutButton } from "@/components/logout-button";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { InstallAppButton } from "@/components/install-app-button";
 import type { AdminPermissionKind } from "@prisma/client";
 
 const iconClass = "h-4 w-4";
@@ -184,6 +185,7 @@ export default async function AdminLayout({
                 ({isSuperAdmin ? t.common.superAdmin : isAdminManager ? t.common.adminManager : t.common.admin})
               </span>
             </span>
+            <InstallAppButton />
             <LanguageSwitcher />
             <LogoutButton label={t.common.logout} />
           </div>

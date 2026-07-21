@@ -19,7 +19,13 @@ const productSchema = z.object({
   cv: z.coerce.number().int().min(0, "CV không được âm.").default(0),
   // Chỉ điền khi sản phẩm này có trang landing page riêng (xem comment trên
   // Product.slug trong schema.prisma) — để trống với sản phẩm thông thường.
-  slug: z.string().trim().optional(),
+  // Strip leading/trailing "/" — a slug typed as "/sanarey-aria" silently
+  // fails the exact-match check in src/app/product/[slug]/page.tsx and 404s.
+  slug: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/^\/+|\/+$/g, ""))
+    .optional(),
   lifestyleImage1Url: z.string().trim().optional(),
   lifestyleImage2Url: z.string().trim().optional(),
   lifestyleImage3Url: z.string().trim().optional(),

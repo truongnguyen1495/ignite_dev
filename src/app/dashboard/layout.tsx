@@ -21,6 +21,7 @@ import { Sidebar, SidebarProvider, SidebarToggle, type NavItem } from "@/compone
 import { BrandLogo } from "@/components/brand-logo";
 import { LogoutButton } from "@/components/logout-button";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { InstallAppButton } from "@/components/install-app-button";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { LevelUpWatcher } from "./level-up-watcher";
 import { HocSinhNav, type HocSinhNavItem } from "./hoc-sinh-nav";
@@ -122,6 +123,7 @@ export default async function DashboardLayout({
                   <span className="sr-only">{t.dashboardNav.myOrders}</span>
                 </Link>
               )}
+              <InstallAppButton />
               <LanguageSwitcher />
               <LogoutButton label={t.common.logout} />
             </div>
@@ -204,6 +206,7 @@ export default async function DashboardLayout({
                 <span className="sr-only">{t.dashboardNav.myOrders}</span>
               </Link>
             )}
+            <InstallAppButton />
             <LanguageSwitcher />
             <LogoutButton label={t.common.logout} />
           </div>

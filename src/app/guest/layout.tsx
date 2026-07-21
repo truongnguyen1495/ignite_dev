@@ -4,6 +4,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { isChatEnabled } from "@/lib/access";
 import { getDictionary } from "@/lib/i18n/get-locale";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { InstallAppButton } from "@/components/install-app-button";
 import { GuestChatWidget } from "./guest-chat-widget";
 import { GuestNav } from "./guest-nav";
 
@@ -20,6 +21,7 @@ export default async function GuestLayout({ children }: { children: React.ReactN
         <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 px-4 pt-4 sm:px-8">
           <BrandLogo subtitle={t.brandSubtitle.guest} />
           <div className="flex items-center gap-2 text-sm">
+            <InstallAppButton />
             <LanguageSwitcher />
             <Link
               href="/login"

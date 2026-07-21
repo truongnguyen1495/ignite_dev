@@ -102,6 +102,14 @@ export const dictionaries = {
       unlocked: "Đã mở khóa",
       locked: "Chưa được cấp quyền",
     },
+    installApp: {
+      button: "Cài đặt ứng dụng",
+      iosTitle: "Cài lên màn hình chính",
+      iosStep1: "Nhấn biểu tượng Chia sẻ trên thanh công cụ Safari.",
+      iosStep2: "Chọn \"Thêm vào MH chính\" (Add to Home Screen).",
+      iosStep3: "Nhấn \"Thêm\" ở góc trên bên phải.",
+      close: "Đã hiểu",
+    },
     guestHomePage: {
       welcomeTitle: "Chào mừng đến với",
       intro:
@@ -212,6 +220,14 @@ export const dictionaries = {
       title: "5-Level Training",
       unlocked: "Unlocked",
       locked: "Not yet granted",
+    },
+    installApp: {
+      button: "Install app",
+      iosTitle: "Add to Home Screen",
+      iosStep1: "Tap the Share icon in Safari's toolbar.",
+      iosStep2: "Choose \"Add to Home Screen\".",
+      iosStep3: "Tap \"Add\" in the top-right corner.",
+      close: "Got it",
     },
     guestHomePage: {
       welcomeTitle: "Welcome to",

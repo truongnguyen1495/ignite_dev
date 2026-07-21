@@ -19,6 +19,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "LMS IGNITE",
   description: "Hệ thống đào tạo nội bộ 5 cấp",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "LMS IGNITE",
+  },
 };
 
 // viewportFit: "cover" lets content extend under the iPhone notch/home-indicator
