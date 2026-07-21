@@ -57,7 +57,7 @@ export default async function LessonsPage() {
                   key={lesson.id}
                   className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3.5 transition-colors hover:border-primary/50 hover:bg-surface-hover"
                 >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-bg text-primary">
                     {lesson.youtubeId ? <Video className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
                   </span>
                   <Link href={`/admin/lessons/${lesson.id}`} className="flex min-w-0 flex-1 flex-col">

@@ -101,7 +101,7 @@ export function OrdersList({ orders }: { orders: OrderListItem[] }) {
             onClick={() => toggleStatus(status)}
             className={`rounded-full border px-3 py-1 text-xs transition-colors ${
               statusFilter.has(status)
-                ? "border-primary/40 bg-primary/10 text-primary"
+                ? "border-primary-border-strong bg-primary-bg text-primary"
                 : "border-border text-muted hover:bg-surface-hover"
             }`}
           >

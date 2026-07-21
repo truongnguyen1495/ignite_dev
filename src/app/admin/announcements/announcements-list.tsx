@@ -101,7 +101,7 @@ export function AnnouncementsList({ announcements }: { announcements: Announceme
             onClick={() => setFilterOpen((v) => !v)}
             className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
               activeFilterCount > 0
-                ? "border-primary/40 bg-primary/10 text-primary"
+                ? "border-primary-border-strong bg-primary-bg text-primary"
                 : "border-border text-muted hover:bg-surface-hover"
             }`}
           >

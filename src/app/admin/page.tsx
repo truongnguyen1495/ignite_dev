@@ -32,7 +32,7 @@ export default async function AdminOverviewPage() {
             >
               <div className="flex items-center justify-between">
                 <p className="text-2xl font-semibold text-foreground">{stat.value}</p>
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-bg text-primary">
                   <Icon className="h-4 w-4" />
                 </span>
               </div>

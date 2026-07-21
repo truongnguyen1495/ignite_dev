@@ -76,7 +76,7 @@ export function EditStudentForm({
           Quay lại
         </Link>
         <div className="mt-3 flex items-center gap-4">
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary-bg text-lg font-semibold text-primary">
             {name.charAt(0).toUpperCase()}
           </span>
           <div className="min-w-0">

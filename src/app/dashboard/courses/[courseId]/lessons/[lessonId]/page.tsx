@@ -156,7 +156,7 @@ export default async function StudentCourseLessonPage({
                       href={`/dashboard/courses/${courseId}/lessons/${l.id}`}
                       prefetch={false}
                       className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                        isCurrent ? "bg-primary/15 text-dark-foreground" : "text-dark-muted hover:bg-dark-surface-raised"
+                        isCurrent ? "bg-primary-bg-strong text-dark-foreground" : "text-dark-muted hover:bg-dark-surface-raised"
                       }`}
                     >
                       {isDone ? (

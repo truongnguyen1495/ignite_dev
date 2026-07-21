@@ -77,7 +77,7 @@ export default async function AdminsPage() {
                 className="flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-primary/50"
               >
                 <Link href={`/admin/admins/${admin.id}`} className="flex min-w-0 flex-1 items-center gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-bg text-sm font-semibold text-primary">
                     {admin.name.charAt(0).toUpperCase()}
                   </span>
                   <div className="min-w-0 flex-1">

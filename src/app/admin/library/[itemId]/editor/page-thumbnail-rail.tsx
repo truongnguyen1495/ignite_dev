@@ -48,7 +48,7 @@ export function PageThumbnailRail({
         <div
           key={index}
           className={`space-y-1 rounded-lg p-1.5 ${
-            index === selectedIndex ? "bg-primary/10 ring-1 ring-primary" : ""
+            index === selectedIndex ? "bg-primary-bg ring-1 ring-primary" : ""
           }`}
         >
           <button type="button" onClick={() => onSelect(index)} className="mx-auto block">

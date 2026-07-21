@@ -138,7 +138,7 @@ export function PropertyPanel({
                 type="button"
                 onClick={() => onUpdateElement({ align })}
                 className={`flex-1 rounded-lg border px-2 py-1.5 text-xs ${
-                  selectedElement.align === align ? "border-primary bg-primary/10 text-primary" : "border-border text-muted"
+                  selectedElement.align === align ? "border-primary bg-primary-bg text-primary" : "border-border text-muted"
                 }`}
               >
                 {align === "left" ? "Trái" : align === "center" ? "Giữa" : "Phải"}
@@ -189,7 +189,7 @@ export function PropertyPanel({
                 type="button"
                 onClick={() => onUpdateElement({ kind })}
                 className={`flex-1 rounded-lg border px-2 py-1.5 text-xs ${
-                  selectedElement.kind === kind ? "border-primary bg-primary/10 text-primary" : "border-border text-muted"
+                  selectedElement.kind === kind ? "border-primary bg-primary-bg text-primary" : "border-border text-muted"
                 }`}
               >
                 {kind === "rectangle" ? "Chữ nhật" : "Hình tròn/oval"}

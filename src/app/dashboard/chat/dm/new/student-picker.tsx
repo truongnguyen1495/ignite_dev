@@ -73,7 +73,7 @@ export function StudentPicker() {
             onClick={() => handleSelect(student.id)}
             className="flex w-full items-center gap-3 rounded-lg border border-border bg-background p-3 text-left transition-colors hover:border-primary/50 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-bg text-sm font-semibold text-primary">
               {student.name.charAt(0).toUpperCase()}
             </span>
             <div className="min-w-0">

@@ -51,7 +51,7 @@ export default async function SettingsPage() {
         href="/admin/admins"
         className="flex max-w-lg items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-primary/50"
       >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-bg text-primary">
           <UserCog className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">

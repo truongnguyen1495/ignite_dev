@@ -104,7 +104,7 @@ export function StudentsTable({
             }}
             className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
               activeFilterCount > 0
-                ? "border-primary/50 bg-primary/10 text-primary"
+                ? "border-primary-border-hover bg-primary-bg text-primary"
                 : "border-border text-muted hover:bg-surface-hover hover:text-foreground"
             }`}
           >

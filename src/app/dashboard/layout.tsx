@@ -92,14 +92,14 @@ export default async function DashboardLayout({
               {hasAdminAccess && (
                 <Link
                   href="/admin"
-                  className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-primary/50 hover:text-foreground"
+                  className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-primary-border-hover hover:text-foreground"
                 >
                   <ShieldCheck className="h-3.5 w-3.5" />
                   {t.dashboardNav.goToAdmin}
                 </Link>
               )}
               <span className="flex min-w-0 items-center gap-2 rounded-full border border-border py-1 pl-1 pr-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-bg text-xs font-semibold text-primary">
                   {student.name.charAt(0).toUpperCase()}
                 </span>
                 <span className="min-w-0">
@@ -174,14 +174,14 @@ export default async function DashboardLayout({
             {hasAdminAccess && (
               <Link
                 href="/admin"
-                className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-primary/50 hover:text-foreground"
+                className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-primary-border-hover hover:text-foreground"
               >
                 <ShieldCheck className="h-3.5 w-3.5" />
                 {t.dashboardNav.goToAdmin}
               </Link>
             )}
             <span className="flex min-w-0 items-center gap-2 rounded-full border border-border py-1 pl-1 pr-3">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-bg text-xs font-semibold text-primary">
                 {student.name.charAt(0).toUpperCase()}
               </span>
               <span className="min-w-0">

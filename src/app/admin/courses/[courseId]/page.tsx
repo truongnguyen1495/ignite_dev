@@ -183,7 +183,7 @@ export default async function EditCoursePage({
               {course.levelGrants.map((levelGrant) => (
                 <li
                   key={levelGrant.id}
-                  className="flex items-center gap-1.5 rounded-full bg-primary/10 py-1 pl-3 pr-1.5 text-sm text-primary"
+                  className="flex items-center gap-1.5 rounded-full bg-primary-bg py-1 pl-3 pr-1.5 text-sm text-primary"
                 >
                   {LEVEL_LABELS[levelGrant.minLevel]} trở lên
                   <RevokeLevelAccessButton grantId={levelGrant.id} courseId={course.id} />
