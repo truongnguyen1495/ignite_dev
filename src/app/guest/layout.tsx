@@ -20,7 +20,7 @@ export default async function GuestLayout({ children }: { children: React.ReactN
       <header className="border-b border-border bg-surface">
         <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 px-4 pt-4 sm:px-8">
           <BrandLogo subtitle={t.brandSubtitle.guest} />
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
             <InstallAppButton />
             <LanguageSwitcher />
             <Link

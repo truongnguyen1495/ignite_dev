@@ -69,7 +69,7 @@ export function InstallAppButton() {
         className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-primary/50 hover:text-foreground"
       >
         <Download className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">{t.installApp.button}</span>
+        {t.installApp.button}
       </button>
       {showIosHelp && (
         <div
