@@ -55,8 +55,8 @@ export function AnnouncementTabs({
             <li key={announcement.id}>
               <Link
                 href={`/dashboard/announcements/${announcement.id}`}
-                className={`flex items-center gap-3 rounded-lg border p-3 transition-colors hover:border-primary/50 ${
-                  announcement.isUnread ? "border-primary/30 bg-primary/5" : "border-border bg-surface"
+                className={`flex items-center gap-3 rounded-lg border p-3 transition-colors hover:border-primary-border-hover ${
+                  announcement.isUnread ? "border-primary-border bg-primary-bg-subtle" : "border-border bg-surface"
                 }`}
               >
                 {announcement.coverImageUrl ? (

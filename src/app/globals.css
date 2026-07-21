@@ -23,6 +23,14 @@
   --primary: #4338ca;
   --primary-hover: #3730a3;
   --primary-foreground: #ffffff;
+  /* Pre-mixed (not Tailwind's /NN opacity-modifier syntax, which compiles to
+     color-mix() in Tailwind v4 and silently fails on Safari < 16.2 — old
+     iPhones render these solid instead of translucent, hiding same-color
+     text on top). Recompute these by hand if --primary ever changes. */
+  --primary-bg: rgba(67, 56, 202, 0.1);
+  --primary-bg-subtle: rgba(67, 56, 202, 0.05);
+  --primary-border: rgba(67, 56, 202, 0.3);
+  --primary-border-hover: rgba(67, 56, 202, 0.5);
 
   /* Accent is reserved for earned/celebratory moments (streaks, level-up,
      quiz passed, badges) — never a generic CTA, and never interchangeable
@@ -90,6 +98,10 @@
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-bg: var(--primary-bg);
+  --color-primary-bg-subtle: var(--primary-bg-subtle);
+  --color-primary-border: var(--primary-border);
+  --color-primary-border-hover: var(--primary-border-hover);
 
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);

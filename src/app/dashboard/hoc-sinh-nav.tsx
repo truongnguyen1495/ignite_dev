@@ -25,7 +25,7 @@ export function HocSinhNav({ items }: { items: HocSinhNavItem[] }) {
             key={item.href}
             href={item.href}
             className={`flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium transition-colors ${
-              active ? "bg-primary/10 text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"
+              active ? "bg-primary-bg text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"
             }`}
           >
             {item.icon}
