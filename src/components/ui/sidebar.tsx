@@ -118,9 +118,21 @@ export function Sidebar({
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r transition-transform duration-200 ease-out md:sticky md:top-0 md:z-auto md:h-screen md:translate-x-0 ${
+        // pointer-events-none when closed on mobile is defense-in-depth
+        // alongside the -translate-x-full transform, not redundant with it:
+        // old WebKit (pre-16 iOS Safari) has a known bug where a `position:
+        // fixed` element combined with a `transform` can keep hit-testing
+        // its pre-transform bounding box, so a "closed" (translated
+        // off-screen) sidebar can still swallow taps in its old on-screen
+        // footprint — exactly the region the mobile hamburger button
+        // (SidebarToggle) sits in. Same "don't rely on a visual-only
+        // property to stay click-through" lesson as the toast tray fix
+        // (see toast.tsx). md:pointer-events-auto restores it above the
+        // mobile breakpoint, where the sidebar is always visible/static
+        // regardless of `open`.
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r transition-transform duration-200 ease-out md:sticky md:top-0 md:z-auto md:h-screen md:translate-x-0 md:pointer-events-auto ${
           navy ? "border-sidebar-hover bg-sidebar" : "border-border bg-surface"
-        } ${open ? "translate-x-0" : "-translate-x-full"}`}
+        } ${open ? "translate-x-0 pointer-events-auto" : "-translate-x-full pointer-events-none"}`}
       >
         <div className="px-6 py-6">{brand}</div>
         <nav className="flex-1 space-y-1 overflow-y-auto px-3">
