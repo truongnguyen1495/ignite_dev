@@ -20,13 +20,13 @@ import {
 // buttons (used everywhere else in this app) can't read against a photo.
 const VARIANT_CLASSES = {
   light: {
-    btn: "flex h-8 w-8 items-center justify-center rounded-lg border border-border transition-colors hover:bg-surface-hover disabled:opacity-40",
+    btn: "flex h-11 w-11 items-center justify-center rounded-lg border border-border transition-colors hover:bg-surface-hover disabled:opacity-40",
     btnActive: "border-primary text-primary",
     label: "text-muted",
     divider: "bg-border",
   },
   dark: {
-    btn: "flex h-8 w-8 items-center justify-center rounded-full text-white transition-colors hover:bg-white/15 disabled:opacity-30",
+    btn: "flex h-11 w-11 items-center justify-center rounded-full text-white transition-colors hover:bg-white/15 disabled:opacity-30",
     btnActive: "bg-white/20",
     label: "text-white",
     divider: "bg-white/20",

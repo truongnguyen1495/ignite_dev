@@ -46,10 +46,7 @@ export function LinkHoverMenu({ editor }: { editor: Editor | null }) {
     if (!editor) return;
     const dom = editor.view.dom;
 
-    function handleMouseOver(e: MouseEvent) {
-      const target = e.target as HTMLElement;
-      const link = target.closest("a");
-      if (!link || !dom.contains(link)) return;
+    function showFor(link: HTMLAnchorElement) {
       cancelHide();
       const containerRect = dom.getBoundingClientRect();
       const linkRect = link.getBoundingClientRect();
@@ -62,6 +59,13 @@ export function LinkHoverMenu({ editor }: { editor: Editor | null }) {
       });
     }
 
+    function handleMouseOver(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+      const link = target.closest("a");
+      if (!link || !dom.contains(link)) return;
+      showFor(link);
+    }
+
     function handleMouseOut(e: MouseEvent) {
       const target = e.target as HTMLElement;
       const link = target.closest("a");
@@ -69,14 +73,36 @@ export function LinkHoverMenu({ editor }: { editor: Editor | null }) {
       scheduleHide();
     }
 
+    // Touch devices have no hover state, so mouseover/mouseout never fire —
+    // without this, the edit-link affordance below is unreachable on a
+    // phone/tablet. The Link mark is configured with target="_blank" (see
+    // lesson-content-editor.tsx), so tapping a link opens it in a *new* tab
+    // without navigating away from this one — this handler runs first
+    // (touchstart fires before the click that triggers that navigation) and
+    // just shows the same popover a mouse hover would, so it's still there
+    // to tap when the admin comes back to this tab. A tap anywhere else
+    // dismisses it, standing in for the mouseout a touch device never sends.
+    function handleTouchStart(e: TouchEvent) {
+      const target = e.target as HTMLElement;
+      const link = target.closest("a");
+      if (link && dom.contains(link)) {
+        showFor(link);
+      } else if (!target.closest("[data-link-hover-menu]")) {
+        setHovered(null);
+        setEditing(false);
+      }
+    }
+
     dom.addEventListener("mouseover", handleMouseOver);
     dom.addEventListener("mouseout", handleMouseOut);
+    document.addEventListener("touchstart", handleTouchStart);
     return () => {
       dom.removeEventListener("mouseover", handleMouseOver);
       dom.removeEventListener("mouseout", handleMouseOut);
+      document.removeEventListener("touchstart", handleTouchStart);
       cancelHide();
     };
-  }, [editor, scheduleHide, cancelHide]);
+  }, [editor, cancelHide, scheduleHide]);
 
   useEffect(() => {
     if (editing) {
@@ -128,6 +154,7 @@ export function LinkHoverMenu({ editor }: { editor: Editor | null }) {
 
   return (
     <div
+      data-link-hover-menu
       className="absolute z-20"
       style={{ top, left: hovered.left }}
       onMouseEnter={cancelHide}
@@ -145,7 +172,7 @@ export function LinkHoverMenu({ editor }: { editor: Editor | null }) {
             onChange={(e) => setUrlValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="https://..."
-            className="w-56 rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground focus:border-primary focus:outline-none"
+            className="w-56 rounded-md border border-border bg-background px-2 py-1 text-base sm:text-sm text-foreground focus:border-primary focus:outline-none"
           />
           <button
             type="button"
@@ -153,7 +180,7 @@ export function LinkHoverMenu({ editor }: { editor: Editor | null }) {
               setEditing(false);
               setHovered(null);
             }}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-surface-hover hover:text-foreground"
+            className="flex h-9 w-9 items-center justify-center rounded-md text-muted hover:bg-surface-hover hover:text-foreground"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -163,7 +190,7 @@ export function LinkHoverMenu({ editor }: { editor: Editor | null }) {
           type="button"
           onClick={openEditForm}
           title="Sửa link"
-          className={`flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface text-muted shadow-md hover:bg-surface-hover hover:text-foreground ${
+          className={`flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-muted shadow-md hover:bg-surface-hover hover:text-foreground ${
             showAbove ? "-translate-y-full" : ""
           }`}
         >

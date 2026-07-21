@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 
 const inputClass =
-  "w-full rounded-lg border border-border bg-background px-3 py-2 pr-10 text-sm text-foreground focus:border-primary focus:outline-none";
+  "w-full rounded-lg border border-border bg-background px-3 py-2 pr-10 text-base sm:text-sm text-foreground focus:border-primary focus:outline-none";
 const labelClass = "mb-1.5 block text-sm font-medium text-foreground";
 
 function PasswordField({

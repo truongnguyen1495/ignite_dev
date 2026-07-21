@@ -149,7 +149,7 @@ export function FlipbookChrome({
       className={
         isFullscreen
           ? "flex h-full w-full flex-col items-center justify-center gap-3 bg-background p-6"
-          : "flex h-[75vh] w-full flex-col items-center gap-3 overflow-hidden"
+          : "flex h-[75vh] supports-[height:100dvh]:h-[75dvh] w-full flex-col items-center gap-3 overflow-hidden"
       }
     >
       {bookBand}

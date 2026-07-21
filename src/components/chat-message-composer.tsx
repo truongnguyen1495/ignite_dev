@@ -117,7 +117,7 @@ export function ChatMessageComposer({
           onKeyDown={handleKeyDown}
           rows={1}
           placeholder="Nhập tin nhắn..."
-          className="max-h-32 flex-1 resize-none rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+          className="max-h-32 flex-1 resize-none rounded-lg border border-border-strong bg-surface px-3 py-2 text-base sm:text-sm text-foreground focus:border-primary focus:outline-none"
         />
         <button
           type="button"

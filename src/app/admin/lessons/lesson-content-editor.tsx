@@ -466,7 +466,7 @@ export function LessonContentEditor({
                         onChange={(e) => setLinkFields((f) => ({ ...f, url: e.target.value }))}
                         onKeyDown={handleLinkKeyDown}
                         placeholder="https://..."
-                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-base sm:text-sm text-foreground focus:border-primary focus:outline-none"
                       />
                     </div>
                     {!linkHasSelection && (
@@ -477,7 +477,7 @@ export function LessonContentEditor({
                           onChange={(e) => setLinkFields((f) => ({ ...f, text: e.target.value }))}
                           onKeyDown={handleLinkKeyDown}
                           placeholder="(tùy chọn)"
-                          className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                          className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-base sm:text-sm text-foreground focus:border-primary focus:outline-none"
                         />
                       </div>
                     )}
@@ -502,7 +502,7 @@ export function LessonContentEditor({
                         onChange={(e) => setImageFields((f) => ({ ...f, url: e.target.value }))}
                         onKeyDown={handleImageKeyDown}
                         placeholder="https://... hoặc tải ảnh lên từ máy"
-                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-base sm:text-sm text-foreground focus:border-primary focus:outline-none"
                       />
                     </div>
                     <input
@@ -528,7 +528,7 @@ export function LessonContentEditor({
                         onChange={(e) => setImageFields((f) => ({ ...f, alt: e.target.value }))}
                         onKeyDown={handleImageKeyDown}
                         placeholder="(tùy chọn)"
-                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-base sm:text-sm text-foreground focus:border-primary focus:outline-none"
                       />
                     </div>
                     <div>
@@ -538,7 +538,7 @@ export function LessonContentEditor({
                         onChange={(e) =>
                           setImageFields((f) => ({ ...f, size: e.target.value as LessonImageSize }))
                         }
-                        className="rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                        className="rounded-md border border-border bg-background px-2 py-1.5 text-base sm:text-sm text-foreground focus:border-primary focus:outline-none"
                       >
                         <option value="sm">Nhỏ</option>
                         <option value="md">Vừa</option>
@@ -552,7 +552,7 @@ export function LessonContentEditor({
                         onChange={(e) =>
                           setImageFields((f) => ({ ...f, align: e.target.value as LessonImageAlign }))
                         }
-                        className="rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                        className="rounded-md border border-border bg-background px-2 py-1.5 text-base sm:text-sm text-foreground focus:border-primary focus:outline-none"
                       >
                         <option value="left">Trái</option>
                         <option value="center">Giữa</option>
@@ -581,7 +581,7 @@ export function LessonContentEditor({
                         onChange={(e) => setYoutubeUrl(e.target.value)}
                         onKeyDown={handleYoutubeKeyDown}
                         placeholder="https://www.youtube.com/watch?v=..."
-                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-base sm:text-sm text-foreground focus:border-primary focus:outline-none"
                       />
                     </div>
                     <button

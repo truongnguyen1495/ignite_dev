@@ -161,12 +161,16 @@ export function PdfFlipbook({
   }, [src]);
 
   if (error) {
-    return <p className="flex h-[80vh] items-center justify-center text-sm text-danger">{error}</p>;
+    return (
+      <p className="flex h-[80vh] supports-[height:100dvh]:h-[80dvh] items-center justify-center text-sm text-danger">
+        {error}
+      </p>
+    );
   }
 
   if (!numPages || !aspect) {
     return (
-      <div className="flex h-[80vh] items-center justify-center gap-2 text-sm text-muted">
+      <div className="flex h-[80vh] supports-[height:100dvh]:h-[80dvh] items-center justify-center gap-2 text-sm text-muted">
         <Loader2 className="h-4 w-4 animate-spin" />
         Đang tải {title}...
       </div>

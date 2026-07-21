@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ConfirmDialogProvider } from "@/components/ui/confirm-dialog";
 import { ToastProvider } from "@/components/ui/toast";
@@ -19,6 +19,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "LMS IGNITE",
   description: "Hệ thống đào tạo nội bộ 5 cấp",
+};
+
+// viewportFit: "cover" lets content extend under the iPhone notch/home-indicator
+// area instead of Safari letterboxing it — required for env(safe-area-inset-*)
+// (used by the floating chat widgets) to report real, non-zero values.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#4338ca",
 };
 
 export default async function RootLayout({

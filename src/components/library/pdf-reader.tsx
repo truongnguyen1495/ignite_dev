@@ -49,7 +49,11 @@ export function PdfReader({
       </div>
 
       {mode === "plain" ? (
-        <iframe src={src} className="h-[80vh] w-full rounded-xl border border-border" title={title} />
+        <iframe
+          src={src}
+          className="h-[80vh] supports-[height:100dvh]:h-[80dvh] w-full rounded-xl border border-border"
+          title={title}
+        />
       ) : (
         <PdfFlipbook src={src} title={title} backgroundImageUrl={backgroundImageUrl} />
       )}

@@ -95,7 +95,7 @@ export default async function LevelUpRequestsPage() {
                         <select
                           name="toLevel"
                           defaultValue={req.toLevel}
-                          className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                          className="rounded-lg border border-border bg-background px-2 py-1.5 text-base sm:text-sm text-foreground focus:border-primary focus:outline-none"
                         >
                           {ORDERED_LEVELS.map((level) => (
                             <option key={level} value={level}>

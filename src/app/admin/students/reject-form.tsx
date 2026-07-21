@@ -16,7 +16,7 @@ export function RejectForm({ requestId }: { requestId: string }) {
         name="reviewerNote"
         required
         placeholder="Lý do từ chối"
-        className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+        className="rounded-lg border border-border bg-background px-2 py-1.5 text-base sm:text-sm text-foreground focus:border-primary focus:outline-none"
       />
       <Button type="submit" variant="danger" size="sm" disabled={pending} isLoading={pending}>
         <XCircle className="h-4 w-4" />
