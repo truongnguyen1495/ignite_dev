@@ -22,13 +22,16 @@ export type AnnouncementListItem = {
   category: AnnouncementCategory;
   minLevel: Level | null;
   visibleToGuest: boolean;
+  visibleToProspective: boolean;
+  visibleToLeveled: boolean;
   visibleToStudents: boolean;
   publishedAtLabel: string;
 };
 
-// "ALL_STUDENTS" stands in for minLevel: null (the "Tất cả học viên" audience)
-// so it can live in the same Set as the real Level values.
-type AudienceFilterValue = "ALL_STUDENTS" | Level;
+// "PROSPECTIVE" and "NO_LEVELED" stand in for the two boolean audience flags
+// so they can live in the same Set as the real Level values (which filter by
+// minLevel, only meaningful when visibleToLeveled is true).
+type AudienceFilterValue = "PROSPECTIVE" | "NO_LEVELED" | Level;
 type GuestFilterValue = "public" | "private";
 type HiddenFilterValue = "hidden" | "visible";
 
@@ -70,8 +73,14 @@ export function AnnouncementsList({ announcements }: { announcements: Announceme
     return announcements.filter((a) => {
       if (categoryFilter.size > 0 && !categoryFilter.has(a.category)) return false;
       if (audienceFilter.size > 0) {
-        const key: AudienceFilterValue = a.minLevel ?? "ALL_STUDENTS";
-        if (!audienceFilter.has(key)) return false;
+        const keys: AudienceFilterValue[] = [];
+        if (a.visibleToProspective) keys.push("PROSPECTIVE");
+        if (a.visibleToLeveled && a.minLevel) {
+          keys.push(a.minLevel);
+        } else if (!a.visibleToLeveled) {
+          keys.push("NO_LEVELED");
+        }
+        if (!keys.some((k) => audienceFilter.has(k))) return false;
       }
       if (guestFilter.size > 0) {
         const key: GuestFilterValue = a.visibleToGuest ? "public" : "private";
@@ -137,10 +146,19 @@ export function AnnouncementsList({ announcements }: { announcements: Announceme
                   <input
                     type="checkbox"
                     className={checkboxClass}
-                    checked={audienceFilter.has("ALL_STUDENTS")}
-                    onChange={() => setAudienceFilter((s) => toggleInSet(s, "ALL_STUDENTS"))}
+                    checked={audienceFilter.has("PROSPECTIVE")}
+                    onChange={() => setAudienceFilter((s) => toggleInSet(s, "PROSPECTIVE"))}
                   />
-                  Tất cả học viên
+                  Học sinh
+                </label>
+                <label className="flex items-center gap-2 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    className={checkboxClass}
+                    checked={audienceFilter.has("NO_LEVELED")}
+                    onChange={() => setAudienceFilter((s) => toggleInSet(s, "NO_LEVELED"))}
+                  />
+                  Không cấp quyền học viên
                 </label>
                 {ORDERED_LEVELS.map((level) => (
                   <label key={level} className="flex items-center gap-2 text-sm text-foreground">
@@ -259,11 +277,15 @@ export function AnnouncementsList({ announcements }: { announcements: Announceme
                     <Badge color={ANNOUNCEMENT_CATEGORY_BADGE_COLOR[announcement.category]}>
                       {ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}
                     </Badge>
-                    {announcement.minLevel ? (
+                    {announcement.visibleToProspective && <Badge color="muted">Học sinh</Badge>}
+                    {announcement.visibleToLeveled && announcement.minLevel && (
                       <Badge color="primary">{LEVEL_LABELS[announcement.minLevel]} trở lên</Badge>
-                    ) : (
-                      <Badge color="muted">Tất cả học viên</Badge>
                     )}
+                    {!announcement.visibleToGuest &&
+                      !announcement.visibleToProspective &&
+                      !announcement.visibleToLeveled && (
+                        <Badge color="warning">Chưa cấp quyền cho ai</Badge>
+                      )}
                     {hidden && <Badge color="warning">Đã ẩn</Badge>}
                     {announcement.visibleToGuest && <Badge color="info">Công khai</Badge>}
                     <span className="text-xs text-muted">{announcement.publishedAtLabel}</span>

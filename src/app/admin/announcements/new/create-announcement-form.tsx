@@ -2,12 +2,12 @@
 
 import { useActionState } from "react";
 import { createAnnouncementAction } from "../actions";
-import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
 import { ORDERED_ANNOUNCEMENT_CATEGORIES, ANNOUNCEMENT_CATEGORY_LABELS } from "@/lib/announcements";
 import { LessonContentEditor } from "@/app/admin/lessons/lesson-content-editor";
 import { Input, Select } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { CoverImageInput } from "@/components/ui/cover-image-input";
+import { AnnouncementAudienceFields } from "../audience-fields";
 
 export function CreateAnnouncementForm() {
   const [error, formAction, pending] = useActionState(createAnnouncementAction, undefined);
@@ -24,18 +24,7 @@ export function CreateAnnouncementForm() {
             </option>
           ))}
         </Select>
-        <Select id="minLevel" name="minLevel" defaultValue="" label="Đối tượng xem" hint="Bỏ trống nếu muốn tất cả học viên đều xem được.">
-          <option value="">Tất cả học viên</option>
-          {ORDERED_LEVELS.map((level) => (
-            <option key={level} value={level}>
-              {LEVEL_LABELS[level]} trở lên
-            </option>
-          ))}
-        </Select>
-        <label className="flex items-center gap-2 text-sm text-foreground">
-          <input type="checkbox" name="visibleToGuest" className="h-4 w-4 accent-primary" />
-          Hiển thị công khai cho khách (không cần đăng nhập)
-        </label>
+        <AnnouncementAudienceFields />
       </section>
 
       <hr className="border-border" />

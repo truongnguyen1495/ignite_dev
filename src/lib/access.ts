@@ -5,6 +5,7 @@ import type { AdminPermissionKind, ChatThread, Level, Role, User } from "@prisma
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hasLevelAccess } from "@/lib/levels";
+import { announcementVisibleTo } from "@/lib/announcements";
 import { getOrCreateSupportThread } from "@/lib/chat";
 
 export class AccessDeniedError extends Error {
@@ -520,10 +521,11 @@ export async function requireLibraryItemAccess(libraryItemId: string) {
 export async function requireAnnouncementAccess(announcementId: string) {
   const student = await requireActiveStudent();
   const announcement = await prisma.announcement.findUnique({ where: { id: announcementId } });
-  if (!announcement || !announcement.visibleToStudents) {
-    redirect("/dashboard/announcements?denied=1");
-  }
-  if (announcement.minLevel && !hasLevelAccess(student.grantedLevel, announcement.minLevel)) {
+  if (
+    !announcement ||
+    !announcement.visibleToStudents ||
+    !announcementVisibleTo(announcement, student.grantedLevel)
+  ) {
     redirect("/dashboard/announcements?denied=1");
   }
   return { student, announcement };

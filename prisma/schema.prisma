@@ -712,25 +712,39 @@ model OrderItem {
   @@index([orderId])
 }
 
-// In-app announcements (bản tin) — simpler than the Course grant system on
-// purpose: a single optional minLevel threshold per post (null = everyone),
-// no per-student overrides, since nothing has asked for that yet.
+// In-app announcements (bản tin) — three audiences (khách/học sinh/học
+// viên) are each independently opt-in per post, no per-student overrides
+// since nothing has asked for that yet.
 model Announcement {
-  id                String               @id @default(cuid())
-  title             String
-  content           String               @db.Text
-  coverImageUrl     String?
-  category          AnnouncementCategory @default(GENERAL)
-  minLevel          Level?
-  visibleToGuest    Boolean              @default(false)
-  // Master hide switch: false pulls the announcement from both the
-  // student-facing /dashboard/announcements list and the public /guest/*
-  // one, overriding visibleToGuest — without deleting it. Defaults true so
-  // existing rows keep showing up unchanged.
-  visibleToStudents Boolean              @default(true)
-  publishedAt       DateTime             @default(now())
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
+  id                   String               @id @default(cuid())
+  title                String
+  content              String               @db.Text
+  coverImageUrl        String?
+  category             AnnouncementCategory @default(GENERAL)
+  // Only meaningful when visibleToLeveled is true — the admin form always
+  // submits a concrete Level in that case (picking the lowest level, Cấp 1,
+  // is how "every học viên" is expressed; there is no separate "no minimum"
+  // state). Stays nullable because pre-migration rows were backfilled with
+  // minLevel left as-is (see the migration for how their effective
+  // visibility was preserved).
+  minLevel             Level?
+  visibleToGuest       Boolean              @default(false)
+  // Học sinh (grantedLevel: null, not on the 5-level ladder) — independent
+  // of visibleToLeveled/minLevel below, which only ever govern học viên.
+  visibleToProspective Boolean              @default(false)
+  // Học viên (any grantedLevel) — false means no học viên can see this
+  // announcement at all, regardless of minLevel. See announcementVisibleTo()
+  // in src/lib/announcements.ts, the single place both this and
+  // visibleToProspective are evaluated.
+  visibleToLeveled     Boolean              @default(false)
+  // Master hide switch: false pulls the announcement from every audience at
+  // once (students AND guests), overriding visibleToGuest/visibleToProspective/
+  // visibleToLeveled — without deleting it. Defaults true so existing rows
+  // keep showing up unchanged.
+  visibleToStudents    Boolean              @default(true)
+  publishedAt          DateTime             @default(now())
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
 
   reads AnnouncementRead[]
 

@@ -15,7 +15,8 @@ import {
 import { requireActiveStudent, isChatEnabled, isSalesEnabled, getAdminPermissions } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { getStudentChatInbox } from "@/lib/chat";
-import { LEVEL_LABELS, hasLevelAccess } from "@/lib/levels";
+import { LEVEL_LABELS } from "@/lib/levels";
+import { announcementVisibleTo } from "@/lib/announcements";
 import { getDictionary } from "@/lib/i18n/get-locale";
 import { Sidebar, SidebarProvider, SidebarToggle, type NavItem } from "@/components/ui/sidebar";
 import { BrandLogo } from "@/components/brand-logo";
@@ -38,7 +39,9 @@ export default async function DashboardLayout({
   const { t } = await getDictionary();
 
   const [announcements, reads, chatEnabled, salesEnabled, adminPermissions] = await Promise.all([
-    prisma.announcement.findMany({ select: { id: true, minLevel: true, visibleToStudents: true } }),
+    prisma.announcement.findMany({
+      select: { id: true, minLevel: true, visibleToStudents: true, visibleToProspective: true, visibleToLeveled: true },
+    }),
     prisma.announcementRead.findMany({
       where: { studentId: student.id },
       select: { announcementId: true },
@@ -55,10 +58,7 @@ export default async function DashboardLayout({
   const chatInbox = chatEnabled && isLeveled ? await getStudentChatInbox(student) : null;
   const readIds = new Set(reads.map((r) => r.announcementId));
   const unreadAnnouncementCount = announcements.filter(
-    (a) =>
-      a.visibleToStudents &&
-      (!a.minLevel || hasLevelAccess(student.grantedLevel, a.minLevel)) &&
-      !readIds.has(a.id)
+    (a) => a.visibleToStudents && announcementVisibleTo(a, student.grantedLevel) && !readIds.has(a.id)
   ).length;
   const unreadChatCount = chatInbox
     ? chatInbox.support.unreadCount +

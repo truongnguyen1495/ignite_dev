@@ -1,8 +1,7 @@
 import { AlertTriangle } from "lucide-react";
 import { requireActiveStudent } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
-import { hasLevelAccess } from "@/lib/levels";
-import { ORDERED_ANNOUNCEMENT_CATEGORIES } from "@/lib/announcements";
+import { ORDERED_ANNOUNCEMENT_CATEGORIES, announcementVisibleTo } from "@/lib/announcements";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatDateVN } from "@/lib/date";
 import { AnnouncementTabs } from "./announcement-tabs";
@@ -22,7 +21,7 @@ export default async function AnnouncementsPage({
 
   const readIds = new Set(reads.map((r) => r.announcementId));
   const visible = announcements.filter(
-    (a) => a.visibleToStudents && (!a.minLevel || hasLevelAccess(student.grantedLevel, a.minLevel))
+    (a) => a.visibleToStudents && announcementVisibleTo(a, student.grantedLevel)
   );
 
   const categories = ORDERED_ANNOUNCEMENT_CATEGORIES.map((category) => ({

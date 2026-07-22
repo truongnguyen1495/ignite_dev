@@ -43,14 +43,21 @@ export async function createAnnouncementAction(
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
   }
 
+  const visibleToLeveled = formData.get("visibleToLeveled") === "on";
+  if (visibleToLeveled && !parsed.data.minLevel) {
+    return "Vui lòng chọn cấp độ cho học viên.";
+  }
+
   await prisma.announcement.create({
     data: {
       title: parsed.data.title,
       content: parsed.data.content,
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       category: parsed.data.category,
-      minLevel: resolveMinLevel(parsed.data.minLevel),
       visibleToGuest: formData.get("visibleToGuest") === "on",
+      visibleToProspective: formData.get("visibleToProspective") === "on",
+      visibleToLeveled,
+      minLevel: visibleToLeveled ? resolveMinLevel(parsed.data.minLevel) : null,
       // New announcements always start visible to students — hiding one is
       // a separate, deliberate action via the eye-icon toggle on the list
       // (setAnnouncementVisibleToStudentsAction), not part of authoring it.
@@ -86,6 +93,11 @@ export async function updateAnnouncementAction(
 
   const { announcementId } = parsed.data;
 
+  const visibleToLeveled = formData.get("visibleToLeveled") === "on";
+  if (visibleToLeveled && !parsed.data.minLevel) {
+    return "Vui lòng chọn cấp độ cho học viên.";
+  }
+
   await prisma.announcement.update({
     where: { id: announcementId },
     data: {
@@ -93,8 +105,10 @@ export async function updateAnnouncementAction(
       content: parsed.data.content,
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       category: parsed.data.category,
-      minLevel: resolveMinLevel(parsed.data.minLevel),
       visibleToGuest: formData.get("visibleToGuest") === "on",
+      visibleToProspective: formData.get("visibleToProspective") === "on",
+      visibleToLeveled,
+      minLevel: visibleToLeveled ? resolveMinLevel(parsed.data.minLevel) : null,
       // visibleToStudents is intentionally left untouched here — it's owned
       // solely by the eye-icon toggle (setAnnouncementVisibleToStudentsAction)
       // so editing title/content etc. can never silently hide an announcement.

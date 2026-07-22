@@ -2,13 +2,13 @@
 
 import { useActionState } from "react";
 import { updateAnnouncementAction } from "../actions";
-import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
 import { ORDERED_ANNOUNCEMENT_CATEGORIES, ANNOUNCEMENT_CATEGORY_LABELS } from "@/lib/announcements";
 import { LessonContentEditor } from "@/app/admin/lessons/lesson-content-editor";
 import type { Level, AnnouncementCategory } from "@prisma/client";
 import { Input, Select } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { CoverImageInput } from "@/components/ui/cover-image-input";
+import { AnnouncementAudienceFields } from "../audience-fields";
 
 export function EditAnnouncementForm({
   announcementId,
@@ -18,6 +18,8 @@ export function EditAnnouncementForm({
   category,
   minLevel,
   visibleToGuest,
+  visibleToProspective,
+  visibleToLeveled,
 }: {
   announcementId: string;
   title: string;
@@ -26,6 +28,8 @@ export function EditAnnouncementForm({
   category: AnnouncementCategory;
   minLevel: Level | null;
   visibleToGuest: boolean;
+  visibleToProspective: boolean;
+  visibleToLeveled: boolean;
 }) {
   const [error, formAction, pending] = useActionState(updateAnnouncementAction, undefined);
 
@@ -43,29 +47,12 @@ export function EditAnnouncementForm({
             </option>
           ))}
         </Select>
-        <Select
-          id="minLevel"
-          name="minLevel"
-          defaultValue={minLevel ?? ""}
-          label="Đối tượng xem"
-          hint="Bỏ trống nếu muốn tất cả học viên đều xem được."
-        >
-          <option value="">Tất cả học viên</option>
-          {ORDERED_LEVELS.map((level) => (
-            <option key={level} value={level}>
-              {LEVEL_LABELS[level]} trở lên
-            </option>
-          ))}
-        </Select>
-        <label className="flex items-center gap-2 text-sm text-foreground">
-          <input
-            type="checkbox"
-            name="visibleToGuest"
-            defaultChecked={visibleToGuest}
-            className="h-4 w-4 accent-primary"
-          />
-          Hiển thị công khai cho khách (không cần đăng nhập)
-        </label>
+        <AnnouncementAudienceFields
+          defaultVisibleToGuest={visibleToGuest}
+          defaultVisibleToProspective={visibleToProspective}
+          defaultVisibleToLeveled={visibleToLeveled}
+          defaultMinLevel={minLevel}
+        />
       </section>
 
       <hr className="border-border" />
