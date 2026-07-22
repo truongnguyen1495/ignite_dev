@@ -39,6 +39,9 @@ yarn-error.log*
 # claude code local settings
 .claude/settings.local.json
 
+# personal on-disk mirror of Claude's memory (machine-specific, not for Git)
+.claude/memory-backup/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -49,6 +49,9 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
   const [orientation, setOrientation] = useState<FlipbookOrientation>("portrait");
   const [error, setError] = useState<string | null>(null);
   const [showThumbnails, setShowThumbnails] = useState(true);
+  // Which remount "bookKey" (see below) has actually finished initializing —
+  // used to hide the flipbook until then, see the comment on bookKey.
+  const [readyKey, setReadyKey] = useState<number | null>(null);
   const flipRef = useRef<PageFlipHandle | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen(containerRef);
@@ -113,6 +116,18 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
   // space below the toolbar and above the thumbnail rail (and the mode-
   // toggle above the whole reader).
   const maxWidth = availableHeight ? Math.max(280, Math.min(1600, Math.floor(availableHeight * aspect))) : 1600;
+  // react-pageflip only reads sizing props once, at construction, so a real
+  // size change (see the comment above) requires a full remount via this key
+  // — but for one frame right after a remount, react-pageflip's own React
+  // wrapper renders the raw page children in plain document order (before
+  // its effect runs and the actual page-flip engine repositions everything
+  // to `startPage`), which visibly flashes page 1 — the cover — regardless
+  // of which page was actually open. `readyKey` gates visibility on the
+  // engine's own `onInit` event (which fires only after it has already
+  // jumped to `startPage`, see node_modules/page-flip/src/PageFlip.ts'
+  // loadFromHTML) so that flash is invisible instead of masked after the
+  // fact.
+  const bookKey = Math.round(maxWidth / 20);
 
   return (
     <FlipbookChrome
@@ -167,56 +182,70 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
                 <Loader2 className="h-5 w-5 animate-spin text-muted" />
               </div>
             ) : (
-              <HTMLFlipBook
-                {...FLIPBOOK_DEFAULTS}
-                // Remounts (fresh instance, correct sizing baked in) only
-                // when the space genuinely changes enough to matter —
-                // fullscreen toggle, thumbnail-rail toggle, a real window
-                // resize — not on every sub-pixel ResizeObserver tick.
-                key={Math.round(maxWidth / 20)}
-                ref={flipRef}
-                width={500}
-                height={Math.round(500 / aspect)}
-                size="stretch"
-                minWidth={280}
-                maxWidth={maxWidth}
-                minHeight={Math.round(280 / aspect)}
-                maxHeight={Math.round(maxWidth / aspect)}
-                startPage={currentPage}
-                showCover
-                maxShadowOpacity={0.5}
-                // "stf__parent" is included here on purpose, not just cosmetic
-                // classes — react-pageflip's own engine adds that class
-                // imperatively (outside React's tracking) when it first
-                // constructs itself. Whenever `spread` changes, React
-                // re-renders this className and, not knowing about that
-                // imperative class, would otherwise wipe it out — losing the
-                // stacking-context/touch-action CSS it depends on. Naming it
-                // here too means React's own diffing always keeps it,
-                // regardless of what the engine did on its own.
-                className={`stf__parent shadow-lg flipbook-page-curve flipbook-book ${spread ? "flipbook-spread" : ""}`}
-                onFlip={(e: { data: number }) => {
-                  setCurrentPage(e.data);
-                  playFlipSound();
+              <div
+                // See bookKey's comment above — invisible (not unmounted, so
+                // sizing/measurement is unaffected) until this instance's own
+                // onInit confirms it has already landed on the right page.
+                style={{
+                  opacity: readyKey === bookKey ? 1 : 0,
+                  transition: readyKey === bookKey ? "opacity 150ms ease" : "none",
+                  pointerEvents: readyKey === bookKey ? undefined : "none",
                 }}
-                onChangeOrientation={(e: { data: FlipbookOrientation }) => setOrientation(e.data)}
-                onInit={(e: { data: { mode: FlipbookOrientation } }) => setOrientation(e.data.mode)}
               >
-                {pages.map((page, i) => (
-                  <BookPage
-                    key={i}
-                    page={page}
-                    bookWidth={bookWidth}
-                    bookHeight={bookHeight}
-                    // A landscape spread shows two pages on screen at once
-                    // (see isPagedSpread) — both need live video/audio, not
-                    // just the one currentPage tracks, or the right-hand
-                    // page's iframe never mounts and its video/audio
-                    // placeholder stays inert.
-                    isActive={i === currentPage || (spread && i === currentPage + 1)}
-                  />
-                ))}
-              </HTMLFlipBook>
+                <HTMLFlipBook
+                  {...FLIPBOOK_DEFAULTS}
+                  // Remounts (fresh instance, correct sizing baked in) only
+                  // when the space genuinely changes enough to matter —
+                  // fullscreen toggle, thumbnail-rail toggle, a real window
+                  // resize — not on every sub-pixel ResizeObserver tick.
+                  key={bookKey}
+                  ref={flipRef}
+                  width={500}
+                  height={Math.round(500 / aspect)}
+                  size="stretch"
+                  minWidth={280}
+                  maxWidth={maxWidth}
+                  minHeight={Math.round(280 / aspect)}
+                  maxHeight={Math.round(maxWidth / aspect)}
+                  startPage={currentPage}
+                  showCover
+                  maxShadowOpacity={0.5}
+                  // "stf__parent" is included here on purpose, not just cosmetic
+                  // classes — react-pageflip's own engine adds that class
+                  // imperatively (outside React's tracking) when it first
+                  // constructs itself. Whenever `spread` changes, React
+                  // re-renders this className and, not knowing about that
+                  // imperative class, would otherwise wipe it out — losing the
+                  // stacking-context/touch-action CSS it depends on. Naming it
+                  // here too means React's own diffing always keeps it,
+                  // regardless of what the engine did on its own.
+                  className={`stf__parent shadow-lg flipbook-page-curve flipbook-book ${spread ? "flipbook-spread" : ""}`}
+                  onFlip={(e: { data: number }) => {
+                    setCurrentPage(e.data);
+                    playFlipSound();
+                  }}
+                  onChangeOrientation={(e: { data: FlipbookOrientation }) => setOrientation(e.data)}
+                  onInit={(e: { data: { mode: FlipbookOrientation } }) => {
+                    setOrientation(e.data.mode);
+                    setReadyKey(bookKey);
+                  }}
+                >
+                  {pages.map((page, i) => (
+                    <BookPage
+                      key={i}
+                      page={page}
+                      bookWidth={bookWidth}
+                      bookHeight={bookHeight}
+                      // A landscape spread shows two pages on screen at once
+                      // (see isPagedSpread) — both need live video/audio, not
+                      // just the one currentPage tracks, or the right-hand
+                      // page's iframe never mounts and its video/audio
+                      // placeholder stays inert.
+                      isActive={i === currentPage || (spread && i === currentPage + 1)}
+                    />
+                  ))}
+                </HTMLFlipBook>
+              </div>
             )}
           </div>
           {zoom.overlayHandlers && (
