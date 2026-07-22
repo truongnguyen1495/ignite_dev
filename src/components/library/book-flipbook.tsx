@@ -165,18 +165,23 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
       bookArea={
         <div
           ref={zoom.wrapperRef}
-          // overflow-y-hidden isn't decorative — per the CSS overflow spec, a
+          // Both axes hidden (not overflow-x-auto) — confirmed live (direct
+          // scrollWidth/clientWidth polling through a real flip) that
+          // react-pageflip's own page-curl animation transiently renders far
+          // wider than the flat page (one measured flip: 1080px -> 1464px at
+          // the curl's peak, back to 1080px once settled) on *every* flip,
+          // not just an edge case. With overflow-x-auto that pops a
+          // horizontal scrollbar in and out on every single page turn,
+          // reported by the user as the book "bobbing" — a scrollbar
+          // consumes layout space, so its appear/disappear cycle reflows
+          // whatever's inside. overflow-hidden just clips the momentary
+          // overshoot instead (a sliver of the curl's peak, invisible at
+          // normal viewing distance during a ~1s animation) with zero layout
+          // side effect. overflow-y-hidden's own reasoning is unchanged: a
           // computed overflow-y of visible gets forced to auto whenever
-          // overflow-x isn't visible, so overflow-x-auto alone silently
-          // opts this div into a vertical scrollbar too. Invisible while the
-          // book stayed small; became a real visible scrollbar once sizing
-          // grew the book close to this band's height (any sub-pixel
-          // rounding slop in react-pageflip's own box was enough to trigger
-          // it). Explicit overflow-y-hidden clips that harmless slop instead
-          // of scrolling it.
-          className={`relative flex h-full w-full max-w-full justify-center px-4 ${
-            zoom.zoomed ? "overflow-hidden" : "overflow-x-auto overflow-y-hidden"
-          }`}
+          // overflow-x isn't visible (CSS overflow spec), so it needs
+          // stating explicitly either way.
+          className="relative flex h-full w-full max-w-full justify-center overflow-hidden px-4"
         >
           <div className="w-full" style={{ transform: zoom.transform, transition: zoom.transition }}>
             {availableHeight === null ? (

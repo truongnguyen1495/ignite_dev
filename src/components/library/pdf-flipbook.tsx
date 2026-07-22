@@ -282,15 +282,19 @@ export function PdfFlipbook({
       bookArea={
         <div
           ref={zoom.wrapperRef}
-          // overflow-y-hidden isn't decorative — see the matching comment in
-          // book-flipbook.tsx: overflow-x-auto alone silently forces
-          // overflow-y to auto too (CSS overflow spec), which only became a
-          // visible scrollbar once the book grew tall enough for
-          // react-pageflip's own box to occasionally exceed this band by a
-          // sub-pixel amount.
-          className={`relative flex h-full w-full max-w-full justify-center px-4 ${
-            zoom.zoomed ? "overflow-hidden" : "overflow-x-auto overflow-y-hidden"
-          }`}
+          // Both axes hidden (not overflow-x-auto) — see the matching
+          // comment in book-flipbook.tsx: confirmed live (direct
+          // scrollWidth/clientWidth polling through a real flip) that
+          // react-pageflip's own page-curl animation transiently renders far
+          // wider than the flat page on *every* flip, popping a horizontal
+          // scrollbar in and out — which consumes layout space, reflowing
+          // the book and reading as it "bobbing" on every page turn (as
+          // reported by the user). overflow-hidden just clips the momentary
+          // overshoot instead, with zero layout side effect. overflow-y also
+          // needs stating explicitly either way — CSS overflow spec forces a
+          // computed overflow-y of visible to auto whenever overflow-x isn't
+          // visible.
+          className="relative flex h-full w-full max-w-full justify-center overflow-hidden px-4"
         >
           <div className="w-full" style={{ transform: zoom.transform, transition: zoom.transition }}>
             {availableHeight === null ? (
