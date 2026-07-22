@@ -3,6 +3,7 @@ import { toDateOnlyISOString } from "@/lib/date";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { ProfileForm } from "./profile-form";
 import { SetPasswordForm } from "./set-password-form";
+import { ChangePasswordForm } from "./change-password-form";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 
@@ -28,7 +29,12 @@ export default async function ProfilePage() {
         />
       </Card>
 
-      {!student.passwordHash && (
+      {student.passwordHash ? (
+        <Card>
+          <h2 className="mb-4 text-sm font-semibold text-foreground">Đổi mật khẩu</h2>
+          <ChangePasswordForm />
+        </Card>
+      ) : (
         <Card>
           <h2 className="mb-4 text-sm font-semibold text-foreground">Đặt mật khẩu</h2>
           <SetPasswordForm />

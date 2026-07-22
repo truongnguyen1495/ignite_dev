@@ -86,3 +86,46 @@ export async function setOwnPasswordAction(input: {
   revalidatePath("/dashboard/profile");
   return undefined;
 }
+
+const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Vui lòng nhập mật khẩu hiện tại."),
+    newPassword: z.string().min(8, "Mật khẩu mới phải có ít nhất 8 ký tự."),
+    confirmNewPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmNewPassword, {
+    message: "Xác nhận mật khẩu mới không khớp.",
+    path: ["confirmNewPassword"],
+  });
+
+// Counterpart to setOwnPasswordAction, for the opposite case: an account
+// that already has a password wants to change it. Requires the current
+// password (bcrypt-verified, same check as login's authorize()) rather than
+// just trusting the active session, since a logged-in browser tab left open
+// shouldn't be enough on its own to silently take over the credential.
+export async function changeOwnPasswordAction(input: {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}): Promise<string | undefined> {
+  const student = await requireActiveStudent();
+  if (!student.passwordHash) {
+    return "Tài khoản của bạn chưa có mật khẩu — hãy đặt mật khẩu trước.";
+  }
+
+  const parsed = changePasswordSchema.safeParse(input);
+  if (!parsed.success) {
+    return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
+  }
+
+  const valid = await bcrypt.compare(parsed.data.currentPassword, student.passwordHash);
+  if (!valid) {
+    return "Mật khẩu hiện tại không đúng.";
+  }
+
+  const passwordHash = await bcrypt.hash(parsed.data.newPassword, 10);
+  await prisma.user.update({ where: { id: student.id }, data: { passwordHash } });
+
+  revalidatePath("/dashboard/profile");
+  return undefined;
+}
