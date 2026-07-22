@@ -521,7 +521,7 @@ const ACTIVA_LANDING_CSS = `
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
 .activa-landing-page nav{position:sticky;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
-  padding:20px 28px;backdrop-filter:blur(10px);
+  padding:20px 28px;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
   background:linear-gradient(180deg,rgba(10,13,20,.85),rgba(10,13,20,0));transition:background .3s}
 .activa-landing-page .brand{font-family:var(--font-fraunces),serif;font-size:1.54rem;letter-spacing:.02em;color:var(--bone)}
 .activa-landing-page .brand b{color:var(--gold);font-weight:500}
@@ -588,7 +588,7 @@ const ACTIVA_LANDING_CSS = `
 .activa-landing-page .core p{margin-top:20px;color:#D3D7DE;font-size:1.26rem}
 .activa-landing-page .mats{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
 .activa-landing-page .mat{border:1px solid var(--line);border-radius:100px;padding:9px 18px;font-size:1.02rem;color:var(--bone);
-  display:flex;align-items:center;gap:.55em;background:rgba(10,13,20,.4);backdrop-filter:blur(4px)}
+  display:flex;align-items:center;gap:.55em;background:rgba(10,13,20,.4);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
 .activa-landing-page .mat i{width:9px;height:9px;border-radius:50%;display:inline-block}
 .activa-landing-page .mat.cu i{background:#B87333}
 .activa-landing-page .mat.au i{background:#E5C558}

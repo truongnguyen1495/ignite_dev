@@ -601,7 +601,7 @@ const BR9_LANDING_CSS = `
 .br9-landing-page .order{background:radial-gradient(90% 120% at 50% 0%, rgba(58,74,44,.5), var(--ink) 65%)}
 .br9-landing-page .order .lattice{opacity:.08}
 .br9-landing-page .order-card{position:relative;z-index:2;max-width:720px;margin:0 auto;text-align:center;
-  border:1px solid rgba(198,161,90,.3);border-radius:10px;padding:56px 44px;background:rgba(18,22,13,.6);backdrop-filter:blur(6px)}
+  border:1px solid rgba(198,161,90,.3);border-radius:10px;padding:56px 44px;background:rgba(18,22,13,.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .br9-landing-page .price{font-family:var(--font-cormorant),serif;font-size:56px;color:var(--gold-soft);line-height:1;margin:14px 0 4px}
 .br9-landing-page .price-usd{color:var(--cream-dim);font-size:18px;letter-spacing:1px}
 .br9-landing-page .order .btn-gold{margin-top:30px;font-size:18px;padding:18px 42px}

@@ -493,7 +493,7 @@ const SIMETRA_LANDING_CSS = `
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
 .simetra-landing-page nav{position:sticky;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
-  padding:20px 28px;backdrop-filter:blur(10px);
+  padding:20px 28px;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
   background:linear-gradient(180deg,rgba(10,13,20,.85),rgba(10,13,20,0));transition:background .3s}
 .simetra-landing-page .brand{font-family:var(--font-fraunces),serif;font-size:1.54rem;letter-spacing:.02em;color:var(--bone)}
 .simetra-landing-page .brand b{color:var(--aurora);font-weight:500}
