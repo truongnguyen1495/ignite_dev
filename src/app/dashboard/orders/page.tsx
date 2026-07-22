@@ -13,7 +13,7 @@ export default async function OrdersPage() {
   const student = await requireActiveStudent();
   await requireSalesEnabled("/dashboard");
   const orders = await prisma.order.findMany({
-    where: { studentId: student.id },
+    where: { studentId: student.id, deletedAt: null },
     include: { items: true },
     orderBy: { createdAt: "desc" },
   });

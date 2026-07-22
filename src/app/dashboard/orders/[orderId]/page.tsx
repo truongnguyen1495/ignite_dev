@@ -27,7 +27,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
       },
     },
   });
-  if (!order || order.studentId !== student.id) {
+  if (!order || order.studentId !== student.id || order.deletedAt) {
     notFound();
   }
 

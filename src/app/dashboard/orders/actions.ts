@@ -11,7 +11,7 @@ export async function cancelMyOrderAction(orderId: string) {
   const student = await requireActiveStudent();
   await requireSalesEnabled("/dashboard/orders");
   await prisma.order.updateMany({
-    where: { id: orderId, studentId: student.id, status: "PENDING" },
+    where: { id: orderId, studentId: student.id, status: "PENDING", deletedAt: null },
     data: { status: "CANCELLED", cancelledAt: new Date() },
   });
   revalidatePath("/dashboard/orders");

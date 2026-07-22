@@ -19,7 +19,7 @@ export default async function AdminOverviewPage() {
     prisma.levelUpRequest.count({ where: { status: "PENDING" } }),
     prisma.lesson.count(),
     prisma.quizAttempt.count(),
-    salesEnabled ? prisma.order.count({ where: { status: "PENDING" } }) : Promise.resolve(0),
+    salesEnabled ? prisma.order.count({ where: { status: "PENDING", deletedAt: null } }) : Promise.resolve(0),
     chatEnabled
       ? Promise.all([getAdminSupportInbox(admin.id), getAdminGuestChatInbox(admin.id)])
       : Promise.resolve([[], []] as const),

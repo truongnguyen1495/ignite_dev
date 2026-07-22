@@ -67,3 +67,12 @@ export async function deleteOrderAction(orderId: string) {
   await prisma.order.update({ where: { id: orderId }, data: { deletedAt: new Date() } });
   revalidatePath("/admin/orders");
 }
+
+// Undo for deleteOrderAction, only meaningful within the
+// ORDER_TRASH_RETENTION_DAYS window (updateMany so a restore racing the
+// opportunistic purge just no-ops instead of erroring if it already lost).
+export async function restoreOrderAction(orderId: string) {
+  await requireActiveSuperAdmin();
+  await prisma.order.updateMany({ where: { id: orderId, deletedAt: { not: null } }, data: { deletedAt: null } });
+  revalidatePath("/admin/orders");
+}
