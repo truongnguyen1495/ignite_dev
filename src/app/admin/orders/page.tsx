@@ -9,7 +9,15 @@ export default async function AdminOrdersPage() {
   await requireSalesEnabled("/admin/settings");
 
   const orders = await prisma.order.findMany({
-    include: { student: { select: { name: true, email: true } }, items: true },
+    include: {
+      student: { select: { name: true, email: true } },
+      items: {
+        include: {
+          courseAccessGrant: { select: { id: true } },
+          libraryAccessGrant: { select: { id: true } },
+        },
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -21,7 +29,11 @@ export default async function AdminOrdersPage() {
     createdAtLabel: formatDateVN(order.createdAt),
     studentName: order.student.name,
     studentEmail: order.student.email,
-    itemTitles: order.items.map((i) => i.titleSnapshot),
+    items: order.items.map((i) => ({
+      id: i.id,
+      title: i.titleSnapshot,
+      hasActiveGrant: !!i.courseAccessGrant || !!i.libraryAccessGrant,
+    })),
   }));
 
   return (

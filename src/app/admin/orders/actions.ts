@@ -17,8 +17,8 @@ export async function confirmOrderPaidAction(orderId: string) {
 }
 
 // Only meaningful from PENDING — a PAID order already granted access, and
-// undoing that isn't part of v1 (see revoke-access buttons on the
-// course/library detail pages if an admin needs to walk back a mistake).
+// undoing that isn't part of v1 (see revokeOrderItemAccessAction below if an
+// admin needs to walk back a mistake instead).
 export async function cancelOrderAction(orderId: string) {
   await requireAdminPermission("MANAGE_ORDERS");
   await requireSalesEnabled("/admin/orders");
@@ -27,4 +27,25 @@ export async function cancelOrderAction(orderId: string) {
     data: { status: "CANCELLED", cancelledAt: new Date() },
   });
   revalidatePath("/admin/orders");
+}
+
+// Lets an admin walk back a specific order item's access grant right from
+// the orders list, instead of having to hunt down the same row on the
+// course/library detail page. Deletes by orderItemId (deleteMany so it's a
+// no-op, not an error, if already revoked from the other page) — never
+// touches the Order itself, which intentionally stays "PAID" forever (see
+// fulfillOrder in src/lib/order-fulfillment.ts).
+export async function revokeOrderItemAccessAction(orderItemId: string) {
+  await requireAdminPermission("MANAGE_ORDERS");
+  const item = await prisma.orderItem.findUnique({ where: { id: orderItemId } });
+  if (!item) return;
+
+  if (item.kind === "COURSE") {
+    await prisma.courseAccessGrant.deleteMany({ where: { orderItemId } });
+  } else {
+    await prisma.libraryAccessGrant.deleteMany({ where: { orderItemId } });
+  }
+  revalidatePath("/admin/orders");
+  if (item.courseId) revalidatePath(`/admin/courses/${item.courseId}`);
+  if (item.libraryItemId) revalidatePath(`/admin/library/${item.libraryItemId}`);
 }

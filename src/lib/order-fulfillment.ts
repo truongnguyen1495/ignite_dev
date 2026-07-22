@@ -24,14 +24,19 @@ export async function fulfillOrder(orderId: string, confirmedById: string | null
       item.kind === "COURSE"
         ? prisma.courseAccessGrant.upsert({
             where: { studentId_courseId: { studentId: order.studentId, courseId: item.courseId! } },
-            create: { studentId: order.studentId, courseId: item.courseId!, grantedById: null },
+            create: { studentId: order.studentId, courseId: item.courseId!, grantedById: null, orderItemId: item.id },
             update: {},
           })
         : prisma.libraryAccessGrant.upsert({
             where: {
               studentId_libraryItemId: { studentId: order.studentId, libraryItemId: item.libraryItemId! },
             },
-            create: { studentId: order.studentId, libraryItemId: item.libraryItemId!, grantedById: null },
+            create: {
+              studentId: order.studentId,
+              libraryItemId: item.libraryItemId!,
+              grantedById: null,
+              orderItemId: item.id,
+            },
             update: {},
           })
     ),

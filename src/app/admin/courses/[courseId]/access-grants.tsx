@@ -6,6 +6,8 @@ import { Loader2, UserMinus, X } from "lucide-react";
 import type { Level } from "@prisma/client";
 import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { formatOrderCode } from "@/lib/orders";
 import {
   grantCourseAccessAction,
   revokeCourseAccessAction,
@@ -111,9 +113,22 @@ export function ToggleOpenToProspectiveStudents({
   );
 }
 
-export function RevokeAccessButton({ grantId, courseId }: { grantId: string; courseId: string }) {
+export type RevokeOrderInfo = { orderNumber: number; amountLabel: string; paidAtLabel: string };
+
+export function RevokeAccessButton({
+  grantId,
+  courseId,
+  studentName,
+  orderInfo,
+}: {
+  grantId: string;
+  courseId: string;
+  studentName?: string;
+  orderInfo?: RevokeOrderInfo | null;
+}) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const confirm = useConfirm();
 
   return (
     <Button
@@ -122,7 +137,22 @@ export function RevokeAccessButton({ grantId, courseId }: { grantId: string; cou
       size="icon"
       disabled={pending}
       title="Thu hồi quyền truy cập"
-      onClick={() => {
+      onClick={async () => {
+        const ok = await confirm({
+          title: `Thu hồi quyền của ${studentName ?? "học viên này"}?`,
+          description: orderInfo ? (
+            <>
+              Học viên này đã mua qua đơn{" "}
+              <span className="font-medium text-foreground">{formatOrderCode(orderInfo.orderNumber)}</span> (
+              {orderInfo.amountLabel}
+              {orderInfo.paidAtLabel ? `, thanh toán ${orderInfo.paidAtLabel}` : ""}). Thu hồi sẽ{" "}
+              <span className="font-semibold text-danger">không</span> tự hủy hay hoàn tiền đơn hàng đó.
+            </>
+          ) : undefined,
+          confirmLabel: "Thu hồi",
+          tone: "danger",
+        });
+        if (!ok) return;
         startTransition(async () => {
           await revokeCourseAccessAction(grantId, courseId);
           router.refresh();
@@ -130,7 +160,7 @@ export function RevokeAccessButton({ grantId, courseId }: { grantId: string; cou
       }}
       className="hover:bg-danger-bg hover:text-danger"
     >
-      <UserMinus className="h-4 w-4" />
+      {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserMinus className="h-4 w-4" />}
     </Button>
   );
 }

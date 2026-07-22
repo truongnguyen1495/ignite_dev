@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPermission, hasAdminPermission, isSalesEnabled } from "@/lib/access";
 import { LEVEL_LABELS } from "@/lib/levels";
+import { formatVND } from "@/lib/currency";
+import { formatDateVN } from "@/lib/date";
 import { EditCourseForm } from "./edit-course-form";
 import { DeleteCourseButton } from "./delete-course-button";
 import {
@@ -30,7 +32,10 @@ export default async function EditCoursePage({
     where: { id: courseId },
     include: {
       lessons: { orderBy: { order: "asc" } },
-      grants: { include: { student: true }, orderBy: { grantedAt: "desc" } },
+      grants: {
+        include: { student: true, orderItem: { include: { order: true } } },
+        orderBy: { grantedAt: "desc" },
+      },
       levelGrants: { orderBy: { minLevel: "asc" } },
     },
   });
@@ -52,6 +57,17 @@ export default async function EditCoursePage({
   const hocSinhGrants = course.grants.filter((g) => g.student.grantedLevel === null);
   const ungrantedHocVien = ungrantedStudents.filter((s) => s.grantedLevel !== null);
   const ungrantedHocSinh = ungrantedStudents.filter((s) => s.grantedLevel === null);
+
+  // Passed to RevokeAccessButton so its confirm dialog can name the actual
+  // order instead of a generic warning — null for admin-granted rows.
+  function orderInfoFor(grant: NonNullable<typeof course>["grants"][number]) {
+    if (!grant.orderItem) return null;
+    return {
+      orderNumber: grant.orderItem.order.orderNumber,
+      amountLabel: formatVND(grant.orderItem.priceAtPurchase),
+      paidAtLabel: grant.orderItem.order.paidAt ? formatDateVN(grant.orderItem.order.paidAt) : "",
+    };
+  }
 
   return (
     <div className="mx-auto max-w-[1000px] space-y-6">
@@ -119,11 +135,16 @@ export default async function EditCoursePage({
                 <div>
                   <p className="flex items-center gap-1.5 text-foreground">
                     {grant.student.name}
-                    {grant.grantedById === null && <Badge color="info">Đã mua</Badge>}
+                    {grant.orderItem && <Badge color="info">Đã mua</Badge>}
                   </p>
                   <p className="text-muted">{grant.student.email}</p>
                 </div>
-                <RevokeAccessButton grantId={grant.id} courseId={course.id} />
+                <RevokeAccessButton
+                  grantId={grant.id}
+                  courseId={course.id}
+                  studentName={grant.student.name}
+                  orderInfo={orderInfoFor(grant)}
+                />
               </li>
             ))}
           </ul>
@@ -154,10 +175,18 @@ export default async function EditCoursePage({
                   className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background p-3 text-sm"
                 >
                   <div>
-                    <p className="text-foreground">{grant.student.name}</p>
+                    <p className="flex items-center gap-1.5 text-foreground">
+                      {grant.student.name}
+                      {grant.orderItem && <Badge color="info">Đã mua</Badge>}
+                    </p>
                     <p className="text-muted">{grant.student.email}</p>
                   </div>
-                  <RevokeAccessButton grantId={grant.id} courseId={course.id} />
+                  <RevokeAccessButton
+                    grantId={grant.id}
+                    courseId={course.id}
+                    studentName={grant.student.name}
+                    orderInfo={orderInfoFor(grant)}
+                  />
                 </li>
               ))}
             </ul>

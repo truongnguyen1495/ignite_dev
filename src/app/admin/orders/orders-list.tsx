@@ -2,14 +2,14 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, X } from "lucide-react";
+import { Check, X, UserMinus, Loader2 } from "lucide-react";
 import type { OrderStatus } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { formatVND } from "@/lib/currency";
 import { formatOrderCode, ORDER_STATUS_LABELS, ORDER_STATUS_BADGE_COLOR } from "@/lib/orders";
-import { confirmOrderPaidAction, cancelOrderAction } from "./actions";
+import { confirmOrderPaidAction, cancelOrderAction, revokeOrderItemAccessAction } from "./actions";
 
 export type OrderListItem = {
   id: string;
@@ -19,7 +19,7 @@ export type OrderListItem = {
   createdAtLabel: string;
   studentName: string;
   studentEmail: string;
-  itemTitles: string[];
+  items: { id: string; title: string; hasActiveGrant: boolean }[];
 };
 
 const STATUS_FILTERS: OrderStatus[] = ["PENDING", "PAID", "CANCELLED"];
@@ -34,7 +34,7 @@ function OrderActions({ order }: { order: OrderListItem }) {
   const onConfirm = async () => {
     const ok = await confirm({
       title: `Xác nhận đã nhận thanh toán cho ${formatOrderCode(order.orderNumber)}?`,
-      description: `${order.studentName} sẽ được cấp quyền xem ngay sau khi xác nhận: ${order.itemTitles.join(", ")}.`,
+      description: `${order.studentName} sẽ được cấp quyền xem ngay sau khi xác nhận: ${order.items.map((i) => i.title).join(", ")}.`,
       confirmLabel: "Xác nhận đã thanh toán",
     });
     if (!ok) return;
@@ -67,6 +67,42 @@ function OrderActions({ order }: { order: OrderListItem }) {
         <X className="h-4 w-4" />
       </Button>
     </div>
+  );
+}
+
+// Only rendered for a PAID order's items that still have an active grant —
+// lets an admin walk that back right here instead of hunting down the same
+// row on the course/library detail page. Never touches the Order itself
+// (stays "PAID" forever, see revokeOrderItemAccessAction).
+function RevokeOrderItemButton({ order, itemId }: { order: OrderListItem; itemId: string }) {
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
+  const confirm = useConfirm();
+
+  return (
+    <Button
+      type="button"
+      size="icon"
+      variant="ghost"
+      disabled={pending}
+      title="Thu hồi quyền truy cập"
+      onClick={async () => {
+        const ok = await confirm({
+          title: `Thu hồi quyền từ đơn ${formatOrderCode(order.orderNumber)}?`,
+          description: `${order.studentName} đã thanh toán ${formatVND(order.totalAmount)} cho đơn này. Thu hồi sẽ không tự hủy hay hoàn tiền đơn hàng.`,
+          confirmLabel: "Thu hồi",
+          tone: "danger",
+        });
+        if (!ok) return;
+        startTransition(async () => {
+          await revokeOrderItemAccessAction(itemId);
+          router.refresh();
+        });
+      }}
+      className="hover:bg-danger-bg hover:text-danger"
+    >
+      {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserMinus className="h-3.5 w-3.5" />}
+    </Button>
   );
 }
 
@@ -126,7 +162,21 @@ export function OrdersList({ orders }: { orders: OrderListItem[] }) {
                     {ORDER_STATUS_LABELS[order.status]}
                   </Badge>
                 </div>
-                <p className="truncate text-sm text-foreground">{order.itemTitles.join(", ")}</p>
+                <ul className="space-y-1">
+                  {order.items.map((item) => (
+                    <li key={item.id} className="flex flex-wrap items-center gap-1.5 text-sm text-foreground">
+                      <span className="truncate">{item.title}</span>
+                      {order.status === "PAID" && (
+                        <>
+                          <Badge color={item.hasActiveGrant ? "success" : "muted"}>
+                            {item.hasActiveGrant ? "Còn hiệu lực" : "Đã thu hồi"}
+                          </Badge>
+                          {item.hasActiveGrant && <RevokeOrderItemButton order={order} itemId={item.id} />}
+                        </>
+                      )}
+                    </li>
+                  ))}
+                </ul>
                 <p className="truncate text-xs text-muted">
                   {order.studentName} · {order.studentEmail} · {order.createdAtLabel}
                 </p>

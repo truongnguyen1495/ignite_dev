@@ -488,6 +488,14 @@ model CourseAccessGrant {
   grantedAt   DateTime @default(now())
   grantedById String?
   grantedBy   User?    @relation("CourseGrantsGiven", fields: [grantedById], references: [id])
+  // Set only when this grant came from a paid order (grantedById is null in
+  // that case) — the actual source of truth for "was this bought", instead
+  // of inferring it from grantedById's nullability, which would get
+  // ambiguous the moment a second non-admin grant source is ever added.
+  // Lets the revoke UI warn with the real order details (amount, date)
+  // instead of a generic "Đã mua" label. Never set on an admin-granted row.
+  orderItemId String?    @unique
+  orderItem   OrderItem? @relation("CourseGrantOrderItem", fields: [orderItemId], references: [id])
 
   @@unique([studentId, courseId])
   @@index([studentId])
@@ -643,6 +651,10 @@ model LibraryAccessGrant {
   grantedAt     DateTime    @default(now())
   grantedById   String?
   grantedBy     User?       @relation("LibraryGrantsGiven", fields: [grantedById], references: [id])
+  // Same convention as CourseAccessGrant.orderItemId — the real source of
+  // truth for "was this bought", set only for order-fulfilled rows.
+  orderItemId   String?     @unique
+  orderItem     OrderItem?  @relation("LibraryGrantOrderItem", fields: [orderItemId], references: [id])
 
   @@unique([studentId, libraryItemId])
   @@index([studentId])
@@ -708,6 +720,12 @@ model OrderItem {
   libraryItem     LibraryItem?  @relation(fields: [libraryItemId], references: [id])
   titleSnapshot   String
   priceAtPurchase Int
+
+  // Back-relations to whichever access grant this item's fulfillment
+  // created (at most one of the two, matching kind) — see
+  // CourseAccessGrant.orderItemId / LibraryAccessGrant.orderItemId.
+  courseAccessGrant  CourseAccessGrant?  @relation("CourseGrantOrderItem")
+  libraryAccessGrant LibraryAccessGrant? @relation("LibraryGrantOrderItem")
 
   @@index([orderId])
 }
