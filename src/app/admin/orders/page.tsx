@@ -29,9 +29,18 @@ export default async function AdminOrdersPage() {
     createdAtLabel: formatDateVN(order.createdAt),
     studentName: order.student.name,
     studentEmail: order.student.email,
+    shipping:
+      order.shippingName || order.shippingPhone || order.shippingAddress
+        ? {
+            name: order.shippingName ?? "",
+            phone: order.shippingPhone ?? "",
+            address: order.shippingAddress ?? "",
+          }
+        : null,
     items: order.items.map((i) => ({
       id: i.id,
       title: i.titleSnapshot,
+      kind: i.kind,
       hasActiveGrant: !!i.courseAccessGrant || !!i.libraryAccessGrant,
     })),
   }));
@@ -40,7 +49,7 @@ export default async function AdminOrdersPage() {
     <div className="space-y-6">
       <PageHeader
         title="Đơn hàng"
-        description="Đơn mua khóa học độc quyền/tài liệu thư viện qua chuyển khoản ngân hàng."
+        description="Đơn mua khóa học độc quyền/tài liệu thư viện/sản phẩm qua chuyển khoản ngân hàng."
       />
       <OrdersList orders={items} />
     </div>

@@ -29,29 +29,34 @@ export async function fulfillOrder(orderId: string, confirmedById: string | null
   });
   if (count === 0) return;
 
-  if (order.items.length > 0) {
-    await prisma.$transaction(
-      order.items.map((item) =>
-        item.kind === "COURSE"
-          ? prisma.courseAccessGrant.upsert({
-              where: { studentId_courseId: { studentId: order.studentId, courseId: item.courseId! } },
-              create: { studentId: order.studentId, courseId: item.courseId!, grantedById: null, orderItemId: item.id },
-              update: {},
-            })
-          : prisma.libraryAccessGrant.upsert({
-              where: {
-                studentId_libraryItemId: { studentId: order.studentId, libraryItemId: item.libraryItemId! },
-              },
-              create: {
-                studentId: order.studentId,
-                libraryItemId: item.libraryItemId!,
-                grantedById: null,
-                orderItemId: item.id,
-              },
-              update: {},
-            })
-      )
+  // PRODUCT items get no access-grant row — a physical good has nothing
+  // digital to unlock, unlike COURSE/LIBRARY_ITEM. Being PAID is itself the
+  // fulfillment signal; shipping happens outside this system using the
+  // Order.shipping* fields the student filled in at checkout.
+  const grantOps = order.items
+    .filter((item) => item.kind !== "PRODUCT")
+    .map((item) =>
+      item.kind === "COURSE"
+        ? prisma.courseAccessGrant.upsert({
+            where: { studentId_courseId: { studentId: order.studentId, courseId: item.courseId! } },
+            create: { studentId: order.studentId, courseId: item.courseId!, grantedById: null, orderItemId: item.id },
+            update: {},
+          })
+        : prisma.libraryAccessGrant.upsert({
+            where: {
+              studentId_libraryItemId: { studentId: order.studentId, libraryItemId: item.libraryItemId! },
+            },
+            create: {
+              studentId: order.studentId,
+              libraryItemId: item.libraryItemId!,
+              grantedById: null,
+              orderItemId: item.id,
+            },
+            update: {},
+          })
     );
+  if (grantOps.length > 0) {
+    await prisma.$transaction(grantOps);
   }
 
   revalidatePath("/admin/orders");

@@ -3,6 +3,7 @@ import { Package } from "lucide-react";
 import { BackLink } from "@/components/ui/back-link";
 import { getPricing } from "@/lib/pricing";
 import { formatVND } from "@/lib/currency";
+import { ProductBuyButton } from "@/components/product-buy-button";
 
 export type GenericProduct = {
   id: string;
@@ -20,7 +21,13 @@ export type GenericProduct = {
 // back to this plain view — matches the dark card treatment already used on
 // the /dashboard/products listing and on Course/Library, so it doesn't look
 // like a dead end after the marketplace-style grid.
-export function GenericProductDetail({ product }: { product: GenericProduct }) {
+export function GenericProductDetail({
+  product,
+  salesEnabled,
+}: {
+  product: GenericProduct;
+  salesEnabled: boolean;
+}) {
   const pricing = getPricing(product);
 
   return (
@@ -63,6 +70,17 @@ export function GenericProductDetail({ product }: { product: GenericProduct }) {
             )}
             <span className="text-xs text-slate-400">CV {product.cv}</span>
           </div>
+          {salesEnabled && pricing.forSale && (
+            <ProductBuyButton
+              productId={product.id}
+              title={product.title}
+              price={pricing.chargeAmount}
+              originalPrice={pricing.originalPrice}
+              className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+            >
+              Đặt hàng ngay
+            </ProductBuyButton>
+          )}
         </div>
       </div>
     </div>

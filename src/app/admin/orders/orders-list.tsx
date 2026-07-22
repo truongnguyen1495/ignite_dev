@@ -2,8 +2,8 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, X, UserMinus, Loader2 } from "lucide-react";
-import type { OrderStatus } from "@prisma/client";
+import { Check, X, UserMinus, Loader2, Truck } from "lucide-react";
+import type { OrderItemKind, OrderStatus } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -19,7 +19,8 @@ export type OrderListItem = {
   createdAtLabel: string;
   studentName: string;
   studentEmail: string;
-  items: { id: string; title: string; hasActiveGrant: boolean }[];
+  shipping: { name: string; phone: string; address: string } | null;
+  items: { id: string; title: string; kind: OrderItemKind; hasActiveGrant: boolean }[];
 };
 
 const STATUS_FILTERS: OrderStatus[] = ["PENDING", "PAID", "CANCELLED"];
@@ -32,9 +33,22 @@ function OrderActions({ order }: { order: OrderListItem }) {
   if (order.status !== "PENDING") return null;
 
   const onConfirm = async () => {
+    const hasProduct = order.items.some((i) => i.kind === "PRODUCT");
     const ok = await confirm({
       title: `Xác nhận đã nhận thanh toán cho ${formatOrderCode(order.orderNumber)}?`,
-      description: `${order.studentName} sẽ được cấp quyền xem ngay sau khi xác nhận: ${order.items.map((i) => i.title).join(", ")}.`,
+      description: (
+        <div className="space-y-2">
+          <p>
+            {order.studentName} sẽ được xác nhận đã mua: {order.items.map((i) => i.title).join(", ")}.
+            {hasProduct && " Sản phẩm vật lý sẽ không tự cấp quyền gì — nhớ sắp xếp giao hàng sau khi xác nhận."}
+          </p>
+          {order.shipping && (
+            <p className="rounded-lg border border-border bg-surface-hover p-2 text-xs">
+              Giao đến: {order.shipping.name} · {order.shipping.phone} · {order.shipping.address}
+            </p>
+          )}
+        </div>
+      ),
       confirmLabel: "Xác nhận đã thanh toán",
     });
     if (!ok) return;
@@ -166,7 +180,7 @@ export function OrdersList({ orders }: { orders: OrderListItem[] }) {
                   {order.items.map((item) => (
                     <li key={item.id} className="flex flex-wrap items-center gap-1.5 text-sm text-foreground">
                       <span className="truncate">{item.title}</span>
-                      {order.status === "PAID" && (
+                      {order.status === "PAID" && item.kind !== "PRODUCT" && (
                         <>
                           <Badge color={item.hasActiveGrant ? "success" : "muted"}>
                             {item.hasActiveGrant ? "Còn hiệu lực" : "Đã thu hồi"}
@@ -180,6 +194,14 @@ export function OrdersList({ orders }: { orders: OrderListItem[] }) {
                 <p className="truncate text-xs text-muted">
                   {order.studentName} · {order.studentEmail} · {order.createdAtLabel}
                 </p>
+                {order.shipping && (
+                  <p className="mt-1 flex items-start gap-1.5 text-xs text-muted">
+                    <Truck className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {order.shipping.name} · {order.shipping.phone} · {order.shipping.address}
+                    </span>
+                  </p>
+                )}
               </div>
               <p className="shrink-0 font-medium text-foreground">{formatVND(order.totalAmount)}</p>
               <OrderActions order={order} />

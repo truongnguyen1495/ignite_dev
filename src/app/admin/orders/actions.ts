@@ -38,7 +38,7 @@ export async function cancelOrderAction(orderId: string) {
 export async function revokeOrderItemAccessAction(orderItemId: string) {
   await requireAdminPermission("MANAGE_ORDERS");
   const item = await prisma.orderItem.findUnique({ where: { id: orderItemId } });
-  if (!item) return;
+  if (!item || item.kind === "PRODUCT") return;
 
   if (item.kind === "COURSE") {
     await prisma.courseAccessGrant.deleteMany({ where: { orderItemId } });

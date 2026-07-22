@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { requireLeveledStudent } from "@/lib/access";
+import { requireLeveledStudent, isSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { AriaLandingPage } from "@/components/product-landing/aria-landing";
 import { ActivaLandingPage } from "@/components/product-landing/activa-landing";
@@ -24,7 +24,10 @@ export default async function ProductLandingPage({
 }) {
   await requireLeveledStudent();
   const { slug } = await params;
-  const product = await prisma.product.findUnique({ where: { slug } });
+  const [product, salesEnabled] = await Promise.all([
+    prisma.product.findUnique({ where: { slug } }),
+    isSalesEnabled(),
+  ]);
   if (!product) {
     notFound();
   }
@@ -43,6 +46,7 @@ export default async function ProductLandingPage({
           lifestyleImage2Url: product.lifestyleImage2Url,
           lifestyleImage3Url: product.lifestyleImage3Url,
         }}
+        salesEnabled={salesEnabled}
       />
     );
   }
@@ -56,6 +60,7 @@ export default async function ProductLandingPage({
           salePrice: product.salePrice,
           cv: product.cv,
         }}
+        salesEnabled={salesEnabled}
       />
     );
   }
@@ -69,6 +74,7 @@ export default async function ProductLandingPage({
           salePrice: product.salePrice,
           cv: product.cv,
         }}
+        salesEnabled={salesEnabled}
       />
     );
   }
@@ -82,6 +88,7 @@ export default async function ProductLandingPage({
           salePrice: product.salePrice,
           cv: product.cv,
         }}
+        salesEnabled={salesEnabled}
       />
     );
   }

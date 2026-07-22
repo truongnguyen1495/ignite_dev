@@ -14,15 +14,63 @@ import { getPricing } from "@/lib/pricing";
 
 export type CreateOrderResult = { error?: string; orderId?: string };
 
+export type ShippingDetails = { name: string; phone: string; address: string };
+
 // Re-checks isSalesEnabled server-side (defense-in-depth — the buy button
 // is already hidden when sales are off, but this stops a direct call too)
 // and blocks anyone who already has access (bought before, or admin-granted
 // for free) or already has a pending order for the same item — returns that
-// existing order instead of creating a duplicate.
-export async function createOrderAction(kind: OrderItemKind, itemId: string): Promise<CreateOrderResult> {
+// existing order instead of creating a duplicate. `shipping` is required
+// (and only meaningful) for kind PRODUCT — a physical good needs somewhere
+// to ship to, unlike COURSE/LIBRARY_ITEM which just grant digital access.
+export async function createOrderAction(
+  kind: OrderItemKind,
+  itemId: string,
+  shipping?: ShippingDetails
+): Promise<CreateOrderResult> {
   const student = await requireActiveStudent();
   if (!(await isSalesEnabled())) {
     return { error: "Hệ thống bán hàng hiện đang tắt." };
+  }
+
+  if (kind === "PRODUCT") {
+    const name = shipping?.name.trim();
+    const phone = shipping?.phone.trim();
+    const address = shipping?.address.trim();
+    if (!name || !phone || !address) {
+      return { error: "Vui lòng nhập đầy đủ họ tên, số điện thoại và địa chỉ nhận hàng." };
+    }
+
+    const product = await prisma.product.findUnique({ where: { id: itemId } });
+    const productPricing = product && getPricing(product);
+    if (!product || !productPricing?.forSale) {
+      return { error: "Sản phẩm này không bán." };
+    }
+
+    const existing = await prisma.orderItem.findFirst({
+      where: { productId: itemId, order: { studentId: student.id, status: "PENDING" } },
+    });
+    if (existing) return { orderId: existing.orderId };
+
+    const order = await prisma.order.create({
+      data: {
+        studentId: student.id,
+        totalAmount: productPricing.chargeAmount,
+        shippingName: name,
+        shippingPhone: phone,
+        shippingAddress: address,
+        items: {
+          create: {
+            kind: "PRODUCT",
+            productId: itemId,
+            titleSnapshot: product.title,
+            priceAtPurchase: productPricing.chargeAmount,
+          },
+        },
+      },
+    });
+    revalidatePath("/dashboard/orders");
+    return { orderId: order.id };
   }
 
   if (kind === "COURSE") {

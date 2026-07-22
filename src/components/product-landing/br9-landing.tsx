@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Cormorant_Garamond, Jost } from "next/font/google";
 import { formatVND } from "@/lib/currency";
 import { getPricing } from "@/lib/pricing";
+import { ProductBuyButton } from "@/components/product-buy-button";
 
 // Bespoke landing page for exactly one product (today: "sanarey-br9") — see
 // the branch in ./page.tsx. Ported from a hand-designed reference file the
@@ -91,8 +92,15 @@ function PriceBlock({ product }: { product: Br9LandingProduct }) {
   );
 }
 
-export function Br9LandingPage({ product }: { product: Br9LandingProduct }) {
+export function Br9LandingPage({
+  product,
+  salesEnabled,
+}: {
+  product: Br9LandingProduct;
+  salesEnabled: boolean;
+}) {
   const navRef = useRef<HTMLElement>(null);
+  const pricing = getPricing(product);
 
   useEffect(() => {
     const io = new IntersectionObserver(
@@ -395,11 +403,21 @@ export function Br9LandingPage({ product }: { product: Br9LandingProduct }) {
           <div className="order-card reveal">
             <div className="eyebrow">Sanarey BR-9</div>
             <PriceBlock product={product} />
-            {/* Checkout chưa được nối — nút này tạm thời chỉ mang tính hiển
-                thị cho tới khi luồng đặt hàng cho Product được quyết định. */}
-            <a href="#order" className="btn btn-gold" onClick={(e) => e.preventDefault()}>
-              Đặt hàng ngay
-            </a>
+            {salesEnabled && pricing.forSale ? (
+              <ProductBuyButton
+                productId={product.id}
+                title="SANAREY BR-9"
+                price={pricing.chargeAmount}
+                originalPrice={pricing.originalPrice}
+                className="btn btn-gold"
+              >
+                Đặt hàng ngay
+              </ProductBuyButton>
+            ) : (
+              <a href="#order" className="btn btn-gold" onClick={(e) => e.preventDefault()}>
+                Liên hệ để đặt hàng
+              </a>
+            )}
             <div className="guarantee">
               <span>
                 <i>✓</i> Hàng chính hãng, có tem

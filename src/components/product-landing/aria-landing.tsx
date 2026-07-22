@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Fraunces, Be_Vietnam_Pro } from "next/font/google";
 import { formatVND } from "@/lib/currency";
 import { getPricing } from "@/lib/pricing";
+import { ProductBuyButton } from "@/components/product-buy-button";
 
 // Bespoke landing page for exactly one product (today: "sanarey-aria") — see
 // the branch in ./page.tsx. Ported verbatim (structure, copy, animation)
@@ -38,7 +39,13 @@ export type AriaLandingProduct = {
   lifestyleImage3Url: string | null;
 };
 
-export function AriaLandingPage({ product }: { product: AriaLandingProduct }) {
+export function AriaLandingPage({
+  product,
+  salesEnabled,
+}: {
+  product: AriaLandingProduct;
+  salesEnabled: boolean;
+}) {
   const navRef = useRef<HTMLElement>(null);
   const pricing = getPricing(product);
 
@@ -497,12 +504,21 @@ export function AriaLandingPage({ product }: { product: AriaLandingProduct }) {
               </p>
             )}
             <div className="buy">
-              {/* Checkout chưa được nối — nút này tạm thời chỉ mang tính hiển
-                  thị, giống hệt bản thiết kế gốc, cho tới khi luồng đặt
-                  hàng cho Product được quyết định. */}
-              <a href="#" className="btn" onClick={(e) => e.preventDefault()}>
-                Đặt hàng ngay <span aria-hidden="true">→</span>
-              </a>
+              {salesEnabled && pricing.forSale ? (
+                <ProductBuyButton
+                  productId={product.id}
+                  title={product.title}
+                  price={pricing.chargeAmount}
+                  originalPrice={pricing.originalPrice}
+                  className="btn"
+                >
+                  Đặt hàng ngay <span aria-hidden="true">→</span>
+                </ProductBuyButton>
+              ) : (
+                <a href="#" className="btn" onClick={(e) => e.preventDefault()}>
+                  Liên hệ để đặt hàng
+                </a>
+              )}
               <a href="#hinh-hoc" className="btn ghost">
                 Tìm hiểu công nghệ
               </a>

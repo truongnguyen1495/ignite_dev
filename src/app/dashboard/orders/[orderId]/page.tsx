@@ -46,6 +46,26 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
         </div>
       </Card>
 
+      {order.shippingAddress && (
+        <Card className="space-y-2">
+          <h2 className="text-sm font-semibold text-foreground">Thông tin giao hàng</h2>
+          <dl className="space-y-2 text-sm">
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted">Người nhận</dt>
+              <dd className="text-right text-foreground">{order.shippingName}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted">Số điện thoại</dt>
+              <dd className="text-right text-foreground">{order.shippingPhone}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted">Địa chỉ</dt>
+              <dd className="text-right text-foreground">{order.shippingAddress}</dd>
+            </div>
+          </dl>
+        </Card>
+      )}
+
       {order.status === "PENDING" && (
         <Card className="space-y-3">
           <h2 className="text-sm font-semibold text-foreground">Thông tin chuyển khoản</h2>

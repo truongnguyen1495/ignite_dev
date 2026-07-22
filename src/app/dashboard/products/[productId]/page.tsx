@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { requireLeveledStudent } from "@/lib/access";
+import { requireLeveledStudent, isSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { GenericProductDetail } from "./generic-product-detail";
 
@@ -15,7 +15,10 @@ export default async function ProductDetailPage({
 }) {
   await requireLeveledStudent();
   const { productId } = await params;
-  const product = await prisma.product.findUnique({ where: { id: productId } });
+  const [product, salesEnabled] = await Promise.all([
+    prisma.product.findUnique({ where: { id: productId } }),
+    isSalesEnabled(),
+  ]);
   if (!product) {
     notFound();
   }
@@ -36,6 +39,7 @@ export default async function ProductDetailPage({
         salePrice: product.salePrice,
         cv: product.cv,
       }}
+      salesEnabled={salesEnabled}
     />
   );
 }

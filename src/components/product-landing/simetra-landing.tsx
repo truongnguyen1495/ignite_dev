@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Fraunces, Be_Vietnam_Pro } from "next/font/google";
 import { formatVND } from "@/lib/currency";
 import { getPricing } from "@/lib/pricing";
+import { ProductBuyButton } from "@/components/product-buy-button";
 
 // Bespoke landing page for exactly one product (today: "sanarey-simetra") —
 // see the branch in ./page.tsx. Ported verbatim (structure, copy, animation)
@@ -61,7 +62,13 @@ function PriceBlock({ product, size }: { product: SimetraLandingProduct; size?: 
   );
 }
 
-export function SimetraLandingPage({ product }: { product: SimetraLandingProduct }) {
+export function SimetraLandingPage({
+  product,
+  salesEnabled,
+}: {
+  product: SimetraLandingProduct;
+  salesEnabled: boolean;
+}) {
   const navRef = useRef<HTMLElement>(null);
   const pricing = getPricing(product);
 
@@ -421,12 +428,21 @@ export function SimetraLandingPage({ product }: { product: SimetraLandingProduct
             </p>
             <div className="buy">
               <PriceBlock product={product} size="lg" />
-              {/* Checkout chưa được nối — nút này tạm thời chỉ mang tính hiển
-                  thị, giống hệt bản thiết kế gốc, cho tới khi luồng đặt
-                  hàng cho Product được quyết định. */}
-              <a href="#" className="btn" onClick={(e) => e.preventDefault()}>
-                Đặt hàng ngay <span aria-hidden="true">→</span>
-              </a>
+              {salesEnabled && pricing.forSale ? (
+                <ProductBuyButton
+                  productId={product.id}
+                  title="SANAREY Simetra"
+                  price={pricing.chargeAmount}
+                  originalPrice={pricing.originalPrice}
+                  className="btn"
+                >
+                  Đặt hàng ngay <span aria-hidden="true">→</span>
+                </ProductBuyButton>
+              ) : (
+                <a href="#" className="btn" onClick={(e) => e.preventDefault()}>
+                  Liên hệ để đặt hàng
+                </a>
+              )}
               <a href="#cong-nghe" className="btn ghost">
                 Tìm hiểu công nghệ
               </a>

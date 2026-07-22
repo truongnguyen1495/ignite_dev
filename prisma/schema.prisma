@@ -70,6 +70,7 @@ enum OrderStatus {
 enum OrderItemKind {
   COURSE
   LIBRARY_ITEM
+  PRODUCT
 }
 
 model User {
@@ -480,14 +481,14 @@ model CourseLessonCompletion {
 }
 
 model CourseAccessGrant {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   studentId   String
-  student     User     @relation("CourseGrants", fields: [studentId], references: [id], onDelete: Cascade)
+  student     User       @relation("CourseGrants", fields: [studentId], references: [id], onDelete: Cascade)
   courseId    String
-  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  grantedAt   DateTime @default(now())
+  course      Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  grantedAt   DateTime   @default(now())
   grantedById String?
-  grantedBy   User?    @relation("CourseGrantsGiven", fields: [grantedById], references: [id])
+  grantedBy   User?      @relation("CourseGrantsGiven", fields: [grantedById], references: [id])
   // Set only when this grant came from a paid order (grantedById is null in
   // that case) — the actual source of truth for "was this bought", instead
   // of inferring it from grantedById's nullability, which would get
@@ -521,36 +522,41 @@ model CourseLevelGrant {
 // A separate, simpler catalog of physical products — not digital content,
 // so unlike Course/LibraryItem there is no access-grant/level-gating model
 // at all: every học viên sees every product, and that's the entire access
-// rule (see requireLeveledStudent() in dashboard/products/*). No lessons,
-// no grants, just a flat admin-managed catalog.
+// rule (see requireLeveledStudent() in dashboard/products/*). No lessons, no
+// access grants — a paid PRODUCT order (see OrderItem) only ever flips the
+// Order to PAID, fulfillment (shipping the physical item) happens outside
+// the system using Order.shipping* + the student's own phoneNumber, the
+// same manual-trust model as payment confirmation itself.
 model Product {
-  id          String   @id @default(cuid())
-  title       String
-  subtitle    String?
-  description String?  @db.Text
+  id                 String   @id @default(cuid())
+  title              String
+  subtitle           String?
+  description        String?  @db.Text
   // e.g. "Package" — shown as a small tag on the catalog card.
-  badgeLabel  String?
-  imageUrl    String?
-  order       Int      @default(0)
+  badgeLabel         String?
+  imageUrl           String?
+  order              Int      @default(0)
   // VND, same convention as Course/LibraryItem.
-  price       Int      @default(0)
-  salePrice   Int?
+  price              Int      @default(0)
+  salePrice          Int?
   // Commission Volume — display-only figure for now; this app has no
   // compensation-plan/downline logic, just shows the number next to price.
-  cv          Int      @default(0)
+  cv                 Int      @default(0)
   // Non-null only for the one product (today: "sanarey-aria") that gets a
   // fully bespoke landing page instead of the generic detail view — see the
   // branch in dashboard/products/[productId]/page.tsx. Every other product
   // renders the plain fallback detail page.
-  slug        String?  @unique
+  slug               String?  @unique
   // Only populated (and only ever read) when slug is set — the 3 lifestyle
   // photos used by that bespoke landing page's "ai nên sử dụng" section.
   // Left null for every ordinary product.
   lifestyleImage1Url String?
   lifestyleImage2Url String?
   lifestyleImage3Url String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  orderItems OrderItem[]
 }
 
 // Library of books/documents (PDFs) — access control mirrors Course exactly
@@ -699,6 +705,16 @@ model Order {
   confirmedById String?
   confirmedBy   User?       @relation("OrderConfirmedBy", fields: [confirmedById], references: [id])
 
+  // Only collected (and only ever read) for a PRODUCT order — a physical
+  // good needs somewhere to be shipped, unlike Course/LibraryItem which just
+  // grant digital access. Null for every COURSE/LIBRARY_ITEM order. Captured
+  // once at checkout (createOrderAction) rather than re-derived from the
+  // student's profile, since User has no address field and this may differ
+  // from where the buyer actually lives.
+  shippingName    String?
+  shippingPhone   String?
+  shippingAddress String? @db.Text
+
   items OrderItem[]
 
   @@index([studentId])
@@ -706,9 +722,9 @@ model Order {
 }
 
 // Discriminated by kind, same convention as ChatThread: exactly one of
-// courseId/libraryItemId is populated, matching kind. titleSnapshot/
+// courseId/libraryItemId/productId is populated, matching kind. titleSnapshot/
 // priceAtPurchase freeze what was actually paid for — the underlying
-// Course/LibraryItem's title or price may change later.
+// Course/LibraryItem/Product's title or price may change later.
 model OrderItem {
   id              String        @id @default(cuid())
   orderId         String
@@ -718,6 +734,11 @@ model OrderItem {
   course          Course?       @relation(fields: [courseId], references: [id])
   libraryItemId   String?
   libraryItem     LibraryItem?  @relation(fields: [libraryItemId], references: [id])
+  // PRODUCT order item — see fulfillOrder in src/lib/order-fulfillment.ts,
+  // which deliberately creates no access-grant row for this kind (nothing to
+  // grant on a physical good).
+  productId       String?
+  product         Product?      @relation(fields: [productId], references: [id])
   titleSnapshot   String
   priceAtPurchase Int
 
