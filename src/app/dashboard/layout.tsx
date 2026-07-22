@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Home,
   ShoppingCart,
+  ShoppingBag,
   Package,
 } from "lucide-react";
 import { requireActiveStudent, isChatEnabled, isSalesEnabled, getAdminPermissions } from "@/lib/access";
@@ -38,7 +39,7 @@ export default async function DashboardLayout({
   const student = await requireActiveStudent();
   const { t } = await getDictionary();
 
-  const [announcements, reads, chatEnabled, salesEnabled, adminPermissions] = await Promise.all([
+  const [announcements, reads, chatEnabled, salesEnabled, adminPermissions, cartCount] = await Promise.all([
     prisma.announcement.findMany({
       select: { id: true, minLevel: true, visibleToStudents: true, visibleToProspective: true, visibleToLeveled: true },
     }),
@@ -49,6 +50,7 @@ export default async function DashboardLayout({
     isChatEnabled(),
     isSalesEnabled(),
     getAdminPermissions(student.id),
+    prisma.cartItem.count({ where: { studentId: student.id } }),
   ]);
   // An Admin Manager's full content access bypasses the AdminPermission
   // table entirely (see hasFullAdminAccess in src/lib/access.ts), so its size
@@ -113,6 +115,21 @@ export default async function DashboardLayout({
                   </span>
                 </span>
               </span>
+              {salesEnabled && (
+                <Link
+                  href="/dashboard/cart"
+                  title="Giỏ hàng"
+                  className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border text-muted transition-colors hover:border-primary-border-hover hover:text-foreground"
+                >
+                  <ShoppingBag className="h-4 w-4" />
+                  {cartCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-on-dark-strong">
+                      {cartCount}
+                    </span>
+                  )}
+                  <span className="sr-only">Giỏ hàng</span>
+                </Link>
+              )}
               {salesEnabled && (
                 <Link
                   href="/dashboard/orders"
@@ -196,6 +213,21 @@ export default async function DashboardLayout({
                 </span>
               </span>
             </span>
+            {salesEnabled && (
+              <Link
+                href="/dashboard/cart"
+                title="Giỏ hàng"
+                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border text-muted transition-colors hover:border-primary-border-hover hover:text-foreground"
+              >
+                <ShoppingBag className="h-4 w-4" />
+                {cartCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-on-dark-strong">
+                    {cartCount}
+                  </span>
+                )}
+                <span className="sr-only">Giỏ hàng</span>
+              </Link>
+            )}
             {salesEnabled && (
               <Link
                 href="/dashboard/orders"

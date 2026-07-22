@@ -411,7 +411,7 @@ export function Br9LandingPage({
                 originalPrice={pricing.originalPrice}
                 className="btn btn-gold"
               >
-                Đặt hàng ngay
+                Thêm vào giỏ hàng
               </ProductBuyButton>
             ) : (
               <a href="#order" className="btn btn-gold" onClick={(e) => e.preventDefault()}>

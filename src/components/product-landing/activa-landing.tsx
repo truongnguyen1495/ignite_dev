@@ -461,7 +461,7 @@ export function ActivaLandingPage({
                   originalPrice={pricing.originalPrice}
                   className="btn"
                 >
-                  Đặt hàng ngay <span aria-hidden="true">→</span>
+                  Thêm vào giỏ hàng <span aria-hidden="true">→</span>
                 </ProductBuyButton>
               ) : (
                 <a href="#" className="btn" onClick={(e) => e.preventDefault()}>

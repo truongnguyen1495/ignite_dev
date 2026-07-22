@@ -162,6 +162,7 @@ model User {
   guestChatThreadReads    GuestChatThreadRead[]    @relation("GuestChatThreadReads")
   orders                  Order[]                  @relation("StudentOrders")
   ordersConfirmed         Order[]                  @relation("OrderConfirmedBy")
+  cartItems               CartItem[]
 
   @@index([role])
 }
@@ -444,6 +445,7 @@ model Course {
   grants      CourseAccessGrant[]
   levelGrants CourseLevelGrant[]
   orderItems  OrderItem[]
+  cartItems   CartItem[]
 }
 
 model CourseLesson {
@@ -557,6 +559,7 @@ model Product {
   updatedAt          DateTime @updatedAt
 
   orderItems OrderItem[]
+  cartItems  CartItem[]
 }
 
 // Library of books/documents (PDFs) — access control mirrors Course exactly
@@ -622,6 +625,7 @@ model LibraryItem {
   grants      LibraryAccessGrant[]
   levelGrants LibraryLevelGrant[]
   orderItems  OrderItem[]
+  cartItems   CartItem[]
   bookPages   LibraryBookPage[]
 
   @@index([type, order])
@@ -749,6 +753,29 @@ model OrderItem {
   libraryAccessGrant LibraryAccessGrant? @relation("LibraryGrantOrderItem")
 
   @@index([orderId])
+}
+
+// Pre-checkout cart — separate from Order/OrderItem on purpose: a row here
+// is just "the student picked this," freely added/removed with no order
+// yet, and never shown to admin. confirmCartOrderAction (src/app/dashboard/
+// cart/actions.ts) is the only place that turns a set of these into one real
+// (possibly multi-item) Order and clears the rows it consumed — reusing a
+// PENDING Order as the cart itself would have let admin see, and possibly
+// act on, an order the student is still actively editing.
+model CartItem {
+  id            String        @id @default(cuid())
+  studentId     String
+  student       User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  kind          OrderItemKind
+  courseId      String?
+  course        Course?       @relation(fields: [courseId], references: [id])
+  libraryItemId String?
+  libraryItem   LibraryItem?  @relation(fields: [libraryItemId], references: [id])
+  productId     String?
+  product       Product?      @relation(fields: [productId], references: [id])
+  createdAt     DateTime      @default(now())
+
+  @@index([studentId])
 }
 
 // In-app announcements (bản tin) — three audiences (khách/học sinh/học
