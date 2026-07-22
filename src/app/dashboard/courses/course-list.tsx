@@ -51,9 +51,9 @@ function Thumbnail({ course, className }: { course: StudentCourseItem; className
   return (
     <div className={`${className} flex items-center justify-center bg-gradient-to-br ${course.gradient}`}>
       {course.accessLevel === "none" ? (
-        <Lock className="h-9 w-9 text-white/90" />
+        <Lock className="h-9 w-9 text-on-dark-strong" />
       ) : (
-        <Video className="h-9 w-9 text-white/90" />
+        <Video className="h-9 w-9 text-on-dark-strong" />
       )}
     </div>
   );
@@ -116,7 +116,7 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                 <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-dark-surface-raised">
                   <Thumbnail course={course} className="h-full w-full" />
                   {!clickable && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                    <div className="absolute inset-0 flex items-center justify-center bg-overlay">
                       <Lock className="h-8 w-8 text-white" />
                     </div>
                   )}
@@ -192,7 +192,7 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                 <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-dark-surface-raised">
                   <Thumbnail course={course} className="h-full w-full" />
                   {!clickable && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                    <div className="absolute inset-0 flex items-center justify-center bg-overlay">
                       <Lock className="h-4 w-4 text-white" />
                     </div>
                   )}

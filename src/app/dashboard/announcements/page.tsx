@@ -40,7 +40,7 @@ export default async function AnnouncementsPage({
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
       {denied && (
-        <p className="flex items-center gap-2 rounded-lg border border-danger/30 bg-danger-bg px-4 py-3 text-sm text-danger">
+        <p className="flex items-center gap-2 rounded-lg border border-danger-border bg-danger-bg px-4 py-3 text-sm text-danger">
           <AlertTriangle className="h-4 w-4" />
           Bạn không có quyền xem bản tin đó.
         </p>

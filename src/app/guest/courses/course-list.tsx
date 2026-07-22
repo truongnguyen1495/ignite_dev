@@ -68,7 +68,7 @@ export function GuestCourseList({
                 <div
                   className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${course.gradient}`}
                 >
-                  <Video className="h-9 w-9 text-white/90" />
+                  <Video className="h-9 w-9 text-on-dark-strong" />
                 </div>
               )}
             </div>

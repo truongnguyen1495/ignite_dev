@@ -43,7 +43,7 @@ function Thumbnail({ course, className }: { course: AdminCourseItem; className: 
   }
   return (
     <div className={`${className} flex items-center justify-center bg-gradient-to-br ${course.gradient}`}>
-      <Video className="h-9 w-9 text-white/90" />
+      <Video className="h-9 w-9 text-on-dark-strong" />
     </div>
   );
 }

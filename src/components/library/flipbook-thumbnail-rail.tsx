@@ -46,7 +46,7 @@ export function FlipbookThumbnailRail({
           aria-current={i === currentPage}
           className={`shrink-0 overflow-hidden rounded border transition-colors ${
             thumbnailGapBefore(i) ? "ml-2.5" : ""
-          } ${i === currentPage ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50"}`}
+          } ${i === currentPage ? "border-primary ring-2 ring-[var(--primary-border-strong)]" : "border-border hover:border-primary/50"}`}
         >
           {renderThumbnail(i)}
         </button>

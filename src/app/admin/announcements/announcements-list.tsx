@@ -266,7 +266,7 @@ export function AnnouncementsList({ announcements }: { announcements: Announceme
                     </span>
                   )}
                   {hidden && (
-                    <span className="absolute inset-0 flex items-center justify-center bg-black/50">
+                    <span className="absolute inset-0 flex items-center justify-center bg-overlay">
                       <EyeOff className="h-4 w-4 text-white" />
                     </span>
                   )}

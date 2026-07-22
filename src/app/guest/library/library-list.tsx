@@ -48,7 +48,7 @@ export function GuestLibraryList({
                 <div
                   className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${item.gradient}`}
                 >
-                  <Icon className="h-9 w-9 text-white/90" />
+                  <Icon className="h-9 w-9 text-on-dark-strong" />
                 </div>
               )}
             </div>

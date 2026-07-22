@@ -8,7 +8,7 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary: "bg-primary text-primary-foreground hover:bg-primary-hover",
   secondary: "border border-border bg-surface text-foreground hover:bg-surface-hover",
   outline: "border border-border text-foreground hover:bg-surface-hover",
-  danger: "border border-danger/30 text-danger hover:bg-danger-bg",
+  danger: "border border-danger-border text-danger hover:bg-danger-bg",
   ghost: "text-muted hover:bg-surface-hover hover:text-foreground",
 };
 

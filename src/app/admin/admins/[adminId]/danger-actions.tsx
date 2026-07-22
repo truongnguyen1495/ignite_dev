@@ -116,7 +116,7 @@ export function DeleteAdminAccountButton({ adminId, adminName }: { adminId: stri
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4"
           onClick={() => !pending && setOpen(false)}
         >
           <div

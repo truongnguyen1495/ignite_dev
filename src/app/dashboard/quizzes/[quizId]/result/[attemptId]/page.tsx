@@ -47,7 +47,7 @@ export default async function QuizResultPage({
 
       <div
         className={`rounded-xl border p-6 ${
-          attempt.passed ? "border-success/30 bg-success-bg" : "border-danger/30 bg-danger-bg"
+          attempt.passed ? "border-success-border bg-success-bg" : "border-danger-border bg-danger-bg"
         }`}
       >
         <p className="text-3xl font-semibold text-foreground">{attempt.scorePercent}%</p>

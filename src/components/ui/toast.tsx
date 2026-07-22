@@ -51,7 +51,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <div
               key={toast.id}
               role="status"
-              className="pointer-events-auto flex w-full items-start gap-3 rounded-xl border border-accent/40 bg-surface p-4 shadow-lg"
+              className="pointer-events-auto flex w-full items-start gap-3 rounded-xl border border-accent-border bg-surface p-4 shadow-lg"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-bg text-accent">
                 <PartyPopper className="h-5 w-5" />

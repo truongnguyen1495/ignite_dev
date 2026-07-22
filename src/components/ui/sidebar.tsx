@@ -114,7 +114,7 @@ export function Sidebar({
         <div
           onClick={() => setOpen(false)}
           aria-hidden
-          className="fixed inset-0 z-40 bg-black/60 md:hidden"
+          className="fixed inset-0 z-40 bg-overlay-strong md:hidden"
         />
       )}
       <aside

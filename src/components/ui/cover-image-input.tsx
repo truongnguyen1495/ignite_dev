@@ -117,7 +117,7 @@ export function CoverImageInput({
                 onChange?.();
               }}
               title="Xóa ảnh"
-              className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+              className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-overlay-strong text-white hover:bg-black/80"
             >
               <X className="h-3 w-3" />
             </button>

@@ -52,7 +52,7 @@ export default async function StudentCourseLessonPage({
       </Link>
 
       {isTrial && (
-        <p className="mt-4 rounded-lg border border-warning/40 bg-warning-bg px-3 py-2 text-xs text-warning">
+        <p className="mt-4 rounded-lg border border-warning-border-strong bg-warning-bg px-3 py-2 text-xs text-warning">
           Bạn đang <span className="font-semibold">học thử</span> khóa học này — chỉ xem được một số bài,
           cần được cấp quyền đầy đủ để xem toàn bộ.
         </p>

@@ -35,19 +35,19 @@ export default async function LoginPage({
           <p className="mt-3 text-sm text-muted">Đăng nhập để tiếp tục</p>
         </div>
         {verified === "1" && (
-          <p className="mb-4 flex items-center gap-2 rounded-lg border border-success/30 bg-success-bg px-3 py-2 text-sm text-success">
+          <p className="mb-4 flex items-center gap-2 rounded-lg border border-success-border bg-success-bg px-3 py-2 text-sm text-success">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             Email đã được xác thực. Mời bạn đăng nhập.
           </p>
         )}
         {verified === "0" && (
-          <p className="mb-4 flex items-center gap-2 rounded-lg border border-danger/30 bg-danger-bg px-3 py-2 text-sm text-danger">
+          <p className="mb-4 flex items-center gap-2 rounded-lg border border-danger-border bg-danger-bg px-3 py-2 text-sm text-danger">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             Liên kết xác thực không hợp lệ hoặc đã hết hạn.
           </p>
         )}
         {reset === "1" && (
-          <p className="mb-4 flex items-center gap-2 rounded-lg border border-success/30 bg-success-bg px-3 py-2 text-sm text-success">
+          <p className="mb-4 flex items-center gap-2 rounded-lg border border-success-border bg-success-bg px-3 py-2 text-sm text-success">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             Mật khẩu đã được đặt lại. Mời bạn đăng nhập.
           </p>

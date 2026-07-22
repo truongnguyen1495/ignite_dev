@@ -27,9 +27,9 @@ const VARIANT_CLASSES = {
   },
   dark: {
     btn: "flex h-11 w-11 items-center justify-center rounded-full text-white transition-colors hover:bg-white/15 disabled:opacity-30",
-    btnActive: "bg-white/20",
+    btnActive: "bg-on-dark",
     label: "text-white",
-    divider: "bg-white/20",
+    divider: "bg-on-dark",
   },
 };
 

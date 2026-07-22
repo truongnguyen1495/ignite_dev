@@ -114,7 +114,7 @@ export default async function EditCoursePage({
           theo cấp&rdquo; ở dưới — dùng công tắc bên dưới để mở cho tất cả, hoặc cấp riêng từng người.
         </p>
         {!course.hiddenFromGuest && (
-          <p className="rounded-lg border border-warning/40 bg-warning-bg px-3 py-2 text-xs text-warning">
+          <p className="rounded-lg border border-warning-border-strong bg-warning-bg px-3 py-2 text-xs text-warning">
             Khóa học này đang <span className="font-semibold">không bị ẩn khỏi khách</span> (mục &ldquo;Cấp
             quyền học thử cho khách&rdquo; bên dưới danh sách bài học) nên mọi học sinh đều xem được các bài{" "}
             <span className="font-semibold">học thử</span> đã tick ở đó, giống trang khách, dù công tắc dưới

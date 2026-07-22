@@ -29,7 +29,7 @@ export default async function RegisterPage() {
           <RegisterForm />
         ) : (
           <div className="space-y-4 text-center">
-            <p className="flex items-center justify-center gap-2 rounded-lg border border-warning/30 bg-warning-bg px-4 py-3 text-sm text-warning">
+            <p className="flex items-center justify-center gap-2 rounded-lg border border-warning-border bg-warning-bg px-4 py-3 text-sm text-warning">
               <AlertTriangle className="h-4 w-4 shrink-0" />
               Đăng ký hiện đang tạm khóa. Vui lòng quay lại sau.
             </p>

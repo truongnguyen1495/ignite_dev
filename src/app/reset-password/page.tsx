@@ -30,7 +30,7 @@ export default async function ResetPasswordPage({
           <ResetPasswordForm token={token} />
         ) : (
           <div className="space-y-4 text-center">
-            <p className="flex items-center justify-center gap-2 rounded-lg border border-danger/30 bg-danger-bg px-4 py-3 text-sm text-danger">
+            <p className="flex items-center justify-center gap-2 rounded-lg border border-danger-border bg-danger-bg px-4 py-3 text-sm text-danger">
               <AlertTriangle className="h-4 w-4 shrink-0" />
               Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.
             </p>
