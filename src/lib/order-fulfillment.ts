@@ -13,34 +13,46 @@ export async function fulfillOrder(orderId: string, confirmedById: string | null
     where: { id: orderId },
     include: { items: true },
   });
-  if (!order || order.status !== "PENDING") return;
+  if (!order) return;
 
-  await prisma.$transaction([
-    prisma.order.update({
-      where: { id: orderId },
-      data: { status: "PAID", paidAt: new Date(), confirmedById },
-    }),
-    ...order.items.map((item) =>
-      item.kind === "COURSE"
-        ? prisma.courseAccessGrant.upsert({
-            where: { studentId_courseId: { studentId: order.studentId, courseId: item.courseId! } },
-            create: { studentId: order.studentId, courseId: item.courseId!, grantedById: null, orderItemId: item.id },
-            update: {},
-          })
-        : prisma.libraryAccessGrant.upsert({
-            where: {
-              studentId_libraryItemId: { studentId: order.studentId, libraryItemId: item.libraryItemId! },
-            },
-            create: {
-              studentId: order.studentId,
-              libraryItemId: item.libraryItemId!,
-              grantedById: null,
-              orderItemId: item.id,
-            },
-            update: {},
-          })
-    ),
-  ]);
+  // Atomic guard against a confirm racing a cancel (or a duplicate confirm)
+  // — only the caller that actually flips PENDING -> PAID goes on to grant
+  // access, same "condition inside the write" pattern as cancelOrderAction/
+  // cancelMyOrderAction. Deliberately split from the grant upserts below
+  // (not one $transaction) instead of branching on this count inside an
+  // interactive transaction, because Supabase's pooled connection can't hold
+  // one open across round trips — see the array-form $transaction comment on
+  // saveQuizAction in src/app/admin/quizzes/actions.ts.
+  const { count } = await prisma.order.updateMany({
+    where: { id: orderId, status: "PENDING" },
+    data: { status: "PAID", paidAt: new Date(), confirmedById },
+  });
+  if (count === 0) return;
+
+  if (order.items.length > 0) {
+    await prisma.$transaction(
+      order.items.map((item) =>
+        item.kind === "COURSE"
+          ? prisma.courseAccessGrant.upsert({
+              where: { studentId_courseId: { studentId: order.studentId, courseId: item.courseId! } },
+              create: { studentId: order.studentId, courseId: item.courseId!, grantedById: null, orderItemId: item.id },
+              update: {},
+            })
+          : prisma.libraryAccessGrant.upsert({
+              where: {
+                studentId_libraryItemId: { studentId: order.studentId, libraryItemId: item.libraryItemId! },
+              },
+              create: {
+                studentId: order.studentId,
+                libraryItemId: item.libraryItemId!,
+                grantedById: null,
+                orderItemId: item.id,
+              },
+              update: {},
+            })
+      )
+    );
+  }
 
   revalidatePath("/admin/orders");
   revalidatePath("/dashboard/orders");
