@@ -300,9 +300,14 @@ export function PdfFlipbook({
                 // See bookKey's comment above — invisible (not unmounted, so
                 // sizing/measurement is unaffected) until this instance's own
                 // onInit confirms it has already landed on the right page.
+                // No transition here on purpose — an animated fade-in was
+                // tried first, but it makes the page's own white background
+                // visible (faintly, mid-fade) for long enough to read as a
+                // "flash of white" before the real content settles in. An
+                // instant, un-animated toggle keeps the whole gap inside a
+                // single frame, which reads as no flash at all.
                 style={{
                   opacity: readyKey === bookKey ? 1 : 0,
-                  transition: readyKey === bookKey ? "opacity 150ms ease" : "none",
                   pointerEvents: readyKey === bookKey ? undefined : "none",
                 }}
               >
