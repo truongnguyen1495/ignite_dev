@@ -62,7 +62,8 @@ export async function createProductAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireAdminPermission("MANAGE_PRODUCTS");
+  const user = await requireAdminPermission("MANAGE_PRODUCTS");
+  const isSuperAdmin = user.role === "SUPER_ADMIN";
 
   const parsed = productSchema.safeParse(readProductFormData(formData));
   if (!parsed.success) {
@@ -74,6 +75,9 @@ export async function createProductAction(
     return salePrice;
   }
 
+  // Landing-page slug + lifestyle images are Super Admin-only (see the
+  // matching `isSuperAdmin` gate in CreateProductForm) — enforced here too
+  // so a non-Super-Admin can't set them by crafting a request directly.
   let product;
   try {
     product = await prisma.product.create({
@@ -87,10 +91,10 @@ export async function createProductAction(
         price: parsed.data.price,
         salePrice,
         cv: parsed.data.cv,
-        slug: parsed.data.slug ?? null,
-        lifestyleImage1Url: parsed.data.lifestyleImage1Url ?? null,
-        lifestyleImage2Url: parsed.data.lifestyleImage2Url ?? null,
-        lifestyleImage3Url: parsed.data.lifestyleImage3Url ?? null,
+        slug: isSuperAdmin ? (parsed.data.slug ?? null) : null,
+        lifestyleImage1Url: isSuperAdmin ? (parsed.data.lifestyleImage1Url ?? null) : null,
+        lifestyleImage2Url: isSuperAdmin ? (parsed.data.lifestyleImage2Url ?? null) : null,
+        lifestyleImage3Url: isSuperAdmin ? (parsed.data.lifestyleImage3Url ?? null) : null,
       },
     });
   } catch (error) {
@@ -112,7 +116,8 @@ export async function updateProductAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireAdminPermission("MANAGE_PRODUCTS");
+  const user = await requireAdminPermission("MANAGE_PRODUCTS");
+  const isSuperAdmin = user.role === "SUPER_ADMIN";
 
   const parsed = updateProductSchema.safeParse({
     productId: formData.get("productId"),
@@ -141,10 +146,17 @@ export async function updateProductAction(
         price: parsed.data.price,
         salePrice,
         cv: parsed.data.cv,
-        slug: parsed.data.slug ?? null,
-        lifestyleImage1Url: parsed.data.lifestyleImage1Url ?? null,
-        lifestyleImage2Url: parsed.data.lifestyleImage2Url ?? null,
-        lifestyleImage3Url: parsed.data.lifestyleImage3Url ?? null,
+        // Landing-page slug + lifestyle images are Super Admin-only (see the
+        // matching `isSuperAdmin` gate in EditProductForm). A non-Super-Admin's
+        // form never renders these fields, so omit the keys entirely here
+        // rather than writing parsed-as-undefined ?? null — that would
+        // silently wipe out a value a Super Admin had previously set.
+        ...(isSuperAdmin && {
+          slug: parsed.data.slug ?? null,
+          lifestyleImage1Url: parsed.data.lifestyleImage1Url ?? null,
+          lifestyleImage2Url: parsed.data.lifestyleImage2Url ?? null,
+          lifestyleImage3Url: parsed.data.lifestyleImage3Url ?? null,
+        }),
       },
     });
   } catch (error) {

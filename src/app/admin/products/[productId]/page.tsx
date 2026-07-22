@@ -11,7 +11,7 @@ export default async function EditProductPage({
 }: {
   params: Promise<{ productId: string }>;
 }) {
-  await requireAdminPermission("MANAGE_PRODUCTS");
+  const user = await requireAdminPermission("MANAGE_PRODUCTS");
   const { productId } = await params;
   const product = await prisma.product.findUnique({ where: { id: productId } });
   if (!product) {
@@ -41,6 +41,7 @@ export default async function EditProductPage({
           lifestyleImage1Url={product.lifestyleImage1Url}
           lifestyleImage2Url={product.lifestyleImage2Url}
           lifestyleImage3Url={product.lifestyleImage3Url}
+          isSuperAdmin={user.role === "SUPER_ADMIN"}
         />
       </Card>
 

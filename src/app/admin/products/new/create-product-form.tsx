@@ -6,7 +6,7 @@ import { CoverImageInput } from "@/components/ui/cover-image-input";
 import { Input, Textarea } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 
-export function CreateProductForm() {
+export function CreateProductForm({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const [error, formAction, pending] = useActionState(createProductAction, undefined);
   const [slugValue, setSlugValue] = useState("");
 
@@ -42,30 +42,32 @@ export function CreateProductForm() {
       </div>
       <Input id="cv" name="cv" type="number" min={0} defaultValue={0} label="CV (Commission Volume)" />
 
-      <div className="space-y-4 rounded-lg border border-border p-3">
-        <div>
-          <p className="text-sm font-medium text-foreground">Landing page riêng (tùy chọn)</p>
-          <p className="mt-1 text-xs text-muted">
-            Chỉ điền nếu sản phẩm này có trang giới thiệu riêng được dựng thủ công (vd: SANAREY Aria, Activa,
-            Simetra, BR-9). Để trống với sản phẩm thông thường — trang chi tiết mặc định sẽ được dùng. Ảnh đời sống
-            bên dưới chỉ áp dụng cho slug sanarey-aria — các landing page khác dùng ảnh dựng sẵn trong code.
-          </p>
+      {isSuperAdmin && (
+        <div className="space-y-4 rounded-lg border border-border p-3">
+          <div>
+            <p className="text-sm font-medium text-foreground">Landing page riêng (tùy chọn)</p>
+            <p className="mt-1 text-xs text-muted">
+              Chỉ điền nếu sản phẩm này có trang giới thiệu riêng được dựng thủ công (vd: SANAREY Aria, Activa,
+              Simetra, BR-9). Để trống với sản phẩm thông thường — trang chi tiết mặc định sẽ được dùng. Ảnh đời
+              sống bên dưới chỉ áp dụng cho slug sanarey-aria — các landing page khác dùng ảnh dựng sẵn trong code.
+            </p>
+          </div>
+          <Input
+            id="slug"
+            name="slug"
+            label="Slug"
+            hint="Vd: sanarey-aria — phải khớp với slug đã lập trình sẵn."
+            onChange={(e) => setSlugValue(e.target.value)}
+          />
+          {slugValue.trim() === "sanarey-aria" && (
+            <>
+              <CoverImageInput name="lifestyleImage1Url" alt="Ảnh đời sống 1" label="Ảnh đời sống 1" enforceRatio={false} />
+              <CoverImageInput name="lifestyleImage2Url" alt="Ảnh đời sống 2" label="Ảnh đời sống 2" enforceRatio={false} />
+              <CoverImageInput name="lifestyleImage3Url" alt="Ảnh đời sống 3" label="Ảnh đời sống 3" enforceRatio={false} />
+            </>
+          )}
         </div>
-        <Input
-          id="slug"
-          name="slug"
-          label="Slug"
-          hint="Vd: sanarey-aria — phải khớp với slug đã lập trình sẵn."
-          onChange={(e) => setSlugValue(e.target.value)}
-        />
-        {slugValue.trim() === "sanarey-aria" && (
-          <>
-            <CoverImageInput name="lifestyleImage1Url" alt="Ảnh đời sống 1" label="Ảnh đời sống 1" enforceRatio={false} />
-            <CoverImageInput name="lifestyleImage2Url" alt="Ảnh đời sống 2" label="Ảnh đời sống 2" enforceRatio={false} />
-            <CoverImageInput name="lifestyleImage3Url" alt="Ảnh đời sống 3" label="Ảnh đời sống 3" enforceRatio={false} />
-          </>
-        )}
-      </div>
+      )}
 
       {error && <p className="text-sm text-danger">{error}</p>}
       <Button type="submit" disabled={pending} isLoading={pending}>

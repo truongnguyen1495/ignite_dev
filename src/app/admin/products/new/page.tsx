@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { CreateProductForm } from "./create-product-form";
 
 export default async function NewProductPage() {
-  await requireAdminPermission("MANAGE_PRODUCTS");
+  const user = await requireAdminPermission("MANAGE_PRODUCTS");
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <div>
@@ -12,7 +12,7 @@ export default async function NewProductPage() {
         <h1 className="mt-2 text-2xl font-semibold text-foreground">Thêm sản phẩm</h1>
       </div>
       <Card>
-        <CreateProductForm />
+        <CreateProductForm isSuperAdmin={user.role === "SUPER_ADMIN"} />
       </Card>
     </div>
   );
