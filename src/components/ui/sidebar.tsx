@@ -73,7 +73,16 @@ export function SidebarToggle() {
       type="button"
       onClick={() => setOpen(!open)}
       aria-label={open ? "Đóng menu" : "Mở menu"}
-      className="-ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-hover hover:text-foreground md:hidden"
+      // No negative margin here (was -ml-2, pulling the button flush against
+      // the header's own left padding, i.e. very close to the true screen
+      // edge on mobile) — iOS Safari/WKWebView reserves a hit-testing zone
+      // along the left edge for its system "swipe to go back" gesture and
+      // can consume a touch that starts inside it before the page's own
+      // JavaScript ever sees the event (confirmed on a real device: not
+      // even a document-level touchstart listener fired for a tap there).
+      // Kept at least the header's own px-4/px-8 as clearance from the edge
+      // instead of pulling closer to it.
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-hover hover:text-foreground md:hidden"
     >
       {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
     </button>
