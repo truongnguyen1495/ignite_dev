@@ -52,6 +52,14 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
   // Which remount "bookKey" (see below) has actually finished initializing —
   // used to hide the flipbook until then, see the comment on bookKey.
   const [readyKey, setReadyKey] = useState<number | null>(null);
+  // Last maxWidth a *ready* instance actually rendered at, and a CSS scale
+  // factor animating a fresh instance from that old size up/down to its own
+  // (already-correct) size — see the comment above the maxWidth calculation
+  // for why this exists: a remount otherwise pops straight to the new size
+  // with no transition, which reads as the book abruptly "zooming".
+  const lastMaxWidthRef = useRef<number | null>(null);
+  const [scale, setScale] = useState(1);
+  const [scaleAnimating, setScaleAnimating] = useState(false);
   const flipRef = useRef<PageFlipHandle | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen(containerRef);
@@ -186,15 +194,22 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
                 // See bookKey's comment above — invisible (not unmounted, so
                 // sizing/measurement is unaffected) until this instance's own
                 // onInit confirms it has already landed on the right page.
-                // No transition here on purpose — an animated fade-in was
+                // No opacity transition on purpose — an animated fade-in was
                 // tried first, but it makes the page's own white background
                 // visible (faintly, mid-fade) for long enough to read as a
                 // "flash of white" before the real content settles in. An
-                // instant, un-animated toggle keeps the whole gap inside a
-                // single frame, which reads as no flash at all.
+                // instant, un-animated opacity toggle keeps that gap inside a
+                // single frame. The scale transform is the opposite case —
+                // *without* animating it, a remount to a genuinely larger
+                // maxWidth (more room freed up — thumbnail rail toggled off,
+                // fullscreen, a real resize) pops straight to the new size,
+                // which reads as the book abruptly "zooming". See onInit.
                 style={{
                   opacity: readyKey === bookKey ? 1 : 0,
                   pointerEvents: readyKey === bookKey ? undefined : "none",
+                  transform: `scale(${scale})`,
+                  transformOrigin: "center top",
+                  transition: scaleAnimating ? "transform 280ms ease" : "none",
                 }}
               >
                 <HTMLFlipBook
@@ -233,6 +248,25 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
                   onInit={(e: { data: { mode: FlipbookOrientation } }) => {
                     setOrientation(e.data.mode);
                     setReadyKey(bookKey);
+                    const prevMaxWidth = lastMaxWidthRef.current;
+                    lastMaxWidthRef.current = maxWidth;
+                    if (prevMaxWidth !== null && prevMaxWidth !== maxWidth) {
+                      // Paint one frame at the *old* size (no transition —
+                      // instant), then flip to 1 with a transition enabled so
+                      // the browser actually animates across that change
+                      // instead of jumping straight to it.
+                      setScaleAnimating(false);
+                      setScale(prevMaxWidth / maxWidth);
+                      requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                          setScaleAnimating(true);
+                          setScale(1);
+                        });
+                      });
+                    } else {
+                      setScaleAnimating(false);
+                      setScale(1);
+                    }
                   }}
                 >
                   {pages.map((page, i) => (
