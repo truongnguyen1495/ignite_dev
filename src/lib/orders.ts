@@ -19,3 +19,9 @@ export const ORDER_STATUS_BADGE_COLOR: Record<OrderStatus, BadgeColor> = {
   PAID: "success",
   CANCELLED: "danger",
 };
+
+// How long a soft-deleted Order (Order.deletedAt set, see deleteOrderAction
+// in admin/orders/actions.ts) lingers before purgeExpiredDeletedOrders
+// actually removes the row — a grace window, not a real trash/restore UI
+// (nothing reads deletedAt rows back yet).
+export const ORDER_TRASH_RETENTION_DAYS = 30;

@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { ORDER_TRASH_RETENTION_DAYS } from "@/lib/orders";
 
 // Single choke point for "this order is now paid" — called today by the
 // manual admin confirm action (src/app/admin/orders/actions.ts), and meant
@@ -68,4 +69,14 @@ export async function fulfillOrder(orderId: string, confirmedById: string | null
     if (item.courseId) revalidatePath(`/admin/courses/${item.courseId}`);
     if (item.libraryItemId) revalidatePath(`/admin/library/${item.libraryItemId}`);
   }
+}
+
+// No cron/queue infra in this app, so the retention window isn't enforced by
+// a scheduled job — this just gets called opportunistically from the
+// /admin/orders page loader on every visit. A day or two of drift past
+// exactly ORDER_TRASH_RETENTION_DAYS is harmless for a manual-review trash
+// window like this one.
+export async function purgeExpiredDeletedOrders(): Promise<void> {
+  const cutoff = new Date(Date.now() - ORDER_TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+  await prisma.order.deleteMany({ where: { deletedAt: { lt: cutoff } } });
 }

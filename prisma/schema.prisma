@@ -719,10 +719,21 @@ model Order {
   shippingPhone   String?
   shippingAddress String? @db.Text
 
+  // Soft-delete only — set by deleteOrderAction (Super Admin only), which
+  // just hides the row from /admin/orders immediately. The row itself (and
+  // its OrderItems) is only actually removed once ORDER_TRASH_RETENTION_DAYS
+  // (src/lib/orders.ts) have passed, opportunistically purged on the next
+  // /admin/orders page load — see purgeExpiredDeletedOrders. Deleting (soft
+  // or eventual hard) never revokes access already granted: CourseAccessGrant/
+  // LibraryAccessGrant.orderItemId is ON DELETE SET NULL, so a hard purge
+  // only orphans the grant from any order record, the student keeps it.
+  deletedAt DateTime?
+
   items OrderItem[]
 
   @@index([studentId])
   @@index([status])
+  @@index([deletedAt])
 }
 
 // Discriminated by kind, same convention as ChatThread: exactly one of

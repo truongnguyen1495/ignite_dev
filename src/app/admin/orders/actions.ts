@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdminPermission, requireSalesEnabled } from "@/lib/access";
+import { requireAdminPermission, requireActiveSuperAdmin, requireSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { fulfillOrder } from "@/lib/order-fulfillment";
 
@@ -48,4 +48,22 @@ export async function revokeOrderItemAccessAction(orderItemId: string) {
   revalidatePath("/admin/orders");
   if (item.courseId) revalidatePath(`/admin/courses/${item.courseId}`);
   if (item.libraryItemId) revalidatePath(`/admin/library/${item.libraryItemId}`);
+}
+
+// Super-Admin-only by explicit request — narrower than requireAdminPermission
+// on purpose, unlike every other action in this file. Soft-delete only: sets
+// deletedAt so the row disappears from /admin/orders immediately, but the
+// actual row (and its OrderItems) isn't purged until
+// ORDER_TRASH_RETENTION_DAYS have passed (see purgeExpiredDeletedOrders,
+// called opportunistically from the orders page loader). Whenever the purge
+// eventually happens, it does NOT revoke access already granted:
+// CourseAccessGrant/LibraryAccessGrant.orderItemId is ON DELETE SET NULL (see
+// the add_grant_order_item_link migration), so deleting the OrderItem just
+// orphans the grant row from any order record — the student keeps studying,
+// only the transaction history/revenue figure disappears. Use
+// revokeOrderItemAccessAction first if the intent is to also pull access.
+export async function deleteOrderAction(orderId: string) {
+  await requireActiveSuperAdmin();
+  await prisma.order.update({ where: { id: orderId }, data: { deletedAt: new Date() } });
+  revalidatePath("/admin/orders");
 }

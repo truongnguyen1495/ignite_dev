@@ -2,13 +2,18 @@ import { requireAdminPermission, requireSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatDateVN } from "@/lib/date";
+import { purgeExpiredDeletedOrders } from "@/lib/order-fulfillment";
 import { OrdersList, type OrderListItem } from "./orders-list";
 
 export default async function AdminOrdersPage() {
-  await requireAdminPermission("MANAGE_ORDERS");
+  const admin = await requireAdminPermission("MANAGE_ORDERS");
   await requireSalesEnabled("/admin/settings");
+  const isSuperAdmin = admin.role === "SUPER_ADMIN";
+
+  await purgeExpiredDeletedOrders();
 
   const orders = await prisma.order.findMany({
+    where: { deletedAt: null },
     include: {
       student: { select: { name: true, email: true } },
       items: {
@@ -51,7 +56,7 @@ export default async function AdminOrdersPage() {
         title="Đơn hàng"
         description="Đơn mua khóa học độc quyền/tài liệu thư viện/sản phẩm qua chuyển khoản ngân hàng."
       />
-      <OrdersList orders={items} />
+      <OrdersList orders={items} isSuperAdmin={isSuperAdmin} />
     </div>
   );
 }

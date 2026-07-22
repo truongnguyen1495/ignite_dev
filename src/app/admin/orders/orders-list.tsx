@@ -2,14 +2,14 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, X, UserMinus, Loader2, Truck } from "lucide-react";
+import { Check, X, UserMinus, Loader2, Truck, Trash2 } from "lucide-react";
 import type { OrderItemKind, OrderStatus } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { formatVND } from "@/lib/currency";
-import { formatOrderCode, ORDER_STATUS_LABELS, ORDER_STATUS_BADGE_COLOR } from "@/lib/orders";
-import { confirmOrderPaidAction, cancelOrderAction, revokeOrderItemAccessAction } from "./actions";
+import { formatOrderCode, ORDER_STATUS_LABELS, ORDER_STATUS_BADGE_COLOR, ORDER_TRASH_RETENTION_DAYS } from "@/lib/orders";
+import { confirmOrderPaidAction, cancelOrderAction, revokeOrderItemAccessAction, deleteOrderAction } from "./actions";
 
 export type OrderListItem = {
   id: string;
@@ -120,7 +120,43 @@ function RevokeOrderItemButton({ order, itemId }: { order: OrderListItem; itemId
   );
 }
 
-export function OrdersList({ orders }: { orders: OrderListItem[] }) {
+// Super-Admin-only per explicit design (see requireActiveSuperAdmin in
+// deleteOrderAction) — rendered regardless of status, unlike OrderActions.
+// Soft-delete: the order just disappears from this list right away, the row
+// itself only gets purged after ORDER_TRASH_RETENTION_DAYS.
+function DeleteOrderButton({ order }: { order: OrderListItem }) {
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
+  const confirm = useConfirm();
+
+  return (
+    <Button
+      type="button"
+      size="icon"
+      variant="ghost"
+      disabled={pending}
+      title="Xóa đơn hàng"
+      onClick={async () => {
+        const ok = await confirm({
+          title: `Xóa đơn hàng ${formatOrderCode(order.orderNumber)}?`,
+          description: `Đơn sẽ biến mất khỏi danh sách ngay, và bị xóa vĩnh viễn, hoàn toàn sau ${ORDER_TRASH_RETENTION_DAYS} ngày. Việc này không thu hồi quyền truy cập đã cấp (nếu có) — dùng nút thu hồi riêng nếu cần.`,
+          confirmLabel: "Xóa đơn hàng",
+          tone: "danger",
+        });
+        if (!ok) return;
+        startTransition(async () => {
+          await deleteOrderAction(order.id);
+          router.refresh();
+        });
+      }}
+      className="hover:bg-danger-bg hover:text-danger"
+    >
+      {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+    </Button>
+  );
+}
+
+export function OrdersList({ orders, isSuperAdmin }: { orders: OrderListItem[]; isSuperAdmin: boolean }) {
   const [statusFilter, setStatusFilter] = useState<Set<OrderStatus>>(new Set());
 
   const filtered = useMemo(() => {
@@ -205,6 +241,7 @@ export function OrdersList({ orders }: { orders: OrderListItem[] }) {
               </div>
               <p className="shrink-0 font-medium text-foreground">{formatVND(order.totalAmount)}</p>
               <OrderActions order={order} />
+              {isSuperAdmin && <DeleteOrderButton order={order} />}
             </li>
           ))}
         </ul>
