@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatDateVN } from "@/lib/date";
 import { ToggleStudentStatusButton, DeleteStudentButton } from "../students/[studentId]/danger-actions";
+import { AdmitStudentButton } from "./admit-student-button";
 
 export default async function ProspectiveStudentsPage() {
   const admin = await requireAdminPermission("MANAGE_PROSPECTIVE_STUDENTS");
@@ -16,6 +17,11 @@ export default async function ProspectiveStudentsPage() {
   const granted = isFullAdmin ? null : await getAdminPermissions(admin.id);
   const canLock = isFullAdmin || !!granted?.has("LOCK_PROSPECTIVE_STUDENTS");
   const canDelete = isFullAdmin || !!granted?.has("DELETE_PROSPECTIVE_STUDENTS");
+  // Admitting someone here promotes them into the Học viên roster, so it's
+  // gated on MANAGE_STUDENTS (the Học viên area's own permission) rather
+  // than MANAGE_PROSPECTIVE_STUDENTS — same reasoning already applied to
+  // approveJoinRequestAction in join-requests-actions.ts.
+  const canAdmit = isFullAdmin || !!granted?.has("MANAGE_STUDENTS");
 
   // "Học sinh" — self-registered (or admin-created) accounts not yet on
   // the 5-level ladder. Kept as its own page/permission, independent of
@@ -71,6 +77,7 @@ export default async function ProspectiveStudentsPage() {
                       >
                         <Eye className="h-4 w-4" />
                       </Link>
+                      {canAdmit && <AdmitStudentButton studentId={student.id} studentName={student.name} />}
                       {canLock && (
                         <ToggleStudentStatusButton
                           studentId={student.id}

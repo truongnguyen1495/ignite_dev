@@ -52,6 +52,48 @@ export async function approveJoinRequestAction(formData: FormData) {
   redirect("/admin/students");
 }
 
+// Admin-initiated equivalent of approveJoinRequestAction — admits a học
+// sinh directly from /admin/prospective-students without requiring them to
+// have submitted a "tham gia hệ thống" request first. If a pending request
+// already exists it's resolved the same way approval does (so it doesn't
+// linger in the review queue); otherwise a pre-approved LevelUpRequest row
+// is still created so "Lịch sử xin lên cấp" on the student's detail page
+// has a record of how they joined, matching the shape approval leaves.
+export async function admitProspectiveStudentAction(studentId: string, toLevel: Level) {
+  const admin = await requireAdminPermission("MANAGE_STUDENTS");
+
+  const student = await prisma.user.findUnique({ where: { id: studentId } });
+  if (!student || student.role !== "STUDENT" || student.grantedLevel !== null) {
+    return;
+  }
+
+  const pendingRequest = await prisma.levelUpRequest.findFirst({
+    where: { studentId, status: "PENDING", fromLevel: null },
+  });
+
+  await prisma.$transaction([
+    pendingRequest
+      ? prisma.levelUpRequest.update({
+          where: { id: pendingRequest.id },
+          data: { status: "APPROVED", toLevel, reviewedAt: new Date(), reviewerId: admin.id },
+        })
+      : prisma.levelUpRequest.create({
+          data: {
+            studentId,
+            fromLevel: null,
+            toLevel,
+            status: "APPROVED",
+            reviewedAt: new Date(),
+            reviewerId: admin.id,
+          },
+        }),
+    prisma.user.update({ where: { id: studentId }, data: { grantedLevel: toLevel } }),
+  ]);
+
+  revalidatePath("/admin/students");
+  revalidatePath("/admin/prospective-students");
+}
+
 const rejectSchema = z.object({
   requestId: z.string().min(1),
   reviewerNote: z.string().trim().min(1, "Vui lòng nhập lý do từ chối."),
