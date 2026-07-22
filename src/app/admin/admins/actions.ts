@@ -8,7 +8,13 @@ import { requireActiveSuperAdmin, requireAdminManagementAccess } from "@/lib/acc
 import { prisma } from "@/lib/prisma";
 import { Prisma, type AdminPermissionKind, type Level } from "@prisma/client";
 
-export type AccountSearchResult = { id: string; name: string; email: string; username: string | null };
+export type AccountSearchResult = {
+  id: string;
+  name: string;
+  email: string;
+  username: string | null;
+  grantedLevel: Level;
+};
 
 // An Admin Manager reaching this page (canManageAdmins) must never see, let
 // alone act on, another Admin Manager or a Super Admin — that boundary is
@@ -25,7 +31,7 @@ export async function searchAccountsForPermissionAction(query: string): Promise<
   const { isSuperAdmin } = await requireAdminManagementAccess();
   const trimmed = query.trim();
   if (trimmed.length < 2) return [];
-  return prisma.user.findMany({
+  const rows = await prisma.user.findMany({
     where: {
       role: "STUDENT",
       status: "ACTIVE",
@@ -44,10 +50,32 @@ export async function searchAccountsForPermissionAction(query: string): Promise<
         { email: { contains: trimmed, mode: "insensitive" } },
       ],
     },
-    select: { id: true, name: true, email: true, username: true },
+    select: { id: true, name: true, email: true, username: true, grantedLevel: true },
     take: 20,
     orderBy: { name: "asc" },
   });
+  return rows.map((r) => ({ ...r, grantedLevel: r.grantedLevel! }));
+}
+
+// Suggested-candidates list shown as soon as the "Tài khoản có sẵn" tab opens,
+// before the admin manager types anything — Cấp 5 (Core Leader) học viên are
+// the intended admin candidates, so surfacing them upfront saves having to
+// know a name to search for. Purely a browse convenience: the search box
+// above still finds học viên of any cấp, unrestricted, once ≥2 chars are
+// typed (see searchAccountsForPermissionAction).
+export async function listCoreLeaderCandidatesAction(): Promise<AccountSearchResult[]> {
+  const { isSuperAdmin } = await requireAdminManagementAccess();
+  const rows = await prisma.user.findMany({
+    where: {
+      role: "STUDENT",
+      status: "ACTIVE",
+      grantedLevel: "CORE_LEADER",
+      ...(isSuperAdmin ? {} : { isAdminManager: false }),
+    },
+    select: { id: true, name: true, email: true, username: true, grantedLevel: true },
+    orderBy: { name: "asc" },
+  });
+  return rows.map((r) => ({ ...r, grantedLevel: r.grantedLevel! }));
 }
 
 const createAdminAccountSchema = z.object({

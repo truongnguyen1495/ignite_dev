@@ -6,8 +6,10 @@ import { Search, Loader2, UserPlus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { LevelBadge } from "@/components/ui/level-badge";
 import {
   searchAccountsForPermissionAction,
+  listCoreLeaderCandidatesAction,
   createAdminAccountAction,
   type AccountSearchResult,
 } from "../actions";
@@ -20,6 +22,24 @@ export function NewAdminPicker() {
   const [results, setResults] = useState<AccountSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [navPending, startNavTransition] = useTransition();
+
+  // Suggested Cấp 5 candidates shown before the admin manager types anything —
+  // loaded once, independent of the search query below.
+  const [candidates, setCandidates] = useState<AccountSearchResult[]>([]);
+  const [loadingCandidates, setLoadingCandidates] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    listCoreLeaderCandidatesAction().then((found) => {
+      if (!cancelled) {
+        setCandidates(found);
+        setLoadingCandidates(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -67,6 +87,9 @@ export function NewAdminPicker() {
     });
   }
 
+  const showingCandidates = query.trim().length < 2;
+  const listToShow = showingCandidates ? candidates : results;
+
   return (
     <Card className="space-y-4">
       <div className="inline-flex items-center rounded-lg border border-border bg-surface p-0.5">
@@ -104,11 +127,19 @@ export function NewAdminPicker() {
               <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted" />
             )}
           </div>
-          {!searching && query.trim().length >= 2 && results.length === 0 && (
-            <p className="text-sm text-muted">Không tìm thấy tài khoản nào.</p>
+          {showingCandidates ? (
+            <>
+              <p className="text-xs text-muted">Gợi ý: học viên Cấp 5 (Core Leader)</p>
+              {!loadingCandidates && candidates.length === 0 && (
+                <p className="text-sm text-muted">Chưa có học viên Cấp 5 nào.</p>
+              )}
+            </>
+          ) : (
+            !searching &&
+            results.length === 0 && <p className="text-sm text-muted">Không tìm thấy tài khoản nào.</p>
           )}
           <div className="space-y-1.5">
-            {results.map((account) => (
+            {listToShow.map((account) => (
               <button
                 key={account.id}
                 type="button"
@@ -119,10 +150,11 @@ export function NewAdminPicker() {
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-bg text-sm font-semibold text-primary">
                   {account.name.charAt(0).toUpperCase()}
                 </span>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-sm text-foreground">{account.name}</p>
                   <p className="truncate text-xs text-muted">{account.email}</p>
                 </div>
+                <LevelBadge level={account.grantedLevel} />
               </button>
             ))}
           </div>
