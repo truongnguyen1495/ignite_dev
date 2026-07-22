@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ConfirmDialogProvider } from "@/components/ui/confirm-dialog";
 import { ToastProvider } from "@/components/ui/toast";
 import { LocaleProvider } from "@/components/i18n/locale-provider";
-import { TapDebugger } from "@/components/tap-debugger";
 import { getLocale } from "@/lib/i18n/get-locale";
 import "./globals.css";
 
@@ -49,7 +48,6 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <TapDebugger />
         <LocaleProvider initialLocale={locale} bilingualEnabled={bilingualEnabled}>
           <ToastProvider>
             <ConfirmDialogProvider>{children}</ConfirmDialogProvider>

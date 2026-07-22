@@ -69,7 +69,14 @@ export function ProductBuyButton({
           <div
             role="dialog"
             aria-modal="true"
-            className="w-full max-w-md space-y-4 rounded-xl border border-border bg-surface p-6 text-left shadow-lg"
+            // This dialog (unlike ConfirmDialog) has 3 input fields, so
+            // focusing one opens the on-screen keyboard on mobile — on a
+            // short viewport (e.g. a small phone with the keyboard open)
+            // the dialog's natural height can exceed what's left, and being
+            // `fixed`+centered means any overflow gets clipped top and
+            // bottom with no way to scroll it into view. max-h + overflow-y
+            // keeps the submit button reachable instead of clipped off.
+            className="max-h-[85vh] w-full max-w-md space-y-4 overflow-y-auto rounded-xl border border-border bg-surface p-6 text-left shadow-lg"
             onClick={(e) => e.stopPropagation()}
           >
             <div>
@@ -91,6 +98,8 @@ export function ProductBuyButton({
               />
               <Input
                 label="Số điện thoại"
+                type="tel"
+                inputMode="numeric"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="09xxxxxxxx"

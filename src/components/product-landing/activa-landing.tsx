@@ -558,6 +558,7 @@ const ACTIVA_LANDING_CSS = `
 .activa-landing-page .btn.ghost:hover{border-color:var(--aurora);color:var(--aurora);transform:none}
 
 .activa-landing-page .hero{min-height:100vh;display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:20px;padding-top:90px}
+@supports (height:100dvh){.activa-landing-page .hero{min-height:100dvh}}
 .activa-landing-page .hero h1{font-size:clamp(3.48rem,7.2vw,6rem);font-weight:300}
 .activa-landing-page .hero h1 em{font-style:italic;color:var(--gold-soft);font-weight:400}
 .activa-landing-page .hero .eyebrow{margin-bottom:26px}

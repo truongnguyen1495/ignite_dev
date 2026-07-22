@@ -522,6 +522,7 @@ const BR9_LANDING_CSS = `
     radial-gradient(90% 70% at 20% 20%, rgba(30,38,22,.6), transparent 70%),
     var(--ink);
   overflow:hidden}
+@supports (height:100dvh){.br9-landing-page .hero{min-height:100dvh}}
 .br9-landing-page .hero .lattice{opacity:.10;animation:br9-drift 40s linear infinite}
 @keyframes br9-rise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
 @keyframes br9-fade{from{opacity:0}to{opacity:1}}

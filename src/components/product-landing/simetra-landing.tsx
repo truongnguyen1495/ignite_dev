@@ -530,6 +530,7 @@ const SIMETRA_LANDING_CSS = `
 .simetra-landing-page .btn.ghost:hover{border-color:var(--gold);color:var(--gold-soft);transform:none}
 
 .simetra-landing-page .hero{min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:30px;padding-top:90px}
+@supports (height:100dvh){.simetra-landing-page .hero{min-height:100dvh}}
 .simetra-landing-page .hero h1{font-size:clamp(3.36rem,6.96vw,5.88rem);font-weight:300}
 .simetra-landing-page .hero h1 em{font-style:italic;color:var(--aurora-soft);font-weight:400}
 .simetra-landing-page .hero .eyebrow{margin-bottom:26px}
