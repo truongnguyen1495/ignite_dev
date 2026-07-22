@@ -1,4 +1,6 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
+import { Package } from "lucide-react";
 import { requireActiveStudent, requireSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { BackLink } from "@/components/ui/back-link";
@@ -13,7 +15,18 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
   await requireSalesEnabled("/dashboard");
   const { orderId } = await params;
 
-  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      items: {
+        include: {
+          course: { select: { coverImageUrl: true, description: true } },
+          libraryItem: { select: { coverImageUrl: true, description: true } },
+          product: { select: { imageUrl: true, subtitle: true, description: true } },
+        },
+      },
+    },
+  });
   if (!order || order.studentId !== student.id) {
     notFound();
   }
@@ -32,13 +45,29 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
 
       <Card className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">Sản phẩm</h2>
-        <ul className="space-y-2">
-          {order.items.map((item) => (
-            <li key={item.id} className="flex items-center justify-between gap-2 text-sm">
-              <span className="text-foreground">{item.titleSnapshot}</span>
-              <span className="text-muted">{formatVND(item.priceAtPurchase)}</span>
-            </li>
-          ))}
+        <ul className="space-y-3">
+          {order.items.map((item) => {
+            const imageUrl = item.product?.imageUrl ?? item.course?.coverImageUrl ?? item.libraryItem?.coverImageUrl;
+            const description = item.product?.subtitle ?? item.product?.description ?? item.course?.description ?? item.libraryItem?.description;
+            return (
+              <li key={item.id} className="flex items-center gap-3 text-sm">
+                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-hover">
+                  {imageUrl ? (
+                    <Image src={imageUrl} alt={item.titleSnapshot} fill sizes="56px" className="object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <Package className="h-5 w-5 text-muted" />
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-foreground">{item.titleSnapshot}</p>
+                  {description && <p className="line-clamp-2 text-xs text-muted">{description}</p>}
+                </div>
+                <span className="shrink-0 text-muted">{formatVND(item.priceAtPurchase)}</span>
+              </li>
+            );
+          })}
         </ul>
         <div className="flex items-center justify-between border-t border-border pt-3 text-sm font-medium">
           <span className="text-foreground">Tổng cộng</span>
