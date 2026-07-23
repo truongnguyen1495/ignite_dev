@@ -43,7 +43,7 @@ const textElementSchema = baseElementSchema.extend({
   content: z.string(),
   fontSize: z.number().positive().default(16),
   color: z.string().default("#111111"),
-  align: z.enum(["left", "center", "right"]).default("left"),
+  align: z.enum(["left", "center", "right", "justify"]).default("left"),
 });
 
 const imageElementSchema = baseElementSchema.extend({

@@ -227,7 +227,7 @@ export function PropertyPanel({
             />
           </label>
           <div className="flex gap-2">
-            {(["left", "center", "right"] as const).map((align) => (
+            {(["left", "center", "right", "justify"] as const).map((align) => (
               <button
                 key={align}
                 type="button"
@@ -236,7 +236,7 @@ export function PropertyPanel({
                   selectedElement.align === align ? "border-primary bg-primary-bg text-primary" : "border-border text-muted"
                 }`}
               >
-                {align === "left" ? "Trái" : align === "center" ? "Giữa" : "Phải"}
+                {align === "left" ? "Trái" : align === "center" ? "Giữa" : align === "right" ? "Phải" : "Đều 2 bên"}
               </button>
             ))}
           </div>
