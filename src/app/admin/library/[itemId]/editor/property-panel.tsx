@@ -201,46 +201,20 @@ export function PropertyPanel({
       </div>
 
       {selectedElement.type === "text" && (
-        <>
-          <div className="space-y-1">
-            <span className="text-sm text-foreground">Nội dung</span>
-            <RichTextEditor
-              key={selectedElement.id}
-              content={selectedElement.content}
-              onChange={(content) => onUpdateElement({ content })}
-            />
-          </div>
-          <Input
-            id="text-fontsize"
-            type="number"
-            label="Cỡ chữ"
-            defaultValue={selectedElement.fontSize}
-            onChange={(e) => onUpdateElement({ fontSize: Number(e.target.value) || 16 })}
+        <div className="space-y-1">
+          <span className="text-sm text-foreground">Nội dung</span>
+          <RichTextEditor
+            key={selectedElement.id}
+            content={selectedElement.content}
+            onChange={(content) => onUpdateElement({ content })}
+            fontSize={selectedElement.fontSize}
+            onFontSizeChange={(fontSize) => onUpdateElement({ fontSize })}
+            fontColor={selectedElement.color}
+            onFontColorChange={(color) => onUpdateElement({ color })}
+            align={selectedElement.align}
+            onAlignChange={(align) => onUpdateElement({ align })}
           />
-          <label className="block space-y-1 text-sm">
-            <span className="text-foreground">Màu chữ</span>
-            <input
-              type="color"
-              value={selectedElement.color}
-              onChange={(e) => onUpdateElement({ color: e.target.value })}
-              className="h-9 w-full cursor-pointer rounded border border-border"
-            />
-          </label>
-          <div className="flex gap-2">
-            {(["left", "center", "right", "justify"] as const).map((align) => (
-              <button
-                key={align}
-                type="button"
-                onClick={() => onUpdateElement({ align })}
-                className={`flex-1 rounded-lg border px-2 py-1.5 text-xs ${
-                  selectedElement.align === align ? "border-primary bg-primary-bg text-primary" : "border-border text-muted"
-                }`}
-              >
-                {align === "left" ? "Trái" : align === "center" ? "Giữa" : align === "right" ? "Phải" : "Đều 2 bên"}
-              </button>
-            ))}
-          </div>
-        </>
+        </div>
       )}
 
       {selectedElement.type === "image" && (

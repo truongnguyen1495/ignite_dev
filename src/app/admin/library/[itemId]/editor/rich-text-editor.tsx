@@ -22,7 +22,13 @@ import {
   Minimize2,
   Palette,
   StickyNote,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
 } from "lucide-react";
+
+type BookTextAlign = "left" | "center" | "right" | "justify";
 import { FootnoteRef } from "./footnote-extension";
 
 // Same button styling convention as lesson-content-editor.tsx's toolbar.
@@ -44,12 +50,36 @@ const TEXT_COLORS: { label: string; value: string }[] = [
 ];
 
 // Deliberately minimal — a book page's text box, not a full lesson editor.
-// Bold/italic/underline/lists/quotes/tables/color/footnotes are exposed
-// here (matching sanitizeBookText's allowlist exactly; anything this editor
+// Bold/italic/underline/lists/quotes/tables/footnotes are exposed here
+// (matching sanitizeBookText's allowlist exactly; anything this editor
 // can't produce doesn't need a slot in that allowlist). No headings/links/
-// images — this element already sits inside the editor's own font-size/
-// align controls, and images/links are their own separate element types.
-export function RichTextEditor({ content, onChange }: { content: string; onChange: (html: string) => void }) {
+// images — images/links are their own separate element types.
+//
+// Two DIFFERENT "color" controls live in this one toolbar, worth spelling
+// out since they're easy to conflate: the palette (🎨) button sets a
+// per-*selection* inline color via Tiptap's Color/TextStyle marks (only
+// the highlighted text changes) — the small square next to font size sets
+// `fontColor`, a whole-*element* fallback color applied to the text box's
+// outer wrapper (book-element-renderer.tsx), same as fontSize/align below.
+export function RichTextEditor({
+  content,
+  onChange,
+  fontSize,
+  onFontSizeChange,
+  fontColor,
+  onFontColorChange,
+  align,
+  onAlignChange,
+}: {
+  content: string;
+  onChange: (content: string) => void;
+  fontSize: number;
+  onFontSizeChange: (fontSize: number) => void;
+  fontColor: string;
+  onFontColorChange: (color: string) => void;
+  align: BookTextAlign;
+  onAlignChange: (align: BookTextAlign) => void;
+}) {
   // Whether the cursor is currently inside a table — drives the extra
   // row/column strip below. editor.isActive() itself isn't reactive (it
   // only reflects the editor's state at the instant it's called), so this
@@ -102,7 +132,59 @@ export function RichTextEditor({ content, onChange }: { content: string; onChang
 
   const toolbar = (
     <>
-      <div className="flex flex-wrap gap-0.5 rounded-lg border border-border bg-surface p-1">
+      <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-border bg-surface p-1">
+        <input
+          type="number"
+          value={fontSize}
+          onChange={(e) => onFontSizeChange(Number(e.target.value) || 16)}
+          title="Cỡ chữ (cả khối)"
+          className="h-7 w-12 rounded-md border border-border bg-background px-1 text-center text-xs text-foreground"
+        />
+        <label
+          title="Màu chữ mặc định (cả khối — khác với 🎨 chỉ áp dụng vùng bôi đen)"
+          className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md border border-border p-1"
+        >
+          <input
+            type="color"
+            value={fontColor}
+            onChange={(e) => onFontColorChange(e.target.value)}
+            className="h-full w-full cursor-pointer"
+          />
+        </label>
+        <span className="mx-0.5 h-5 w-px bg-border" />
+        <button
+          type="button"
+          onClick={() => onAlignChange("left")}
+          className={btnClass(align === "left")}
+          title="Canh trái"
+        >
+          <AlignLeft className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => onAlignChange("center")}
+          className={btnClass(align === "center")}
+          title="Canh giữa"
+        >
+          <AlignCenter className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => onAlignChange("right")}
+          className={btnClass(align === "right")}
+          title="Canh phải"
+        >
+          <AlignRight className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => onAlignChange("justify")}
+          className={btnClass(align === "justify")}
+          title="Đều 2 bên"
+        >
+          <AlignJustify className="h-3.5 w-3.5" />
+        </button>
+        <span className="mx-0.5 h-5 w-px bg-border" />
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
