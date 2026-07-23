@@ -16,6 +16,7 @@ import {
   UserCog,
   Receipt,
   Package,
+  Phone,
 } from "lucide-react";
 import { requireAnyAdminAccess, isChatEnabled, isSalesEnabled } from "@/lib/access";
 import { getAdminSupportInbox } from "@/lib/chat";
@@ -86,6 +87,10 @@ export default async function AdminLayout({
     {
       item: { href: "/admin/orders", label: t.adminNav.orders, icon: <Receipt className={iconClass} /> },
       permission: "MANAGE_ORDERS",
+    },
+    {
+      item: { href: "/admin/consultations", label: t.adminNav.consultations, icon: <Phone className={iconClass} /> },
+      permission: "MANAGE_PRODUCTS",
     },
     {
       item: { href: "/admin/announcements", label: t.adminNav.announcements, icon: <Megaphone className={iconClass} /> },

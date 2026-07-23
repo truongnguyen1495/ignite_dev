@@ -163,6 +163,7 @@ model User {
   orders                  Order[]                  @relation("StudentOrders")
   ordersConfirmed         Order[]                  @relation("OrderConfirmedBy")
   cartItems               CartItem[]
+  consultationRequests    ConsultationRequest[]
 
   @@index([role])
 }
@@ -569,8 +570,30 @@ model Product {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  orderItems OrderItem[]
-  cartItems  CartItem[]
+  orderItems           OrderItem[]
+  cartItems            CartItem[]
+  consultationRequests ConsultationRequest[]
+}
+
+// A student asking to be called back about a product ("Đặt lịch tư vấn" on
+// the bespoke/generic product pages) — separate from Order/CartItem
+// entirely, since this is a pre-sale contact request, not a purchase.
+// contactedAt is set by an admin once they've followed up (see
+// /admin/consultations); nothing else in the app reads this table.
+model ConsultationRequest {
+  id            String    @id @default(cuid())
+  productId     String
+  product       Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  studentId     String
+  student       User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  name          String
+  phone         String
+  preferredTime String
+  createdAt     DateTime  @default(now())
+  contactedAt   DateTime?
+
+  @@index([productId])
+  @@index([studentId])
 }
 
 // Library of books/documents (PDFs) — access control mirrors Course exactly

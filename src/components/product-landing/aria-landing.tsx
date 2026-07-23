@@ -5,6 +5,7 @@ import { Fraunces, Be_Vietnam_Pro } from "next/font/google";
 import { formatVND } from "@/lib/currency";
 import { getPricing } from "@/lib/pricing";
 import { ProductBuyButton } from "@/components/product-buy-button";
+import { ConsultationButton } from "@/components/consultation-button";
 
 // Bespoke landing page for exactly one product (today: "sanarey-aria") — see
 // the branch in ./page.tsx. Ported verbatim (structure, copy, animation)
@@ -512,13 +513,16 @@ export function AriaLandingPage({
                   originalPrice={pricing.originalPrice}
                   className="btn"
                 >
-                  Thêm vào giỏ hàng <span aria-hidden="true">→</span>
+                  Mua ngay
                 </ProductBuyButton>
               ) : (
                 <a href="#" className="btn" onClick={(e) => e.preventDefault()}>
                   Liên hệ để đặt hàng
                 </a>
               )}
+              <ConsultationButton productId={product.id} title={product.title} className="btn ghost">
+                Đặt lịch tư vấn
+              </ConsultationButton>
               <a href="#hinh-hoc" className="btn ghost">
                 Tìm hiểu công nghệ
               </a>

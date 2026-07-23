@@ -5,6 +5,7 @@ import { Cormorant_Garamond, Jost } from "next/font/google";
 import { formatVND } from "@/lib/currency";
 import { getPricing } from "@/lib/pricing";
 import { ProductBuyButton } from "@/components/product-buy-button";
+import { ConsultationButton } from "@/components/consultation-button";
 
 // Bespoke landing page for exactly one product (today: "sanarey-br9") — see
 // the branch in ./page.tsx. Ported from a hand-designed reference file the
@@ -404,15 +405,20 @@ export function Br9LandingPage({
             <div className="eyebrow">Sanarey BR-9</div>
             <PriceBlock product={product} />
             {salesEnabled && pricing.forSale ? (
-              <ProductBuyButton
-                productId={product.id}
-                title="SANAREY BR-9"
-                price={pricing.chargeAmount}
-                originalPrice={pricing.originalPrice}
-                className="btn btn-gold"
-              >
-                Thêm vào giỏ hàng
-              </ProductBuyButton>
+              <>
+                <ProductBuyButton
+                  productId={product.id}
+                  title="SANAREY BR-9"
+                  price={pricing.chargeAmount}
+                  originalPrice={pricing.originalPrice}
+                  className="btn btn-gold"
+                >
+                  Mua ngay
+                </ProductBuyButton>
+                <ConsultationButton productId={product.id} title="SANAREY BR-9" className="btn btn-ghost">
+                  Đặt lịch tư vấn
+                </ConsultationButton>
+              </>
             ) : (
               <a href="#order" className="btn btn-gold" onClick={(e) => e.preventDefault()}>
                 Liên hệ để đặt hàng

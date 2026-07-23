@@ -4,6 +4,7 @@ import { BackLink } from "@/components/ui/back-link";
 import { getPricing } from "@/lib/pricing";
 import { formatVND } from "@/lib/currency";
 import { ProductBuyButton } from "@/components/product-buy-button";
+import { ConsultationButton } from "@/components/consultation-button";
 
 export type GenericProduct = {
   id: string;
@@ -71,15 +72,24 @@ export function GenericProductDetail({
             <span className="text-xs text-slate-400">CV {product.cv}</span>
           </div>
           {salesEnabled && pricing.forSale && (
-            <ProductBuyButton
-              productId={product.id}
-              title={product.title}
-              price={pricing.chargeAmount}
-              originalPrice={pricing.originalPrice}
-              className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
-            >
-              Thêm vào giỏ hàng
-            </ProductBuyButton>
+            <div className="space-y-2">
+              <ProductBuyButton
+                productId={product.id}
+                title={product.title}
+                price={pricing.chargeAmount}
+                originalPrice={pricing.originalPrice}
+                className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+              >
+                Mua ngay
+              </ProductBuyButton>
+              <ConsultationButton
+                productId={product.id}
+                title={product.title}
+                className="w-full rounded-lg border border-dark-border px-4 py-2.5 text-sm font-medium text-dark-foreground transition-colors hover:bg-dark-surface-raised"
+              >
+                Đặt lịch tư vấn
+              </ConsultationButton>
+            </div>
           )}
         </div>
       </div>
