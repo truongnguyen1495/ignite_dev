@@ -241,6 +241,31 @@ body {
 .ProseMirror.resize-cursor {
   cursor: col-resize;
 }
+/* Visible cell borders for any live Tiptap table (lesson editor, and the
+   library book editor's text-element rich-text editor) — .lesson-content
+   above only covers the *read* side of lesson content (Markdown-rendered),
+   nothing styled the editor's own live contentEditable table before this. */
+.ProseMirror table {
+  border-collapse: collapse;
+}
+.ProseMirror th,
+.ProseMirror td {
+  border: 1px solid var(--border);
+  padding: 0.25rem 0.5rem;
+}
+
+/* Same borders for the book editor's *rendered* text elements (the actual
+   flipbook reader and the editor canvas's live preview, both via
+   BookElementRenderer) — mirrors .lesson-content's table rules above,
+   scoped to book-text instead since that content isn't Markdown-rendered. */
+.book-text table {
+  border-collapse: collapse;
+}
+.book-text th,
+.book-text td {
+  border: 1px solid var(--border);
+  padding: 0.25rem 0.5rem;
+}
 
 /* Flipbook "real book" chrome (see BookFlipbook/PdfFlipbook, applied
    directly to react-pageflip's own root element via its className prop).
