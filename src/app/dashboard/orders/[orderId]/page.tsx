@@ -10,6 +10,7 @@ import { formatVND } from "@/lib/currency";
 import { formatOrderCode, ORDER_STATUS_LABELS, ORDER_STATUS_BADGE_COLOR } from "@/lib/orders";
 import { buildVietQrImageUrl } from "@/lib/vietqr";
 import { CancelOrderButton } from "./cancel-order-button";
+import { OrderStatusPoller } from "./order-status-poller";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ orderId: string }> }) {
   const student = await requireActiveStudent();
@@ -36,6 +37,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
+      <OrderStatusPoller status={order.status} />
       <div>
         <BackLink href="/dashboard/orders">Đơn hàng của tôi</BackLink>
         <div className="mt-2 flex flex-wrap items-center gap-2">
