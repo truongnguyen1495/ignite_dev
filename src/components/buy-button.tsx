@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ShoppingCart, Check, Zap } from "lucide-react";
+import { ShoppingCart, Check, Zap, Loader2 } from "lucide-react";
 import type { OrderItemKind } from "@prisma/client";
 import { addToCartAction } from "@/app/dashboard/cart/actions";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -99,10 +99,16 @@ export function BuyButton({ kind, itemId, details }: { kind: OrderItemKind; item
           onClick={onAddToCart}
           disabled={pending}
           title="Thêm vào giỏ hàng"
-          className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface-hover disabled:opacity-60"
+          aria-label="Thêm vào giỏ hàng"
+          className="flex shrink-0 items-center justify-center rounded-lg border border-border p-1.5 text-foreground transition-colors hover:bg-surface-hover disabled:opacity-60"
         >
-          {added ? <Check className="h-3.5 w-3.5" /> : <ShoppingCart className="h-3.5 w-3.5" />}
-          {pending ? "Đang xử lý..." : added ? "Đã thêm vào giỏ" : "Thêm vào giỏ hàng"}
+          {pending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : added ? (
+            <Check className="h-3.5 w-3.5" />
+          ) : (
+            <ShoppingCart className="h-3.5 w-3.5" />
+          )}
         </button>
         <button
           type="button"
