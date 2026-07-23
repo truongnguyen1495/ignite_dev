@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Trash2, Copy, ArrowUpToLine, ArrowDownToLine, Upload, Loader2, Ruler } from "lucide-react";
+import { Trash2, Copy, ArrowUpToLine, ArrowDownToLine, Upload, Loader2, Ruler, AlignVerticalSpaceAround } from "lucide-react";
 import type { BookElement, BookPageData } from "@/lib/library-book-elements";
 import { parseYoutubeId } from "@/lib/youtube";
 import { Input } from "@/components/ui/form";
@@ -127,6 +127,7 @@ export function PropertyPanel({
   onMoveElementLayer,
   onUpdatePageBackground,
   onApplyBackgroundToAllPages,
+  onFillPageVertically,
 }: {
   page: BookPageData;
   selectedElement: BookElement | null;
@@ -136,6 +137,7 @@ export function PropertyPanel({
   onMoveElementLayer: (direction: "front" | "back") => void;
   onUpdatePageBackground: (patch: Partial<BookPageData>) => void;
   onApplyBackgroundToAllPages: () => void;
+  onFillPageVertically: () => void;
 }) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -179,6 +181,18 @@ export function PropertyPanel({
         <Button type="button" variant="secondary" size="sm" onClick={onApplyBackgroundToAllPages}>
           Áp dụng cho mọi trang
         </Button>
+
+        <div className="space-y-2 border-t border-border pt-4">
+          <h2 className="text-sm font-semibold text-foreground">Bố cục trang</h2>
+          <Button type="button" variant="secondary" size="sm" onClick={onFillPageVertically}>
+            <AlignVerticalSpaceAround className="h-3.5 w-3.5" />
+            Dàn kín trang
+          </Button>
+          <p className="text-xs text-muted">
+            Giãn đều khoảng cách dọc để nội dung chạm lề đáy. Không thu nhỏ hay cắt phần tử nào; nhóm phần tử xếp
+            chồng di chuyển cùng nhau. Bấm Ctrl+Z để hoàn tác.
+          </p>
+        </div>
       </div>
     );
   }

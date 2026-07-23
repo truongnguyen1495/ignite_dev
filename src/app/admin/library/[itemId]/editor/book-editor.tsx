@@ -29,6 +29,90 @@ function isEditingText(target: EventTarget | null): boolean {
 
 const MAX_HISTORY = 50;
 
+// Transitive TRUE-overlap grouping: two elements belong to one group only
+// when their boxes intersect on BOTH axes — i.e. genuinely layered content
+// (text over a background shape, a badge on an image). Side-by-side columns
+// share y-ranges but not x-ranges and stay independent. Groups move as
+// rigid units in fillPageVertically so deliberate layering can never drift.
+function groupsByTrueOverlap(elements: BookElement[]): BookElement[][] {
+  const overlaps = (a: BookElement, b: BookElement) =>
+    a.x < b.x + b.width - 0.5 &&
+    b.x < a.x + a.width - 0.5 &&
+    a.y < b.y + b.height - 0.5 &&
+    b.y < a.y + a.height - 0.5;
+  const groups: BookElement[][] = [];
+  for (const el of elements) {
+    const hits = groups.filter((g) => g.some((m) => overlaps(m, el)));
+    if (hits.length === 0) {
+      groups.push([el]);
+    } else {
+      hits[0].push(el);
+      for (const extra of hits.slice(1)) {
+        hits[0].push(...extra);
+        groups.splice(groups.indexOf(extra), 1);
+      }
+    }
+  }
+  return groups;
+}
+
+// "Dàn kín trang": stretches the page's vertical layout so the lowest
+// content lands on the bottom margin (mirroring the top margin), designed
+// around two explicit user worries ("co lại là bị mất chữ", layered text
+// getting covered):
+// - Nothing ever shrinks. If the content already reaches the bottom margin
+//   (or past it), this returns no patches at all — it only ever ADDS space.
+// - Layered stacks (true 2D overlap, see groupsByTrueOverlap) move as one
+//   rigid unit, so text can't slide off its background.
+// - Everything else gets a single uniform scale on its (group's) top
+//   offset from the first row: y' = minY + (y − minY)·s with one shared
+//   s > 1. Uniformity means elements that started at the same y stay at
+//   the same y (columns stay aligned), and the gap between any element and
+//   the x-overlapping one below it can only grow. s is capped by whichever
+//   group's bottom would reach the margin first, so nothing overflows.
+// - A page whose content is all anchored at the top row can't be filled by
+//   moving; a lone element there is stretched TALLER to the margin (a
+//   taller box only gains empty room — clips nothing). Anything else is
+//   left untouched rather than guessed at.
+function fillPageVertically(elements: BookElement[], bookHeight: number): { id: string; patch: Partial<BookElement> }[] {
+  if (elements.length === 0) return [];
+  const minY = Math.min(...elements.map((e) => e.y));
+  const targetBottom = bookHeight - minY;
+
+  const groups = groupsByTrueOverlap(elements).map((members) => ({
+    top: Math.min(...members.map((e) => e.y)),
+    bottom: Math.max(...members.map((e) => e.y + e.height)),
+    members,
+  }));
+
+  const movable = groups.filter((g) => g.top - minY > 1);
+  if (movable.length === 0) {
+    if (groups.length === 1 && groups[0].members.length === 1) {
+      const el = groups[0].members[0];
+      if (targetBottom - (el.y + el.height) > 0.5) {
+        return [{ id: el.id, patch: { height: Math.round((targetBottom - el.y) * 100) / 100 } }];
+      }
+    }
+    return [];
+  }
+
+  const factors = movable
+    .map((g) => (targetBottom - (g.bottom - g.top) - minY) / (g.top - minY))
+    .filter((s) => Number.isFinite(s) && s > 0);
+  if (factors.length === 0) return [];
+  const scale = Math.min(...factors);
+  if (scale <= 1.001) return []; // already full or overflowing — never compress
+
+  const patches: { id: string; patch: Partial<BookElement> }[] = [];
+  for (const g of movable) {
+    const delta = (g.top - minY) * (scale - 1);
+    for (const el of g.members) {
+      patches.push({ id: el.id, patch: { y: Math.round((el.y + delta) * 100) / 100 } });
+    }
+  }
+  return patches;
+}
+
 export function BookEditor({
   libraryItemId,
   title,
@@ -304,6 +388,11 @@ export function BookEditor({
     setSelectedPageIndex(target);
   }
 
+  function fillCurrentPage() {
+    const patches = fillPageVertically(currentPage.elements, bookHeight);
+    if (patches.length > 0) updateElements(patches);
+  }
+
   function handleSave() {
     setError(undefined);
     startTransition(async () => {
@@ -414,6 +503,7 @@ export function BookEditor({
             onDeleteElement={deleteSelected}
             onDuplicateElement={duplicateSelected}
             onMoveElementLayer={(direction) => selectedElement && moveElementLayer(selectedElement.id, direction)}
+            onFillPageVertically={fillCurrentPage}
             onUpdatePageBackground={(patch) => mutateCurrentPage(patch)}
             onApplyBackgroundToAllPages={() => {
               commitPages((prev) =>
