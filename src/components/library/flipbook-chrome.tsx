@@ -4,6 +4,7 @@ import type { ReactNode, RefObject } from "react";
 import { FlipbookToolbar } from "./flipbook-toolbar";
 import { FlipbookThumbnailRail } from "./flipbook-thumbnail-rail";
 import { useAutoHideControls } from "./use-auto-hide-controls";
+import { BookLightboxProvider } from "./book-element-renderer";
 
 // Shared outer chrome for both BookFlipbook and PdfFlipbook: the fullscreen
 // container (containerRef gets passed to requestFullscreen by the caller's
@@ -121,25 +122,32 @@ export function FlipbookChrome({
     // so bookBand's flex-1 (and the ResizeObserver height it feeds — see
     // use-available-height.ts) always resolves against the *full* fullscreen
     // frame, regardless of whether the controls are currently shown.
+    // BookLightboxProvider sits at the root of BOTH return branches — same
+    // component type in the same position, so React keeps its state (an
+    // open lightbox) across the fullscreen/normal branch switch, and it's
+    // above the caller's key-remounted <HTMLFlipBook> so zoomed media
+    // survives flipbook remounts (see the provider's own comment).
     return (
-      <div
-        ref={containerRef}
-        className={`flex items-center justify-center bg-background ${
-          isFakeFullscreen
-            ? "fixed inset-0 z-50 h-[100vh] supports-[height:100dvh]:h-[100dvh] w-full"
-            : "relative h-full w-full"
-        }`}
-      >
-        <div className="flex h-full w-full items-center justify-center p-6">{bookArea}</div>
+      <BookLightboxProvider>
         <div
-          className={`absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-3 bg-gradient-to-t from-background via-background/90 to-transparent px-6 pb-4 pt-12 transition-opacity duration-300 ${
-            controlsVisible ? "opacity-100" : "pointer-events-none opacity-0"
+          ref={containerRef}
+          className={`flex items-center justify-center bg-background ${
+            isFakeFullscreen
+              ? "fixed inset-0 z-50 h-[100vh] supports-[height:100dvh]:h-[100dvh] w-full"
+              : "relative h-full w-full"
           }`}
         >
-          {toolbar}
-          {thumbnailRail}
+          <div className="flex h-full w-full items-center justify-center p-6">{bookArea}</div>
+          <div
+            className={`absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-3 bg-gradient-to-t from-background via-background/90 to-transparent px-6 pb-4 pt-12 transition-opacity duration-300 ${
+              controlsVisible ? "opacity-100" : "pointer-events-none opacity-0"
+            }`}
+          >
+            {toolbar}
+            {thumbnailRail}
+          </div>
         </div>
-      </div>
+      </BookLightboxProvider>
     );
   }
 
@@ -171,13 +179,15 @@ export function FlipbookChrome({
   // confirmed from real screenshots of a short browser window doing exactly
   // that. overflow-hidden is a safety net for any residual rounding.
   return (
-    <div
-      ref={containerRef}
-      className="flex h-[75vh] supports-[height:100dvh]:h-[75dvh] w-full flex-col items-center gap-3 overflow-hidden"
-    >
-      {bookBand}
-      {stickyToolbar}
-      {thumbnailRail}
-    </div>
+    <BookLightboxProvider>
+      <div
+        ref={containerRef}
+        className="flex h-[75vh] supports-[height:100dvh]:h-[75dvh] w-full flex-col items-center gap-3 overflow-hidden"
+      >
+        {bookBand}
+        {stickyToolbar}
+        {thumbnailRail}
+      </div>
+    </BookLightboxProvider>
   );
 }
