@@ -5,6 +5,18 @@ import { createPortal } from "react-dom";
 import { Play, Volume2, X, Maximize2 } from "lucide-react";
 import type { BookElement } from "@/lib/library-book-elements";
 
+// react-pageflip listens for mousedown/touchstart on `window` to detect
+// page-turn swipes/clicks, and only exempts an event whose *exact* target is
+// an `<a>` or `<button>` tag (see checkTarget in page-flip's bundled
+// source). Clicking an icon *inside* one of our buttons lands on the icon's
+// own <svg>/<path> node, not the <button>, so the library doesn't recognize
+// it and starts a flip-drag gesture right underneath — the video/image
+// zoom controls below all need this to stop that gesture before it ever
+// reaches `window`, or clicking them flips the page instead of zooming.
+function stopFlipGesture(e: { stopPropagation: () => void }) {
+  e.stopPropagation();
+}
+
 // Rendered via a portal straight onto document.body — book-page.tsx's page
 // wrapper has a CSS `transform: scale(...)` on it (for fitting the fixed
 // design-pixel canvas to whatever size the flipbook renders at), and
@@ -22,6 +34,8 @@ function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClos
       <button
         type="button"
         onClick={onClose}
+        onMouseDown={stopFlipGesture}
+        onTouchStart={stopFlipGesture}
         aria-label="Đóng"
         className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
       >
@@ -48,6 +62,8 @@ function ImageElement({ url, alt, editable }: { url: string; alt: string; editab
         draggable={false}
         className={`h-full w-full object-contain ${editable ? "" : "cursor-zoom-in"}`}
         onClick={editable ? undefined : () => setZoomed(true)}
+        onMouseDown={editable ? undefined : stopFlipGesture}
+        onTouchStart={editable ? undefined : stopFlipGesture}
       />
       {zoomed && <ImageLightbox src={url} alt={alt} onClose={() => setZoomed(false)} />}
     </>
@@ -63,6 +79,8 @@ function VideoLightbox({ onClose, children }: { onClose: () => void; children: R
       <button
         type="button"
         onClick={onClose}
+        onMouseDown={stopFlipGesture}
+        onTouchStart={stopFlipGesture}
         aria-label="Đóng"
         className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
       >
@@ -86,6 +104,8 @@ function ExpandVideoButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
+      onMouseDown={stopFlipGesture}
+      onTouchStart={stopFlipGesture}
       aria-label="Phóng to video"
       title="Phóng to"
       className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded bg-black/60 text-white hover:bg-black/80"
@@ -117,6 +137,8 @@ function UploadedVideo({ url, className, autoPlay }: { url: string; className: s
         src={url}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
+        onMouseDown={stopFlipGesture}
+        onTouchStart={stopFlipGesture}
       >
         <track kind="captions" />
       </video>
@@ -124,6 +146,8 @@ function UploadedVideo({ url, className, autoPlay }: { url: string; className: s
         <button
           type="button"
           onClick={() => videoRef.current?.play()}
+          onMouseDown={stopFlipGesture}
+          onTouchStart={stopFlipGesture}
           aria-label="Phát video"
           className="absolute inset-0 flex items-center justify-center rounded-md bg-black/20 text-white hover:bg-black/30"
         >
@@ -321,7 +345,13 @@ export function BookElementRenderer({
         );
       }
       return (
-        <audio controls className="w-full" style={{ height: element.height }}>
+        <audio
+          controls
+          className="w-full"
+          style={{ height: element.height }}
+          onMouseDown={stopFlipGesture}
+          onTouchStart={stopFlipGesture}
+        >
           <source src={element.url} />
         </audio>
       );
