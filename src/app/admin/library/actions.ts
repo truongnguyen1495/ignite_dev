@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { downloadLibraryFile, uploadLibraryFile, deleteLibraryFile } from "@/lib/library-storage";
 import { extractFirstPages } from "@/lib/library-pdf";
 import { bookPagesPayloadSchema } from "@/lib/library-book-elements";
+import { sanitizeBookText } from "@/lib/sanitize-book-text";
 
 const libraryItemTypeEnum = z.enum(["BOOK", "DOCUMENT"] as [LibraryItemType, ...LibraryItemType[]]);
 const libraryItemFormatEnum = z.enum(["PDF", "INTERACTIVE"] as [LibraryItemFormat, ...LibraryItemFormat[]]);
@@ -408,10 +409,19 @@ export async function saveLibraryBookPagesAction(
     return "Dữ liệu trang không hợp lệ.";
   }
 
+  // Server-side backstop: a direct call to this action (bypassing the
+  // client editor's constrained Tiptap instance entirely) could otherwise
+  // persist arbitrary HTML in a text element's content, rendered to every
+  // student/guest reading the book — see sanitizeBookText's own comment.
+  const sanitizedPages = parsed.data.map((page) => ({
+    ...page,
+    elements: page.elements.map((el) => (el.type === "text" ? { ...el, content: sanitizeBookText(el.content) } : el)),
+  }));
+
   await prisma.$transaction([
     prisma.libraryBookPage.deleteMany({ where: { libraryItemId } }),
     prisma.libraryBookPage.createMany({
-      data: parsed.data.map((page, index) => ({
+      data: sanitizedPages.map((page, index) => ({
         libraryItemId,
         order: index,
         backgroundColor: page.backgroundColor ?? null,

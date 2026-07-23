@@ -4,8 +4,9 @@ import { useState } from "react";
 import { Trash2, Copy, ArrowUpToLine, ArrowDownToLine } from "lucide-react";
 import type { BookElement, BookPageData } from "@/lib/library-book-elements";
 import { parseYoutubeId } from "@/lib/youtube";
-import { Input, Textarea } from "@/components/ui/form";
+import { Input } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { RichTextEditor } from "./rich-text-editor";
 
 async function uploadFile(url: string, file: File): Promise<string | null> {
   const formData = new FormData();
@@ -158,13 +159,14 @@ export function PropertyPanel({
 
       {selectedElement.type === "text" && (
         <>
-          <Textarea
-            id="text-content"
-            label="Nội dung"
-            rows={3}
-            defaultValue={selectedElement.content}
-            onChange={(e) => onUpdateElement({ content: e.target.value })}
-          />
+          <div className="space-y-1">
+            <span className="text-sm text-foreground">Nội dung</span>
+            <RichTextEditor
+              key={selectedElement.id}
+              content={selectedElement.content}
+              onChange={(content) => onUpdateElement({ content })}
+            />
+          </div>
           <Input
             id="text-fontsize"
             type="number"
@@ -181,35 +183,6 @@ export function PropertyPanel({
               className="h-9 w-full cursor-pointer rounded border border-border"
             />
           </label>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 text-sm text-foreground">
-              <input
-                type="checkbox"
-                checked={selectedElement.bold}
-                onChange={(e) => onUpdateElement({ bold: e.target.checked })}
-                className="h-4 w-4 accent-primary"
-              />
-              In đậm
-            </label>
-            <label className="flex items-center gap-2 text-sm text-foreground">
-              <input
-                type="checkbox"
-                checked={selectedElement.italic}
-                onChange={(e) => onUpdateElement({ italic: e.target.checked })}
-                className="h-4 w-4 accent-primary"
-              />
-              In nghiêng
-            </label>
-            <label className="flex items-center gap-2 text-sm text-foreground">
-              <input
-                type="checkbox"
-                checked={selectedElement.underline}
-                onChange={(e) => onUpdateElement({ underline: e.target.checked })}
-                className="h-4 w-4 accent-primary"
-              />
-              Gạch chân
-            </label>
-          </div>
           <div className="flex gap-2">
             {(["left", "center", "right"] as const).map((align) => (
               <button

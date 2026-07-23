@@ -29,20 +29,19 @@ export function BookElementRenderer({
 }) {
   switch (element.type) {
     case "text":
+      // `content` is sanitized rich-text HTML from the editor's Tiptap
+      // instance (see sanitizeBookText) — bold/italic/underline/lists/
+      // tables live as real markup now, not whole-element booleans.
+      // `prose` (Tailwind Typography) gives that markup sensible default
+      // spacing/list-bullets/table borders without hand-rolled CSS; fontSize
+      // on the wrapper scales every prose element proportionally since
+      // Typography sizes everything in em.
       return (
         <div
-          className="h-full w-full overflow-hidden whitespace-pre-wrap break-words"
-          style={{
-            fontSize: element.fontSize,
-            color: element.color,
-            textAlign: element.align,
-            fontWeight: element.bold ? 700 : 400,
-            fontStyle: element.italic ? "italic" : "normal",
-            textDecoration: element.underline ? "underline" : "none",
-          }}
-        >
-          {element.content}
-        </div>
+          className="book-text prose prose-sm h-full w-full max-w-none overflow-hidden break-words"
+          style={{ fontSize: element.fontSize, color: element.color, textAlign: element.align }}
+          dangerouslySetInnerHTML={{ __html: element.content }}
+        />
       );
     case "image":
       return element.url ? (

@@ -34,13 +34,16 @@ const baseElementSchema = z.object({
 
 const textElementSchema = baseElementSchema.extend({
   type: z.literal("text"),
+  // Rich-text HTML from the property panel's Tiptap instance (bold/italic/
+  // underline/lists/tables as inline marks and block structure, not whole-
+  // element booleans anymore) — sanitized server-side before every save,
+  // see sanitizeBookText. Plain text with no markup (older saves, or a
+  // fresh element) parses through Tiptap/this renderer just fine as an
+  // unstyled paragraph.
   content: z.string(),
   fontSize: z.number().positive().default(16),
   color: z.string().default("#111111"),
   align: z.enum(["left", "center", "right"]).default("left"),
-  bold: z.boolean().default(false),
-  italic: z.boolean().default(false),
-  underline: z.boolean().default(false),
 });
 
 const imageElementSchema = baseElementSchema.extend({
@@ -130,13 +133,10 @@ export function createDefaultElement(type: BookElementType, id: string): BookEle
       return {
         ...base,
         type: "text",
-        content: "Văn bản mới",
+        content: "<p>Văn bản mới</p>",
         fontSize: 16,
         color: "#111111",
         align: "left",
-        bold: false,
-        italic: false,
-        underline: false,
       };
     case "image":
       return { ...base, width: 240, height: 160, type: "image", url: "", alt: "" };
