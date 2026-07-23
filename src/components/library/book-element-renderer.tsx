@@ -175,6 +175,22 @@ function VideoElement({
   editable: boolean;
 }) {
   const [zoomed, setZoomed] = useState(false);
+  // YouTube's embed page takes a moment to fetch its own JS player and paints
+  // a plain black rectangle in the meantime — invisible on a full-size embed
+  // elsewhere on the web, but glaring at the small sizes book video elements
+  // are usually placed at, and it happens on every single page turn since
+  // the iframe used to mount the instant a page became active. Gating the
+  // real iframe behind an explicit click (showing our own instant static
+  // thumbnail — already fetched directly, no iframe involved — until then)
+  // means that black flash only ever happens once, right after a deliberate
+  // click, instead of on every page turn.
+  // Deliberately not reset when the page flips away and back — the whole
+  // element unmounts its real iframe while inactive either way (see the
+  // `!isActive` check below), so this only affects whether *returning* to
+  // an already-started video needs a second click. Letting it stay true
+  // means a video the reader already opted into just resumes; only a video
+  // they never touched needs the click-to-load thumbnail.
+  const [started, setStarted] = useState(false);
   const canExpand = isActive && !editable;
 
   if (url) {
@@ -201,7 +217,7 @@ function VideoElement({
   if (!youtubeId) {
     return <div className="flex h-full w-full items-center justify-center bg-faint-bg text-xs text-muted">Video</div>;
   }
-  if (!isActive) {
+  if (!isActive || !started) {
     return (
       <div className="relative h-full w-full overflow-hidden rounded-md bg-black">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -211,7 +227,32 @@ function VideoElement({
           className="h-full w-full object-cover opacity-70"
           draggable={false}
         />
-        <Play className="absolute inset-0 m-auto h-8 w-8 text-white" />
+        {isActive && !editable ? (
+          <button
+            type="button"
+            onClick={() => setStarted(true)}
+            onMouseDown={stopFlipGesture}
+            onTouchStart={stopFlipGesture}
+            aria-label="Phát video"
+            className="absolute inset-0 flex items-center justify-center text-white"
+          >
+            <Play className="h-8 w-8" fill="currentColor" />
+          </button>
+        ) : (
+          <Play className="absolute inset-0 m-auto h-8 w-8 text-white" />
+        )}
+        {canExpand && <ExpandVideoButton onClick={() => setZoomed(true)} />}
+        {zoomed && (
+          <VideoLightbox onClose={() => setZoomed(false)}>
+            <iframe
+              className="h-full w-full rounded-md"
+              src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
+              title="YouTube video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          </VideoLightbox>
+        )}
       </div>
     );
   }
@@ -219,7 +260,7 @@ function VideoElement({
     <div className="relative h-full w-full">
       <iframe
         className="h-full w-full rounded-md"
-        src={`https://www.youtube.com/embed/${youtubeId}`}
+        src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
         title="YouTube video"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowFullScreen
