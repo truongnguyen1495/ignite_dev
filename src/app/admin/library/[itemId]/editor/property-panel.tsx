@@ -1,12 +1,39 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Trash2, Copy, ArrowUpToLine, ArrowDownToLine, Upload, Loader2 } from "lucide-react";
+import { Trash2, Copy, ArrowUpToLine, ArrowDownToLine, Upload, Loader2, Ruler } from "lucide-react";
 import type { BookElement, BookPageData } from "@/lib/library-book-elements";
 import { parseYoutubeId } from "@/lib/youtube";
 import { Input } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { RichTextEditor } from "./rich-text-editor";
+
+// Text elements are a fixed-size box (dragged/resized by hand), not a
+// flowing document — its `height` never auto-tracks how much content is
+// actually inside. Left alone after adding/removing text, that mismatch
+// either clips content (box too short) or leaves dead space before
+// whatever's positioned next on the page (box too tall — the "khoảng
+// trống" an admin ran into after growing a paragraph without resizing the
+// box to match). This renders the exact same markup/classes/width
+// BookElementRenderer's text case would (see book-element-renderer.tsx and
+// the .book-text prose rules in globals.css) in a hidden, off-screen node
+// to measure its real height, then removes it — a plain DOM measurement,
+// not a persisted element, so it's safe to do outside React's own tree.
+function measureTextHeight(content: string, width: number, fontSize: number): number {
+  const el = document.createElement("div");
+  el.className = "book-text prose prose-sm max-w-none break-words";
+  el.style.position = "fixed";
+  el.style.visibility = "hidden";
+  el.style.left = "-99999px";
+  el.style.top = "0";
+  el.style.width = `${width}px`;
+  el.style.fontSize = `${fontSize}px`;
+  el.innerHTML = content;
+  document.body.appendChild(el);
+  const height = el.scrollHeight;
+  document.body.removeChild(el);
+  return height;
+}
 
 // A bare native <input type="file"> renders as the browser's own tiny
 // "Choose File / No file chosen" widget — easy to miss entirely next to
@@ -202,7 +229,21 @@ export function PropertyPanel({
 
       {selectedElement.type === "text" && (
         <div className="space-y-1">
-          <span className="text-sm text-foreground">Nội dung</span>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-foreground">Nội dung</span>
+            <button
+              type="button"
+              onClick={() => {
+                const height = measureTextHeight(selectedElement.content, selectedElement.width, selectedElement.fontSize);
+                onUpdateElement({ height: Math.max(20, Math.ceil(height)) });
+              }}
+              title="Tự động khớp chiều cao hộp với chữ thật"
+              className="flex items-center gap-1 text-xs text-muted hover:text-foreground"
+            >
+              <Ruler className="h-3.5 w-3.5" />
+              Khớp chiều cao
+            </button>
+          </div>
           <RichTextEditor
             key={selectedElement.id}
             content={selectedElement.content}
