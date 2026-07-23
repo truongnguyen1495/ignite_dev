@@ -37,6 +37,8 @@ export function BookElementRenderer({
             color: element.color,
             textAlign: element.align,
             fontWeight: element.bold ? 700 : 400,
+            fontStyle: element.italic ? "italic" : "normal",
+            textDecoration: element.underline ? "underline" : "none",
           }}
         >
           {element.content}
@@ -72,6 +74,22 @@ export function BookElementRenderer({
         </a>
       );
     case "video":
+      // A directly-uploaded file wins over a YouTube link when both are set
+      // — see the schema comment on videoElementSchema.url.
+      if (element.url) {
+        if (!isActive) {
+          return (
+            <div className="flex h-full w-full items-center justify-center gap-1.5 rounded-md bg-black text-xs text-white/80">
+              <Play className="h-8 w-8" />
+            </div>
+          );
+        }
+        return (
+          <video controls className="h-full w-full rounded-md bg-black" src={element.url}>
+            <track kind="captions" />
+          </video>
+        );
+      }
       if (!element.youtubeId) {
         return <div className="flex h-full w-full items-center justify-center bg-faint-bg text-xs text-muted">Video</div>;
       }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Copy, ArrowUpToLine, ArrowDownToLine } from "lucide-react";
 import type { BookElement, BookPageData } from "@/lib/library-book-elements";
 import { parseYoutubeId } from "@/lib/youtube";
 import { Input, Textarea } from "@/components/ui/form";
@@ -15,6 +15,30 @@ async function uploadFile(url: string, file: File): Promise<string | null> {
   return res.ok ? json.url : null;
 }
 
+// Video specifically needs a surfaced error message (unlike the plain
+// uploadFile above) since a too-large file trips Vercel's own platform body
+// limit before this route runs — that comes back as a plain-text 413 body,
+// and res.json() on it throws its own confusing parse error instead of the
+// real "file too large" message. Same lesson as library-file-input.tsx.
+async function uploadVideoFile(file: File): Promise<{ url: string | null; error: string | null }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch("/api/admin/upload-book-video", { method: "POST", body: formData });
+  if (!res.ok) {
+    if (res.status === 413) {
+      return { url: null, error: "File quá lớn so với giới hạn upload của server. Video dài nên dùng link YouTube thay vì tải trực tiếp." };
+    }
+    try {
+      const json = await res.json();
+      return { url: null, error: json.error || "Tải video lên thất bại." };
+    } catch {
+      return { url: null, error: "Tải video lên thất bại." };
+    }
+  }
+  const json = await res.json();
+  return { url: json.url, error: null };
+}
+
 // Contextual right panel: page background controls when nothing is
 // selected, or the selected element's type-specific fields. `key` on the
 // per-type fields wrapper forces a remount on selection change so
@@ -25,6 +49,8 @@ export function PropertyPanel({
   selectedElement,
   onUpdateElement,
   onDeleteElement,
+  onDuplicateElement,
+  onMoveElementLayer,
   onUpdatePageBackground,
   onApplyBackgroundToAllPages,
 }: {
@@ -32,10 +58,13 @@ export function PropertyPanel({
   selectedElement: BookElement | null;
   onUpdateElement: (patch: Partial<BookElement>) => void;
   onDeleteElement: () => void;
+  onDuplicateElement: () => void;
+  onMoveElementLayer: (direction: "front" | "back") => void;
   onUpdatePageBackground: (patch: Partial<BookPageData>) => void;
   onApplyBackgroundToAllPages: () => void;
 }) {
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   if (!selectedElement) {
     return (
@@ -87,14 +116,44 @@ export function PropertyPanel({
     <div key={selectedElement.id} className="w-72 shrink-0 space-y-4 overflow-y-auto border-l border-border bg-surface p-4">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-foreground">Thuộc tính</h2>
-        <button
-          type="button"
-          onClick={onDeleteElement}
-          className="text-danger hover:text-danger/80"
-          aria-label="Xóa phần tử"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => onMoveElementLayer("back")}
+            className="text-muted hover:text-foreground"
+            title="Đưa xuống dưới"
+            aria-label="Đưa xuống dưới"
+          >
+            <ArrowDownToLine className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onMoveElementLayer("front")}
+            className="text-muted hover:text-foreground"
+            title="Đưa lên trên"
+            aria-label="Đưa lên trên"
+          >
+            <ArrowUpToLine className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={onDuplicateElement}
+            className="text-muted hover:text-foreground"
+            title="Nhân bản (Ctrl+D)"
+            aria-label="Nhân bản phần tử"
+          >
+            <Copy className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={onDeleteElement}
+            className="text-danger hover:text-danger/80"
+            title="Xóa (phím Delete)"
+            aria-label="Xóa phần tử"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {selectedElement.type === "text" && (
@@ -122,15 +181,35 @@ export function PropertyPanel({
               className="h-9 w-full cursor-pointer rounded border border-border"
             />
           </label>
-          <label className="flex items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              checked={selectedElement.bold}
-              onChange={(e) => onUpdateElement({ bold: e.target.checked })}
-              className="h-4 w-4 accent-primary"
-            />
-            In đậm
-          </label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={selectedElement.bold}
+                onChange={(e) => onUpdateElement({ bold: e.target.checked })}
+                className="h-4 w-4 accent-primary"
+              />
+              In đậm
+            </label>
+            <label className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={selectedElement.italic}
+                onChange={(e) => onUpdateElement({ italic: e.target.checked })}
+                className="h-4 w-4 accent-primary"
+              />
+              In nghiêng
+            </label>
+            <label className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={selectedElement.underline}
+                onChange={(e) => onUpdateElement({ underline: e.target.checked })}
+                className="h-4 w-4 accent-primary"
+              />
+              Gạch chân
+            </label>
+          </div>
           <div className="flex gap-2">
             {(["left", "center", "right"] as const).map((align) => (
               <button
@@ -253,13 +332,48 @@ export function PropertyPanel({
       )}
 
       {selectedElement.type === "video" && (
-        <Input
-          id="video-url"
-          label="Link YouTube"
-          defaultValue={selectedElement.youtubeId}
-          placeholder="https://youtube.com/watch?v=..."
-          onChange={(e) => onUpdateElement({ youtubeId: parseYoutubeId(e.target.value) ?? "" })}
-        />
+        <>
+          <label className="block space-y-1 text-sm">
+            <span className="text-foreground">Tải video lên (MP4/WebM/OGG, tối đa ~4MB)</span>
+            <input
+              type="file"
+              accept="video/mp4,video/webm,video/ogg"
+              disabled={uploading}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setUploading(true);
+                setUploadError(null);
+                const result = await uploadVideoFile(file);
+                setUploading(false);
+                if (result.url) onUpdateElement({ url: result.url });
+                else setUploadError(result.error);
+              }}
+              className="block w-full text-xs"
+            />
+          </label>
+          {uploadError && <p className="text-xs text-danger">{uploadError}</p>}
+          {selectedElement.url && (
+            <div className="flex items-center justify-between gap-2">
+              <video controls className="max-h-32 w-full rounded border border-border" src={selectedElement.url} />
+              <button
+                type="button"
+                onClick={() => onUpdateElement({ url: "" })}
+                className="shrink-0 text-xs text-danger hover:underline"
+              >
+                Xóa video
+              </button>
+            </div>
+          )}
+          <Input
+            id="video-url"
+            label="Hoặc link YouTube"
+            defaultValue={selectedElement.youtubeId}
+            placeholder="https://youtube.com/watch?v=..."
+            hint={selectedElement.url ? "Đang ưu tiên phát video đã tải lên ở trên, bỏ qua link này." : undefined}
+            onChange={(e) => onUpdateElement({ youtubeId: parseYoutubeId(e.target.value) ?? "" })}
+          />
+        </>
       )}
 
       {selectedElement.type === "audio" && (

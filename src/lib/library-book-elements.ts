@@ -39,6 +39,8 @@ const textElementSchema = baseElementSchema.extend({
   color: z.string().default("#111111"),
   align: z.enum(["left", "center", "right"]).default("left"),
   bold: z.boolean().default(false),
+  italic: z.boolean().default(false),
+  underline: z.boolean().default(false),
 });
 
 const imageElementSchema = baseElementSchema.extend({
@@ -75,6 +77,11 @@ const videoElementSchema = baseElementSchema.extend({
   youtubeId: z.string().refine((v) => v === "" || YOUTUBE_ID_RE.test(v), {
     message: "youtubeId không hợp lệ.",
   }),
+  // A directly-uploaded video file (see /api/admin/upload-book-video),
+  // independent of youtubeId — BookElementRenderer prefers this when both
+  // are set, since an admin who just uploaded a file almost certainly means
+  // to use it over a stale/previous YouTube link.
+  url: z.string().default(""),
 });
 
 const audioElementSchema = baseElementSchema.extend({
@@ -120,7 +127,17 @@ export function createDefaultElement(type: BookElementType, id: string): BookEle
   const base = { id, x: 40, y: 40, width: 200, height: 100, rotation: 0, zIndex: 0 };
   switch (type) {
     case "text":
-      return { ...base, type: "text", content: "Văn bản mới", fontSize: 16, color: "#111111", align: "left", bold: false };
+      return {
+        ...base,
+        type: "text",
+        content: "Văn bản mới",
+        fontSize: 16,
+        color: "#111111",
+        align: "left",
+        bold: false,
+        italic: false,
+        underline: false,
+      };
     case "image":
       return { ...base, width: 240, height: 160, type: "image", url: "", alt: "" };
     case "shape":
@@ -128,7 +145,7 @@ export function createDefaultElement(type: BookElementType, id: string): BookEle
     case "button":
       return { ...base, width: 160, height: 48, type: "button", label: "Bấm vào đây", href: "", bgColor: "#3b82f6", textColor: "#ffffff" };
     case "video":
-      return { ...base, width: 320, height: 180, type: "video", youtubeId: "" };
+      return { ...base, width: 320, height: 180, type: "video", youtubeId: "", url: "" };
     case "audio":
       return { ...base, width: 280, height: 54, type: "audio", url: "" };
   }
