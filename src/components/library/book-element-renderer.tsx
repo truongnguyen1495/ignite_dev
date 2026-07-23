@@ -112,18 +112,35 @@ export function BookElementRenderer({
           }}
         />
       );
-    case "button":
+    case "button": {
+      const buttonStyle = { backgroundColor: element.bgColor, color: element.textColor };
+      // A real <a> in the editor would try to navigate/open a tab on every
+      // click, fighting react-rnd's own click-to-select/drag handling (and
+      // risking the admin losing unsaved changes by accidentally
+      // navigating the editor itself away). Editable mode gets an inert
+      // look-alike; only the actual reader gets a real, clickable link.
+      if (editable) {
+        return (
+          <div
+            className="flex h-full w-full items-center justify-center rounded-lg text-center text-sm font-medium"
+            style={buttonStyle}
+          >
+            {element.label}
+          </div>
+        );
+      }
       return (
         <a
           href={element.href}
           target="_blank"
           rel="noopener noreferrer"
           className="flex h-full w-full items-center justify-center rounded-lg text-center text-sm font-medium"
-          style={{ backgroundColor: element.bgColor, color: element.textColor }}
+          style={buttonStyle}
         >
           {element.label}
         </a>
       );
+    }
     case "video":
       // A directly-uploaded file wins over a YouTube link when both are set
       // — see the schema comment on videoElementSchema.url.
