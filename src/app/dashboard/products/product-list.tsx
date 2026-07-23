@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Package, ArrowRight } from "lucide-react";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
+import { ProductBuyButton } from "@/components/product-buy-button";
 import { getPricing } from "@/lib/pricing";
 import { formatVND } from "@/lib/currency";
 
@@ -59,7 +60,13 @@ function PriceRow({ product }: { product: StudentProductItem }) {
   );
 }
 
-export function ProductList({ products }: { products: StudentProductItem[] }) {
+export function ProductList({
+  products,
+  salesEnabled,
+}: {
+  products: StudentProductItem[];
+  salesEnabled: boolean;
+}) {
   const [mode, setMode] = useState<ViewMode>(() => {
     if (typeof window === "undefined") return "grid";
     const saved = window.localStorage.getItem(STORAGE_KEY);
@@ -83,62 +90,94 @@ export function ProductList({ products }: { products: StudentProductItem[] }) {
 
       {mode === "grid" ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
-            <Link
-              key={product.id}
-              href={`/dashboard/products/${product.id}`}
-              className="flex h-full flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors hover:border-primary/60"
-            >
-              <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-dark-surface-raised">
-                <Thumbnail product={product} className="h-full w-full" />
-                {product.badgeLabel && (
-                  <span className="absolute left-3 top-3 rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">
-                    {product.badgeLabel}
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-1 flex-col p-5">
-                <p className="font-semibold text-dark-foreground">{product.title}</p>
-                {product.subtitle && <p className="mt-0.5 text-sm text-dark-muted">{product.subtitle}</p>}
-                <div className="mt-auto space-y-3 pt-4">
-                  <PriceRow product={product} />
-                  <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
-                    Xem chi tiết
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {products.map((product) => (
-            <Link
-              key={product.id}
-              href={`/dashboard/products/${product.id}`}
-              className="flex items-center gap-4 rounded-xl border border-dark-border bg-dark-surface p-3 transition-colors hover:border-primary/60"
-            >
-              <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-dark-surface-raised">
-                <Thumbnail product={product} className="h-full w-full" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
+          {products.map((product) => {
+            const pricing = getPricing(product);
+            const purchasable = salesEnabled && pricing.forSale;
+            return (
+              <Link
+                key={product.id}
+                href={`/dashboard/products/${product.id}`}
+                className="flex h-full flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-surface transition-colors hover:border-primary/60"
+              >
+                <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-dark-surface-raised">
+                  <Thumbnail product={product} className="h-full w-full" />
                   {product.badgeLabel && (
-                    <span className="rounded-md bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+                    <span className="absolute left-3 top-3 rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">
                       {product.badgeLabel}
                     </span>
                   )}
-                  <p className="truncate font-semibold text-dark-foreground">{product.title}</p>
                 </div>
-                {product.subtitle && <p className="line-clamp-1 text-sm text-dark-muted">{product.subtitle}</p>}
-              </div>
-              <div className="hidden shrink-0 sm:block">
-                <PriceRow product={product} />
-              </div>
-              <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />
-            </Link>
-          ))}
+                <div className="flex flex-1 flex-col p-5">
+                  <p className="font-semibold text-dark-foreground">{product.title}</p>
+                  {product.subtitle && <p className="mt-0.5 text-sm text-dark-muted">{product.subtitle}</p>}
+                  <div className="mt-auto space-y-3 pt-4">
+                    <PriceRow product={product} />
+                    <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
+                      Xem chi tiết
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </span>
+                    {purchasable && (
+                      <div className="border-t border-dark-border pt-3">
+                        <ProductBuyButton
+                          productId={product.id}
+                          title={product.title}
+                          price={pricing.chargeAmount}
+                          originalPrice={pricing.originalPrice}
+                          className="w-full rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+                        >
+                          Mua ngay
+                        </ProductBuyButton>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {products.map((product) => {
+            const pricing = getPricing(product);
+            const purchasable = salesEnabled && pricing.forSale;
+            return (
+              <Link
+                key={product.id}
+                href={`/dashboard/products/${product.id}`}
+                className="flex items-center gap-4 rounded-xl border border-dark-border bg-dark-surface p-3 transition-colors hover:border-primary/60"
+              >
+                <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-dark-surface-raised">
+                  <Thumbnail product={product} className="h-full w-full" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {product.badgeLabel && (
+                      <span className="rounded-md bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+                        {product.badgeLabel}
+                      </span>
+                    )}
+                    <p className="truncate font-semibold text-dark-foreground">{product.title}</p>
+                  </div>
+                  {product.subtitle && <p className="line-clamp-1 text-sm text-dark-muted">{product.subtitle}</p>}
+                </div>
+                <div className="hidden shrink-0 sm:block">
+                  <PriceRow product={product} />
+                </div>
+                {purchasable && (
+                  <ProductBuyButton
+                    productId={product.id}
+                    title={product.title}
+                    price={pricing.chargeAmount}
+                    originalPrice={pricing.originalPrice}
+                    className="hidden shrink-0 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary-hover sm:block"
+                  >
+                    Mua ngay
+                  </ProductBuyButton>
+                )}
+                <ArrowRight className="hidden h-4 w-4 shrink-0 text-accent sm:block" />
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

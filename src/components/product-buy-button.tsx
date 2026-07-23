@@ -56,14 +56,29 @@ export function ProductBuyButton({
 
   return (
     <>
-      <button type="button" className={className} onClick={() => setOpen(true)}>
+      <button
+        type="button"
+        className={className}
+        onClick={(e) => {
+          // Guards against being nested inside a card-wide <Link> (e.g. the
+          // /dashboard/products catalog grid) — without this, clicking would
+          // both open the dialog and navigate away.
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen(true);
+        }}
+      >
         {children}
       </button>
 
       {open && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4"
-          onClick={() => setOpen(false)}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setOpen(false);
+          }}
         >
           <div
             role="dialog"

@@ -1,4 +1,4 @@
-import { requireLeveledStudent } from "@/lib/access";
+import { requireLeveledStudent, isSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
 import { ProductList, type StudentProductItem } from "./product-list";
@@ -10,7 +10,10 @@ import { ProductList, type StudentProductItem } from "./product-list";
 // branch has no "Sản phẩm" nav entry, and /guest/* never links here).
 export default async function ProductsPage() {
   await requireLeveledStudent();
-  const products = await prisma.product.findMany({ orderBy: { order: "asc" } });
+  const [products, salesEnabled] = await Promise.all([
+    prisma.product.findMany({ orderBy: { order: "asc" } }),
+    isSalesEnabled(),
+  ]);
 
   const items: StudentProductItem[] = products.map((product) => ({
     id: product.id,
@@ -26,7 +29,7 @@ export default async function ProductsPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Sản phẩm" description="Danh sách sản phẩm dành cho học viên." />
-      <ProductList products={items} />
+      <ProductList products={items} salesEnabled={salesEnabled} />
     </div>
   );
 }

@@ -66,7 +66,11 @@ export function BuyButton({ kind, itemId, details }: { kind: OrderItemKind; item
       {open && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4"
-          onClick={() => setOpen(false)}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setOpen(false);
+          }}
         >
           <div
             role="dialog"

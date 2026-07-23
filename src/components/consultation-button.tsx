@@ -55,12 +55,30 @@ export function ConsultationButton({
 
   return (
     <>
-      <button type="button" className={className} onClick={() => setOpen(true)}>
+      <button
+        type="button"
+        className={className}
+        onClick={(e) => {
+          // Guards against being nested inside a card-wide <Link>, same as
+          // ProductBuyButton — without this, clicking would both open the
+          // dialog and navigate away.
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen(true);
+        }}
+      >
         {children}
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4" onClick={close}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            close();
+          }}
+        >
           <div
             role="dialog"
             aria-modal="true"
