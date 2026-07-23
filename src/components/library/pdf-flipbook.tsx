@@ -146,7 +146,13 @@ export function PdfFlipbook({
     let cancelled = false;
     (async () => {
       try {
-        const pdfjsLib = await import("pdfjs-dist");
+        // The LEGACY build, deliberately — pdfjs's modern build calls
+        // Promise.withResolvers (Safari 17.4+) and friends with no
+        // polyfill, so on any older Safari (every iPhone on iOS ≤ 17.3,
+        // older Macs) the flipbook died before rendering a single page.
+        // The legacy build ships core-js polyfills for all of it. The
+        // worker file in public/ must stay the legacy one to match.
+        const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
         pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
         // JBIG2/OpenJPEG-encoded images (common in scanned PDFs) need these
         // wasm codecs — pdfjs can't reach them inside node_modules at
