@@ -5,6 +5,7 @@ import { AriaLandingPage } from "@/components/product-landing/aria-landing";
 import { ActivaLandingPage } from "@/components/product-landing/activa-landing";
 import { SimetraLandingPage } from "@/components/product-landing/simetra-landing";
 import { Br9LandingPage } from "@/components/product-landing/br9-landing";
+import { FloatingCartButton } from "@/components/floating-cart-button";
 
 // Deliberately outside /dashboard entirely — a bespoke landing page needs
 // its own full-bleed nav/hero with no sidebar/header squeezing it, which
@@ -34,62 +35,74 @@ export default async function ProductLandingPage({
 
   if (product.slug === "sanarey-aria") {
     return (
-      <AriaLandingPage
-        product={{
-          id: product.id,
-          title: product.title,
-          price: product.price,
-          salePrice: product.salePrice,
-          cv: product.cv,
-          imageUrl: product.imageUrl,
-          lifestyleImage1Url: product.lifestyleImage1Url,
-          lifestyleImage2Url: product.lifestyleImage2Url,
-          lifestyleImage3Url: product.lifestyleImage3Url,
-        }}
-        salesEnabled={salesEnabled}
-      />
+      <>
+        <AriaLandingPage
+          product={{
+            id: product.id,
+            title: product.title,
+            price: product.price,
+            salePrice: product.salePrice,
+            cv: product.cv,
+            imageUrl: product.imageUrl,
+            lifestyleImage1Url: product.lifestyleImage1Url,
+            lifestyleImage2Url: product.lifestyleImage2Url,
+            lifestyleImage3Url: product.lifestyleImage3Url,
+          }}
+          salesEnabled={salesEnabled}
+        />
+        <FloatingCartButton />
+      </>
     );
   }
 
   if (product.slug === "sanarey-activa") {
     return (
-      <ActivaLandingPage
-        product={{
-          id: product.id,
-          price: product.price,
-          salePrice: product.salePrice,
-          cv: product.cv,
-        }}
-        salesEnabled={salesEnabled}
-      />
+      <>
+        <ActivaLandingPage
+          product={{
+            id: product.id,
+            price: product.price,
+            salePrice: product.salePrice,
+            cv: product.cv,
+          }}
+          salesEnabled={salesEnabled}
+        />
+        <FloatingCartButton />
+      </>
     );
   }
 
   if (product.slug === "sanarey-simetra") {
     return (
-      <SimetraLandingPage
-        product={{
-          id: product.id,
-          price: product.price,
-          salePrice: product.salePrice,
-          cv: product.cv,
-        }}
-        salesEnabled={salesEnabled}
-      />
+      <>
+        <SimetraLandingPage
+          product={{
+            id: product.id,
+            price: product.price,
+            salePrice: product.salePrice,
+            cv: product.cv,
+          }}
+          salesEnabled={salesEnabled}
+        />
+        <FloatingCartButton />
+      </>
     );
   }
 
   if (product.slug === "sanarey-br9") {
     return (
-      <Br9LandingPage
-        product={{
-          id: product.id,
-          price: product.price,
-          salePrice: product.salePrice,
-          cv: product.cv,
-        }}
-        salesEnabled={salesEnabled}
-      />
+      <>
+        <Br9LandingPage
+          product={{
+            id: product.id,
+            price: product.price,
+            salePrice: product.salePrice,
+            cv: product.cv,
+          }}
+          salesEnabled={salesEnabled}
+        />
+        <FloatingCartButton />
+      </>
     );
   }
 
