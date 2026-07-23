@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Play, Volume2, X } from "lucide-react";
+import { Play, Volume2, X, Maximize2 } from "lucide-react";
 import type { BookElement } from "@/lib/library-book-elements";
 
 // Rendered via a portal straight onto document.body — book-page.tsx's page
@@ -51,6 +51,134 @@ function ImageElement({ url, alt, editable }: { url: string; alt: string; editab
       />
       {zoomed && <ImageLightbox src={url} alt={alt} onClose={() => setZoomed(false)} />}
     </>
+  );
+}
+
+// Same portal reasoning as ImageLightbox above. Sized to a wide max-w
+// instead of filling the viewport (unlike the image one) — a bare
+// aspect-video box scaled to full width/height would letterbox oddly.
+function VideoLightbox({ onClose, children }: { onClose: () => void; children: ReactNode }) {
+  return createPortal(
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/90 p-6" onClick={onClose}>
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Đóng"
+        className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+      >
+        <X className="h-5 w-5" />
+      </button>
+      <div className="aspect-video w-full max-w-4xl" onClick={(e) => e.stopPropagation()}>
+        {children}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// A small corner button rather than making the whole video clickable (unlike
+// ImageElement's whole-image click target) — the video itself already needs
+// clicks to reach its own play button/controls (or, for an iframe, controls
+// baked into the cross-origin embed itself), so a full-area overlay would
+// block that instead of just adding zoom.
+function ExpandVideoButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Phóng to video"
+      title="Phóng to"
+      className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded bg-black/60 text-white hover:bg-black/80"
+    >
+      <Maximize2 className="h-3.5 w-3.5" />
+    </button>
+  );
+}
+
+// A directly-uploaded file wins over a YouTube link when both are set — see
+// the schema comment on videoElementSchema.url. The expand-to-lightbox
+// button only ever shows in the reader (isActive && !editable): the editor
+// needs the whole area free for react-rnd's drag/select, and an inactive
+// (flipped-away) page just shows the inert thumbnail.
+function VideoElement({
+  url,
+  youtubeId,
+  isActive,
+  editable,
+}: {
+  url: string;
+  youtubeId: string;
+  isActive: boolean;
+  editable: boolean;
+}) {
+  const [zoomed, setZoomed] = useState(false);
+  const canExpand = isActive && !editable;
+
+  if (url) {
+    if (!isActive) {
+      return (
+        <div className="flex h-full w-full items-center justify-center gap-1.5 rounded-md bg-black text-xs text-white/80">
+          <Play className="h-8 w-8" />
+        </div>
+      );
+    }
+    return (
+      <div className="relative h-full w-full">
+        <video controls className="h-full w-full rounded-md bg-black" src={url}>
+          <track kind="captions" />
+        </video>
+        {canExpand && <ExpandVideoButton onClick={() => setZoomed(true)} />}
+        {zoomed && (
+          <VideoLightbox onClose={() => setZoomed(false)}>
+            <video controls autoPlay className="h-full w-full rounded-md bg-black" src={url}>
+              <track kind="captions" />
+            </video>
+          </VideoLightbox>
+        )}
+      </div>
+    );
+  }
+
+  if (!youtubeId) {
+    return <div className="flex h-full w-full items-center justify-center bg-faint-bg text-xs text-muted">Video</div>;
+  }
+  if (!isActive) {
+    return (
+      <div className="relative h-full w-full overflow-hidden rounded-md bg-black">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`}
+          alt=""
+          className="h-full w-full object-cover opacity-70"
+          draggable={false}
+        />
+        <Play className="absolute inset-0 m-auto h-8 w-8 text-white" />
+      </div>
+    );
+  }
+  return (
+    <div className="relative h-full w-full">
+      <iframe
+        className="h-full w-full rounded-md"
+        src={`https://www.youtube.com/embed/${youtubeId}`}
+        title="YouTube video"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen
+      />
+      {editable && <div className="absolute inset-0" />}
+      {canExpand && <ExpandVideoButton onClick={() => setZoomed(true)} />}
+      {zoomed && (
+        <VideoLightbox onClose={() => setZoomed(false)}>
+          <iframe
+            className="h-full w-full rounded-md"
+            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
+            title="YouTube video"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        </VideoLightbox>
+      )}
+    </div>
   );
 }
 
@@ -142,50 +270,8 @@ export function BookElementRenderer({
       );
     }
     case "video":
-      // A directly-uploaded file wins over a YouTube link when both are set
-      // — see the schema comment on videoElementSchema.url.
-      if (element.url) {
-        if (!isActive) {
-          return (
-            <div className="flex h-full w-full items-center justify-center gap-1.5 rounded-md bg-black text-xs text-white/80">
-              <Play className="h-8 w-8" />
-            </div>
-          );
-        }
-        return (
-          <video controls className="h-full w-full rounded-md bg-black" src={element.url}>
-            <track kind="captions" />
-          </video>
-        );
-      }
-      if (!element.youtubeId) {
-        return <div className="flex h-full w-full items-center justify-center bg-faint-bg text-xs text-muted">Video</div>;
-      }
-      if (!isActive) {
-        return (
-          <div className="relative h-full w-full overflow-hidden rounded-md bg-black">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`https://img.youtube.com/vi/${element.youtubeId}/hqdefault.jpg`}
-              alt=""
-              className="h-full w-full object-cover opacity-70"
-              draggable={false}
-            />
-            <Play className="absolute inset-0 m-auto h-8 w-8 text-white" />
-          </div>
-        );
-      }
       return (
-        <div className="relative h-full w-full">
-          <iframe
-            className="h-full w-full rounded-md"
-            src={`https://www.youtube.com/embed/${element.youtubeId}`}
-            title="YouTube video"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          />
-          {editable && <div className="absolute inset-0" />}
-        </div>
+        <VideoElement url={element.url} youtubeId={element.youtubeId} isActive={isActive} editable={editable} />
       );
     case "audio":
       if (!element.url) {
