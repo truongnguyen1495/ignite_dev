@@ -187,7 +187,12 @@ export function RichTextEditor({
         <span className="mx-0.5 h-5 w-px bg-border" />
         <button
           type="button"
-          onClick={() => editor.chain().focus().toggleBold().run()}
+          onClick={() => {
+            // TEMP diagnostic — remove once the bold-strips-color bug is found.
+            console.log("[bold-debug] html before:", editor.getHTML());
+            editor.chain().focus().toggleBold().run();
+            console.log("[bold-debug] html after:", editor.getHTML());
+          }}
           className={btnClass(editor.isActive("bold"))}
           title="In đậm"
         >
