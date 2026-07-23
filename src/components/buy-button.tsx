@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ShoppingCart, Check } from "lucide-react";
+import { ShoppingCart, Check, Zap } from "lucide-react";
 import type { OrderItemKind } from "@prisma/client";
 import { addToCartAction } from "@/app/dashboard/cart/actions";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -32,15 +32,16 @@ export function BuyButton({ kind, itemId, details }: { kind: OrderItemKind; item
   const router = useRouter();
   const confirm = useConfirm();
 
-  const onClick = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  // Shared by both buttons — they only differ in what happens after a
+  // successful add: "Thêm vào giỏ hàng" stays put (existing behavior, cart
+  // review happens later on /dashboard/cart), "Mua ngay" jumps straight to
+  // that same cart/checkout page instead of toasting and staying.
+  const addItem = async (confirmLabel: string, goToCartAfter: boolean) => {
     setError(undefined);
-
     const ok = await confirm({
       title: details.title,
       tone: "primary",
-      confirmLabel: "Thêm vào giỏ hàng",
+      confirmLabel,
       cancelLabel: "Để sau",
       description: (
         <div className="space-y-3">
@@ -68,23 +69,52 @@ export function BuyButton({ kind, itemId, details }: { kind: OrderItemKind; item
         setError(result.error);
         return;
       }
+      if (goToCartAfter) {
+        router.push("/dashboard/cart");
+        return;
+      }
       setAdded(true);
       router.refresh();
       setTimeout(() => setAdded(false), 3000);
     });
   };
 
+  const onAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    void addItem("Thêm vào giỏ hàng", false);
+  };
+
+  const onBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    void addItem("Mua ngay", true);
+  };
+
   return (
     <div className="flex flex-col items-end gap-1">
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={pending}
-        className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
-      >
-        {added ? <Check className="h-3.5 w-3.5" /> : <ShoppingCart className="h-3.5 w-3.5" />}
-        {pending ? "Đang xử lý..." : added ? "Đã thêm vào giỏ" : "Thêm vào giỏ hàng"}
-      </button>
+      <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={onAddToCart}
+          disabled={pending}
+          title="Thêm vào giỏ hàng"
+          className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface-hover disabled:opacity-60"
+        >
+          {added ? <Check className="h-3.5 w-3.5" /> : <ShoppingCart className="h-3.5 w-3.5" />}
+          {pending ? "Đang xử lý..." : added ? "Đã thêm vào giỏ" : "Thêm vào giỏ hàng"}
+        </button>
+        <button
+          type="button"
+          onClick={onBuyNow}
+          disabled={pending}
+          title="Mua ngay"
+          className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
+        >
+          <Zap className="h-3.5 w-3.5" />
+          Mua ngay
+        </button>
+      </div>
       {error && <p className="text-xs text-danger">{error}</p>}
     </div>
   );
