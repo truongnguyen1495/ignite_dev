@@ -76,7 +76,6 @@ export default async function EditCoursePage({
         title={course.title}
         description={course.description}
         coverImageUrl={course.coverImageUrl}
-        order={course.order}
         price={course.price}
         salePrice={course.salePrice}
         isFree={course.isFree}

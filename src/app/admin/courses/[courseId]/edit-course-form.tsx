@@ -13,7 +13,6 @@ export function EditCourseForm({
   title,
   description,
   coverImageUrl,
-  order,
   price,
   salePrice,
   isFree: initialIsFree,
@@ -24,7 +23,6 @@ export function EditCourseForm({
   title: string;
   description: string | null;
   coverImageUrl: string | null;
-  order: number;
   price: number;
   salePrice: number | null;
   isFree: boolean;
@@ -71,8 +69,6 @@ export function EditCourseForm({
             defaultValue={coverImageUrl ?? ""}
             onChange={() => setIsDirty(true)}
           />
-          <Input id="order" name="order" type="number" defaultValue={order} label="Thứ tự hiển thị" />
-
           <div className="space-y-3 rounded-lg border border-border p-3">
             <label className="flex items-center gap-2 text-sm text-foreground">
               <input

@@ -21,7 +21,6 @@ export function CreateCourseForm({
       <Input id="title" name="title" required label="Tên khóa học" />
       <Textarea id="description" name="description" rows={3} label="Mô tả (tùy chọn)" />
       <CoverImageInput alt="Ảnh bìa khóa học" />
-      <Input id="order" name="order" type="number" defaultValue={0} label="Thứ tự hiển thị" />
 
       <div className="space-y-3 rounded-lg border border-border p-3">
         <label className="flex items-center gap-2 text-sm text-foreground">

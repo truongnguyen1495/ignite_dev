@@ -99,8 +99,6 @@ export function CreateLibraryItemForm({
         </div>
       )}
 
-      <Input id="order" name="order" type="number" defaultValue={0} label="Thứ tự hiển thị" />
-
       <div className="space-y-3 rounded-lg border border-border p-3">
         <label className="flex items-center gap-2 text-sm text-foreground">
           <input

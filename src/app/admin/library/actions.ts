@@ -26,7 +26,6 @@ const libraryItemSchema = z.object({
   filePath: z.string().trim().optional(),
   pageCount: z.coerce.number().int().optional(),
   guestPreviewPages: z.coerce.number().int().positive().optional(),
-  order: z.coerce.number().int().default(0),
   price: z.coerce.number().int().min(0, "Giá không được âm.").default(0),
   salePrice: z.coerce.number().int().min(0, "Giá khuyến mãi không được âm.").optional(),
   // INTERACTIVE-only: fixed design-pixel page size, chosen once at creation.
@@ -79,7 +78,6 @@ export async function createLibraryItemAction(
     filePath: formData.get("filePath") || undefined,
     pageCount: formData.get("pageCount") || undefined,
     guestPreviewPages: formData.get("guestPreviewPages") || undefined,
-    order: formData.get("order") || 0,
     price: formData.get("price") || 0,
     salePrice: formData.get("salePrice") || undefined,
     bookWidth: formData.get("bookWidth") || undefined,
@@ -110,6 +108,12 @@ export async function createLibraryItemAction(
   const visibleToGuest = formData.get("visibleToGuest") === "on";
   const featuredOnHome = formData.get("featuredOnHome") === "on";
 
+  // New items always land at the end of the list — order is no longer a
+  // free-text field an admin types in (see ReorderModal on /admin/library
+  // for how existing items get repositioned instead).
+  const { _max } = await prisma.libraryItem.aggregate({ _max: { order: true } });
+  const nextOrder = (_max.order ?? -1) + 1;
+
   if (parsed.data.format === "INTERACTIVE") {
     // No filePath, no PDF preview generation — an interactive book starts
     // with zero pages, authored afterward in the editor
@@ -128,7 +132,7 @@ export async function createLibraryItemAction(
         bookWidth: parsed.data.bookWidth,
         bookHeight: parsed.data.bookHeight,
         pageCount: 0,
-        order: parsed.data.order,
+        order: nextOrder,
         price: pricing.price,
         salePrice: pricing.salePrice,
         isFree: pricing.isFree,
@@ -158,7 +162,7 @@ export async function createLibraryItemAction(
       pageCount: parsed.data.pageCount ?? null,
       previewFilePath,
       guestPreviewPages: parsed.data.guestPreviewPages ?? null,
-      order: parsed.data.order,
+      order: nextOrder,
       price: pricing.price,
       salePrice: pricing.salePrice,
       isFree: pricing.isFree,
@@ -194,7 +198,6 @@ export async function updateLibraryItemAction(
     filePath: formData.get("filePath") || undefined,
     pageCount: formData.get("pageCount") || undefined,
     guestPreviewPages: formData.get("guestPreviewPages") || undefined,
-    order: formData.get("order") || 0,
     price: formData.get("price") || 0,
     salePrice: formData.get("salePrice") || undefined,
   });
@@ -241,7 +244,6 @@ export async function updateLibraryItemAction(
         type: parsed.data.type,
         coverImageUrl: parsed.data.coverImageUrl ?? null,
         backgroundImageUrl: parsed.data.backgroundImageUrl ?? null,
-        order: parsed.data.order,
         ...pricing,
       },
     });
@@ -278,7 +280,6 @@ export async function updateLibraryItemAction(
       filePath: parsed.data.filePath,
       pageCount: parsed.data.pageCount ?? null,
       previewFilePath,
-      order: parsed.data.order,
       ...pricing,
     },
   });
@@ -359,6 +360,17 @@ export async function deleteLibraryItemAction(libraryItemId: string) {
     }
   }
 
+  revalidatePath("/admin/library");
+}
+
+// Persists a full drag-and-drop reorder from ReorderModal — each id's new
+// `order` is just its index in the array, one $transaction so the list
+// never reads a half-applied order mid-write.
+export async function reorderLibraryItemsAction(orderedIds: string[]) {
+  await requireAdminPermission("MANAGE_LIBRARY");
+  await prisma.$transaction(
+    orderedIds.map((id, index) => prisma.libraryItem.update({ where: { id }, data: { order: index } }))
+  );
   revalidatePath("/admin/library");
 }
 

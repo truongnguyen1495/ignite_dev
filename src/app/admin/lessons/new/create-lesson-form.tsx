@@ -22,16 +22,13 @@ export function CreateLessonForm() {
           label="Mô tả (tùy chọn)"
           hint="Giới thiệu ngắn hiển thị cho học viên phía trên nội dung bài học."
         />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Select id="level" name="level" defaultValue={ORDERED_LEVELS[0]} label="Cấp">
-            {ORDERED_LEVELS.map((level) => (
-              <option key={level} value={level}>
-                {LEVEL_LABELS[level]}
-              </option>
-            ))}
-          </Select>
-          <Input id="order" name="order" type="number" defaultValue={0} label="Thứ tự hiển thị" />
-        </div>
+        <Select id="level" name="level" defaultValue={ORDERED_LEVELS[0]} label="Cấp">
+          {ORDERED_LEVELS.map((level) => (
+            <option key={level} value={level}>
+              {LEVEL_LABELS[level]}
+            </option>
+          ))}
+        </Select>
       </section>
 
       <hr className="border-border" />

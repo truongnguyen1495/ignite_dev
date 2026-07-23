@@ -40,7 +40,6 @@ export default async function EditLessonPage({
           description={lesson.description}
           content={lesson.content}
           youtubeId={lesson.youtubeId}
-          order={lesson.order}
         />
       </Card>
 

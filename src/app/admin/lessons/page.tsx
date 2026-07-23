@@ -1,13 +1,15 @@
 import Link from "next/link";
-import { Plus, Video, FileText, ClipboardList } from "lucide-react";
+import { Plus, Video, FileText, ClipboardList, ArrowUpDown } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPermission } from "@/lib/access";
-import { ORDERED_LEVELS } from "@/lib/levels";
+import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
 import { DeleteLessonInlineButton } from "./delete-lesson-inline-button";
 import { createQuizForLessonAction } from "../quizzes/actions";
+import { reorderLessonsAction } from "./actions";
 import { PageHeader } from "@/components/ui/page-header";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { LevelBadge } from "@/components/ui/level-badge";
+import { ReorderModal } from "@/components/ui/reorder-modal";
 
 export default async function LessonsPage() {
   await requireAdminPermission("MANAGE_LESSONS_QUIZZES");
@@ -49,6 +51,17 @@ export default async function LessonsPage() {
                 <LevelBadge level={level} full />
                 <span className="text-xs text-muted">({levelLessons.length})</span>
               </span>
+            }
+            actions={
+              levelLessons.length > 1 && (
+                <ReorderModal
+                  triggerLabel={<ArrowUpDown className="h-4 w-4" />}
+                  triggerClassName="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+                  title={`Sắp xếp bài học — ${LEVEL_LABELS[level]}`}
+                  items={levelLessons.map((l) => ({ id: l.id, label: l.title }))}
+                  onSave={reorderLessonsAction}
+                />
+              )
             }
           >
             <ul className="mt-2 space-y-2.5">

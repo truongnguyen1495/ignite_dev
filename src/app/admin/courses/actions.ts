@@ -12,7 +12,6 @@ const courseSchema = z.object({
   title: z.string().trim().min(1, "Tiêu đề không được để trống."),
   description: z.string().trim().optional(),
   coverImageUrl: z.string().trim().optional(),
-  order: z.coerce.number().int().default(0),
   price: z.coerce.number().int().min(0, "Giá không được âm.").default(0),
   salePrice: z.coerce.number().int().min(0, "Giá khuyến mãi không được âm.").optional(),
 });
@@ -47,7 +46,6 @@ export async function createCourseAction(
     title: formData.get("title"),
     description: formData.get("description") || undefined,
     coverImageUrl: formData.get("coverImageUrl") || undefined,
-    order: formData.get("order") || 0,
     price: formData.get("price") || 0,
     salePrice: formData.get("salePrice") || undefined,
   });
@@ -72,12 +70,18 @@ export async function createCourseAction(
     pricing = { price: 0, salePrice: null, isFree };
   }
 
+  // New courses always land at the end of the list — order is no longer a
+  // free-text field an admin types in (see ReorderModal on /admin/courses
+  // for how existing courses get repositioned instead).
+  const { _max } = await prisma.course.aggregate({ _max: { order: true } });
+  const nextOrder = (_max.order ?? -1) + 1;
+
   const course = await prisma.course.create({
     data: {
       title: parsed.data.title,
       description: parsed.data.description ?? null,
       coverImageUrl: parsed.data.coverImageUrl ?? null,
-      order: parsed.data.order,
+      order: nextOrder,
       price: pricing.price,
       salePrice: pricing.salePrice,
       isFree: pricing.isFree,
@@ -106,7 +110,6 @@ export async function updateCourseAction(
     title: formData.get("title"),
     description: formData.get("description") || undefined,
     coverImageUrl: formData.get("coverImageUrl") || undefined,
-    order: formData.get("order") || 0,
     price: formData.get("price") || 0,
     salePrice: formData.get("salePrice") || undefined,
   });
@@ -139,7 +142,6 @@ export async function updateCourseAction(
       title: parsed.data.title,
       description: parsed.data.description ?? null,
       coverImageUrl: parsed.data.coverImageUrl ?? null,
-      order: parsed.data.order,
       ...pricing,
     },
   });
@@ -153,6 +155,17 @@ export async function updateCourseAction(
 export async function deleteCourseAction(courseId: string) {
   await requireAdminPermission("MANAGE_COURSES");
   await prisma.course.delete({ where: { id: courseId } });
+  revalidatePath("/admin/courses");
+}
+
+// Persists a full drag-and-drop reorder from ReorderModal — each id's new
+// `order` is just its index in the array, one $transaction so the list
+// never reads a half-applied order mid-write.
+export async function reorderCoursesAction(orderedIds: string[]) {
+  await requireAdminPermission("MANAGE_COURSES");
+  await prisma.$transaction(
+    orderedIds.map((id, index) => prisma.course.update({ where: { id }, data: { order: index } }))
+  );
   revalidatePath("/admin/courses");
 }
 

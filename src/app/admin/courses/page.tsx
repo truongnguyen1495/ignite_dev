@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, ArrowUpDown } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPermission } from "@/lib/access";
 import { CourseList, type AdminCourseItem } from "./course-list";
 import { PageHeader } from "@/components/ui/page-header";
+import { ReorderModal } from "@/components/ui/reorder-modal";
+import { reorderCoursesAction } from "./actions";
 
 const BANNER_GRADIENTS = [
   "from-[var(--primary)] to-[var(--info)]",
@@ -48,13 +50,27 @@ export default async function CoursesPage() {
       <PageHeader
         title="Khóa học độc quyền"
         actions={
-          <Link
-            href="/admin/courses/new"
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
-          >
-            <Plus className="h-4 w-4" />
-            Thêm khóa học
-          </Link>
+          <>
+            <ReorderModal
+              triggerLabel={
+                <>
+                  <ArrowUpDown className="h-4 w-4" />
+                  Sắp xếp thứ tự
+                </>
+              }
+              triggerClassName="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover"
+              title="Sắp xếp khóa học"
+              items={items.map((c) => ({ id: c.id, label: c.title }))}
+              onSave={reorderCoursesAction}
+            />
+            <Link
+              href="/admin/courses/new"
+              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+            >
+              <Plus className="h-4 w-4" />
+              Thêm khóa học
+            </Link>
+          </>
         }
       />
 

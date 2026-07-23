@@ -15,7 +15,6 @@ export function EditLessonForm({
   description,
   content,
   youtubeId,
-  order,
 }: {
   lessonId: string;
   title: string;
@@ -23,7 +22,6 @@ export function EditLessonForm({
   description: string | null;
   content: string;
   youtubeId: string | null;
-  order: number;
 }) {
   const [error, formAction, pending] = useActionState(updateLessonAction, undefined);
 
@@ -42,16 +40,13 @@ export function EditLessonForm({
           label="Mô tả (tùy chọn)"
           hint="Giới thiệu ngắn hiển thị cho học viên phía trên nội dung bài học."
         />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Select id="level" name="level" defaultValue={level} label="Cấp">
-            {ORDERED_LEVELS.map((l) => (
-              <option key={l} value={l}>
-                {LEVEL_LABELS[l]}
-              </option>
-            ))}
-          </Select>
-          <Input id="order" name="order" type="number" defaultValue={order} label="Thứ tự hiển thị" />
-        </div>
+        <Select id="level" name="level" defaultValue={level} label="Cấp">
+          {ORDERED_LEVELS.map((l) => (
+            <option key={l} value={l}>
+              {LEVEL_LABELS[l]}
+            </option>
+          ))}
+        </Select>
       </section>
 
       <hr className="border-border" />

@@ -23,7 +23,6 @@ export function EditLibraryItemForm({
   backgroundImageUrl,
   filePath,
   pageCount,
-  order,
   price,
   salePrice,
   isFree: initialIsFree,
@@ -40,7 +39,6 @@ export function EditLibraryItemForm({
   backgroundImageUrl: string | null;
   filePath: string | null;
   pageCount: number | null;
-  order: number;
   price: number;
   salePrice: number | null;
   isFree: boolean;
@@ -119,8 +117,6 @@ export function EditLibraryItemForm({
               Mở trình soạn thảo ({pageCount ?? 0} trang)
             </Link>
           )}
-          <Input id="order" name="order" type="number" defaultValue={order} label="Thứ tự hiển thị" />
-
           <div className="space-y-3 rounded-lg border border-border p-3">
             <label className="flex items-center gap-2 text-sm text-foreground">
               <input
