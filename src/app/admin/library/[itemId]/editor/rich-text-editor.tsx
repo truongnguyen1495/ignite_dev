@@ -258,9 +258,7 @@ export function RichTextEditor({
                   type="button"
                   title={c.label}
                   onClick={() => {
-                    const ok = editor.chain().focus().setColor(c.value).run();
-                    // TEMP diagnostic — remove once the color bug is found.
-                    console.log("[color-debug] setColor ran:", ok, "selection empty:", editor.state.selection.empty, "html after:", editor.getHTML());
+                    editor.chain().focus().setColor(c.value).run();
                     setColorPopoverOpen(false);
                   }}
                   style={{ backgroundColor: c.value }}
