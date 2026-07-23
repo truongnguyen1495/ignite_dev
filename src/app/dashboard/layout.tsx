@@ -30,6 +30,11 @@ import { SupportChatWidget } from "./support-chat-widget";
 
 const iconClass = "h-4 w-4";
 
+// Same reasoning as admin/layout.tsx: reads live, per-student data (chat,
+// cart, admin permissions) on every render — must never be statically
+// prerendered at build time, where there's no reachable database.
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
 }: {

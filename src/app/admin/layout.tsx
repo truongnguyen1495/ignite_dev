@@ -31,6 +31,14 @@ import type { AdminPermissionKind } from "@prisma/client";
 
 const iconClass = "h-4 w-4";
 
+// Every admin page reads live, per-admin data (permissions, unread chat
+// counts, toggleable settings) through this layout — it must never be
+// statically prerendered at build time, where there's no real request and
+// no reachable database connection (see the P1001 build failures this was
+// causing on whichever /admin/** page Next picked first to prerender).
+// Same reasoning as the guest pages' "force-dynamic" comments.
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({
   children,
 }: {
