@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { requireActiveStudent, requireSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
@@ -56,7 +58,17 @@ export default async function CartPage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
-      <PageHeader title="Giỏ hàng" />
+      <PageHeader
+        title="Giỏ hàng"
+        actions={
+          <Link
+            href="/dashboard/orders"
+            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+          >
+            Đơn hàng của tôi <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        }
+      />
       <CartList items={items} />
     </div>
   );

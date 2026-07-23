@@ -45,7 +45,6 @@ export const dictionaries = {
       levelUp: "Xin lên cấp",
       profile: "Thông tin cá nhân",
       goToAdmin: "Vào trang Admin",
-      myOrders: "Đơn hàng của tôi",
     },
     hocSinhNav: {
       home: "Trang chủ",
@@ -167,7 +166,6 @@ export const dictionaries = {
       levelUp: "Request level-up",
       profile: "Profile",
       goToAdmin: "Go to Admin",
-      myOrders: "My orders",
     },
     hocSinhNav: {
       home: "Home",
