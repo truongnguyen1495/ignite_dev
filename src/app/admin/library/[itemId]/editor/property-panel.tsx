@@ -1,12 +1,58 @@
 "use client";
 
-import { useState } from "react";
-import { Trash2, Copy, ArrowUpToLine, ArrowDownToLine } from "lucide-react";
+import { useRef, useState } from "react";
+import { Trash2, Copy, ArrowUpToLine, ArrowDownToLine, Upload, Loader2 } from "lucide-react";
 import type { BookElement, BookPageData } from "@/lib/library-book-elements";
 import { parseYoutubeId } from "@/lib/youtube";
 import { Input } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { RichTextEditor } from "./rich-text-editor";
+
+// A bare native <input type="file"> renders as the browser's own tiny
+// "Choose File / No file chosen" widget — easy to miss entirely next to
+// this panel's other proper buttons (an admin testing the editor didn't
+// spot it as the upload control at all). Hides the native input and
+// triggers it from a normal styled Button instead, matching the upload
+// buttons everywhere else in this app (LibraryFileInput, CoverImageInput).
+function UploadButton({
+  accept,
+  disabled,
+  label,
+  onFile,
+}: {
+  accept: string;
+  disabled?: boolean;
+  label: string;
+  onFile: (file: File) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        disabled={disabled}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (file) onFile(file);
+        }}
+        className="hidden"
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={disabled}
+        onClick={() => inputRef.current?.click()}
+      >
+        {disabled ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+        {disabled ? "Đang tải..." : label}
+      </Button>
+    </>
+  );
+}
 
 async function uploadFile(url: string, file: File): Promise<string | null> {
   const formData = new FormData();
@@ -82,19 +128,16 @@ export function PropertyPanel({
         </label>
         <label className="block space-y-1 text-sm">
           <span className="text-foreground">Ảnh nền (tùy chọn)</span>
-          <input
-            type="file"
+          <UploadButton
             accept="image/png,image/jpeg,image/webp,image/gif"
             disabled={uploading}
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
+            label="Tải ảnh nền lên"
+            onFile={async (file) => {
               setUploading(true);
               const url = await uploadFile("/api/admin/upload-image", file);
               setUploading(false);
               if (url) onUpdatePageBackground({ backgroundImageUrl: url });
             }}
-            className="block w-full text-xs"
           />
           {page.backgroundImageUrl && (
             <button
@@ -204,19 +247,16 @@ export function PropertyPanel({
         <>
           <label className="block space-y-1 text-sm">
             <span className="text-foreground">Ảnh</span>
-            <input
-              type="file"
+            <UploadButton
               accept="image/png,image/jpeg,image/webp,image/gif"
               disabled={uploading}
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
+              label="Tải ảnh lên"
+              onFile={async (file) => {
                 setUploading(true);
                 const url = await uploadFile("/api/admin/upload-image", file);
                 setUploading(false);
                 if (url) onUpdateElement({ url });
               }}
-              className="block w-full text-xs"
             />
           </label>
           {selectedElement.url && (
@@ -307,14 +347,12 @@ export function PropertyPanel({
       {selectedElement.type === "video" && (
         <>
           <label className="block space-y-1 text-sm">
-            <span className="text-foreground">Tải video lên (MP4/WebM/OGG, tối đa ~4MB)</span>
-            <input
-              type="file"
+            <span className="text-foreground">Video (MP4/WebM/OGG, tối đa ~4MB)</span>
+            <UploadButton
               accept="video/mp4,video/webm,video/ogg"
               disabled={uploading}
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
+              label="Tải video lên"
+              onFile={async (file) => {
                 setUploading(true);
                 setUploadError(null);
                 const result = await uploadVideoFile(file);
@@ -322,7 +360,6 @@ export function PropertyPanel({
                 if (result.url) onUpdateElement({ url: result.url });
                 else setUploadError(result.error);
               }}
-              className="block w-full text-xs"
             />
           </label>
           {uploadError && <p className="text-xs text-danger">{uploadError}</p>}
@@ -352,19 +389,16 @@ export function PropertyPanel({
       {selectedElement.type === "audio" && (
         <label className="block space-y-1 text-sm">
           <span className="text-foreground">File audio</span>
-          <input
-            type="file"
+          <UploadButton
             accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/m4a,audio/mp4"
             disabled={uploading}
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
+            label="Tải audio lên"
+            onFile={async (file) => {
               setUploading(true);
               const url = await uploadFile("/api/admin/upload-book-audio", file);
               setUploading(false);
               if (url) onUpdateElement({ url });
             }}
-            className="block w-full text-xs"
           />
           {selectedElement.url && <audio controls src={selectedElement.url} className="w-full" />}
         </label>
