@@ -5,16 +5,29 @@ import { createPortal } from "react-dom";
 import { Play, Volume2, X, Maximize2 } from "lucide-react";
 import type { BookElement } from "@/lib/library-book-elements";
 
-// react-pageflip listens for mousedown/touchstart on `window` to detect
-// page-turn swipes/clicks, and only exempts an event whose *exact* target is
-// an `<a>` or `<button>` tag (see checkTarget in page-flip's bundled
-// source). Clicking an icon *inside* one of our buttons lands on the icon's
-// own <svg>/<path> node, not the <button>, so the library doesn't recognize
-// it and starts a flip-drag gesture right underneath — the video/image
-// zoom controls below all need this to stop that gesture before it ever
-// reaches `window`, or clicking them flips the page instead of zooming.
-function stopFlipGesture(e: { stopPropagation: () => void }) {
-  e.stopPropagation();
+// react-pageflip starts a flip-drag from NATIVE mousedown/touchstart
+// listeners attached directly to its own `.stf__block` container (see
+// setHandlers in node_modules/page-flip/src/UI/UI.ts), exempting only
+// events whose *exact* target is an `<a>`/`<button>` tag — a click landing
+// on the <svg> icon inside one of our buttons, or anywhere on a <video>/
+// <audio>/<img>, is fair game to it. A React onMouseDown={stopPropagation}
+// handler CANNOT stop that: React delivers synthetic events from a
+// delegated listener at the app root — an ancestor of `.stf__block` — so by
+// the time a React handler runs, page-flip's own listener has already fired
+// and grabbed the page. (Confirmed frame-by-frame from a screen recording:
+// clicking the video expand button opened the lightbox AND curled the page
+// underneath it, and the finished flip then deactivated the page and yanked
+// the playing lightbox shut.) Only a native listener on the element itself
+// — deeper than `.stf__block`, so it fires first in the bubble phase — cuts
+// the event off in time. Attached via ref; the guard property keeps
+// StrictMode's double ref-invocation from stacking duplicate listeners, and
+// listeners are never removed on purpose — they die with the node.
+function stopFlipGestureRef(node: (HTMLElement & { __stopFlip?: true }) | null) {
+  if (!node || node.__stopFlip) return;
+  node.__stopFlip = true;
+  const stop = (e: Event) => e.stopPropagation();
+  node.addEventListener("mousedown", stop);
+  node.addEventListener("touchstart", stop);
 }
 
 // Rendered via a portal straight onto document.body — book-page.tsx's page
@@ -31,11 +44,12 @@ function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClos
       className="fixed inset-0 z-[999] flex items-center justify-center bg-black/90 p-6"
       onClick={onClose}
     >
+      {/* No stop-flip ref needed inside either lightbox: the portal hangs
+          off document.body, outside `.stf__block`, so page-flip's listeners
+          never see events from here in the first place. */}
       <button
         type="button"
         onClick={onClose}
-        onMouseDown={stopFlipGesture}
-        onTouchStart={stopFlipGesture}
         aria-label="Đóng"
         className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
       >
@@ -62,8 +76,7 @@ function ImageElement({ url, alt, editable }: { url: string; alt: string; editab
         draggable={false}
         className={`h-full w-full object-contain ${editable ? "" : "cursor-zoom-in"}`}
         onClick={editable ? undefined : () => setZoomed(true)}
-        onMouseDown={editable ? undefined : stopFlipGesture}
-        onTouchStart={editable ? undefined : stopFlipGesture}
+        ref={editable ? undefined : stopFlipGestureRef}
       />
       {zoomed && <ImageLightbox src={url} alt={alt} onClose={() => setZoomed(false)} />}
     </>
@@ -79,8 +92,6 @@ function VideoLightbox({ onClose, children }: { onClose: () => void; children: R
       <button
         type="button"
         onClick={onClose}
-        onMouseDown={stopFlipGesture}
-        onTouchStart={stopFlipGesture}
         aria-label="Đóng"
         className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
       >
@@ -103,9 +114,8 @@ function ExpandVideoButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       type="button"
+      ref={stopFlipGestureRef}
       onClick={onClick}
-      onMouseDown={stopFlipGesture}
-      onTouchStart={stopFlipGesture}
       aria-label="Phóng to video"
       title="Phóng to"
       className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded bg-black/60 text-white hover:bg-black/80"
@@ -137,7 +147,10 @@ function UploadedVideo({ url, className, autoPlay }: { url: string; className: s
   return (
     <div className="relative h-full w-full">
       <video
-        ref={videoRef}
+        ref={(node) => {
+          videoRef.current = node;
+          stopFlipGestureRef(node);
+        }}
         controls
         autoPlay={autoPlay}
         playsInline
@@ -146,17 +159,14 @@ function UploadedVideo({ url, className, autoPlay }: { url: string; className: s
         src={`${url}#t=0.001`}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
-        onMouseDown={stopFlipGesture}
-        onTouchStart={stopFlipGesture}
       >
         <track kind="captions" />
       </video>
       {!playing && (
         <button
           type="button"
+          ref={stopFlipGestureRef}
           onClick={() => videoRef.current?.play()}
-          onMouseDown={stopFlipGesture}
-          onTouchStart={stopFlipGesture}
           aria-label="Phát video"
           className="absolute inset-0 flex items-center justify-center rounded-md bg-black/20 text-white hover:bg-black/30"
         >
@@ -210,10 +220,19 @@ function VideoElement({
         </div>
       );
     }
+    // While zoomed, the in-page player unmounts (placeholder box instead) —
+    // the lightbox renders its own player, and leaving both mounted meant
+    // two players with sound over the same file at once.
     return (
       <div className="relative h-full w-full">
-        <UploadedVideo url={url} className="h-full w-full rounded-md bg-black" />
-        {canExpand && <ExpandVideoButton onClick={() => setZoomed(true)} />}
+        {zoomed ? (
+          <div className="flex h-full w-full items-center justify-center rounded-md bg-black text-white/80">
+            <Play className="h-8 w-8" />
+          </div>
+        ) : (
+          <UploadedVideo url={url} className="h-full w-full rounded-md bg-black" />
+        )}
+        {canExpand && !zoomed && <ExpandVideoButton onClick={() => setZoomed(true)} />}
         {zoomed && (
           <VideoLightbox onClose={() => setZoomed(false)}>
             <UploadedVideo url={url} className="h-full w-full rounded-md bg-black" autoPlay />
@@ -239,9 +258,8 @@ function VideoElement({
         {isActive && !editable ? (
           <button
             type="button"
+            ref={stopFlipGestureRef}
             onClick={() => setStarted(true)}
-            onMouseDown={stopFlipGesture}
-            onTouchStart={stopFlipGesture}
             aria-label="Phát video"
             className="absolute inset-0 flex items-center justify-center text-white"
           >
@@ -265,17 +283,33 @@ function VideoElement({
       </div>
     );
   }
+  // While zoomed, the in-page iframe is swapped for the static thumbnail —
+  // the lightbox mounts a second autoplay iframe, and leaving the in-page
+  // one mounted meant both played sound at once. Closing the lightbox
+  // remounts the in-page iframe fresh (autoplay=1), so playback resumes.
   return (
     <div className="relative h-full w-full">
-      <iframe
-        className="h-full w-full rounded-md"
-        src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
-        title="YouTube video"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowFullScreen
-      />
+      {zoomed ? (
+        <div className="h-full w-full overflow-hidden rounded-md bg-black">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`}
+            alt=""
+            className="h-full w-full object-cover opacity-70"
+            draggable={false}
+          />
+        </div>
+      ) : (
+        <iframe
+          className="h-full w-full rounded-md"
+          src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
+          title="YouTube video"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      )}
       {editable && <div className="absolute inset-0" />}
-      {canExpand && <ExpandVideoButton onClick={() => setZoomed(true)} />}
+      {canExpand && !zoomed && <ExpandVideoButton onClick={() => setZoomed(true)} />}
       {zoomed && (
         <VideoLightbox onClose={() => setZoomed(false)}>
           <iframe
@@ -399,8 +433,7 @@ export function BookElementRenderer({
           controls
           className="w-full"
           style={{ height: element.height }}
-          onMouseDown={stopFlipGesture}
-          onTouchStart={stopFlipGesture}
+          ref={editable ? undefined : stopFlipGestureRef}
         >
           <source src={element.url} />
         </audio>
