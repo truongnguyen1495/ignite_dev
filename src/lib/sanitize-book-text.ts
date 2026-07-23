@@ -21,7 +21,24 @@ import rehypeStringify from "rehype-stringify";
 // as script (no more expression()/javascript: url() in style values), so
 // this doesn't reopen the XSS gap the rest of this schema exists to close.
 const schema: Options = {
-  tagNames: ["p", "strong", "em", "u", "ul", "ol", "li", "br", "table", "tbody", "tr", "td", "th", "span", "sup"],
+  tagNames: [
+    "p",
+    "strong",
+    "em",
+    "u",
+    "ul",
+    "ol",
+    "li",
+    "br",
+    "table",
+    "tbody",
+    "tr",
+    "td",
+    "th",
+    "span",
+    "sup",
+    "blockquote",
+  ],
   attributes: {
     span: ["style"],
     sup: ["title", ["className", "footnote-ref"]],

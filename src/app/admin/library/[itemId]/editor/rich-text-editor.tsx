@@ -13,6 +13,7 @@ import {
   Underline as UnderlineIcon,
   List,
   ListOrdered,
+  Quote,
   Table as TableIcon,
   Columns3,
   Rows3,
@@ -43,8 +44,8 @@ const TEXT_COLORS: { label: string; value: string }[] = [
 ];
 
 // Deliberately minimal — a book page's text box, not a full lesson editor.
-// Bold/italic/underline/lists/tables/color/footnotes are exposed here
-// (matching sanitizeBookText's allowlist exactly; anything this editor
+// Bold/italic/underline/lists/quotes/tables/color/footnotes are exposed
+// here (matching sanitizeBookText's allowlist exactly; anything this editor
 // can't produce doesn't need a slot in that allowlist). No headings/links/
 // images — this element already sits inside the editor's own font-size/
 // align controls, and images/links are their own separate element types.
@@ -70,7 +71,6 @@ export function RichTextEditor({ content, onChange }: { content: string; onChang
     extensions: [
       StarterKit.configure({
         heading: false,
-        blockquote: false,
         codeBlock: false,
         horizontalRule: false,
         code: false,
@@ -142,6 +142,14 @@ export function RichTextEditor({ content, onChange }: { content: string; onChang
           title="Danh sách đánh số"
         >
           <ListOrdered className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          className={btnClass(editor.isActive("blockquote"))}
+          title="Trích dẫn"
+        >
+          <Quote className="h-3.5 w-3.5" />
         </button>
         <button
           type="button"
