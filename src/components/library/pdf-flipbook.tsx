@@ -51,11 +51,9 @@ function buildDisplaySlots(numPages: number): DisplaySlot[] {
 export function PdfFlipbook({
   src,
   title,
-  backgroundImageUrl,
 }: {
   src: string;
   title: string;
-  backgroundImageUrl?: string | null;
 }) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [aspect, setAspect] = useState<number | null>(null); // width / height
@@ -239,7 +237,6 @@ export function PdfFlipbook({
   return (
     <FlipbookChrome
       containerRef={containerRef}
-      backgroundImageUrl={backgroundImageUrl}
       isFullscreen={isFullscreen}
       pageLabel={`Trang ${
         spread ? `${currentPage + 1}-${currentPage + 2}` : currentPage + 1

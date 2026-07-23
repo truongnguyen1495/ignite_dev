@@ -31,7 +31,6 @@ export default async function LibraryItemReaderPage({
         <PdfReader
           src={`/api/library/${itemId}/${isTrial ? "preview" : "file"}`}
           title={libraryItem.title}
-          backgroundImageUrl={libraryItem.backgroundImageUrl}
         />
       )}
     </div>

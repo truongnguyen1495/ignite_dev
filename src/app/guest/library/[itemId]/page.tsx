@@ -38,7 +38,6 @@ export default async function GuestLibraryItemPage({
         <PdfReader
           src={`/api/library/${itemId}/${libraryItem.isFree ? "file" : "preview"}`}
           title={libraryItem.title}
-          backgroundImageUrl={libraryItem.backgroundImageUrl}
         />
       )}
     </div>

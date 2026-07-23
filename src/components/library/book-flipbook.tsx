@@ -18,7 +18,6 @@ type PagesResponse = {
   pages: BookPageData[];
   bookWidth: number | null;
   bookHeight: number | null;
-  backgroundImageUrl: string | null;
 };
 
 // turnToPage jumps instantly (no page-turn animation) — used for
@@ -106,7 +105,7 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
     );
   }
 
-  const { bookWidth, bookHeight, backgroundImageUrl } = data;
+  const { bookWidth, bookHeight } = data;
   const aspect = bookWidth / bookHeight;
   const totalPages = pages.length;
   const spread = isPagedSpread(orientation, currentPage, totalPages);
@@ -140,7 +139,6 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
   return (
     <FlipbookChrome
       containerRef={containerRef}
-      backgroundImageUrl={backgroundImageUrl}
       isFullscreen={isFullscreen}
       pageLabel={`Trang ${spread ? `${currentPage + 1}-${currentPage + 2}` : currentPage + 1}/${totalPages}`}
       onFirst={() => flipRef.current?.pageFlip().turnToPage(0)}

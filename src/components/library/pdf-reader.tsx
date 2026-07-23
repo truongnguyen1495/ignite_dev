@@ -15,11 +15,9 @@ type Mode = "plain" | "flipbook";
 export function PdfReader({
   src,
   title,
-  backgroundImageUrl,
 }: {
   src: string;
   title: string;
-  backgroundImageUrl?: string | null;
 }) {
   const [mode, setMode] = useState<Mode>("plain");
 
@@ -55,7 +53,7 @@ export function PdfReader({
           title={title}
         />
       ) : (
-        <PdfFlipbook src={src} title={title} backgroundImageUrl={backgroundImageUrl} />
+        <PdfFlipbook src={src} title={title} />
       )}
     </div>
   );

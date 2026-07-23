@@ -5,15 +5,14 @@ import { FlipbookToolbar } from "./flipbook-toolbar";
 import { FlipbookThumbnailRail } from "./flipbook-thumbnail-rail";
 import { useAutoHideControls } from "./use-auto-hide-controls";
 
-// Shared outer chrome for both BookFlipbook and PdfFlipbook: the optional
-// backdrop image, the fullscreen container (containerRef gets passed to
-// requestFullscreen by the caller's useFullscreen hook), the toolbar, and
-// the thumbnail rail. `bookArea` is the caller's own <HTMLFlipBook> +
+// Shared outer chrome for both BookFlipbook and PdfFlipbook: the fullscreen
+// container (containerRef gets passed to requestFullscreen by the caller's
+// useFullscreen hook), the toolbar, and the thumbnail rail. `bookArea` is
+// the caller's own <HTMLFlipBook> +
 // zoom-overlay markup — kept out of this component since react-pageflip
 // needs its ref/children wired up directly by each format's component.
 export function FlipbookChrome({
   containerRef,
-  backgroundImageUrl,
   isFullscreen,
   bookArea,
   pageLabel,
@@ -36,7 +35,6 @@ export function FlipbookChrome({
   renderThumbnail,
 }: {
   containerRef: RefObject<HTMLDivElement | null>;
-  backgroundImageUrl?: string | null;
   isFullscreen: boolean;
   bookArea: ReactNode;
   pageLabel: string;
@@ -58,16 +56,6 @@ export function FlipbookChrome({
   onSelectPage: (index: number) => void;
   renderThumbnail: (index: number) => ReactNode;
 }) {
-  // Rendering a per-book backdrop image here turned into a long back-and-forth
-  // (floating pill vs. a docked bar vs. one continuous scene, plus the
-  // sizing fixes that came with it) that ended up costing more than it was
-  // worth — the user asked to drop it from the reader entirely. `backgroundImageUrl`
-  // is intentionally left unused (still accepted as a prop so the callers
-  // don't need edits, and the admin upload field / stored URL stay intact
-  // in case this gets revisited later) — every book now always gets the
-  // plain light chrome below, regardless of whether one is set.
-  void backgroundImageUrl;
-
   const toolbar = (
     <FlipbookToolbar
       pageLabel={pageLabel}

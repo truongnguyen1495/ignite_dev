@@ -77,7 +77,6 @@ export default async function EditLibraryItemPage({
         type={item.type}
         format={item.format}
         coverImageUrl={item.coverImageUrl}
-        backgroundImageUrl={item.backgroundImageUrl}
         filePath={item.filePath}
         pageCount={item.pageCount}
         price={item.price}

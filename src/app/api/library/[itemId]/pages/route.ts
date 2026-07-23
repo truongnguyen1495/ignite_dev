@@ -62,6 +62,5 @@ export async function GET(_request: Request, { params }: { params: Promise<{ ite
     bookWidth: libraryItem.bookWidth,
     bookHeight: libraryItem.bookHeight,
     totalPages: libraryItem.pageCount ?? pages.length,
-    backgroundImageUrl: libraryItem.backgroundImageUrl,
   });
 }
