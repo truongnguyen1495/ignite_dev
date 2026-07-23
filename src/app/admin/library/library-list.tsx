@@ -7,6 +7,8 @@ import type { Level, LibraryItemType } from "@prisma/client";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { Badge } from "@/components/ui/badge";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
+import { PriceBlock } from "@/components/price-block";
+import { getPricing } from "@/lib/pricing";
 import { DeleteLibraryItemInlineButton } from "./delete-library-item-inline-button";
 import { ToggleLibraryItemGuestButton } from "./toggle-library-item-guest-button";
 import { ToggleLibraryItemVisibilityButton } from "./toggle-library-item-visibility-button";
@@ -17,9 +19,12 @@ export type LibraryListItem = {
   id: string;
   title: string;
   author: string | null;
+  description: string | null;
   type: LibraryItemType;
   coverImageUrl: string | null;
   pageCount: number | null;
+  price: number;
+  salePrice: number | null;
   // Split by LibraryAccessGrant.grantedById, same convention as
   // AdminCourseItem.manualGrantsCount/purchasedGrantsCount.
   manualGrantsCount: number;
@@ -130,7 +135,9 @@ export function LibraryList({ items }: { items: LibraryListItem[] }) {
         <p className="text-sm text-muted">Chưa có mục nào.</p>
       ) : mode === "grid" ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((item) => (
+          {filtered.map((item) => {
+            const pricing = getPricing(item);
+            return (
             <div key={item.id} className="relative h-full">
               <Link
                 href={`/admin/library/${item.id}`}
@@ -143,11 +150,19 @@ export function LibraryList({ items }: { items: LibraryListItem[] }) {
                   <div>
                     <p className="font-semibold text-dark-foreground">{item.title}</p>
                     {item.author && <p className="text-sm text-dark-muted">{item.author}</p>}
+                    {item.description && (
+                      <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{item.description}</p>
+                    )}
                   </div>
                   <AccessBadges item={item} />
-                  {item.pageCount && (
-                    <span className="mt-auto pt-2 text-xs text-slate-300">{item.pageCount} trang</span>
-                  )}
+                  <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+                    {item.pageCount ? (
+                      <span className="text-xs text-slate-300">{item.pageCount} trang</span>
+                    ) : (
+                      <span />
+                    )}
+                    {pricing.forSale && <PriceBlock price={pricing.chargeAmount} originalPrice={pricing.originalPrice} />}
+                  </div>
                 </div>
               </Link>
               <div className="absolute right-2 top-2 flex items-center gap-1 rounded-lg bg-surface/90 p-0.5 shadow-sm">
@@ -159,11 +174,14 @@ export function LibraryList({ items }: { items: LibraryListItem[] }) {
                 <DeleteLibraryItemInlineButton libraryItemId={item.id} libraryItemTitle={item.title} />
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <ul className="space-y-2">
-          {filtered.map((item) => (
+          {filtered.map((item) => {
+            const pricing = getPricing(item);
+            return (
             <li
               key={item.id}
               className="flex items-center gap-3 rounded-lg border border-dark-border bg-dark-surface p-3 hover:border-primary/60"
@@ -181,9 +199,17 @@ export function LibraryList({ items }: { items: LibraryListItem[] }) {
                     {item.author && <span className="text-sm text-dark-muted">— {item.author}</span>}
                     {item.pageCount && <span className="text-xs text-slate-300">{item.pageCount} trang</span>}
                   </div>
+                  {item.description && (
+                    <p className="line-clamp-1 text-sm text-dark-muted">{item.description}</p>
+                  )}
                   <AccessBadges item={item} />
                 </div>
               </Link>
+              {pricing.forSale && (
+                <div className="hidden shrink-0 sm:block">
+                  <PriceBlock price={pricing.chargeAmount} originalPrice={pricing.originalPrice} />
+                </div>
+              )}
               <ToggleLibraryItemVisibilityButton
                 libraryItemId={item.id}
                 visibleToStudents={item.visibleToStudents}
@@ -191,7 +217,8 @@ export function LibraryList({ items }: { items: LibraryListItem[] }) {
               <ToggleLibraryItemGuestButton libraryItemId={item.id} visibleToGuest={item.visibleToGuest} />
               <DeleteLibraryItemInlineButton libraryItemId={item.id} libraryItemTitle={item.title} />
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>
