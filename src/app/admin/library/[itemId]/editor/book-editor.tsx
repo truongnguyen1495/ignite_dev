@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Undo2, Redo2, Trash2, Copy } from "lucide-react";
+import { Loader2, Undo2, Redo2, Trash2, Copy, Eye } from "lucide-react";
 import { BackLink } from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
 import { saveLibraryBookPagesAction } from "../../actions";
 import type { BookElement, BookElementType, BookPageData } from "@/lib/library-book-elements";
 import { createDefaultElement } from "@/lib/library-book-elements";
 import { PageThumbnailRail } from "./page-thumbnail-rail";
+import { EditorPreview } from "./editor-preview";
 import { ElementToolbar } from "./element-toolbar";
 import { EditorCanvas } from "./editor-canvas";
 import { PropertyPanel } from "./property-panel";
@@ -136,6 +137,7 @@ export function BookEditor({
   // entry (see the JSX below).
   const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
   const [isDirty, setIsDirty] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | undefined>();
 
@@ -296,6 +298,10 @@ export function BookEditor({
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (isEditingText(e.target)) return;
+      // While the preview overlay is open, Esc/arrows belong to it — nudging
+      // elements or deleting the selection from "inside" the preview would
+      // be invisible and alarming.
+      if (previewOpen) return;
       const mod = e.ctrlKey || e.metaKey;
 
       if (mod && e.key.toLowerCase() === "z") {
@@ -350,7 +356,7 @@ export function BookEditor({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedElementIds, currentPage]);
+  }, [selectedElementIds, currentPage, previewOpen]);
 
   function addPage() {
     commitPages((prev) => [...prev, emptyPage()]);
@@ -437,6 +443,10 @@ export function BookEditor({
             </button>
           </div>
           {error && <p className="text-sm text-danger">{error}</p>}
+          <Button type="button" variant="secondary" onClick={() => setPreviewOpen(true)}>
+            <Eye className="h-4 w-4" />
+            Xem trước
+          </Button>
           <Button
             type="button"
             onClick={handleSave}
@@ -517,6 +527,16 @@ export function BookEditor({
           />
         )}
       </div>
+
+      {previewOpen && (
+        <EditorPreview
+          pages={pages}
+          bookWidth={bookWidth}
+          bookHeight={bookHeight}
+          startIndex={selectedPageIndex}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
     </div>
   );
 }
