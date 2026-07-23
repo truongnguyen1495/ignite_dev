@@ -267,6 +267,25 @@ body {
   padding: 0.25rem 0.5rem;
 }
 
+/* Tailwind Typography (the `prose` class, applied to both .book-text and
+   the live .ProseMirror editor) hardcodes its own color on <strong>/<em>/<u>
+   via CSS — an explicit rule always beats plain inheritance, even a
+   low-specificity one, so it silently overrode a custom color set via
+   Tiptap's Color extension (a <span style="color:..."> wrapping the bold
+   text) the moment bold/italic/underline was also applied to that same
+   selection. Confirmed the hard way: the saved HTML correctly kept both
+   the color and the <strong>, but the color visually vanished as soon as
+   bold was toggled on top of it. Forcing these to inherit lets the
+   ancestor span's inline color win again. */
+.book-text strong,
+.book-text em,
+.book-text u,
+.ProseMirror strong,
+.ProseMirror em,
+.ProseMirror u {
+  color: inherit;
+}
+
 /* Footnote reference markers (see footnote-extension.ts) — the visible
    number is a pure CSS counter, not stored data, so it always reflects
    left-to-right document order even after footnotes are added/removed/
