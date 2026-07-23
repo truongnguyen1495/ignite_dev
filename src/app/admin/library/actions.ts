@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { EncryptedPDFError } from "pdf-lib";
 import type { Level, LibraryItemType, LibraryItemFormat } from "@prisma/client";
 import { requireAdminPermission, hasAdminPermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
@@ -53,7 +54,17 @@ function resolvePricingFields(
 // calls (e.g. admin changes the preview page count later) just overwrite it.
 async function generateLibraryPreview(filePath: string, pages: number): Promise<string> {
   const bytes = await downloadLibraryFile(filePath);
-  const previewBytes = await extractFirstPages(bytes, pages);
+  let previewBytes: Uint8Array;
+  try {
+    previewBytes = await extractFirstPages(bytes, pages);
+  } catch (error) {
+    if (error instanceof EncryptedPDFError) {
+      throw new Error(
+        "File PDF này có mã hóa/bảo vệ nên không tạo được bản xem thử. Vui lòng gỡ mã hóa file (ví dụ mở file rồi \"In > Lưu thành PDF\" để tạo bản không mã hóa) rồi tải lại, hoặc tắt \"Hiển thị công khai cho khách\" cho mục này."
+      );
+    }
+    throw error;
+  }
   const previewPath = `${filePath.replace(/\.pdf$/i, "")}-preview.pdf`;
   await uploadLibraryFile(previewBytes, previewPath);
   return previewPath;
@@ -141,10 +152,14 @@ export async function createLibraryItemAction(
     redirect(`/admin/library/${item.id}/editor`);
   }
 
-  const previewFilePath =
-    visibleToGuest && parsed.data.guestPreviewPages
-      ? await generateLibraryPreview(parsed.data.filePath!, parsed.data.guestPreviewPages)
-      : null;
+  let previewFilePath: string | null = null;
+  if (visibleToGuest && parsed.data.guestPreviewPages) {
+    try {
+      previewFilePath = await generateLibraryPreview(parsed.data.filePath!, parsed.data.guestPreviewPages);
+    } catch (error) {
+      return error instanceof Error ? error.message : "Không tạo được bản xem thử.";
+    }
+  }
 
   const item = await prisma.libraryItem.create({
     data: {
@@ -256,11 +271,17 @@ export async function updateLibraryItemAction(
   // regenerates (or clears) the preview correctly without this form having
   // to carry those fields along just to avoid resetting them.
   const fileChanged = current.filePath !== parsed.data.filePath;
-  const previewFilePath = fileChanged
-    ? current.visibleToGuest && current.guestPreviewPages
-      ? await generateLibraryPreview(parsed.data.filePath, current.guestPreviewPages)
-      : null
-    : (current.previewFilePath ?? null);
+  let previewFilePath: string | null = current.previewFilePath ?? null;
+  if (fileChanged) {
+    previewFilePath = null;
+    if (current.visibleToGuest && current.guestPreviewPages) {
+      try {
+        previewFilePath = await generateLibraryPreview(parsed.data.filePath, current.guestPreviewPages);
+      } catch (error) {
+        return error instanceof Error ? error.message : "Không tạo được bản xem thử.";
+      }
+    }
+  }
 
   await prisma.libraryItem.update({
     where: { id: libraryItemId },
@@ -313,10 +334,14 @@ export async function setLibraryItemGuestAccessAction(
 
   const visibleToGuest = formData.get("visibleToGuest") === "on";
   const featuredOnHome = formData.get("featuredOnHome") === "on";
-  const previewFilePath =
-    typeof filePath === "string" && filePath && visibleToGuest && guestPreviewPages
-      ? await generateLibraryPreview(filePath, guestPreviewPages)
-      : null;
+  let previewFilePath: string | null = null;
+  if (typeof filePath === "string" && filePath && visibleToGuest && guestPreviewPages) {
+    try {
+      previewFilePath = await generateLibraryPreview(filePath, guestPreviewPages);
+    } catch (error) {
+      return error instanceof Error ? error.message : "Không tạo được bản xem thử.";
+    }
+  }
 
   await prisma.libraryItem.update({
     where: { id: libraryItemId },
