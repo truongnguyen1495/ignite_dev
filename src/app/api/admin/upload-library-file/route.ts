@@ -55,6 +55,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ path, pageCount });
   } catch (error) {
     console.error("Library file upload failed:", error);
-    return NextResponse.json({ error: "Tải file lên thất bại. Vui lòng thử lại." }, { status: 500 });
+    const detail = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: `Tải file lên thất bại: ${detail}` }, { status: 500 });
   }
 }
