@@ -267,6 +267,29 @@ body {
   padding: 0.25rem 0.5rem;
 }
 
+/* Footnote reference markers (see footnote-extension.ts) — the visible
+   number is a pure CSS counter, not stored data, so it always reflects
+   left-to-right document order even after footnotes are added/removed/
+   reordered. The note text itself is a plain `title` attribute, so it shows
+   as a native hover tooltip with no extra interactive JS. Scoped to both
+   the live Tiptap editor (.ProseMirror) and the actual rendered output
+   (.book-text), same split as the table border rules above. */
+.ProseMirror,
+.book-text {
+  counter-reset: footnote;
+}
+.ProseMirror .footnote-ref,
+.book-text .footnote-ref {
+  counter-increment: footnote;
+  cursor: help;
+  color: var(--primary);
+  font-weight: 600;
+}
+.ProseMirror .footnote-ref::after,
+.book-text .footnote-ref::after {
+  content: "[" counter(footnote) "]";
+}
+
 /* Flipbook "real book" chrome (see BookFlipbook/PdfFlipbook, applied
    directly to react-pageflip's own root element via its className prop).
    react-pageflip renders one flat page image with no sense of the pages

@@ -5,6 +5,8 @@ import { createPortal } from "react-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Table, TableRow, TableHeader, TableCell } from "@tiptap/extension-table";
+import { Color } from "@tiptap/extension-color";
+import { TextStyle } from "@tiptap/extension-text-style";
 import {
   Bold,
   Italic,
@@ -17,19 +19,35 @@ import {
   Trash2,
   Maximize2,
   Minimize2,
+  Palette,
+  StickyNote,
 } from "lucide-react";
+import { FootnoteRef } from "./footnote-extension";
 
 // Same button styling convention as lesson-content-editor.tsx's toolbar.
 const toolbarButtonClass =
   "flex h-7 w-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground";
 const activeToolbarButtonClass = "flex h-7 w-7 items-center justify-center rounded-md bg-surface-hover text-foreground";
 
+// Same swatch set as lesson-content-editor.tsx's TEXT_COLORS, for the same
+// look across both editors.
+const TEXT_COLORS: { label: string; value: string }[] = [
+  { label: "Đỏ", value: "#ef4444" },
+  { label: "Cam", value: "#f97316" },
+  { label: "Vàng", value: "#eab308" },
+  { label: "Lục", value: "#16a34a" },
+  { label: "Lam", value: "#2563eb" },
+  { label: "Chàm", value: "#4338ca" },
+  { label: "Tím", value: "#9333ea" },
+  { label: "Hồng", value: "#db2777" },
+];
+
 // Deliberately minimal — a book page's text box, not a full lesson editor.
-// Only bold/italic/underline/lists/tables are exposed here (matching
-// sanitizeBookText's allowlist exactly; anything this editor can't produce
-// doesn't need a slot in that allowlist). No headings/links/images/color —
-// this element already sits inside the editor's own font-size/color/align
-// controls, and images/links are their own separate element types.
+// Bold/italic/underline/lists/tables/color/footnotes are exposed here
+// (matching sanitizeBookText's allowlist exactly; anything this editor
+// can't produce doesn't need a slot in that allowlist). No headings/links/
+// images — this element already sits inside the editor's own font-size/
+// align controls, and images/links are their own separate element types.
 export function RichTextEditor({ content, onChange }: { content: string; onChange: (html: string) => void }) {
   // Whether the cursor is currently inside a table — drives the extra
   // row/column strip below. editor.isActive() itself isn't reactive (it
@@ -44,6 +62,7 @@ export function RichTextEditor({ content, onChange }: { content: string; onChang
   // one renders doesn't lose or fork any content) inside a full-screen
   // portal overlay instead, escaping the sidebar's width entirely.
   const [expanded, setExpanded] = useState(false);
+  const [colorPopoverOpen, setColorPopoverOpen] = useState(false);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -62,6 +81,9 @@ export function RichTextEditor({ content, onChange }: { content: string; onChang
       TableRow,
       TableHeader,
       TableCell,
+      TextStyle,
+      Color.configure({ types: ["textStyle"] }),
+      FootnoteRef,
     ],
     content,
     editorProps: {
@@ -128,6 +150,56 @@ export function RichTextEditor({ content, onChange }: { content: string; onChang
           title="Chèn bảng 3x3"
         >
           <TableIcon className="h-3.5 w-3.5" />
+        </button>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setColorPopoverOpen((v) => !v)}
+            className={btnClass(colorPopoverOpen)}
+            title="Màu chữ"
+          >
+            <Palette className="h-3.5 w-3.5" />
+          </button>
+          {colorPopoverOpen && (
+            <div className="absolute left-0 top-full z-10 mt-1 flex w-48 flex-wrap items-center gap-1.5 rounded-lg border border-border bg-surface p-2 shadow-md">
+              {TEXT_COLORS.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  title={c.label}
+                  onClick={() => {
+                    editor.chain().focus().setColor(c.value).run();
+                    setColorPopoverOpen(false);
+                  }}
+                  style={{ backgroundColor: c.value }}
+                  className={`h-6 w-6 rounded-full border-2 ${
+                    editor.isActive("textStyle", { color: c.value }) ? "border-foreground" : "border-border"
+                  }`}
+                />
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  editor.chain().focus().unsetColor().run();
+                  setColorPopoverOpen(false);
+                }}
+                className="w-full rounded-md border border-border px-2 py-1 text-xs font-medium text-foreground hover:bg-surface-hover"
+              >
+                Mặc định
+              </button>
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            const note = window.prompt("Nội dung chú thích:");
+            if (note) editor.chain().focus().insertContent({ type: "footnoteRef", attrs: { note } }).run();
+          }}
+          className={toolbarButtonClass}
+          title="Thêm chú thích"
+        >
+          <StickyNote className="h-3.5 w-3.5" />
         </button>
         <button
           type="button"
