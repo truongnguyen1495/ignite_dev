@@ -4,7 +4,13 @@ import { useRef, useState, type ChangeEvent } from "react";
 import { FileText, Upload, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
+// The server route itself allows up to 50MB, but Vercel's own request-body
+// limit for a Serverless Function (a few MB on the Hobby plan) sits well
+// below that and rejects an oversized request before our code ever runs —
+// the browser sees a 413 with a plain-text body, not our JSON error shape.
+// Capping the client-side check here means most oversized files get a clear
+// message immediately instead of a round-trip that ends in a 413.
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 
 export function LibraryFileInput({
   defaultPath = "",
@@ -31,7 +37,9 @@ export function LibraryFileInput({
       return;
     }
     if (file.size > MAX_UPLOAD_BYTES) {
-      setError("File vượt quá giới hạn 50MB.");
+      setError(
+        `File ${(file.size / 1024 / 1024).toFixed(1)}MB vượt quá giới hạn ~4MB của server hiện tại. Vui lòng nén nhỏ file lại (ví dụ giảm chất lượng ảnh scan) rồi thử lại.`
+      );
       return;
     }
 
@@ -41,10 +49,24 @@ export function LibraryFileInput({
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/admin/upload-library-file", { method: "POST", body: formData });
-      const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Tải file lên thất bại.");
+        // A 413 from Vercel's own platform limit (request too large before
+        // our route even runs) comes back as a plain-text body, not JSON —
+        // res.json() would throw its own confusing "Unexpected token"
+        // error, masking the real problem.
+        if (res.status === 413) {
+          throw new Error("File quá lớn so với giới hạn upload của server. Vui lòng nén nhỏ file lại rồi thử lại.");
+        }
+        let message = "Tải file lên thất bại.";
+        try {
+          const data = await res.json();
+          message = data.error || message;
+        } catch {
+          // non-JSON error body — keep the generic message above
+        }
+        throw new Error(message);
       }
+      const data = await res.json();
       setPath(data.path);
       setPageCount(data.pageCount);
       onChange?.({ path: data.path, pageCount: data.pageCount });
