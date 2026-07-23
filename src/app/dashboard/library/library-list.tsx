@@ -32,7 +32,7 @@ export type StudentLibraryItem = {
 
 function AccessBadge({ accessLevel, isFree }: { accessLevel: LibraryAccessLevel; isFree: boolean }) {
   if (accessLevel === "full") return <Badge color="success">{isFree ? "Miễn phí" : "Đã mở khóa"}</Badge>;
-  if (accessLevel === "trial") return <Badge color="warning">Học thử</Badge>;
+  if (accessLevel === "trial") return <Badge color="warning">Đọc thử</Badge>;
   return <Badge color="faint">Chưa mở khóa</Badge>;
 }
 

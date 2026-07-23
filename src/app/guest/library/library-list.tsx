@@ -55,7 +55,7 @@ export function GuestLibraryList({
             <div className="flex flex-1 flex-col p-5">
               <div className="mb-2">
                 <Badge color={item.isFree || item.fullyUnlocked ? "success" : "warning"}>
-                  {item.isFree ? "Miễn phí" : item.fullyUnlocked ? "Đã mở khóa" : "Học thử"}
+                  {item.isFree ? "Miễn phí" : item.fullyUnlocked ? "Đã mở khóa" : "Đọc thử"}
                 </Badge>
               </div>
               <p className="font-semibold text-dark-foreground">{item.title}</p>
