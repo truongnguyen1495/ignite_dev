@@ -148,7 +148,13 @@ export function PdfFlipbook({
       try {
         const pdfjsLib = await import("pdfjs-dist");
         pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
-        const loadingTask = pdfjsLib.getDocument({ url: src });
+        // JBIG2/OpenJPEG-encoded images (common in scanned PDFs) need these
+        // wasm codecs — pdfjs can't reach them inside node_modules at
+        // runtime, so they're copied to public/pdfjs-wasm (see that folder's
+        // origin: node_modules/pdfjs-dist/wasm). Without this, pdfjs falls
+        // back to a broken module path (literally "null" + filename) and
+        // just fails to decode those images instead of throwing loudly.
+        const loadingTask = pdfjsLib.getDocument({ url: src, wasmUrl: "/pdfjs-wasm/" });
         loadingTaskRef.current = loadingTask;
         const doc = await loadingTask.promise;
         if (cancelled) return;
