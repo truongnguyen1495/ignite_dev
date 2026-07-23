@@ -98,7 +98,12 @@ export function PdfFlipbook({
     canvas.height = viewport.height;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+    // intent: "any" — some PDFs mark their body content as a "print-only"
+    // optional content layer (visible when printed, hidden on-screen) as a
+    // read-online deterrent. pdfjs respects that and renders a blank page
+    // under the default "display" intent; "any" ignores the view/print
+    // distinction entirely so every layer always shows here.
+    await page.render({ canvas, canvasContext: ctx, viewport, intent: "any" }).promise;
     const dataUrl = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
     pagesRef.current[pageNumber - 1] = dataUrl;
     setPages([...pagesRef.current]);
@@ -112,10 +117,13 @@ export function PdfFlipbook({
       if (!pagesRef.current[next - 1]) {
         try {
           await renderPage(next);
-        } catch {
+        } catch (error) {
           // Leave that page's slot null — its placeholder just keeps
           // spinning rather than crashing the whole flipbook over one
-          // malformed page.
+          // malformed page. Logged so a silently-failing page (e.g. a
+          // pdfjs limitation on this particular file) is diagnosable
+          // instead of just looking permanently blank.
+          console.error(`Flipbook: failed to render page ${next}`, error);
         }
       }
     }
