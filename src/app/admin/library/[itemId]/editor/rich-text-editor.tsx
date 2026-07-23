@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Table, TableRow, TableHeader, TableCell } from "@tiptap/extension-table";
@@ -14,6 +15,8 @@ import {
   Columns3,
   Rows3,
   Trash2,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 
 // Same button styling convention as lesson-content-editor.tsx's toolbar.
@@ -34,6 +37,13 @@ export function RichTextEditor({ content, onChange }: { content: string; onChang
   // needs its own state kept in sync via onTransaction, which fires on
   // every selection move as well as every edit.
   const [inTable, setInTable] = useState(false);
+  // The property panel is a narrow w-72 sidebar — fine for a short label,
+  // cramped for a real paragraph. This renders the SAME editor instance
+  // (not a second one — Tiptap/ProseMirror only ever mounts its view in
+  // whichever <EditorContent> is currently in the tree, so toggling which
+  // one renders doesn't lose or fork any content) inside a full-screen
+  // portal overlay instead, escaping the sidebar's width entirely.
+  const [expanded, setExpanded] = useState(false);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -68,8 +78,8 @@ export function RichTextEditor({ content, onChange }: { content: string; onChang
     return active ? activeToolbarButtonClass : toolbarButtonClass;
   }
 
-  return (
-    <div className="space-y-1.5">
+  const toolbar = (
+    <>
       <div className="flex flex-wrap gap-0.5 rounded-lg border border-border bg-surface p-1">
         <button
           type="button"
@@ -118,6 +128,14 @@ export function RichTextEditor({ content, onChange }: { content: string; onChang
           title="Chèn bảng 3x3"
         >
           <TableIcon className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className={toolbarButtonClass}
+          title={expanded ? "Thu nhỏ" : "Phóng to để soạn"}
+        >
+          {expanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
         </button>
       </div>
       {inTable && (
@@ -168,6 +186,43 @@ export function RichTextEditor({ content, onChange }: { content: string; onChang
           </button>
         </div>
       )}
+    </>
+  );
+
+  if (expanded) {
+    return createPortal(
+      <div
+        className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 p-6"
+        onClick={() => setExpanded(false)}
+      >
+        <div
+          className="flex max-h-full w-full max-w-3xl flex-col gap-1.5 rounded-xl bg-surface p-4 shadow-xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-semibold text-foreground">Soạn nội dung</span>
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-hover"
+            >
+              Xong
+            </button>
+          </div>
+          {toolbar}
+          <EditorContent
+            editor={editor}
+            className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border bg-background text-sm"
+          />
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
+  return (
+    <div className="space-y-1.5">
+      {toolbar}
       <EditorContent editor={editor} className="rounded-lg border border-border bg-background text-sm" />
     </div>
   );
