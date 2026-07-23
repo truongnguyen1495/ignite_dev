@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Play, Volume2, X, Maximize2 } from "lucide-react";
 import type { BookElement } from "@/lib/library-book-elements";
@@ -95,6 +95,45 @@ function ExpandVideoButton({ onClick }: { onClick: () => void }) {
   );
 }
 
+// A bare `<video controls src=...>` with no `preload` paints nothing but a
+// black rectangle until the browser fetches enough to decode a frame, and at
+// the small sizes book elements are usually placed at, Chrome hides its
+// native controls bar entirely — leaving a dead black box with no way to
+// even start playback. `preload="metadata"` makes the browser fetch just
+// enough (a byte-range, not the whole file) to paint a real first frame, and
+// the always-visible custom Play button (independent of box size, unlike
+// native controls) guarantees a click target either way.
+function UploadedVideo({ url, className, autoPlay }: { url: string; className: string; autoPlay?: boolean }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+  return (
+    <div className="relative h-full w-full">
+      <video
+        ref={videoRef}
+        controls
+        autoPlay={autoPlay}
+        preload="metadata"
+        className={className}
+        src={url}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+      >
+        <track kind="captions" />
+      </video>
+      {!playing && (
+        <button
+          type="button"
+          onClick={() => videoRef.current?.play()}
+          aria-label="Phát video"
+          className="absolute inset-0 flex items-center justify-center rounded-md bg-black/20 text-white hover:bg-black/30"
+        >
+          <Play className="h-10 w-10 drop-shadow-md" fill="currentColor" />
+        </button>
+      )}
+    </div>
+  );
+}
+
 // A directly-uploaded file wins over a YouTube link when both are set — see
 // the schema comment on videoElementSchema.url. The expand-to-lightbox
 // button only ever shows in the reader (isActive && !editable): the editor
@@ -124,15 +163,11 @@ function VideoElement({
     }
     return (
       <div className="relative h-full w-full">
-        <video controls className="h-full w-full rounded-md bg-black" src={url}>
-          <track kind="captions" />
-        </video>
+        <UploadedVideo url={url} className="h-full w-full rounded-md bg-black" />
         {canExpand && <ExpandVideoButton onClick={() => setZoomed(true)} />}
         {zoomed && (
           <VideoLightbox onClose={() => setZoomed(false)}>
-            <video controls autoPlay className="h-full w-full rounded-md bg-black" src={url}>
-              <track kind="captions" />
-            </video>
+            <UploadedVideo url={url} className="h-full w-full rounded-md bg-black" autoPlay />
           </VideoLightbox>
         )}
       </div>
