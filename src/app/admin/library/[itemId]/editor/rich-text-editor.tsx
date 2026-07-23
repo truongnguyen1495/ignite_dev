@@ -1,9 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Table, TableRow, TableHeader, TableCell } from "@tiptap/extension-table";
-import { Bold, Italic, Underline as UnderlineIcon, List, ListOrdered, Table as TableIcon } from "lucide-react";
+import {
+  Bold,
+  Italic,
+  Underline as UnderlineIcon,
+  List,
+  ListOrdered,
+  Table as TableIcon,
+  Columns3,
+  Rows3,
+  Trash2,
+} from "lucide-react";
 
 // Same button styling convention as lesson-content-editor.tsx's toolbar.
 const toolbarButtonClass =
@@ -17,8 +28,16 @@ const activeToolbarButtonClass = "flex h-7 w-7 items-center justify-center round
 // this element already sits inside the editor's own font-size/color/align
 // controls, and images/links are their own separate element types.
 export function RichTextEditor({ content, onChange }: { content: string; onChange: (html: string) => void }) {
+  // Whether the cursor is currently inside a table — drives the extra
+  // row/column strip below. editor.isActive() itself isn't reactive (it
+  // only reflects the editor's state at the instant it's called), so this
+  // needs its own state kept in sync via onTransaction, which fires on
+  // every selection move as well as every edit.
+  const [inTable, setInTable] = useState(false);
+
   const editor = useEditor({
     immediatelyRender: false,
+    onTransaction: ({ editor }) => setInTable(editor.isActive("table")),
     extensions: [
       StarterKit.configure({
         heading: false,
@@ -95,12 +114,60 @@ export function RichTextEditor({ content, onChange }: { content: string; onChang
         <button
           type="button"
           onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-          className={btnClass(editor.isActive("table"))}
+          className={btnClass(inTable)}
           title="Chèn bảng 3x3"
         >
           <TableIcon className="h-3.5 w-3.5" />
         </button>
       </div>
+      {inTable && (
+        <div className="flex flex-wrap gap-0.5 rounded-lg border border-border bg-surface p-1">
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().addColumnAfter().run()}
+            className={toolbarButtonClass}
+            title="Thêm cột"
+          >
+            <Columns3 className="h-3.5 w-3.5" />
+            <span className="sr-only">Thêm cột</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().deleteColumn().run()}
+            className={toolbarButtonClass}
+            title="Xóa cột"
+          >
+            <Columns3 className="h-3.5 w-3.5" />
+            <Trash2 className="-ml-1 h-2.5 w-2.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().addRowAfter().run()}
+            className={toolbarButtonClass}
+            title="Thêm dòng"
+          >
+            <Rows3 className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().deleteRow().run()}
+            className={toolbarButtonClass}
+            title="Xóa dòng"
+          >
+            <Rows3 className="h-3.5 w-3.5" />
+            <Trash2 className="-ml-1 h-2.5 w-2.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().deleteTable().run()}
+            className={toolbarButtonClass}
+            title="Xóa cả bảng"
+          >
+            <TableIcon className="h-3.5 w-3.5" />
+            <Trash2 className="-ml-1 h-2.5 w-2.5 text-danger" />
+          </button>
+        </div>
+      )}
       <EditorContent editor={editor} className="rounded-lg border border-border bg-background text-sm" />
     </div>
   );
