@@ -1,6 +1,7 @@
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Package } from "lucide-react";
+import { Package, CheckCircle2, ArrowRight } from "lucide-react";
 import { requireActiveStudent, requireSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { BackLink } from "@/components/ui/back-link";
@@ -46,6 +47,18 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
         </div>
       </div>
 
+      {order.status === "PAID" && (
+        <Card className="flex items-center gap-3 border-success-border bg-success-bg">
+          <CheckCircle2 className="h-8 w-8 shrink-0 text-success" />
+          <div>
+            <p className="font-semibold text-foreground">Thanh toán thành công!</p>
+            <p className="text-sm text-muted">
+              Đơn {formatOrderCode(order.orderNumber)} — {formatVND(order.totalAmount)}
+            </p>
+          </div>
+        </Card>
+      )}
+
       <Card className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">Sản phẩm</h2>
         <ul className="space-y-3">
@@ -53,21 +66,45 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
             const imageUrl = item.product?.imageUrl ?? item.course?.coverImageUrl ?? item.libraryItem?.coverImageUrl;
             const description = item.product?.subtitle ?? item.product?.description ?? item.course?.description ?? item.libraryItem?.description;
             return (
-              <li key={item.id} className="flex items-center gap-3 text-sm">
-                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-hover">
-                  {imageUrl ? (
-                    <Image src={imageUrl} alt={item.titleSnapshot} fill sizes="56px" className="object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <Package className="h-5 w-5 text-muted" />
-                    </div>
-                  )}
+              <li key={item.id} className="space-y-2 text-sm">
+                <div className="flex items-center gap-3">
+                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-hover">
+                    {imageUrl ? (
+                      <Image src={imageUrl} alt={item.titleSnapshot} fill sizes="56px" className="object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Package className="h-5 w-5 text-muted" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-foreground">{item.titleSnapshot}</p>
+                    {description && <p className="line-clamp-2 text-xs text-muted">{description}</p>}
+                  </div>
+                  <span className="shrink-0 text-muted">{formatVND(item.priceAtPurchase)}</span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-foreground">{item.titleSnapshot}</p>
-                  {description && <p className="line-clamp-2 text-xs text-muted">{description}</p>}
-                </div>
-                <span className="shrink-0 text-muted">{formatVND(item.priceAtPurchase)}</span>
+                {order.status === "PAID" && item.kind === "COURSE" && item.courseId && (
+                  <Link
+                    href={`/dashboard/courses/${item.courseId}`}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  >
+                    Vào học <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                )}
+                {order.status === "PAID" && item.kind === "LIBRARY_ITEM" && item.libraryItemId && (
+                  <Link
+                    href={`/dashboard/library/${item.libraryItemId}`}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  >
+                    Đọc <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                )}
+                {order.status === "PAID" && item.kind === "PRODUCT" && (
+                  <p className="text-xs text-muted">
+                    Sản phẩm &quot;{item.titleSnapshot}&quot; đang được đóng gói và vận chuyển đến tay bạn sớm
+                    thôi nhé. Bạn vui lòng đợi vài ngày nhé.
+                  </p>
+                )}
               </li>
             );
           })}
