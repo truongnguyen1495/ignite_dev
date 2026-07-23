@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Package, CheckCircle2, ArrowRight } from "lucide-react";
+import { Package, CheckCircle2, ArrowRight, BookOpen, Video } from "lucide-react";
 import { requireActiveStudent, requireSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { BackLink } from "@/components/ui/back-link";
@@ -23,8 +23,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
     include: {
       items: {
         include: {
-          course: { select: { coverImageUrl: true, description: true } },
-          libraryItem: { select: { coverImageUrl: true, description: true } },
+          course: { select: { coverImageUrl: true, description: true, _count: { select: { lessons: true } } } },
+          libraryItem: { select: { coverImageUrl: true, description: true, author: true, pageCount: true } },
           product: { select: { imageUrl: true, subtitle: true, description: true } },
         },
       },
@@ -65,6 +65,25 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
           {order.items.map((item) => {
             const imageUrl = item.product?.imageUrl ?? item.course?.coverImageUrl ?? item.libraryItem?.coverImageUrl;
             const description = item.product?.subtitle ?? item.product?.description ?? item.course?.description ?? item.libraryItem?.description;
+            // Once PAID, a COURSE/LIBRARY_ITEM item gets the same "unlocked
+            // content" card look as the real course/library grid (see
+            // library-list.tsx's list-mode row) instead of a plain text
+            // link — same dark-card tokens, just always "Đã mở khóa" since
+            // there's no lock/purchase state left to represent here.
+            const unlockedHref =
+              order.status === "PAID" && item.kind === "COURSE" && item.courseId
+                ? `/dashboard/courses/${item.courseId}`
+                : order.status === "PAID" && item.kind === "LIBRARY_ITEM" && item.libraryItemId
+                  ? `/dashboard/library/${item.libraryItemId}`
+                  : null;
+            const unlockedMeta =
+              item.kind === "COURSE"
+                ? `${item.course?._count.lessons ?? 0} bài học`
+                : [item.libraryItem?.author, item.libraryItem?.pageCount ? `${item.libraryItem.pageCount} trang` : null]
+                    .filter(Boolean)
+                    .join(" · ") || undefined;
+            const UnlockedIcon = item.kind === "COURSE" ? Video : BookOpen;
+
             return (
               <li key={item.id} className="space-y-2 text-sm">
                 <div className="flex items-center gap-3">
@@ -83,20 +102,29 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
                   </div>
                   <span className="shrink-0 text-muted">{formatVND(item.priceAtPurchase)}</span>
                 </div>
-                {order.status === "PAID" && item.kind === "COURSE" && item.courseId && (
+                {unlockedHref && (
                   <Link
-                    href={`/dashboard/courses/${item.courseId}`}
-                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                    href={unlockedHref}
+                    className="flex items-center gap-3 rounded-xl border border-dark-border bg-dark-surface p-3 transition-colors hover:border-primary/60"
                   >
-                    Vào học <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                )}
-                {order.status === "PAID" && item.kind === "LIBRARY_ITEM" && item.libraryItemId && (
-                  <Link
-                    href={`/dashboard/library/${item.libraryItemId}`}
-                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-                  >
-                    Đọc <ArrowRight className="h-3.5 w-3.5" />
+                    <div className="relative aspect-video w-20 shrink-0 overflow-hidden rounded-lg bg-dark-surface-raised">
+                      {imageUrl ? (
+                        <Image src={imageUrl} alt={item.titleSnapshot} fill sizes="80px" className="object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <UnlockedIcon className="h-6 w-6 text-on-dark-strong" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <Badge color="success">Đã mở khóa</Badge>
+                      <p className="mt-1 truncate font-semibold text-dark-foreground">{item.titleSnapshot}</p>
+                      {unlockedMeta && <p className="truncate text-xs text-dark-muted">{unlockedMeta}</p>}
+                    </div>
+                    <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
+                      {item.kind === "COURSE" ? "Vào học" : "Đọc"}
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </span>
                   </Link>
                 )}
                 {order.status === "PAID" && item.kind === "PRODUCT" && (
