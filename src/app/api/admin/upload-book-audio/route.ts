@@ -6,7 +6,10 @@ import { uploadBookAudio } from "@/lib/library-audio-storage";
 import { matchesDeclaredMimeType } from "@/lib/file-signature";
 
 const MAX_FILE_BYTES = 15 * 1024 * 1024;
-const ALLOWED_TYPES = new Set(["audio/mpeg", "audio/mp3", "audio/wav", "audio/ogg", "audio/m4a", "audio/mp4"]);
+// No OGG — Safari (macOS and every iOS browser) can't decode Ogg Vorbis at
+// all, so an OGG upload played fine for the admin on Chrome but stayed
+// silent for students on Apple devices. MP3/WAV/M4A play everywhere.
+const ALLOWED_TYPES = new Set(["audio/mpeg", "audio/mp3", "audio/wav", "audio/m4a", "audio/mp4"]);
 
 // Backs the audio element in the library book editor's property panel.
 // Plain auth() + role check instead of requireAdminPermission(): that
@@ -35,7 +38,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Thiếu file audio." }, { status: 400 });
   }
   if (!ALLOWED_TYPES.has(file.type)) {
-    return NextResponse.json({ error: "Chỉ hỗ trợ MP3, WAV, OGG hoặc M4A." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Chỉ hỗ trợ MP3, WAV hoặc M4A — định dạng OGG không phát được trên iPhone/iPad/Safari." },
+      { status: 400 }
+    );
   }
   if (file.size > MAX_FILE_BYTES) {
     return NextResponse.json({ error: "File vượt quá giới hạn 15MB." }, { status: 400 });

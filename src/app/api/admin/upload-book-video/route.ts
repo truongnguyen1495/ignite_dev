@@ -12,7 +12,11 @@ import { matchesDeclaredMimeType } from "@/lib/file-signature";
 // far bigger than a scanned PDF, so in practice only short/low-res clips
 // will actually fit; anything longer should stay a YouTube link instead.
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
-const ALLOWED_TYPES = new Set(["video/mp4", "video/webm", "video/ogg"]);
+// MP4 (H.264/AAC) only — WebM has no reliable decode support on iOS/older
+// Safari and OGG none at all, so accepting them meant a video that played
+// fine on the admin's Chrome showed students on Apple devices a dead black
+// box.
+const ALLOWED_TYPES = new Set(["video/mp4"]);
 
 // Backs the video element's direct-upload option in the library book
 // editor's property panel. Plain auth() + role check instead of
@@ -42,7 +46,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Thiếu file video." }, { status: 400 });
   }
   if (!ALLOWED_TYPES.has(file.type)) {
-    return NextResponse.json({ error: "Chỉ hỗ trợ MP4, WebM hoặc OGG." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Chỉ hỗ trợ MP4 (H.264) — định dạng WebM/OGG không phát được trên iPhone/iPad/Safari." },
+      { status: 400 }
+    );
   }
   if (file.size > MAX_FILE_BYTES) {
     return NextResponse.json({

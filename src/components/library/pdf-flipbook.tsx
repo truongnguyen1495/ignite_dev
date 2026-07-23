@@ -81,7 +81,7 @@ export function PdfFlipbook({
   const renderingRef = useRef(false);
   const flipRef = useRef<PageFlipHandle | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const { isFullscreen, toggle: toggleFullscreen } = useFullscreen(containerRef);
+  const { isFullscreen, isFake: isFakeFullscreen, toggle: toggleFullscreen } = useFullscreen(containerRef);
   const zoom = useFlipbookZoom();
   const { muted, toggleMuted, playFlipSound } = useFlipbookSound();
   const availableHeight = useAvailableHeight(zoom.wrapperRef);
@@ -252,6 +252,7 @@ export function PdfFlipbook({
     <FlipbookChrome
       containerRef={containerRef}
       isFullscreen={isFullscreen}
+      isFakeFullscreen={isFakeFullscreen}
       pageLabel={`Trang ${
         spread ? `${currentPage + 1}-${currentPage + 2}` : currentPage + 1
       }/${totalDisplayPages}`}

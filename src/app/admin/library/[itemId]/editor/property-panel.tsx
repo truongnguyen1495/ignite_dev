@@ -362,9 +362,9 @@ export function PropertyPanel({
       {selectedElement.type === "video" && (
         <>
           <label className="block space-y-1 text-sm">
-            <span className="text-foreground">Video (MP4/WebM/OGG, tối đa ~4MB)</span>
+            <span className="text-foreground">Video (MP4, tối đa ~4MB)</span>
             <UploadButton
-              accept="video/mp4,video/webm,video/ogg"
+              accept="video/mp4"
               disabled={uploading}
               label="Tải video lên"
               onFile={async (file) => {
@@ -405,7 +405,7 @@ export function PropertyPanel({
         <label className="block space-y-1 text-sm">
           <span className="text-foreground">File audio</span>
           <UploadButton
-            accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/m4a,audio/mp4"
+            accept="audio/mpeg,audio/mp3,audio/wav,audio/m4a,audio/mp4"
             disabled={uploading}
             label="Tải audio lên"
             onFile={async (file) => {

@@ -61,7 +61,7 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
   const [scaleAnimating, setScaleAnimating] = useState(false);
   const flipRef = useRef<PageFlipHandle | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const { isFullscreen, toggle: toggleFullscreen } = useFullscreen(containerRef);
+  const { isFullscreen, isFake: isFakeFullscreen, toggle: toggleFullscreen } = useFullscreen(containerRef);
   const zoom = useFlipbookZoom();
   const { muted, toggleMuted, playFlipSound } = useFlipbookSound();
   const availableHeight = useAvailableHeight(zoom.wrapperRef);
@@ -140,6 +140,7 @@ export function BookFlipbook({ itemId, title }: { itemId: string; title: string 
     <FlipbookChrome
       containerRef={containerRef}
       isFullscreen={isFullscreen}
+      isFakeFullscreen={isFakeFullscreen}
       pageLabel={`Trang ${spread ? `${currentPage + 1}-${currentPage + 2}` : currentPage + 1}/${totalPages}`}
       onFirst={() => flipRef.current?.pageFlip().turnToPage(0)}
       onPrev={() => flipRef.current?.pageFlip().flipPrev()}

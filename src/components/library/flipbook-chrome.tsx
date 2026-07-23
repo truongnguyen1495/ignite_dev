@@ -14,6 +14,7 @@ import { useAutoHideControls } from "./use-auto-hide-controls";
 export function FlipbookChrome({
   containerRef,
   isFullscreen,
+  isFakeFullscreen = false,
   bookArea,
   pageLabel,
   onFirst,
@@ -36,6 +37,12 @@ export function FlipbookChrome({
 }: {
   containerRef: RefObject<HTMLDivElement | null>;
   isFullscreen: boolean;
+  // iPhone Safari has no Fullscreen API for regular elements (see
+  // use-fullscreen.ts) — when set, "fullscreen" is emulated by pinning this
+  // same container over the whole viewport with position:fixed instead of
+  // the native API. dvh (not h-full) so Safari's collapsing address bar
+  // never leaves a dead strip at the bottom.
+  isFakeFullscreen?: boolean;
   bookArea: ReactNode;
   pageLabel: string;
   onFirst: () => void;
@@ -115,7 +122,14 @@ export function FlipbookChrome({
     // use-available-height.ts) always resolves against the *full* fullscreen
     // frame, regardless of whether the controls are currently shown.
     return (
-      <div ref={containerRef} className="relative flex h-full w-full items-center justify-center bg-background">
+      <div
+        ref={containerRef}
+        className={`flex items-center justify-center bg-background ${
+          isFakeFullscreen
+            ? "fixed inset-0 z-50 h-[100vh] supports-[height:100dvh]:h-[100dvh] w-full"
+            : "relative h-full w-full"
+        }`}
+      >
         <div className="flex h-full w-full items-center justify-center p-6">{bookArea}</div>
         <div
           className={`absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-3 bg-gradient-to-t from-background via-background/90 to-transparent px-6 pb-4 pt-12 transition-opacity duration-300 ${

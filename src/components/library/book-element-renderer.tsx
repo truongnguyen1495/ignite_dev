@@ -123,6 +123,14 @@ function ExpandVideoButton({ onClick }: { onClick: () => void }) {
 // enough (a byte-range, not the whole file) to paint a real first frame, and
 // the always-visible custom Play button (independent of box size, unlike
 // native controls) guarantees a click target either way.
+// `playsInline` matters on iPhone: without it, pressing play rips the video
+// out of the book into Safari's native full-screen player. The `#t=0.001`
+// media fragment exists because iOS Safari ignores `preload="metadata"` for
+// the purpose of painting a first frame (it stays a black box until played);
+// a fragment start time forces it to decode and paint that frame. Harmless
+// everywhere else. `autoPlay` may still be blocked on iOS (sound on, no
+// direct gesture on the element) — the custom Play overlay stays up in that
+// case, so playback is always one tap away rather than silently broken.
 function UploadedVideo({ url, className, autoPlay }: { url: string; className: string; autoPlay?: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -132,9 +140,10 @@ function UploadedVideo({ url, className, autoPlay }: { url: string; className: s
         ref={videoRef}
         controls
         autoPlay={autoPlay}
+        playsInline
         preload="metadata"
         className={className}
-        src={url}
+        src={`${url}#t=0.001`}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onMouseDown={stopFlipGesture}
