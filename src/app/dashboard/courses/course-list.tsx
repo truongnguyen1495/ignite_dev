@@ -60,7 +60,7 @@ function Thumbnail({ course, className }: { course: StudentCourseItem; className
 }
 
 function ProgressBar({ course }: { course: StudentCourseItem }) {
-  if (course.accessLevel === "none" || course.totalLessons === 0) return null;
+  if (course.accessLevel !== "full" || course.totalLessons === 0) return null;
   return (
     <div>
       <div className="flex items-center justify-between text-xs text-dark-muted">
@@ -127,7 +127,7 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                   {course.description && (
                     <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{course.description}</p>
                   )}
-                  {clickable && course.totalLessons > 0 && (
+                  {course.accessLevel === "full" && course.totalLessons > 0 && (
                     <div className="mt-4">
                       <ProgressBar course={course} />
                     </div>
