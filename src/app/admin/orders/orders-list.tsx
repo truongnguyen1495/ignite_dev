@@ -13,6 +13,7 @@ import {
   confirmOrderPaidAction,
   cancelOrderAction,
   revokeOrderItemAccessAction,
+  restoreOrderItemAccessAction,
   deleteOrderAction,
   restoreOrderAction,
 } from "./actions";
@@ -123,6 +124,42 @@ function RevokeOrderItemButton({ order, itemId }: { order: OrderListItem; itemId
       className="hover:bg-danger-bg hover:text-danger"
     >
       {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserMinus className="h-3.5 w-3.5" />}
+    </Button>
+  );
+}
+
+// Undo for RevokeOrderItemButton — re-grants access via
+// restoreOrderItemAccessAction. Only rendered for a PAID, non-PRODUCT item
+// that currently has no active grant (the mirror-image condition of
+// RevokeOrderItemButton).
+function RestoreOrderItemAccessButton({ order, itemId }: { order: OrderListItem; itemId: string }) {
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
+  const confirm = useConfirm();
+
+  return (
+    <Button
+      type="button"
+      size="icon"
+      variant="ghost"
+      disabled={pending}
+      title="Trả lại quyền truy cập"
+      onClick={async () => {
+        const ok = await confirm({
+          title: `Trả lại quyền cho đơn ${formatOrderCode(order.orderNumber)}?`,
+          description: `${order.studentName} sẽ được cấp lại quyền truy cập như lúc đơn này được xác nhận thanh toán.`,
+          confirmLabel: "Trả lại quyền",
+          tone: "primary",
+        });
+        if (!ok) return;
+        startTransition(async () => {
+          await restoreOrderItemAccessAction(itemId);
+          router.refresh();
+        });
+      }}
+      className="hover:bg-success-bg hover:text-success"
+    >
+      {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
     </Button>
   );
 }
@@ -333,7 +370,11 @@ export function OrdersList({
                               <Badge color={item.hasActiveGrant ? "success" : "muted"}>
                                 {item.hasActiveGrant ? "Còn hiệu lực" : "Đã thu hồi"}
                               </Badge>
-                              {item.hasActiveGrant && <RevokeOrderItemButton order={order} itemId={item.id} />}
+                              {item.hasActiveGrant ? (
+                                <RevokeOrderItemButton order={order} itemId={item.id} />
+                              ) : (
+                                <RestoreOrderItemAccessButton order={order} itemId={item.id} />
+                              )}
                             </>
                           )}
                         </li>

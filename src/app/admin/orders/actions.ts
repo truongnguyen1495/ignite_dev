@@ -50,6 +50,40 @@ export async function revokeOrderItemAccessAction(orderItemId: string) {
   if (item.libraryItemId) revalidatePath(`/admin/library/${item.libraryItemId}`);
 }
 
+// Undo for revokeOrderItemAccessAction — re-creates the exact grant row
+// fulfillOrder would have created (same upsert, same grantedById: null
+// convention marking it order-granted rather than an ad-hoc admin grant).
+// Upsert on studentId_courseId/studentId_libraryItemId (not orderItemId)
+// so this also correctly re-attaches an existing grant that another path
+// created in the meantime, rather than erroring on a duplicate.
+export async function restoreOrderItemAccessAction(orderItemId: string) {
+  await requireAdminPermission("MANAGE_ORDERS");
+  const item = await prisma.orderItem.findUnique({ where: { id: orderItemId }, include: { order: true } });
+  if (!item || item.kind === "PRODUCT" || item.order.status !== "PAID") return;
+
+  if (item.kind === "COURSE" && item.courseId) {
+    await prisma.courseAccessGrant.upsert({
+      where: { studentId_courseId: { studentId: item.order.studentId, courseId: item.courseId } },
+      create: { studentId: item.order.studentId, courseId: item.courseId, grantedById: null, orderItemId: item.id },
+      update: { orderItemId: item.id },
+    });
+  } else if (item.kind === "LIBRARY_ITEM" && item.libraryItemId) {
+    await prisma.libraryAccessGrant.upsert({
+      where: { studentId_libraryItemId: { studentId: item.order.studentId, libraryItemId: item.libraryItemId } },
+      create: {
+        studentId: item.order.studentId,
+        libraryItemId: item.libraryItemId,
+        grantedById: null,
+        orderItemId: item.id,
+      },
+      update: { orderItemId: item.id },
+    });
+  }
+  revalidatePath("/admin/orders");
+  if (item.courseId) revalidatePath(`/admin/courses/${item.courseId}`);
+  if (item.libraryItemId) revalidatePath(`/admin/library/${item.libraryItemId}`);
+}
+
 // Super-Admin-only by explicit request — narrower than requireAdminPermission
 // on purpose, unlike every other action in this file. Soft-delete only: sets
 // deletedAt so the row disappears from /admin/orders immediately, but the
