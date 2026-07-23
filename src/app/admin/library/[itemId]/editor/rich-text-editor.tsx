@@ -191,14 +191,8 @@ export function RichTextEditor({ content, onChange }: { content: string; onChang
 
   if (expanded) {
     return createPortal(
-      <div
-        className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 p-6"
-        onClick={() => setExpanded(false)}
-      >
-        <div
-          className="flex max-h-full w-full max-w-3xl flex-col gap-1.5 rounded-xl bg-surface p-4 shadow-xl"
-          onClick={(e) => e.stopPropagation()}
-        >
+      <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 p-6">
+        <div className="flex max-h-full w-full max-w-3xl flex-col gap-1.5 rounded-xl bg-surface p-4 shadow-xl">
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm font-semibold text-foreground">Soạn nội dung</span>
             <button
