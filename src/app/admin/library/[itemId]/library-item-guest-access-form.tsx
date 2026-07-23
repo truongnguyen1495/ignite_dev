@@ -13,6 +13,7 @@ export function LibraryItemGuestAccessForm({
   guestPreviewPages,
   visibleToGuest: initialVisibleToGuest,
   featuredOnHome,
+  isFree,
 }: {
   libraryItemId: string;
   filePath: string | null;
@@ -20,6 +21,7 @@ export function LibraryItemGuestAccessForm({
   guestPreviewPages: number | null;
   visibleToGuest: boolean;
   featuredOnHome: boolean;
+  isFree: boolean;
 }) {
   const [error, formAction, pending] = useActionState(setLibraryItemGuestAccessAction, undefined);
   const [isDirty, setIsDirty] = useState(false);
@@ -49,10 +51,12 @@ export function LibraryItemGuestAccessForm({
             onChange={(e) => setVisibleToGuest(e.target.checked)}
             className="h-4 w-4 accent-primary"
           />
-          Hiển thị công khai cho khách (chỉ đọc thử một phần)
+          {isFree
+            ? "Hiển thị công khai cho khách (đang Miễn phí — khách đọc toàn bộ, không chỉ đọc thử)"
+            : "Hiển thị công khai cho khách (chỉ đọc thử một phần)"}
         </label>
 
-        {visibleToGuest && (
+        {visibleToGuest && !isFree && (
           <Input
             id="guestPreviewPages"
             name="guestPreviewPages"

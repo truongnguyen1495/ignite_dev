@@ -93,6 +93,7 @@ export default async function EditLibraryItemPage({
         guestPreviewPages={item.guestPreviewPages}
         visibleToGuest={item.visibleToGuest}
         featuredOnHome={item.featuredOnHome}
+        isFree={item.isFree}
       />
 
       {item.isFree && (
