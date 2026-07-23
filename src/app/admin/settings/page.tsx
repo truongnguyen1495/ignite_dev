@@ -12,6 +12,7 @@ import { SalesToggle } from "./sales-toggle";
 import { EmailVerificationToggle } from "./email-verification-toggle";
 import { GoogleLoginToggle } from "./google-login-toggle";
 import { BankInfoForm } from "./bank-info-form";
+import { AutoPaymentToggle } from "./auto-payment-toggle";
 
 export default async function SettingsPage() {
   await requireActiveSuperAdmin();
@@ -46,6 +47,9 @@ export default async function SettingsPage() {
           bankAccountHolder={settings.bankAccountHolder}
           bankQrImageUrl={settings.bankQrImageUrl}
         />
+      </Card>
+      <Card className="max-w-lg">
+        <AutoPaymentToggle autoPaymentEnabled={settings.autoPaymentEnabled} />
       </Card>
       <Link
         href="/admin/admins"

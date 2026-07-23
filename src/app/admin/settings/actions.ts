@@ -65,6 +65,16 @@ export async function setSalesEnabledAction(salesEnabled: boolean) {
   revalidatePath("/admin/settings");
 }
 
+export async function setAutoPaymentEnabledAction(autoPaymentEnabled: boolean) {
+  await requireActiveSuperAdmin();
+  await prisma.settings.upsert({
+    where: { id: 1 },
+    update: { autoPaymentEnabled },
+    create: { id: 1, autoPaymentEnabled },
+  });
+  revalidatePath("/admin/settings");
+}
+
 const bankInfoSchema = z.object({
   bankName: z.string().trim().optional(),
   bankAccountNumber: z.string().trim().optional(),

@@ -3,8 +3,9 @@
 import { useActionState } from "react";
 import { setBankInfoAction } from "./actions";
 import { CoverImageInput } from "@/components/ui/cover-image-input";
-import { Input } from "@/components/ui/form";
+import { Input, Select } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { VIETQR_BANKS } from "@/lib/vietqr-banks";
 
 export function BankInfoForm({
   bankName,
@@ -28,7 +29,17 @@ export function BankInfoForm({
           đơn hàng, admin vào &quot;Đơn hàng&quot; xác nhận đã nhận tiền để mở khóa.
         </p>
       </div>
-      <Input id="bankName" name="bankName" defaultValue={bankName ?? ""} label="Tên ngân hàng" />
+      <Select id="bankName" name="bankName" defaultValue={bankName ?? ""} label="Tên ngân hàng">
+        <option value="">— Chọn ngân hàng —</option>
+        {VIETQR_BANKS.map((bank) => (
+          <option key={bank.label} value={bank.label}>
+            {bank.label}
+          </option>
+        ))}
+      </Select>
+      <p className="-mt-2 text-xs text-muted">
+        Chọn đúng ngân hàng để hệ thống có thể sinh mã QR động (kèm sẵn số tiền + nội dung) cho từng đơn hàng.
+      </p>
       <Input
         id="bankAccountNumber"
         name="bankAccountNumber"

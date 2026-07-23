@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatVND } from "@/lib/currency";
 import { formatOrderCode, ORDER_STATUS_LABELS, ORDER_STATUS_BADGE_COLOR } from "@/lib/orders";
+import { buildVietQrImageUrl } from "@/lib/vietqr";
 import { CancelOrderButton } from "./cancel-order-button";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ orderId: string }> }) {
@@ -126,14 +127,33 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
           ) : (
             <p className="text-sm text-muted">Chưa có thông tin chuyển khoản, vui lòng liên hệ admin.</p>
           )}
-          {settings?.bankQrImageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={settings.bankQrImageUrl}
-              alt="Mã QR chuyển khoản"
-              className="mx-auto h-48 w-48 rounded-lg border border-border object-contain"
-            />
-          )}
+          {(() => {
+            // Dynamic per-order QR (amount + content pre-filled) takes
+            // priority — falls back to the static admin-uploaded QR only
+            // when bankName doesn't match a known VietQR bank yet (e.g. an
+            // admin hasn't re-selected it from the new dropdown) or no
+            // account number is set at all.
+            const dynamicQrUrl = settings
+              ? buildVietQrImageUrl({
+                  bankName: settings.bankName,
+                  accountNumber: settings.bankAccountNumber,
+                  accountHolder: settings.bankAccountHolder,
+                  amount: order.totalAmount,
+                  content: formatOrderCode(order.orderNumber),
+                })
+              : null;
+            const qrUrl = dynamicQrUrl ?? settings?.bankQrImageUrl;
+            return (
+              qrUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={qrUrl}
+                  alt="Mã QR chuyển khoản"
+                  className="mx-auto h-48 w-48 rounded-lg border border-border object-contain"
+                />
+              )
+            );
+          })()}
           <p className="text-xs text-muted">
             Sau khi chuyển khoản, vui lòng đợi admin xác nhận — trang này sẽ tự cập nhật trạng thái khi đơn
             được duyệt.

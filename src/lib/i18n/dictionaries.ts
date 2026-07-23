@@ -82,6 +82,9 @@ export const dictionaries = {
       salesTitle: "Bán khóa học / thư viện",
       salesDescription:
         'Bật/tắt toàn bộ tính năng bán hàng — nút "Mua ngay", trang "Đơn hàng của tôi" của học viên, và trang "Đơn hàng" của admin đều ẩn đi khi tắt. Chỉ bật sau khi đã điền đầy đủ thông tin chuyển khoản bên dưới. Nếu đang có đơn chờ xác nhận, phải bật lại công tắc này mới xử lý được.',
+      autoPaymentTitle: "Thanh toán tự động (SePay)",
+      autoPaymentDescription:
+        "Bật/tắt tự động xác nhận đơn hàng khi có chuyển khoản khớp mã đơn qua webhook SePay. Cần cấu hình SEPAY_WEBHOOK_SECRET trước khi bật. Khi tắt, admin vẫn xác nhận thanh toán thủ công như bình thường ở trang \"Đơn hàng\".",
       adminManagementTitle: "Quản lý Admin",
       adminManagementDescription: "Cấp/thu hồi quyền admin cho tài khoản, xem toàn bộ thông tin từng admin.",
     },
@@ -201,6 +204,9 @@ export const dictionaries = {
       salesTitle: "Course / library sales",
       salesDescription:
         'Turn the whole sales feature on or off — the "Buy Now" button, a student\'s "My Orders" page, and the admin "Orders" page all hide when off. Only turn on after filling in the bank transfer details below. If there\'s a pending order, this switch must be back on to process it.',
+      autoPaymentTitle: "Automatic payment (SePay)",
+      autoPaymentDescription:
+        'Turn on to auto-confirm an order once a matching bank transfer arrives via the SePay webhook. Requires SEPAY_WEBHOOK_SECRET to be configured first. When off, admins still confirm payments manually as usual on the "Orders" page.',
       adminManagementTitle: "Admin management",
       adminManagementDescription: "Grant or revoke admin permissions per account, and view each admin's full details.",
     },

@@ -287,6 +287,20 @@ export async function requireSalesEnabled(redirectTo: string): Promise<void> {
   }
 }
 
+// Master switch for SePay webhook auto-confirmation, toggled from
+// /admin/settings. Read fresh at the moment the webhook processes each
+// transaction (src/app/api/webhooks/sepay/route.ts) — not cached, not
+// snapshotted onto the Order — so flipping this off takes effect
+// immediately, even for orders created while it was on. When false, the
+// webhook route still accepts SePay's requests (so nothing needs
+// reconfiguring on SePay's side) but never calls fulfillOrder; admins fall
+// back to the pre-existing manual confirmOrderPaidAction, which stays
+// available regardless of this switch.
+export async function isAutoPaymentEnabled(): Promise<boolean> {
+  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
+  return settings?.autoPaymentEnabled ?? false;
+}
+
 export async function requireLevelAccess(requestedLevel: Level): Promise<User> {
   const student = await requireLeveledStudent();
   if (!hasLevelAccess(student.grantedLevel, requestedLevel)) {

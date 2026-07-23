@@ -363,6 +363,17 @@ model Settings {
   bankAccountNumber        String?
   bankAccountHolder        String?
   bankQrImageUrl           String?
+  // Master switch for auto-confirming orders via the SePay bank-transfer
+  // webhook (see isAutoPaymentEnabled in src/lib/access.ts and
+  // src/app/api/webhooks/sepay/route.ts). Read fresh at webhook-processing
+  // time, never snapshotted onto an Order — flipping this off immediately
+  // stops auto-confirmation for every order, including ones created while it
+  // was on. When off, the webhook still accepts SePay's requests (so nothing
+  // needs reconfiguring on SePay's side) but skips fulfillOrder entirely,
+  // falling back to the pre-existing manual admin confirm
+  // (confirmOrderPaidAction), which always stays available regardless of
+  // this switch. Defaults off — needs SEPAY_WEBHOOK_SECRET configured first.
+  autoPaymentEnabled       Boolean  @default(false)
   updatedAt                DateTime @updatedAt
 }
 
