@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -351,6 +351,14 @@ export function RichTextEditor({
     </>
   );
 
+  // Matches how BookElementRenderer's text case actually renders this
+  // element everywhere else (the flipbook reader and the editor canvas's
+  // own live preview) — so this box shows the real fontSize/color/align a
+  // reader will see, not just the marks applied inside it. A per-selection
+  // Tiptap color/mark still wins visually since its inline style sits
+  // closer to that text than this container-level one.
+  const contentStyle: CSSProperties = { fontSize, color: fontColor, textAlign: align };
+
   if (expanded) {
     return createPortal(
       <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 p-6">
@@ -368,6 +376,7 @@ export function RichTextEditor({
           {toolbar}
           <EditorContent
             editor={editor}
+            style={contentStyle}
             className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border bg-background text-sm"
           />
         </div>
@@ -379,7 +388,11 @@ export function RichTextEditor({
   return (
     <div className="space-y-1.5">
       {toolbar}
-      <EditorContent editor={editor} className="rounded-lg border border-border bg-background text-sm" />
+      <EditorContent
+        editor={editor}
+        style={contentStyle}
+        className="rounded-lg border border-border bg-background text-sm"
+      />
     </div>
   );
 }
