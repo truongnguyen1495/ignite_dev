@@ -1,5 +1,58 @@
-import { Play, Volume2 } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { createPortal } from "react-dom";
+import { Play, Volume2, X } from "lucide-react";
 import type { BookElement } from "@/lib/library-book-elements";
+
+// Rendered via a portal straight onto document.body — book-page.tsx's page
+// wrapper has a CSS `transform: scale(...)` on it (for fitting the fixed
+// design-pixel canvas to whatever size the flipbook renders at), and
+// react-pageflip's own page-curl animation applies more transforms on top
+// of that. A `transform` on any ancestor turns `position: fixed` into
+// "fixed relative to that ancestor" instead of the real viewport, so
+// without the portal this would render clipped/mis-scaled inside the page
+// instead of as a true full-screen overlay.
+function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClose: () => void }) {
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/90 p-6"
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Đóng"
+        className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+      >
+        <X className="h-5 w-5" />
+      </button>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} className="max-h-full max-w-full object-contain" onClick={(e) => e.stopPropagation()} />
+    </div>,
+    document.body
+  );
+}
+
+// Click-to-zoom only applies in the reader (`editable` is editor-canvas.tsx
+// only) — in the editor, a click needs to reach react-rnd's own drag/select
+// handling on the wrapper, not open a lightbox.
+function ImageElement({ url, alt, editable }: { url: string; alt: string; editable: boolean }) {
+  const [zoomed, setZoomed] = useState(false);
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={url}
+        alt={alt}
+        draggable={false}
+        className={`h-full w-full object-contain ${editable ? "" : "cursor-zoom-in"}`}
+        onClick={editable ? undefined : () => setZoomed(true)}
+      />
+      {zoomed && <ImageLightbox src={url} alt={alt} onClose={() => setZoomed(false)} />}
+    </>
+  );
+}
 
 // Renders one element at its natural size, filling whatever box its caller
 // already positioned/sized it into (book-page.tsx for the reader,
@@ -45,8 +98,7 @@ export function BookElementRenderer({
       );
     case "image":
       return element.url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={element.url} alt={element.alt ?? ""} className="h-full w-full object-contain" draggable={false} />
+        <ImageElement url={element.url} alt={element.alt ?? ""} editable={editable} />
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-faint-bg text-xs text-muted">Ảnh</div>
       );
