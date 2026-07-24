@@ -64,7 +64,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
       <Card className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">Sản phẩm</h2>
         <ul className="space-y-3">
-          {order.items.map((item) => {
+          {order.items
+            // Once PAID, a PRODUCT item moves into the "Thông tin giao hàng"
+            // card below instead — course/library are "đã mở khóa" (digital,
+            // nothing to ship), so grouping them apart from a physical item
+            // that's about to be packed and shipped reads clearer than
+            // mixing both under one plain "Sản phẩm" list. Left mixed for
+            // PENDING/CANCELLED (per user decision — those states have no
+            // "sắp giao hàng" story to tell yet anyway).
+            .filter((item) => !(order.status === "PAID" && item.kind === "PRODUCT"))
+            .map((item) => {
             const imageUrl = item.product?.imageUrl ?? item.course?.coverImageUrl ?? item.libraryItem?.coverImageUrl;
             const description = item.product?.subtitle ?? item.product?.description ?? item.course?.description ?? item.libraryItem?.description;
             // Once PAID, a COURSE/LIBRARY_ITEM item gets the same "unlocked
@@ -129,12 +138,6 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
                     </span>
                   </Link>
                 )}
-                {order.status === "PAID" && item.kind === "PRODUCT" && (
-                  <p className="text-xs text-muted">
-                    Sản phẩm &quot;{item.titleSnapshot}&quot; đang được đóng gói và vận chuyển đến tay bạn sớm
-                    thôi nhé. Bạn vui lòng đợi vài ngày nhé.
-                  </p>
-                )}
               </li>
             );
           })}
@@ -146,8 +149,32 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
       </Card>
 
       {order.shippingAddress && (
-        <Card className="space-y-2">
+        <Card className="space-y-3">
           <h2 className="text-sm font-semibold text-foreground">Thông tin giao hàng</h2>
+          {/* Physical items themselves only show here once PAID (see the
+              matching filter on the "Sản phẩm" list above) — for
+              PENDING/CANCELLED they're still listed there instead, unchanged. */}
+          {order.status === "PAID" && (
+            <ul className="space-y-2 border-b border-border pb-3">
+              {order.items
+                .filter((item) => item.kind === "PRODUCT")
+                .map((item) => (
+                  <li key={item.id} className="flex items-center gap-3 text-sm">
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-hover">
+                      {item.product?.imageUrl ? (
+                        <Image src={item.product.imageUrl} alt={item.titleSnapshot} fill sizes="56px" className="object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <Package className="h-5 w-5 text-muted" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="min-w-0 flex-1 truncate text-foreground">{item.titleSnapshot}</p>
+                    <span className="shrink-0 text-muted">{formatVND(item.priceAtPurchase)}</span>
+                  </li>
+                ))}
+            </ul>
+          )}
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between gap-3">
               <dt className="text-muted">Người nhận</dt>
@@ -162,6 +189,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
               <dd className="text-right text-foreground">{order.shippingAddress}</dd>
             </div>
           </dl>
+          {order.status === "PAID" && (
+            <p className="border-t border-border pt-3 text-xs text-muted">
+              Đơn hàng đang được đóng gói và sẽ sớm giao đến tay bạn nhé. Bạn vui lòng đợi vài ngày nhé.
+            </p>
+          )}
         </Card>
       )}
 
