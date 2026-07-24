@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { X, Package } from "lucide-react";
 import type { OrderItemKind } from "@prisma/client";
@@ -151,9 +151,7 @@ function ShippingDialog({
 }
 
 // Digital-only cart (courses/library) — no shipping step, so checkout is a
-// plain "confirm this order" before going to the payment page. A dedicated
-// component (not the shared useConfirm) so its open state can be lazy-inited
-// from ?checkout=1 without a post-mount setState.
+// plain "confirm this order" before going to the payment page.
 function ConfirmOrderDialog({
   total,
   count,
@@ -241,22 +239,16 @@ function ConfirmShippingDialog({
   );
 }
 
+// "Thanh toán" buttons elsewhere (product/course/library cards) add the
+// item and land here plainly — no dialog auto-opens on arrival. The buyer
+// reviews the cart and presses "Xác nhận đơn hàng" themselves when ready,
+// which opens whichever of the three dialogs below fits the cart (digital
+// confirm, shipping form, or confirm-with-saved-address).
 export function CartList({ items, savedShipping }: { items: CartListItem[]; savedShipping: ShippingDetails | null }) {
-  const searchParams = useSearchParams();
   const [viewing, setViewing] = useState<CartListItem | null>(null);
-  // A product's "Thanh toán" button routes here with ?checkout=1 to land the
-  // buyer straight in checkout. For a cart holding a physical product that
-  // means immediately (lazy init, so it's open on the very first render — no
-  // post-mount setState) opening either the confirm dialog (when a saved
-  // address exists) or the shipping form (first-time buyer). A courses-only
-  // cart has no shipping step, so it just shows the normal cart and its own
-  // "Xác nhận đơn hàng" button; the flag is still stripped below.
-  const wantsCheckout = searchParams.get("checkout") === "1" && items.length > 0;
-  const autoCheckoutProduct = wantsCheckout && items.some((i) => i.kind === "PRODUCT");
-  const autoCheckoutDigital = wantsCheckout && !items.some((i) => i.kind === "PRODUCT");
-  const [shippingOpen, setShippingOpen] = useState(() => autoCheckoutProduct && !savedShipping);
-  const [confirmShipOpen, setConfirmShipOpen] = useState(() => autoCheckoutProduct && !!savedShipping);
-  const [confirmOrderOpen, setConfirmOrderOpen] = useState(() => autoCheckoutDigital);
+  const [shippingOpen, setShippingOpen] = useState(false);
+  const [confirmShipOpen, setConfirmShipOpen] = useState(false);
+  const [confirmOrderOpen, setConfirmOrderOpen] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -297,16 +289,6 @@ export function CartList({ items, savedShipping }: { items: CartListItem[]; save
     // Digital-only cart (courses/library): no address, just a confirm.
     setConfirmOrderOpen(true);
   }
-
-  // Strip the ?checkout=1 flag once the dialog has been pre-opened from it
-  // (above), so a manual refresh doesn't reopen checkout. replaceState is a
-  // client-only history edit, not setState — safe in an effect and skips a
-  // server round trip.
-  useEffect(() => {
-    if (searchParams.get("checkout") === "1") {
-      window.history.replaceState(null, "", "/dashboard/cart");
-    }
-  }, [searchParams]);
 
   if (items.length === 0) {
     return <p className="text-sm text-muted">Giỏ hàng của bạn đang trống.</p>;

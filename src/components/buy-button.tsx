@@ -56,11 +56,10 @@ export function BuyButton({ kind, itemId, details }: { kind: OrderItemKind; item
       }
       setOpen(false);
       if (goToCheckout) {
-        // `?checkout=1` makes the cart open the checkout step immediately on
-        // arrival (see CartList) — for a course/library that's the order
-        // confirm dialog — so "Thanh toán" lands the buyer in checkout
-        // instead of a static cart. Same as product-buy-button.tsx.
-        router.push("/dashboard/cart?checkout=1");
+        // Lands the buyer on the cart page itself, no dialog auto-opened —
+        // they review the cart and press "Xác nhận đơn hàng" there when
+        // ready. Same as product-buy-button.tsx.
+        router.push("/dashboard/cart");
         return;
       }
       router.refresh();
