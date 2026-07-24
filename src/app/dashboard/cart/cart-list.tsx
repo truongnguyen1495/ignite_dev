@@ -82,18 +82,23 @@ function ItemDetailDialog({
 
 // Shipping is collected once for the whole cart, right before checkout —
 // only shown when the cart has at least one PRODUCT item (see CartList).
+// `initial` prefills the fields from the buyer's saved address (their most
+// recent shipped order) when they choose "Đổi địa chỉ" from the confirm
+// dialog, or stays empty for a first-time buyer who has none yet.
 function ShippingDialog({
+  initial,
   onClose,
   onSubmit,
   pending,
 }: {
+  initial?: ShippingDetails | null;
   onClose: () => void;
   onSubmit: (shipping: ShippingDetails) => void;
   pending: boolean;
 }) {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
+  const [name, setName] = useState(initial?.name ?? "");
+  const [phone, setPhone] = useState(initial?.phone ?? "");
+  const [address, setAddress] = useState(initial?.address ?? "");
   const [error, setError] = useState<string | undefined>();
 
   function submit() {
@@ -146,18 +151,70 @@ function ShippingDialog({
   );
 }
 
-export function CartList({ items }: { items: CartListItem[] }) {
+// Shown to a returning buyer of a physical product who already has a saved
+// address — one-tap confirm instead of re-typing, with an explicit "Đổi địa
+// chỉ" escape to the full form so a moved/gift address is never shipped to
+// the old one silently.
+function ConfirmShippingDialog({
+  shipping,
+  total,
+  onClose,
+  onChangeAddress,
+  onConfirm,
+  pending,
+}: {
+  shipping: ShippingDetails;
+  total: number;
+  onClose: () => void;
+  onChangeAddress: () => void;
+  onConfirm: () => void;
+  pending: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4" onClick={() => !pending && onClose()}>
+      <div
+        className="w-full max-w-md space-y-4 rounded-xl border border-border bg-surface p-6 text-left shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-base font-semibold text-foreground">Xác nhận đơn hàng</h2>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted">Tổng cộng</span>
+          <span className="font-semibold text-foreground">{formatVND(total)}</span>
+        </div>
+        <div className="space-y-1 rounded-lg border border-border bg-faint-bg p-3 text-sm">
+          <p className="text-xs font-medium text-muted">Giao đến</p>
+          <p className="text-foreground">
+            {shipping.name} — {shipping.phone}
+          </p>
+          <p className="text-foreground">{shipping.address}</p>
+        </div>
+        <div className="flex justify-end gap-2 border-t border-border pt-4">
+          <Button type="button" variant="secondary" onClick={onChangeAddress} disabled={pending}>
+            Đổi địa chỉ
+          </Button>
+          <Button type="button" variant="primary" onClick={onConfirm} isLoading={pending}>
+            Xác nhận &amp; thanh toán
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function CartList({ items, savedShipping }: { items: CartListItem[]; savedShipping: ShippingDetails | null }) {
   const searchParams = useSearchParams();
   const [viewing, setViewing] = useState<CartListItem | null>(null);
   // A product's "Thanh toán" button routes here with ?checkout=1 to land the
   // buyer straight in checkout. For a cart holding a physical product that
-  // means opening the shipping dialog immediately (lazy init, so it's open
-  // on the very first render — no post-mount setState needed). A courses-
-  // only cart has no shipping step, so it just shows the normal cart and its
-  // own "Xác nhận đơn hàng" button; the flag is still stripped below.
-  const [shippingOpen, setShippingOpen] = useState(
-    () => searchParams.get("checkout") === "1" && items.some((i) => i.kind === "PRODUCT")
-  );
+  // means immediately (lazy init, so it's open on the very first render — no
+  // post-mount setState) opening either the confirm dialog (when a saved
+  // address exists) or the shipping form (first-time buyer). A courses-only
+  // cart has no shipping step, so it just shows the normal cart and its own
+  // "Xác nhận đơn hàng" button; the flag is still stripped below.
+  const autoCheckoutProduct =
+    searchParams.get("checkout") === "1" && items.some((i) => i.kind === "PRODUCT");
+  const [shippingOpen, setShippingOpen] = useState(() => autoCheckoutProduct && !savedShipping);
+  const [confirmShipOpen, setConfirmShipOpen] = useState(() => autoCheckoutProduct && !!savedShipping);
   const [error, setError] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -189,9 +246,14 @@ export function CartList({ items }: { items: CartListItem[] }) {
 
   async function startCheckout() {
     if (hasProduct) {
-      setShippingOpen(true);
+      // Physical goods need a shipping address: reuse the buyer's saved one
+      // via a one-tap confirm (with an "Đổi địa chỉ" escape), or ask for it
+      // in full the first time they order a physical item.
+      if (savedShipping) setConfirmShipOpen(true);
+      else setShippingOpen(true);
       return;
     }
+    // Digital-only cart (courses/library): no address, just a confirm.
     const ok = await confirm({
       title: "Xác nhận đơn hàng",
       tone: "primary",
@@ -268,8 +330,22 @@ export function CartList({ items }: { items: CartListItem[] }) {
           onRemove={() => remove(viewing.id)}
         />
       )}
+      {confirmShipOpen && savedShipping && (
+        <ConfirmShippingDialog
+          shipping={savedShipping}
+          total={total}
+          pending={pending}
+          onClose={() => setConfirmShipOpen(false)}
+          onChangeAddress={() => {
+            setConfirmShipOpen(false);
+            setShippingOpen(true);
+          }}
+          onConfirm={() => submitOrder(savedShipping)}
+        />
+      )}
       {shippingOpen && (
         <ShippingDialog
+          initial={savedShipping}
           pending={pending}
           onClose={() => setShippingOpen(false)}
           onSubmit={(shipping) => submitOrder(shipping)}
