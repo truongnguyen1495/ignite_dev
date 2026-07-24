@@ -30,7 +30,7 @@ export function BuyButton({ kind, itemId, details }: { kind: OrderItemKind; item
   const [error, setError] = useState<string | undefined>();
   const router = useRouter();
 
-  const addItem = (goToCartAfter: boolean) => {
+  const addItem = (goToCheckout: boolean) => {
     setError(undefined);
     startTransition(async () => {
       const result = await addToCartAction(kind, itemId);
@@ -39,8 +39,12 @@ export function BuyButton({ kind, itemId, details }: { kind: OrderItemKind; item
         return;
       }
       setOpen(false);
-      if (goToCartAfter) {
-        router.push("/dashboard/cart");
+      if (goToCheckout) {
+        // `?checkout=1` makes the cart open the checkout step immediately on
+        // arrival (see CartList) — for a course/library that's the order
+        // confirm dialog — so "Thanh toán" lands the buyer in checkout
+        // instead of a static cart. Same as product-buy-button.tsx.
+        router.push("/dashboard/cart?checkout=1");
         return;
       }
       router.refresh();

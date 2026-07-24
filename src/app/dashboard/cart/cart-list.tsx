@@ -7,7 +7,6 @@ import { X, Package } from "lucide-react";
 import type { OrderItemKind } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/form";
-import { useConfirm } from "@/components/ui/confirm-dialog";
 import { formatVND } from "@/lib/currency";
 import { removeFromCartAction, confirmCartOrderAction, type ShippingDetails } from "./actions";
 
@@ -151,6 +150,47 @@ function ShippingDialog({
   );
 }
 
+// Digital-only cart (courses/library) — no shipping step, so checkout is a
+// plain "confirm this order" before going to the payment page. A dedicated
+// component (not the shared useConfirm) so its open state can be lazy-inited
+// from ?checkout=1 without a post-mount setState.
+function ConfirmOrderDialog({
+  total,
+  count,
+  onClose,
+  onConfirm,
+  pending,
+}: {
+  total: number;
+  count: number;
+  onClose: () => void;
+  onConfirm: () => void;
+  pending: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4" onClick={() => !pending && onClose()}>
+      <div
+        className="w-full max-w-md space-y-4 rounded-xl border border-border bg-surface p-6 text-left shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-base font-semibold text-foreground">Xác nhận đơn hàng</h2>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted">Tổng cộng {count} sản phẩm</span>
+          <span className="font-semibold text-foreground">{formatVND(total)}</span>
+        </div>
+        <div className="flex justify-end gap-2 border-t border-border pt-4">
+          <Button type="button" variant="secondary" onClick={onClose} disabled={pending}>
+            Hủy
+          </Button>
+          <Button type="button" variant="primary" onClick={onConfirm} isLoading={pending}>
+            Xác nhận &amp; thanh toán
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Shown to a returning buyer of a physical product who already has a saved
 // address — one-tap confirm instead of re-typing, with an explicit "Đổi địa
 // chỉ" escape to the full form so a moved/gift address is never shipped to
@@ -211,14 +251,15 @@ export function CartList({ items, savedShipping }: { items: CartListItem[]; save
   // address exists) or the shipping form (first-time buyer). A courses-only
   // cart has no shipping step, so it just shows the normal cart and its own
   // "Xác nhận đơn hàng" button; the flag is still stripped below.
-  const autoCheckoutProduct =
-    searchParams.get("checkout") === "1" && items.some((i) => i.kind === "PRODUCT");
+  const wantsCheckout = searchParams.get("checkout") === "1" && items.length > 0;
+  const autoCheckoutProduct = wantsCheckout && items.some((i) => i.kind === "PRODUCT");
+  const autoCheckoutDigital = wantsCheckout && !items.some((i) => i.kind === "PRODUCT");
   const [shippingOpen, setShippingOpen] = useState(() => autoCheckoutProduct && !savedShipping);
   const [confirmShipOpen, setConfirmShipOpen] = useState(() => autoCheckoutProduct && !!savedShipping);
+  const [confirmOrderOpen, setConfirmOrderOpen] = useState(() => autoCheckoutDigital);
   const [error, setError] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();
   const router = useRouter();
-  const confirm = useConfirm();
 
   function remove(id: string) {
     startTransition(async () => {
@@ -244,7 +285,7 @@ export function CartList({ items, savedShipping }: { items: CartListItem[]; save
   const hasProduct = items.some((i) => i.kind === "PRODUCT");
   const total = items.reduce((sum, i) => sum + i.price, 0);
 
-  async function startCheckout() {
+  function startCheckout() {
     if (hasProduct) {
       // Physical goods need a shipping address: reuse the buyer's saved one
       // via a one-tap confirm (with an "Đổi địa chỉ" escape), or ask for it
@@ -254,14 +295,7 @@ export function CartList({ items, savedShipping }: { items: CartListItem[]; save
       return;
     }
     // Digital-only cart (courses/library): no address, just a confirm.
-    const ok = await confirm({
-      title: "Xác nhận đơn hàng",
-      tone: "primary",
-      confirmLabel: "Xác nhận đơn hàng",
-      description: `Tổng cộng ${formatVND(total)} cho ${items.length} sản phẩm.`,
-    });
-    if (!ok) return;
-    submitOrder();
+    setConfirmOrderOpen(true);
   }
 
   // Strip the ?checkout=1 flag once the dialog has been pre-opened from it
@@ -328,6 +362,15 @@ export function CartList({ items, savedShipping }: { items: CartListItem[]; save
           pending={pending}
           onClose={() => setViewing(null)}
           onRemove={() => remove(viewing.id)}
+        />
+      )}
+      {confirmOrderOpen && (
+        <ConfirmOrderDialog
+          total={total}
+          count={items.length}
+          pending={pending}
+          onClose={() => setConfirmOrderOpen(false)}
+          onConfirm={() => submitOrder()}
         />
       )}
       {confirmShipOpen && savedShipping && (
