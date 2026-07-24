@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { requireActiveStudent, requireSalesEnabled } from "@/lib/access";
@@ -69,7 +70,12 @@ export default async function CartPage() {
           </Link>
         }
       />
-      <CartList items={items} />
+      {/* CartList reads useSearchParams (for the ?checkout=1 auto-open) —
+          wrapped in Suspense so a static-prerender pass never errors on the
+          missing boundary, regardless of how the route gets rendered. */}
+      <Suspense fallback={null}>
+        <CartList items={items} />
+      </Suspense>
     </div>
   );
 }

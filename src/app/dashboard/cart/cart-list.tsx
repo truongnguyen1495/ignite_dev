@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { X, Package } from "lucide-react";
 import type { OrderItemKind } from "@prisma/client";
@@ -147,8 +147,17 @@ function ShippingDialog({
 }
 
 export function CartList({ items }: { items: CartListItem[] }) {
+  const searchParams = useSearchParams();
   const [viewing, setViewing] = useState<CartListItem | null>(null);
-  const [shippingOpen, setShippingOpen] = useState(false);
+  // A product's "Thanh toán" button routes here with ?checkout=1 to land the
+  // buyer straight in checkout. For a cart holding a physical product that
+  // means opening the shipping dialog immediately (lazy init, so it's open
+  // on the very first render — no post-mount setState needed). A courses-
+  // only cart has no shipping step, so it just shows the normal cart and its
+  // own "Xác nhận đơn hàng" button; the flag is still stripped below.
+  const [shippingOpen, setShippingOpen] = useState(
+    () => searchParams.get("checkout") === "1" && items.some((i) => i.kind === "PRODUCT")
+  );
   const [error, setError] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -192,6 +201,16 @@ export function CartList({ items }: { items: CartListItem[] }) {
     if (!ok) return;
     submitOrder();
   }
+
+  // Strip the ?checkout=1 flag once the dialog has been pre-opened from it
+  // (above), so a manual refresh doesn't reopen checkout. replaceState is a
+  // client-only history edit, not setState — safe in an effect and skips a
+  // server round trip.
+  useEffect(() => {
+    if (searchParams.get("checkout") === "1") {
+      window.history.replaceState(null, "", "/dashboard/cart");
+    }
+  }, [searchParams]);
 
   if (items.length === 0) {
     return <p className="text-sm text-muted">Giỏ hàng của bạn đang trống.</p>;

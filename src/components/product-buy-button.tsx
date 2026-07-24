@@ -37,7 +37,7 @@ export function ProductBuyButton({
   const [error, setError] = useState<string | undefined>();
   const router = useRouter();
 
-  const addItem = (goToCartAfter: boolean) => {
+  const addItem = (goToCheckout: boolean) => {
     setError(undefined);
     startTransition(async () => {
       const result = await addToCartAction("PRODUCT", productId);
@@ -46,8 +46,14 @@ export function ProductBuyButton({
         return;
       }
       setOpen(false);
-      if (goToCartAfter) {
-        router.push("/dashboard/cart");
+      if (goToCheckout) {
+        // `?checkout=1` makes the cart page open the checkout step (shipping
+        // form → confirm) immediately on arrival, so "Thanh toán" lands the
+        // buyer straight in checkout instead of a static cart they'd have to
+        // press "Xác nhận đơn hàng" on again — see CartList's auto-checkout
+        // effect. Still routes through the cart so the whole cart (which may
+        // hold more than this one product) checks out under one address.
+        router.push("/dashboard/cart?checkout=1");
         return;
       }
       router.refresh();
