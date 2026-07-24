@@ -11,6 +11,7 @@ import { formatVND } from "@/lib/currency";
 import { formatOrderCode, ORDER_STATUS_LABELS, ORDER_STATUS_BADGE_COLOR } from "@/lib/orders";
 import { buildVietQrImageUrl } from "@/lib/vietqr";
 import { CancelOrderButton } from "./cancel-order-button";
+import { ReorderButton } from "./reorder-button";
 import { OrderStatusPoller } from "./order-status-poller";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ orderId: string }> }) {
@@ -44,6 +45,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <h1 className="text-xl font-semibold text-foreground">{formatOrderCode(order.orderNumber)}</h1>
           <Badge color={ORDER_STATUS_BADGE_COLOR[order.status]}>{ORDER_STATUS_LABELS[order.status]}</Badge>
+          {order.status === "CANCELLED" && <ReorderButton orderId={order.id} />}
         </div>
       </div>
 
