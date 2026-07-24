@@ -8,6 +8,7 @@ import { BackLink } from "@/components/ui/back-link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatVND } from "@/lib/currency";
+import { formatDateVN } from "@/lib/date";
 import { formatOrderCode, ORDER_STATUS_LABELS, ORDER_STATUS_BADGE_COLOR } from "@/lib/orders";
 import { buildVietQrImageUrl } from "@/lib/vietqr";
 import { CancelOrderButton } from "./cancel-order-button";
@@ -57,6 +58,33 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
             <p className="text-sm text-muted">
               Đơn {formatOrderCode(order.orderNumber)} — {formatVND(order.totalAmount)}
             </p>
+          </div>
+        </Card>
+      )}
+
+      {/* Once PAID, all pricing moves here — one clean invoice-style card —
+          instead of being scattered per-item across the "Sản phẩm" and
+          "Thông tin giao hàng" cards below (which, for a PAID order, drop
+          their own price/Tổng cộng lines entirely; see their filters). Only
+          for PAID: PENDING/CANCELLED keep the old mixed layout with prices
+          shown inline, per user decision. */}
+      {order.status === "PAID" && (
+        <Card className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-foreground">Hóa đơn</h2>
+            {order.paidAt && <span className="text-xs text-muted">{formatDateVN(order.paidAt)}</span>}
+          </div>
+          <ul className="space-y-2 text-sm">
+            {order.items.map((item) => (
+              <li key={item.id} className="flex items-center justify-between gap-3">
+                <span className="min-w-0 truncate text-foreground">{item.titleSnapshot}</span>
+                <span className="shrink-0 text-muted">{formatVND(item.priceAtPurchase)}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="flex items-center justify-between border-t border-border pt-3 text-sm font-medium">
+            <span className="text-foreground">Tổng cộng</span>
+            <span className="text-foreground">{formatVND(order.totalAmount)}</span>
           </div>
         </Card>
       )}
@@ -111,7 +139,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
                     <p className="truncate text-foreground">{item.titleSnapshot}</p>
                     {description && <p className="line-clamp-2 text-xs text-muted">{description}</p>}
                   </div>
-                  <span className="shrink-0 text-muted">{formatVND(item.priceAtPurchase)}</span>
+                  {/* Price now lives only in the "Hóa đơn" card above, once
+                      PAID — this list is purely "what you got" then. */}
+                  {order.status !== "PAID" && (
+                    <span className="shrink-0 text-muted">{formatVND(item.priceAtPurchase)}</span>
+                  )}
                 </div>
                 {unlockedHref && (
                   <Link
@@ -142,10 +174,13 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
             );
           })}
         </ul>
-        <div className="flex items-center justify-between border-t border-border pt-3 text-sm font-medium">
-          <span className="text-foreground">Tổng cộng</span>
-          <span className="text-foreground">{formatVND(order.totalAmount)}</span>
-        </div>
+        {/* Grand total now lives only in the "Hóa đơn" card above, once PAID. */}
+        {order.status !== "PAID" && (
+          <div className="flex items-center justify-between border-t border-border pt-3 text-sm font-medium">
+            <span className="text-foreground">Tổng cộng</span>
+            <span className="text-foreground">{formatVND(order.totalAmount)}</span>
+          </div>
+        )}
       </Card>
 
       {order.shippingAddress && (
@@ -170,7 +205,6 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
                       )}
                     </div>
                     <p className="min-w-0 flex-1 truncate text-foreground">{item.titleSnapshot}</p>
-                    <span className="shrink-0 text-muted">{formatVND(item.priceAtPurchase)}</span>
                   </li>
                 ))}
             </ul>
