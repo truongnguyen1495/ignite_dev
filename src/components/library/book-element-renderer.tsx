@@ -193,9 +193,9 @@ function ExpandVideoButton({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       aria-label="Phóng to video"
       title="Phóng to"
-      className="absolute right-1.5 top-1.5 z-10 flex h-12 w-12 items-center justify-center rounded bg-black/60 text-white hover:bg-black/80"
+      className="absolute right-1.5 top-1.5 z-10 flex h-24 w-24 items-center justify-center rounded bg-black/60 text-white hover:bg-black/80"
     >
-      <Maximize2 className="h-7 w-7" />
+      <Maximize2 className="h-14 w-14" />
     </button>
   );
 }
