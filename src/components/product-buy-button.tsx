@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { addToCartAction } from "@/app/dashboard/cart/actions";
@@ -17,6 +18,23 @@ import { PriceBlock } from "@/components/price-block";
 // address isn't collected here — asked once for the whole cart at checkout
 // (see confirmCartOrderAction), since a cart can mix several products under
 // one address.
+//
+// The dialog is rendered via createPortal straight onto document.body —
+// critical, not cosmetic. Catalog grids (product-list.tsx) wrap each card in
+// a whole-card <Link>; without a portal this dialog would be a real DOM
+// descendant of that <a>, and clicking "Thêm vào giỏ hàng"/"Thanh toán"
+// inside it would bubble up through the dialog's own onClick={stopPropagation}
+// — which stops Next.js's Link from ever running its own onClick (the one
+// that calls preventDefault() to enable client-side routing), so
+// preventDefault() never fires anywhere in the chain and the BROWSER'S
+// NATIVE anchor navigation for the ancestor <a href> still went through,
+// silently dragging the buyer to the card's own detail/landing page instead
+// of adding to cart / going to checkout. Confirmed live on production via
+// Playwright before this fix: clicking either button from the products grid
+// landed on /product/sanarey-activa, not the cart. A portal makes this
+// entire class of "clicked inside a modal nested in a card-link" bug
+// structurally impossible — matches the lightbox pattern already used in
+// book-element-renderer.tsx for the same reason.
 export function ProductBuyButton({
   productId,
   title,
@@ -77,45 +95,47 @@ export function ProductBuyButton({
         {children}
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setOpen(false);
-          }}
-        >
+      {open &&
+        createPortal(
           <div
-            role="dialog"
-            aria-modal="true"
-            className="relative w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setOpen(false);
+            }}
           >
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              aria-label="Đóng"
-              className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+            <div
+              role="dialog"
+              aria-modal="true"
+              className="relative w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-lg"
+              onClick={(e) => e.stopPropagation()}
             >
-              <X className="h-4 w-4" />
-            </button>
-            <h2 className="pr-8 text-base font-semibold text-foreground">{title}</h2>
-            <div className="mt-3 flex items-center justify-end border-t border-border pt-3">
-              <PriceBlock price={price} originalPrice={originalPrice} />
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Đóng"
+                className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <h2 className="pr-8 text-base font-semibold text-foreground">{title}</h2>
+              <div className="mt-3 flex items-center justify-end border-t border-border pt-3">
+                <PriceBlock price={price} originalPrice={originalPrice} />
+              </div>
+              {error && <p className="mt-2 text-xs text-danger">{error}</p>}
+              <div className="mt-6 flex justify-end gap-2">
+                <Button type="button" variant="secondary" disabled={pending} onClick={() => addItem(false)}>
+                  Thêm vào giỏ hàng
+                </Button>
+                <Button type="button" variant="primary" disabled={pending} isLoading={pending} onClick={() => addItem(true)}>
+                  Thanh toán
+                </Button>
+              </div>
             </div>
-            {error && <p className="mt-2 text-xs text-danger">{error}</p>}
-            <div className="mt-6 flex justify-end gap-2">
-              <Button type="button" variant="secondary" disabled={pending} onClick={() => addItem(false)}>
-                Thêm vào giỏ hàng
-              </Button>
-              <Button type="button" variant="primary" disabled={pending} isLoading={pending} onClick={() => addItem(true)}>
-                Thanh toán
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }
