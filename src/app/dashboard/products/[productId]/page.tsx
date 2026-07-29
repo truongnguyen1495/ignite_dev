@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { requireLeveledStudent, isSalesEnabled } from "@/lib/access";
+import { requireActiveStudent, isSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { GenericProductDetail } from "./generic-product-detail";
 
@@ -8,12 +8,14 @@ import { GenericProductDetail } from "./generic-product-detail";
 // custom nav/hero, no sidebar. This route just redirects there so the
 // catalog card's stable /dashboard/products/{id} link keeps working either
 // way. Everything else renders inline, in the normal dashboard shell.
+// requireActiveStudent() (not requireLeveledStudent()), same reasoning as
+// ../page.tsx — "học sinh" (no-cấp) can reach this too.
 export default async function ProductDetailPage({
   params,
 }: {
   params: Promise<{ productId: string }>;
 }) {
-  await requireLeveledStudent();
+  await requireActiveStudent();
   const { productId } = await params;
   const [product, salesEnabled] = await Promise.all([
     prisma.product.findUnique({ where: { id: productId } }),

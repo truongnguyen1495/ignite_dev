@@ -83,6 +83,7 @@ export default async function DashboardLayout({
       { href: "/dashboard/announcements", label: t.hocSinhNav.announcements, icon: <Megaphone className="h-4 w-4" /> },
       { href: "/dashboard/courses", label: t.hocSinhNav.exclusiveCourses, icon: <Video className="h-4 w-4" /> },
       { href: "/dashboard/library", label: t.hocSinhNav.library, icon: <Library className="h-4 w-4" /> },
+      { href: "/dashboard/products", label: t.hocSinhNav.products, icon: <Package className="h-4 w-4" /> },
       {
         href: "/dashboard/level-up",
         label: t.hocSinhNav.joinFiveLevel,

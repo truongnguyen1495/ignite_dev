@@ -1,15 +1,17 @@
-import { requireLeveledStudent, isSalesEnabled } from "@/lib/access";
+import { requireActiveStudent, isSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
 import { ProductList, type StudentProductItem } from "./product-list";
 
-// Products are a học-viên-only catalog — no per-item access grant/level
-// gating exists (unlike Course/LibraryItem), so requireLeveledStudent() here
-// is the entire access rule: every học viên sees every product, khách and
-// học sinh never reach this route at all (dashboard/layout.tsx's học-sinh
-// branch has no "Sản phẩm" nav entry, and /guest/* never links here).
+// Products have no per-item access grant/level gating (unlike Course/
+// LibraryItem) — every signed-in student sees every product regardless of
+// level, so requireActiveStudent() (not requireLeveledStudent()) is the
+// entire access rule here. "Học sinh" (no-cấp) reach this route too now via
+// the "Sản phẩm" entry in dashboard/layout.tsx's học-sinh nav; a fully
+// anonymous khách gets the separate public /guest/products catalog instead,
+// since this page still lives under /dashboard and needs a session.
 export default async function ProductsPage() {
-  await requireLeveledStudent();
+  await requireActiveStudent();
   const [products, salesEnabled] = await Promise.all([
     prisma.product.findMany({ orderBy: { order: "asc" } }),
     isSalesEnabled(),

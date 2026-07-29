@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Home, Megaphone, Video, LogIn, UserPlus, Library } from "lucide-react";
+import { Home, Megaphone, Video, LogIn, UserPlus, Library, Package } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { isChatEnabled } from "@/lib/access";
 import { getDictionary } from "@/lib/i18n/get-locale";
@@ -53,6 +53,7 @@ export default async function GuestLayout({ children }: { children: React.ReactN
               icon: <Video className="h-4 w-4" />,
             },
             { href: "/guest/library", label: t.guestNav.library, icon: <Library className="h-4 w-4" /> },
+            { href: "/guest/products", label: t.guestNav.products, icon: <Package className="h-4 w-4" /> },
           ]}
         />
       </header>
