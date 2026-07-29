@@ -116,6 +116,7 @@ export function SimetraLandingPage({
           <a href="#cong-nghe">Công nghệ</a>
           <a href="#loi-ich">Lợi ích</a>
           <a href="#cong-dung">Công dụng</a>
+          <a href="#huong-dan">Hướng dẫn</a>
           <a href="#phien-ban">Phiên bản</a>
           <a href="#dat-hang" className="nav-cta">
             {pricing.forSale ? `Đặt hàng · ${formatVND(pricing.chargeAmount)}` : "Đặt hàng"}
@@ -389,6 +390,340 @@ export function SimetraLandingPage({
         </div>
       </section>
 
+      <div className="wrap">
+        <div className="hr"></div>
+      </div>
+
+      <section className="section" id="huong-dan">
+        <div className="wrap">
+          <div className="tech-head reveal">
+            <span className="eyebrow">Hướng dẫn chi tiết</span>
+            <h2>15 cách sử dụng Simetra trong đời sống</h2>
+            <p>
+              Simetra hoạt động thụ động và liên tục. Đặt vật cần tái cấu trúc lên bề mặt đĩa, hoặc để gần đĩa, và
+              cho nước/thực phẩm &ldquo;nghỉ&rdquo; để hấp thụ trạng thái năng lượng.
+            </p>
+          </div>
+
+          <div className="charge reveal">
+            <div className="cl">
+              <div className="lv">1×</div>
+              <h3>Cơ bản</h3>
+              <p>Đặt ly/bình nước lên đĩa và để yên khoảng 10 phút.</p>
+              <div className="turns">Đặt tĩnh · 10 phút</div>
+            </div>
+            <div className="cl">
+              <div className="lv">3×</div>
+              <h3>Vừa</h3>
+              <p>Rót nước qua bề mặt đĩa nhiều lần, hoặc khuấy nhẹ theo chiều kim đồng hồ.</p>
+              <div className="turns">Rót/khuấy 3 lần</div>
+            </div>
+            <div className="cl">
+              <div className="lv">6×</div>
+              <h3>Mạnh</h3>
+              <p>Lặp lại quy trình rót/khuấy nhiều lần hơn để tăng mức độ tái cấu trúc.</p>
+              <div className="turns">Rót/khuấy 6 lần</div>
+            </div>
+            <div className="cl">
+              <div className="lv">10×</div>
+              <h3>Đậm đặc</h3>
+              <p>Mức cao nhất, dùng cho các trường hợp cần trạng thái năng lượng sâu.</p>
+              <div className="turns">Rót/khuấy 10 lần</div>
+            </div>
+          </div>
+          <p className="src-note reveal">
+            Nội dung tham khảo từ buổi hướng dẫn IGNITE Global cùng TS. Shafi Shaik (28/07/2026). Các gợi ý dưới đây
+            là hướng dẫn sử dụng của thương hiệu, không phải tư vấn hay chỉ định y tế.
+          </p>
+
+          <div className="guide reveal" style={{ marginTop: "36px" }}>
+            <details className="ga">
+              <summary>
+                <span className="gn">1</span>
+                <span className="gt">Tạo năng lượng cho nước uống</span>
+                <span className="gx">+</span>
+              </summary>
+              <div className="gbody">
+                <p>
+                  <b>Cách A —</b> Đặt trực tiếp ly hoặc bình nước lên bề mặt đĩa, để yên khoảng 10 phút.
+                </p>
+                <p>
+                  <b>Cách B —</b> Rót nước chảy qua bề mặt đĩa (rót đi rót lại) để tăng mức năng lượng.
+                </p>
+                <p>
+                  <b>Cách C —</b> Khuấy nhẹ nước theo chiều kim đồng hồ khi vật chứa đặt trên đĩa.
+                </p>
+                <p>
+                  Chọn mức <span className="m">1× / 3× / 6× / 10×</span> tùy nhu cầu. Với người rất yếu sức hoặc mức
+                  năng lượng thấp, có thể dùng nước mức 10×. <b>Lưu ý:</b> đây là sản phẩm chăm sóc sức khỏe năng
+                  lượng, <b>không phải để chữa bệnh</b>; không thay thế cho điều trị y tế.
+                </p>
+              </div>
+            </details>
+
+            <details className="ga">
+              <summary>
+                <span className="gn">2</span>
+                <span className="gt">Nấu ăn với nước đã tái cấu trúc</span>
+                <span className="gx">+</span>
+              </summary>
+              <div className="gbody">
+                <p>Dùng nước đã cấu trúc để nấu cơm, súp, cà ri, pha cà phê, trà hoặc làm nước ép.</p>
+                <p>Mục tiêu là nâng cao chất lượng năng lượng và hương vị cho món ăn, đồ uống hằng ngày.</p>
+              </div>
+            </details>
+
+            <details className="ga">
+              <summary>
+                <span className="gn">3</span>
+                <span className="gt">Cấu trúc lượng nước lớn (tắm, tưới, vật nuôi)</span>
+                <span className="gx">+</span>
+              </summary>
+              <div className="gbody">
+                <p>
+                  Với 50–100 lít nước, khuấy theo chiều kim đồng hồ khoảng <span className="m">100–200 vòng</span>{" "}
+                  (hoặc đặt đĩa gần nguồn nước).
+                </p>
+                <p>Nước này có thể dùng để tắm, tưới cây hoặc cho vật nuôi.</p>
+              </div>
+            </details>
+
+            <details className="ga">
+              <summary>
+                <span className="gn">4</span>
+                <span className="gt">Mang theo bên người</span>
+                <span className="gx">+</span>
+              </summary>
+              <div className="gbody">
+                <p>Mang đĩa trong túi quần, túi áo hoặc túi xách để giữ trường năng lượng bên mình.</p>
+                <p>
+                  Cơ thể con người chứa khoảng <span className="m">70% là nước</span> (máu khoảng 5 lít), nên ý
+                  tưởng là hỗ trợ sự hài hòa của lượng nước trong cơ thể.
+                </p>
+              </div>
+            </details>
+
+            <details className="ga">
+              <summary>
+                <span className="gn">5</span>
+                <span className="gt">Dùng cùng thực phẩm chức năng &amp; sản phẩm chăm sóc sức khỏe</span>
+                <span className="gx">+</span>
+              </summary>
+              <div className="gbody">
+                <p>
+                  Đặt viên/hộp sản phẩm lên đĩa và xoay nhẹ theo chiều kim đồng hồ khoảng 1 phút; hoặc để cả hộp
+                  trên đĩa qua đêm (6–8 giờ).
+                </p>
+                <p>
+                  Mục tiêu là hỗ trợ cảm giác dễ hấp thu hơn. <b>Lưu ý:</b> luôn dùng thuốc và thực phẩm chức năng
+                  theo đúng chỉ định của bác sĩ/dược sĩ; Simetra không thay thế thuốc và không làm thay đổi công
+                  dụng của thuốc.
+                </p>
+              </div>
+            </details>
+
+            <details className="ga">
+              <summary>
+                <span className="gn">6</span>
+                <span className="gt">Làm đẹp &amp; mỹ phẩm</span>
+                <span className="gx">+</span>
+              </summary>
+              <div className="gbody">
+                <p>
+                  Đặt dầu gội, kem dưỡng, son, mascara, bút kẻ mắt hoặc sản phẩm skincare lên đĩa trong khoảng 15
+                  phút, hoặc để qua đêm.
+                </p>
+                <p>Ý tưởng là tăng &ldquo;năng lượng&rdquo; cho sản phẩm trước khi sử dụng.</p>
+              </div>
+            </details>
+
+            <details className="ga">
+              <summary>
+                <span className="gn">7</span>
+                <span className="gt">Đặt trong tủ lạnh</span>
+                <span className="gx">+</span>
+              </summary>
+              <div className="gbody">
+                <p>Đặt đĩa trong tủ lạnh khoảng 1 giờ mỗi ngày để hỗ trợ giữ tươi cho trái cây, rau, sữa, thịt.</p>
+                <p>
+                  <b>Cách thay thế:</b> đặt 2 chai nước mức 10× trong tủ lạnh và thay mới sau mỗi 7–10 ngày.
+                </p>
+              </div>
+            </details>
+
+            <details className="ga">
+              <summary>
+                <span className="gn">8</span>
+                <span className="gt">Rửa rau củ &amp; trái cây</span>
+                <span className="gx">+</span>
+              </summary>
+              <div className="gbody">
+                <p>
+                  Ngâm rau củ, trái cây trong <span className="m">1–2 lít</span> nước đã cấu trúc.
+                </p>
+                <p>
+                  Ý tưởng là hỗ trợ làm sạch bề mặt, giúp bạn yên tâm hơn với dư lượng hóa chất bám ngoài. Vẫn nên
+                  rửa kỹ dưới vòi nước sạch như bình thường.
+                </p>
+              </div>
+            </details>
+
+            <details className="ga">
+              <summary>
+                <span className="gn">9</span>
+                <span className="gt">Đồ uống (kể cả có cồn)</span>
+                <span className="gx">+</span>
+              </summary>
+              <div className="gbody">
+                <p>Đặt ly đồ uống lên đĩa, hoặc rót qua bề mặt đĩa 3–6 lần.</p>
+                <p>
+                  Nhiều người dùng cho biết hương vị dịu hơn. <b>Lưu ý:</b> hãy sử dụng đồ uống có cồn một cách điều
+                  độ và có trách nhiệm; sản phẩm không làm giảm tác hại của rượu bia.
+                </p>
+              </div>
+            </details>
+
+            <details className="ga">
+              <summary>
+                <span className="gn">10</span>
+                <span className="gt">Xông hơi (hít thở)</span>
+                <span className="gx">+</span>
+              </summary>
+              <div className="gbody">
+                <p>
+                  Dùng khoảng <span className="m">20–30 ml</span> nước mức 10×, xông trong 10–15 phút, hít thở nhẹ
+                  nhàng và đều.
+                </p>
+                <p>
+                  Nhiều người dùng chia sẻ cảm giác dễ chịu, thư giãn khi hô hấp. <b>Lưu ý quan trọng:</b> đây không
+                  phải là phương pháp điều trị. Nếu bạn có vấn đề về hô hấp (hen suyễn, nhiễm trùng, viêm xoang)
+                  hoặc các triệu chứng kéo dài, hãy đi khám và tuân theo chỉ định của bác sĩ.
+                </p>
+              </div>
+            </details>
+
+            <details className="ga">
+              <summary>
+                <span className="gn">11</span>
+                <span className="gt">Xịt / phun sương</span>
+                <span className="gx">+</span>
+              </summary>
+              <div className="gbody">
+                <p>
+                  Cho nước mức 10× vào bình xịt và phun sương lên da mặt hoặc vùng bạn muốn làm dịu, thư giãn.
+                </p>
+                <p>
+                  <b>Lưu ý an toàn:</b> không xịt vào mắt hoặc lên vết thương hở. Với các vấn đề về mắt, da hay
+                  chấn thương, hãy tham khảo ý kiến chuyên gia y tế thay vì tự xử lý.
+                </p>
+              </div>
+            </details>
+
+            <details className="ga">
+              <summary>
+                <span className="gn">12</span>
+                <span className="gt">Đặt gần thiết bị điện tử</span>
+                <span className="gx">+</span>
+              </summary>
+              <div className="gbody">
+                <p>Đặt đĩa gần máy tính, laptop, bộ phát wifi hoặc máy chơi game (PS5, Xbox).</p>
+                <p>
+                  Hình học kiểu Fibonacci trên bề mặt được thiết kế với ý tưởng hài hòa trường năng lượng xung
+                  quanh thiết bị. Đây là mô tả theo khái niệm của thương hiệu, chưa được kiểm chứng khoa học độc
+                  lập.
+                </p>
+              </div>
+            </details>
+
+            <details className="ga">
+              <summary>
+                <span className="gn">13</span>
+                <span className="gt">Thú cưng</span>
+                <span className="gx">+</span>
+              </summary>
+              <div className="gbody">
+                <p>
+                  Cho chó, mèo, cá… uống hoặc sống trong nước đã cấu trúc để hỗ trợ sức sống và sự năng động.
+                </p>
+              </div>
+            </details>
+
+            <details className="ga">
+              <summary>
+                <span className="gn">14</span>
+                <span className="gt">Bể cá cảnh</span>
+                <span className="gx">+</span>
+              </summary>
+              <div className="gbody">
+                <p>
+                  Thả đĩa gần hoặc trong khu vực bể cá. Nhiều người dùng nhận thấy cá năng động hơn, tiêu hóa tốt
+                  và giảm rêu tảo.
+                </p>
+              </div>
+            </details>
+
+            <details className="ga">
+              <summary>
+                <span className="gn">15</span>
+                <span className="gt">Hỗ trợ cảm giác tiêu hóa</span>
+                <span className="gx">+</span>
+              </summary>
+              <div className="gbody">
+                <p>Uống 2–3 ly nước mức 10× để hỗ trợ cảm giác dễ chịu khi đầy bụng, khó tiêu.</p>
+                <p>
+                  <b>Lưu ý:</b> nếu bạn khỏe mạnh bình thường thì không cần dùng nước mức 10× thường xuyên. Với các
+                  triệu chứng tiêu hóa kéo dài, hãy đi khám bác sĩ.
+                </p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <div className="wrap">
+        <div className="hr"></div>
+      </div>
+
+      <section className="section">
+        <div className="wrap">
+          <div className="tech-head reveal">
+            <span className="eyebrow">Bảo quản &amp; An toàn</span>
+            <h2>Bền bỉ, dễ chăm sóc</h2>
+          </div>
+          <div className="care-grid">
+            <div className="care reveal">
+              <h3>Vệ sinh &amp; độ bền</h3>
+              <div className="life">40 năm</div>
+              <p style={{ color: "var(--slate)", fontSize: "1.08rem", marginTop: "-2px" }}>
+                năng lượng duy trì ổn định, không suy giảm theo thời gian.
+              </p>
+              <ul>
+                <li>Vệ sinh bằng muối ăn / muối hồng / muối biển: chà nhẹ rồi rửa lại với nước.</li>
+                <li>Nếu ngâm đĩa trực tiếp vào nước, nên vệ sinh khoảng 1 lần/tuần.</li>
+                <li>Không dùng hóa chất tẩy rửa mạnh.</li>
+                <li>Vỏ silicone y tế giúp bảo vệ đĩa thủy tinh khi rơi va chạm.</li>
+              </ul>
+            </div>
+            <div className="care warn reveal">
+              <h3>Lưu ý an toàn</h3>
+              <ul>
+                <li>
+                  <b>Không khuyến nghị</b> cho người đang sử dụng máy tạo nhịp tim (pacemaker).
+                </li>
+                <li>An toàn khi sử dụng với người có cấy ghép kim loại, van tim cơ học hoặc cấy ghép silicone.</li>
+                <li>Không xịt/nhỏ vào mắt hoặc vết thương hở.</li>
+                <li>Không dùng thay thế cho nguồn nước sạch hợp vệ sinh, thuốc hay điều trị y tế.</li>
+                <li>Nếu có bệnh lý hoặc triệu chứng kéo dài, hãy tham khảo ý kiến bác sĩ.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="wrap">
+        <div className="hr"></div>
+      </div>
+
       <section className="section" style={{ paddingTop: "20px" }}>
         <div className="wrap">
           <div className="tech-head reveal">
@@ -473,8 +808,12 @@ export function SimetraLandingPage({
             Lưu ý: SANAREY Simetra là sản phẩm chăm sóc sức khỏe năng lượng, hướng đến việc hỗ trợ cân bằng và cảm
             giác khỏe khoắn. Sản phẩm không phải là thiết bị y tế hay thiết bị lọc/xử lý nước, và không nhằm mục
             đích chẩn đoán, điều trị, chữa khỏi hay ngăn ngừa bất kỳ bệnh nào, cũng không thay thế cho nguồn nước
-            sạch hợp vệ sinh hay tư vấn y tế. Các mô tả về "cộng hưởng", "tái cấu trúc nước" và lợi ích liên quan
-            phản ánh khái niệm của thương hiệu và chưa được các cơ quan y tế hay khoa học đánh giá, kiểm chứng.
+            sạch hợp vệ sinh, thuốc hay tư vấn/điều trị y tế. Các mô tả về &ldquo;cộng hưởng&rdquo;, &ldquo;tái cấu
+            trúc nước&rdquo; và mọi gợi ý sử dụng trong phần hướng dẫn (bao gồm các cách dùng liên quan đến sức
+            khỏe, xông hơi, xịt phun, thực phẩm chức năng…) phản ánh khái niệm và kinh nghiệm chia sẻ của thương
+            hiệu, chưa được các cơ quan y tế hay khoa học đánh giá, kiểm chứng. Không khuyến nghị dùng cho người sử
+            dụng máy tạo nhịp tim. Nếu bạn đang có vấn đề sức khỏe, đang mang thai hoặc đang dùng thuốc, hãy tham
+            khảo ý kiến chuyên gia y tế trước khi sử dụng.
           </p>
         </div>
       </footer>
@@ -672,6 +1011,46 @@ const SIMETRA_LANDING_CSS = `
 .simetra-landing-page .foot .price{text-align:right}
 .simetra-landing-page .foot .price .amt{font-family:var(--font-fraunces),serif;font-size:2.16rem;color:var(--bone)}
 .simetra-landing-page .disclaimer{margin-top:28px;color:#6B7285;font-size:.91rem;line-height:1.6;max-width:64em}
+
+.simetra-landing-page .charge{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:8px}
+.simetra-landing-page .cl{border:1px solid var(--line);border-radius:16px;padding:26px 22px;text-align:center;
+  background:linear-gradient(165deg,rgba(95,211,196,.03),transparent);position:relative}
+.simetra-landing-page .cl .lv{font-family:var(--font-fraunces),serif;font-size:2.88rem;color:var(--aurora-soft);line-height:1}
+.simetra-landing-page .cl h3{font-size:1.2rem;font-weight:600;color:var(--bone);margin-top:12px}
+.simetra-landing-page .cl p{margin-top:8px;color:var(--slate);font-size:1.03rem;line-height:1.5}
+.simetra-landing-page .cl .turns{font-size:.86rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-top:10px}
+@media(max-width:820px){.simetra-landing-page .charge{grid-template-columns:1fr 1fr}}
+@media(max-width:460px){.simetra-landing-page .charge{grid-template-columns:1fr}}
+
+.simetra-landing-page .guide{display:flex;flex-direction:column;gap:12px}
+.simetra-landing-page .ga{border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.012);overflow:hidden;transition:.25s}
+.simetra-landing-page .ga[open]{border-color:rgba(95,211,196,.4);background:rgba(95,211,196,.04)}
+.simetra-landing-page .ga summary{list-style:none;cursor:pointer;padding:22px 26px;display:flex;align-items:center;gap:18px;
+  font-family:var(--font-be-vietnam-pro),sans-serif}
+.simetra-landing-page .ga summary::-webkit-details-marker{display:none}
+.simetra-landing-page .ga summary .gn{font-family:var(--font-fraunces),serif;font-size:1.32rem;color:var(--aurora);
+  width:40px;height:40px;flex:none;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center}
+.simetra-landing-page .ga summary .gt{font-size:1.37rem;font-weight:500;color:var(--bone);flex:1}
+.simetra-landing-page .ga summary .gx{color:var(--slate);font-size:1.68rem;transition:transform .25s;flex:none}
+.simetra-landing-page .ga[open] summary .gx{transform:rotate(45deg);color:var(--aurora)}
+.simetra-landing-page .ga .gbody{padding:0 26px 24px 84px;color:#B9BEC9;font-size:1.15rem}
+.simetra-landing-page .ga .gbody p{margin-bottom:10px}
+.simetra-landing-page .ga .gbody p:last-child{margin-bottom:0}
+.simetra-landing-page .ga .gbody b{color:var(--bone);font-weight:500}
+.simetra-landing-page .ga .gbody .m{color:var(--aurora-soft);font-weight:500}
+@media(max-width:600px){.simetra-landing-page .ga summary{padding:18px 18px}.simetra-landing-page .ga .gbody{padding:0 18px 20px 18px}}
+
+.simetra-landing-page .care-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.simetra-landing-page .care{border:1px solid var(--line);border-radius:16px;padding:32px 30px;background:rgba(255,255,255,.012)}
+.simetra-landing-page .care.warn{border-color:var(--line-g);background:rgba(198,161,91,.05)}
+.simetra-landing-page .care h3{font-size:1.44rem;font-weight:500;color:var(--bone);display:flex;align-items:center;gap:.5em}
+.simetra-landing-page .care ul{margin-top:16px;list-style:none;display:flex;flex-direction:column;gap:10px;padding:0}
+.simetra-landing-page .care li{position:relative;padding-left:20px;color:#B9BEC9;font-size:1.13rem}
+.simetra-landing-page .care li::before{content:"✓";position:absolute;left:0;color:var(--aurora)}
+.simetra-landing-page .care.warn li::before{content:"!";color:var(--gold-soft);font-weight:700}
+.simetra-landing-page .care .life{font-family:var(--font-fraunces),serif;font-size:2.64rem;color:var(--aurora-soft);line-height:1;margin-bottom:6px}
+@media(max-width:760px){.simetra-landing-page .care-grid{grid-template-columns:1fr}}
+.simetra-landing-page .src-note{margin-top:16px;color:var(--slate);font-size:.98rem;font-style:italic}
 
 .simetra-landing-page .reveal{opacity:0;transform:translateY(24px);transition:opacity .8s ease,transform .8s ease}
 .simetra-landing-page .reveal.in{opacity:1;transform:none}
