@@ -17,12 +17,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LMS IGNITE",
+  title: "IGNITE VIETNAM",
   description: "Hệ thống đào tạo nội bộ 5 cấp",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "LMS IGNITE",
+    title: "IGNITE VIETNAM",
   },
 };
 

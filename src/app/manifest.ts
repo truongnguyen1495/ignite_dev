@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "LMS IGNITE",
-    short_name: "LMS IGNITE",
+    name: "IGNITE VIETNAM",
+    short_name: "IGNITE VIETNAM",
     description: "Hệ thống đào tạo nội bộ 5 cấp",
     start_url: "/",
     display: "standalone",

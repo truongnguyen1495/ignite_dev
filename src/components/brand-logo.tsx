@@ -15,7 +15,7 @@ export function BrandLogo({
           <Zap className="h-4 w-4" />
         </span>
         <span className={`text-lg font-bold ${navy ? "text-sidebar-foreground" : "text-foreground"}`}>
-          LMS <span className="text-primary">IGNITE</span>
+          IGNITE <span className="text-primary">VIETNAM</span>
         </span>
       </div>
       {subtitle && (
