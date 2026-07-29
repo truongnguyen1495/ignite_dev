@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { requireLeveledStudent, isSalesEnabled } from "@/lib/access";
+import { isSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { AriaLandingPage } from "@/components/product-landing/aria-landing";
 import { ActivaLandingPage } from "@/components/product-landing/activa-landing";
@@ -10,9 +10,15 @@ import { FloatingCartButton } from "@/components/floating-cart-button";
 // Deliberately outside /dashboard entirely — a bespoke landing page needs
 // its own full-bleed nav/hero with no sidebar/header squeezing it, which
 // dashboard/layout.tsx's shell can't opt out of per-route (Next.js layouts
-// always wrap their whole subtree). Still gated the same way every other
-// học-viên-only page is: requireLeveledStudent() redirects khách/học sinh
-// away exactly as it would under /dashboard.
+// always wrap their whole subtree). Public: no require*() gate here anymore
+// (removed the old requireLeveledStudent() call, and /product/:path* was
+// dropped from middleware.ts's matcher) — khách and "học sinh" (no-cấp
+// students) can both view the page now, same as /guest/*. Buying still
+// requires an account: ProductBuyButton/ConsultationButton call Server
+// Actions that each do their own requireActiveStudent()/requireLeveledStudent()
+// and redirect to /login on click if there's no session — that's the real,
+// DB-checked boundary, this page only ever controls whether the page itself
+// renders.
 //
 // Four bespoke templates exist today ("sanarey-aria", "sanarey-activa",
 // "sanarey-simetra", "sanarey-br9") — explicit one-off scope decision, not
@@ -23,7 +29,6 @@ export default async function ProductLandingPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  await requireLeveledStudent();
   const { slug } = await params;
   const [product, salesEnabled] = await Promise.all([
     prisma.product.findUnique({ where: { slug } }),

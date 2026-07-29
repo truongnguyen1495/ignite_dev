@@ -35,9 +35,11 @@ export default auth((req) => {
 });
 
 export const config = {
-  // /product/:path* is a học-viên-only bespoke product landing page living
-  // outside /dashboard (see src/app/product/[slug]/page.tsx) — needs the
-  // same fast unauthenticated-bounce as everything else, even though it
-  // isn't nested under /dashboard's own layout/middleware coverage.
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/product/:path*"],
+  // /product/:path* (bespoke product landing pages, src/app/product/[slug]/
+  // page.tsx) is intentionally NOT matched here — those pages are public
+  // now (khách and "học sinh" no-cấp students can both view them), same as
+  // /guest/*. The real boundary for buying still lives in the Server
+  // Actions those pages call (each does its own requireActiveStudent()/
+  // requireLeveledStudent()), never in this Edge-only fast path.
+  matcher: ["/dashboard/:path*", "/admin/:path*"],
 };

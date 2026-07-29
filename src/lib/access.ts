@@ -64,6 +64,20 @@ export async function requireActiveStudent(): Promise<User> {
   return user;
 }
 
+// Non-redirecting counterpart to requireActiveStudent, for pages that must
+// render for anonymous guests too (public product landing pages) but still
+// want to show student-only chrome (the floating cart icon) when a real
+// session happens to exist. Never call this to gate an actual mutation or
+// level-restricted read — every write path must keep using a require*
+// function so the "always redirect on failure" guarantee holds.
+export async function getActiveStudentOrNull(): Promise<User | null> {
+  const session = await auth();
+  if (!session?.user?.id) return null;
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (!user || user.status !== "ACTIVE" || user.role !== "STUDENT" || user.adminOnly) return null;
+  return user;
+}
+
 // A "no cấp" student (grantedLevel null — a self-registered account not yet
 // admitted into the 5-level system) is restricted to exclusive
 // courses/library/announcements/profile and the join-request page at

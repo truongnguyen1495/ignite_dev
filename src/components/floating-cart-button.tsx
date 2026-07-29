@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
-import { requireActiveStudent, isSalesEnabled } from "@/lib/access";
+import { getActiveStudentOrNull, isSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 
 // The 4 bespoke product landing pages (/product/[slug]) live entirely
@@ -10,9 +10,15 @@ import { prisma } from "@/lib/prisma";
 // support-chat widgets (dashboard/support-chat-widget.tsx) so it never
 // collides with a notch/home-indicator, and same icon as the dashboard
 // header's own cart link for a consistent look.
+//
+// Product pages are public now (guests and no-cấp students can view them —
+// see the page-level comment), so this must degrade to "render nothing"
+// for a signed-out visitor instead of the old requireActiveStudent(), which
+// would hard-redirect anyone without a session straight to /login just for
+// viewing the page.
 export async function FloatingCartButton() {
-  const [salesEnabled, student] = await Promise.all([isSalesEnabled(), requireActiveStudent()]);
-  if (!salesEnabled) return null;
+  const [salesEnabled, student] = await Promise.all([isSalesEnabled(), getActiveStudentOrNull()]);
+  if (!salesEnabled || !student) return null;
 
   const cartCount = await prisma.cartItem.count({ where: { studentId: student.id } });
 
