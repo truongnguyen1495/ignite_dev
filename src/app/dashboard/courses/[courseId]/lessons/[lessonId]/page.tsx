@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
-import { requireCourseLessonAccess } from "@/lib/access";
+import { ArrowLeft, ChevronLeft, ChevronRight, PlayCircle, ExternalLink } from "lucide-react";
+import { requireCourseLessonAccess, isSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
+import { getPricing } from "@/lib/pricing";
 import { YoutubeEmbed } from "@/components/youtube-embed";
 import { LessonMarkdown } from "@/components/lesson-markdown";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
+import { BuyButton } from "@/components/buy-button";
 import { groupLessonsByChapter } from "@/lib/course-lessons";
 import { CourseLessonSidebar, type SidebarGroup } from "@/components/course-lesson-sidebar";
 import { MarkCompleteButton } from "./mark-complete-button";
@@ -18,7 +20,7 @@ export default async function StudentCourseLessonPage({
   const { student, lesson, accessLevel } = await requireCourseLessonAccess(lessonId);
   const isTrial = accessLevel === "trial";
 
-  const [course, siblingLessons, completions, courseChapters] = await Promise.all([
+  const [course, siblingLessons, completions, courseChapters, salesEnabled] = await Promise.all([
     prisma.course.findUnique({ where: { id: lesson.courseId } }),
     prisma.courseLesson.findMany({
       where: { courseId: lesson.courseId },
@@ -33,6 +35,7 @@ export default async function StudentCourseLessonPage({
       orderBy: { order: "asc" },
       select: { id: true, title: true },
     }),
+    isSalesEnabled(),
   ]);
 
   const completedLessonIds = new Set(completions.map((c) => c.courseLessonId));
@@ -47,6 +50,11 @@ export default async function StudentCourseLessonPage({
     currentIndex >= 0 && currentIndex < totalLessons - 1 ? siblingLessons[currentIndex + 1] : null;
   const prevLesson = prevCandidate && isReachable(prevCandidate) ? prevCandidate : null;
   const nextLesson = nextCandidate && isReachable(nextCandidate) ? nextCandidate : null;
+
+  // Chapter numbers are always derived from list position, never stored —
+  // see the comment on the CourseChapter model in schema.prisma.
+  const chapterNumberById = new Map(courseChapters.map((c, i) => [c.id, i + 1]));
+  const lessonChapterNumber = lesson.chapterId ? chapterNumberById.get(lesson.chapterId) : undefined;
 
   // Groups the sidebar list under its chapter headings, matching the admin
   // editor's merged outline — but only when the course actually uses
@@ -70,26 +78,75 @@ export default async function StudentCourseLessonPage({
     })),
   }));
 
+  const trialVisibleCount = siblingLessons.filter((l) => l.visibleToGuest).length;
+  const lockedCount = totalLessons - trialVisibleCount;
+  const pricing = course ? getPricing(course) : { forSale: false as const };
+
   return (
     <div className="rounded-2xl border border-dark-border bg-dark-surface-raised p-4 sm:p-6">
-      <Link
-        href="/dashboard/courses"
-        className="inline-flex items-center gap-1.5 text-sm text-dark-muted hover:text-dark-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Quay lại
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link
+          href="/dashboard/courses"
+          className="inline-flex items-center gap-1.5 text-sm text-dark-muted hover:text-dark-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Quay lại
+        </Link>
+        {course && isTrial && salesEnabled && pricing.forSale && (
+          <BuyButton
+            kind="COURSE"
+            itemId={course.id}
+            label="Nâng cấp để mở khóa toàn bộ"
+            className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-danger px-3 py-1.5 text-xs font-medium text-white transition-colors hover:opacity-90"
+            details={{
+              title: course.title,
+              description: course.description,
+              coverImageUrl: course.coverImageUrl,
+              meta: `${totalLessons} bài học`,
+              price: pricing.chargeAmount,
+              originalPrice: pricing.originalPrice,
+            }}
+          />
+        )}
+      </div>
 
       {isTrial && (
         <p className="mt-4 rounded-lg border border-warning-border-strong bg-warning-bg px-3 py-2 text-xs text-warning">
-          Bạn đang <span className="font-semibold">học thử</span> khóa học này — chỉ xem được một số bài,
-          cần được cấp quyền đầy đủ để xem toàn bộ.
+          Bạn đang <span className="font-semibold">học thử</span> — xem được {trialVisibleCount}/{totalLessons} bài.{" "}
+          {salesEnabled && pricing.forSale
+            ? "Nâng cấp để mở toàn bộ khóa học."
+            : "Cần được cấp quyền để xem toàn bộ khóa học."}
         </p>
       )}
 
       <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-4">
-          {lesson.youtubeId && <YoutubeEmbed videoId={lesson.youtubeId} />}
+          <div className="relative">
+            {lesson.youtubeId ? (
+              <YoutubeEmbed videoId={lesson.youtubeId} />
+            ) : (
+              <div className="flex aspect-video w-full items-center justify-center rounded-lg border border-dark-border bg-dark-surface">
+                <PlayCircle className="h-10 w-10 text-dark-muted" />
+              </div>
+            )}
+            {lessonChapterNumber && (
+              <span className="pointer-events-none absolute bottom-2 right-2 rounded bg-black/70 px-2 py-0.5 text-[11px] font-medium text-white">
+                Chương {String(lessonChapterNumber).padStart(2, "0")}
+              </span>
+            )}
+          </div>
+
+          {lesson.youtubeId && (
+            <a
+              href={`https://www.youtube.com/watch?v=${lesson.youtubeId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-dark-muted hover:text-dark-foreground"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Xem trên YouTube
+            </a>
+          )}
 
           <div>
             {currentIndex >= 0 && (
@@ -146,7 +203,7 @@ export default async function StudentCourseLessonPage({
           </div>
         </div>
 
-        <aside className="lg:sticky lg:top-6 lg:self-start">
+        <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
           <div className="rounded-xl border border-dark-border bg-dark-surface p-4">
             {course && (
               <p className="truncate text-xs font-medium uppercase tracking-wide text-dark-muted">
@@ -166,6 +223,27 @@ export default async function StudentCourseLessonPage({
               />
             </div>
           </div>
+
+          {course && isTrial && salesEnabled && pricing.forSale && lockedCount > 0 && (
+            <div className="rounded-xl border border-primary/30 bg-primary-bg p-4 text-center">
+              <p className="text-sm font-medium text-dark-foreground">Mở khóa {lockedCount} bài còn lại</p>
+              <p className="text-xs text-dark-muted">Học trọn bộ {course.title}</p>
+              <BuyButton
+                kind="COURSE"
+                itemId={course.id}
+                label="Nâng cấp ngay"
+                className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+                details={{
+                  title: course.title,
+                  description: course.description,
+                  coverImageUrl: course.coverImageUrl,
+                  meta: `${totalLessons} bài học`,
+                  price: pricing.chargeAmount,
+                  originalPrice: pricing.originalPrice,
+                }}
+              />
+            </div>
+          )}
         </aside>
       </div>
     </div>

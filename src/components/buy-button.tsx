@@ -40,7 +40,22 @@ export type BuyButtonDetails = {
 // case (same bug, same dialog shape) before this fix — see that file's
 // longer comment. Matches the lightbox portal pattern already used in
 // book-element-renderer.tsx for the identical reason.
-export function BuyButton({ kind, itemId, details }: { kind: OrderItemKind; itemId: string; details: BuyButtonDetails }) {
+export function BuyButton({
+  kind,
+  itemId,
+  details,
+  label = "Mua ngay",
+  className,
+}: {
+  kind: OrderItemKind;
+  itemId: string;
+  details: BuyButtonDetails;
+  // Callers outside course-list/library-list (e.g. the lesson page's
+  // "Nâng cấp" CTAs) want different wording on the exact same cart/checkout
+  // dialog — everything below the trigger button stays identical on purpose.
+  label?: string;
+  className?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | undefined>();
@@ -76,10 +91,13 @@ export function BuyButton({ kind, itemId, details }: { kind: OrderItemKind; item
           setError(undefined);
           setOpen(true);
         }}
-        className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+        className={
+          className ??
+          "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+        }
       >
         <Zap className="h-3.5 w-3.5" />
-        Mua ngay
+        {label}
       </button>
 
       {open &&
