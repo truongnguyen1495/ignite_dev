@@ -73,6 +73,71 @@ enum OrderItemKind {
   PRODUCT
 }
 
+enum WhiteboardAccessRole {
+  VIEWER
+  COMMENTER
+  EDITOR
+}
+
+// Infinite-canvas collaborative whiteboard ("Bảng vẽ") — reachable by every
+// non-guest audience (Super Admin, Admin, học viên, học sinh) once
+// Settings.whiteboardsEnabled is on (see requireWhiteboardsEnabled in
+// src/lib/access.ts), unlike most other content models which are admin-only
+// to create. Access to one specific board is Google-Drive-style, resolved
+// by requireWhiteboardAccess: owner (createdBy) always full access, named
+// WhiteboardCollaborator rows next, then generalAccessRole as a fallback
+// for anyone signed in with the link. `elements` is the entire canvas as one
+// JSON array (whole-array last-write-wins autosave + Realtime broadcast, see
+// use-whiteboard-broadcast.ts) validated by whiteboardElementsPayloadSchema
+// in src/lib/whiteboard-elements.ts — not enforced at the DB layer.
+model Whiteboard {
+  id             String   @id @default(cuid())
+  title          String
+  createdById    String?
+  createdBy      User?    @relation("WhiteboardsCreated", fields: [createdById], references: [id], onDelete: SetNull)
+  lastEditedById String?
+  lastEditedBy   User?    @relation("WhiteboardsEdited", fields: [lastEditedById], references: [id], onDelete: SetNull)
+  elements       Json     @default("[]")
+  viewportX      Float    @default(0)
+  viewportY      Float    @default(0)
+  viewportZoom   Float    @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  // null = "Hạn chế" (restricted to the owner + named collaborators only,
+  // the default for a newly created board) — a non-null value opens the
+  // board to anyone signed in with the link, at that role (see
+  // requireWhiteboardAccess's step 4, which also auto-upserts a
+  // WhiteboardCollaborator row the first time a non-collaborator opens the
+  // board this way, mirroring real Google Drive's "Shared with me").
+  generalAccessRole WhiteboardAccessRole?
+
+  collaborators WhiteboardCollaborator[]
+
+  @@index([updatedAt])
+}
+
+// One row per named person a board's owner (or a Super Admin) has explicitly
+// shared it with — Google-Drive-style, see WhiteboardAccessRole and
+// requireWhiteboardAccess in src/lib/access.ts. Also the row auto-created the
+// first time someone reaches a board purely through its generalAccessRole
+// (see that same function's step 4), so a "anyone with the link" open
+// permanently adds the board to that person's own list even if general
+// access is later revoked.
+model WhiteboardCollaborator {
+  id           String               @id @default(cuid())
+  whiteboardId String
+  whiteboard   Whiteboard           @relation(fields: [whiteboardId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User                 @relation("WhiteboardCollaboratorUser", fields: [userId], references: [id], onDelete: Cascade)
+  role         WhiteboardAccessRole @default(EDITOR)
+  addedAt      DateTime             @default(now())
+  addedById    String?
+  addedBy      User?                @relation("WhiteboardCollaboratorAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
+
+  @@unique([whiteboardId, userId])
+  @@index([userId])
+}
+
 model User {
   id                  String        @id @default(cuid())
   email               String        @unique
@@ -165,6 +230,11 @@ model User {
   ordersConfirmed           Order[]                     @relation("OrderConfirmedBy")
   cartItems                 CartItem[]
   consultationRequests      ConsultationRequest[]
+
+  whiteboardsCreated            Whiteboard[]              @relation("WhiteboardsCreated")
+  whiteboardsEdited             Whiteboard[]              @relation("WhiteboardsEdited")
+  whiteboardCollaborations      WhiteboardCollaborator[]  @relation("WhiteboardCollaboratorUser")
+  whiteboardCollaboratorsAdded  WhiteboardCollaborator[]  @relation("WhiteboardCollaboratorAddedBy")
 
   @@index([role])
 }
@@ -395,6 +465,15 @@ model Settings {
   // access grants, level rules, etc.).
   enforceLessonWatchForHocSinh   Boolean  @default(true)
   enforceLessonWatchForHocVien   Boolean  @default(true)
+  // Single global master switch for the whole "Bảng vẽ" whiteboard feature,
+  // toggled from /admin/settings (Super Admin only — see
+  // isWhiteboardsEnabled/requireWhiteboardsEnabled in src/lib/access.ts).
+  // Unlike most other toggles in this model, this is NOT split by audience:
+  // off makes the feature unreachable for literally everyone, Super Admin
+  // included; on opens it to all 4 non-guest audiences (Super Admin, Admin,
+  // học viên, học sinh) at once, subject to each board's own per-board
+  // sharing (Whiteboard.generalAccessRole / WhiteboardCollaborator).
+  whiteboardsEnabled              Boolean  @default(false)
   updatedAt                      DateTime @updatedAt
 }
 

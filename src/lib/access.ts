@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import type { AdminPermissionKind, ChatThread, Level, Role, User } from "@prisma/client";
+import type { AdminPermissionKind, ChatThread, Level, Role, User, Whiteboard, WhiteboardAccessRole } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hasLevelAccess } from "@/lib/levels";
@@ -110,7 +110,13 @@ export function hasFullAdminAccess(user: User): boolean {
 // Same "fresh from DB, cached per request" shape as requireRole, but without
 // pinning a role — used by the permission helpers below, which need to
 // branch on role themselves rather than being redirected away by requireRole.
-const requireActiveUser = cache(async (): Promise<User> => {
+// Exported (unlike a purely internal helper) because it's also the exact
+// gate wanted for "any active logged-in account, either role" call sites
+// that have nothing to do with admin permissions — e.g. the whiteboard
+// upload routes (/api/admin/upload-whiteboard-image, -video) and gate #1 of
+// reaching /admin/whiteboards or /dashboard/whiteboards, both of which only
+// need a valid, active session, never a specific AdminPermissionKind.
+export const requireAnyActiveAccount = cache(async (): Promise<User> => {
   const session = await requireSession();
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (!user || user.status !== "ACTIVE") {
@@ -138,7 +144,7 @@ export const getAdminPermissions = cache(async (userId: string): Promise<Set<Adm
 // regardless of the AdminPermission table — that table only ever describes
 // a STUDENT's limited slice of /admin.
 export async function requireAdminPermission(permission: AdminPermissionKind): Promise<User> {
-  const user = await requireActiveUser();
+  const user = await requireAnyActiveAccount();
   if (hasFullAdminAccess(user)) {
     return user;
   }
@@ -156,7 +162,7 @@ export async function requireAdminPermission(permission: AdminPermissionKind): P
 // even though their list pages and request-review queues stay strictly
 // separate.
 export async function requireAnyAdminPermission(permissions: AdminPermissionKind[]): Promise<User> {
-  const user = await requireActiveUser();
+  const user = await requireAnyActiveAccount();
   if (hasFullAdminAccess(user)) {
     return user;
   }
@@ -200,7 +206,7 @@ export async function requireAnyAdminAccess(): Promise<{
   canManageAdmins: boolean;
   permissions: Set<AdminPermissionKind>;
 }> {
-  const user = await requireActiveUser();
+  const user = await requireAnyActiveAccount();
   if (user.role === "SUPER_ADMIN") {
     return { user, isSuperAdmin: true, isAdminManager: false, canManageAdmins: false, permissions: new Set() };
   }
@@ -227,7 +233,7 @@ export async function requireAnyAdminAccess(): Promise<{
 // capability (canManageAdmins) per Super Admin's decision, same spirit as
 // DEMOTE_STUDENTS being separate from plain MANAGE_STUDENTS above.
 export async function requireAdminManagementAccess(): Promise<{ user: User; isSuperAdmin: boolean }> {
-  const user = await requireActiveUser();
+  const user = await requireAnyActiveAccount();
   if (user.role === "SUPER_ADMIN") {
     return { user, isSuperAdmin: true };
   }
@@ -248,6 +254,25 @@ export async function isChatEnabled(): Promise<boolean> {
 
 export async function requireChatEnabled(redirectTo: string): Promise<void> {
   if (!(await isChatEnabled())) {
+    redirect(redirectTo);
+  }
+}
+
+// Single global master switch for the whole "Bảng vẽ" whiteboard feature,
+// toggled from /admin/settings (Super Admin only) — same fresh-from-DB
+// convention as isChatEnabled. Deliberately NOT split by audience the way
+// most other toggles in this file are: off makes the feature unreachable
+// for literally everyone, Super Admin included; on opens it to all 4
+// non-guest audiences (Super Admin, Admin, học viên, học sinh) at once,
+// subject to each board's own per-board sharing (see requireWhiteboardAccess
+// below).
+export async function isWhiteboardsEnabled(): Promise<boolean> {
+  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
+  return settings?.whiteboardsEnabled ?? false;
+}
+
+export async function requireWhiteboardsEnabled(redirectTo: string): Promise<void> {
+  if (!(await isWhiteboardsEnabled())) {
     redirect(redirectTo);
   }
 }
@@ -715,4 +740,98 @@ export async function requireAdminGroupThreadAccess(level: Level) {
   const admin = await requireAdminPermission("MANAGE_CHAT");
   await requireChatEnabled("/admin");
   return { admin, level };
+}
+
+// "OWNER" covers both a real SUPER_ADMIN and the board's own creator — both
+// imply full edit access AND the ability to manage sharing (see
+// canManageWhiteboardSharing below). The WhiteboardAccessRole values cover
+// an explicit per-person grant (WhiteboardCollaborator) or the board's
+// generalAccessRole, which may be VIEWER/COMMENTER (read-only — see
+// WhiteboardViewer) or EDITOR (full edit, but NOT sharing management).
+export type WhiteboardResolvedRole = "OWNER" | WhiteboardAccessRole;
+
+// The single choke point for opening ONE specific whiteboard — backs both
+// the admin per-board route and the student per-board route, so the access
+// rule only lives in one place. Returns null (not a redirect) if the board
+// itself doesn't exist, so callers can render their own notFound() rather
+// than this file needing to know each route's 404 UI; every actual ACCESS
+// denial redirects to `deniedRedirect` instead, same convention as
+// requireLibraryItemAccess/requireCourseAccess above.
+//
+// Rules, in order (deliberately simpler than Kian_project's reference
+// implementation — see this app's Role enum, which has no separate ADMIN
+// tier and no MANAGE_WHITEBOARDS permission, so there is no "admin team
+// gets blanket access to admin-owned boards" step here: an Admin's own
+// boards are exactly as private as a student's):
+//  1. SUPER_ADMIN — always allowed, role "OWNER".
+//  2. The board's owner (createdById) — always allowed, role "OWNER".
+//  3. An explicit WhiteboardCollaborator row — grants that row's own role.
+//  4. Otherwise, the board's generalAccessRole, if set — grants that role,
+//     AND upserts a WhiteboardCollaborator row for this user at that role
+//     (new behavior vs. Kian_project) so the board keeps showing up in this
+//     user's own board list from then on even if general access is later
+//     revoked, mirroring real Google Drive's "Shared with me."
+//  5. Otherwise — redirect(deniedRedirect).
+export async function requireWhiteboardAccess(
+  boardId: string,
+  deniedRedirect: string
+): Promise<{ user: User; board: Whiteboard; role: WhiteboardResolvedRole } | null> {
+  await requireWhiteboardsEnabled(deniedRedirect);
+
+  const session = await requireSession();
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (!user || user.status !== "ACTIVE") {
+    redirect("/login");
+  }
+
+  const board = await prisma.whiteboard.findUnique({ where: { id: boardId } });
+  if (!board) {
+    return null;
+  }
+
+  if (user.role === "SUPER_ADMIN") {
+    return { user, board, role: "OWNER" };
+  }
+  if (board.createdById === user.id) {
+    return { user, board, role: "OWNER" };
+  }
+
+  const grant = await prisma.whiteboardCollaborator.findUnique({
+    where: { whiteboardId_userId: { whiteboardId: boardId, userId: user.id } },
+  });
+  if (grant) {
+    return { user, board, role: grant.role };
+  }
+
+  if (board.generalAccessRole) {
+    await prisma.whiteboardCollaborator.upsert({
+      where: { whiteboardId_userId: { whiteboardId: boardId, userId: user.id } },
+      create: { whiteboardId: boardId, userId: user.id, role: board.generalAccessRole },
+      update: {},
+    });
+    return { user, board, role: board.generalAccessRole };
+  }
+
+  redirect(deniedRedirect);
+}
+
+// Whether `user` may manage WHO ELSE can edit `board` — narrower than
+// requireWhiteboardAccess's "can open this board at all": a collaborator,
+// even an Editor, can edit content but not the share list itself, same as a
+// Google Doc's can-edit vs can-share distinction. Only the true owner or a
+// Super Admin may manage sharing.
+export async function canManageWhiteboardSharing(
+  user: User,
+  board: { createdById: string | null }
+): Promise<boolean> {
+  return user.role === "SUPER_ADMIN" || board.createdById === user.id;
+}
+
+// Whether a resolved requireWhiteboardAccess role may mutate board content
+// (save/rename/delete) — VIEWER/COMMENTER are read-only (see
+// WhiteboardViewer), OWNER/EDITOR are not. A single named check so the
+// admin and student action files don't each hardcode the same
+// `role === "OWNER" || role === "EDITOR"` comparison.
+export function canEditWhiteboard(role: WhiteboardResolvedRole): boolean {
+  return role === "OWNER" || role === "EDITOR";
 }

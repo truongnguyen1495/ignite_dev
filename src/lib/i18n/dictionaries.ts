@@ -35,6 +35,7 @@ export const dictionaries = {
       adminManagement: "Quản lý Admin",
       settings: "Cài đặt",
       backToStudentPage: "Về trang học viên",
+      whiteboards: "Bảng vẽ",
     },
     dashboardNav: {
       fiveLevelTraining: "5 Cấp đào tạo",
@@ -46,6 +47,7 @@ export const dictionaries = {
       levelUp: "Xin lên cấp",
       profile: "Thông tin cá nhân",
       goToAdmin: "Vào trang Admin",
+      whiteboards: "Bảng vẽ",
     },
     hocSinhNav: {
       home: "Trang chủ",
@@ -55,6 +57,7 @@ export const dictionaries = {
       products: "Sản phẩm",
       joinFiveLevel: "Tham gia hệ thống 5 cấp",
       profile: "Thông tin cá nhân",
+      whiteboards: "Bảng vẽ",
     },
     guestNav: {
       home: "Trang chủ",
@@ -89,6 +92,9 @@ export const dictionaries = {
         "Bật/tắt tự động xác nhận đơn hàng khi có chuyển khoản khớp mã đơn qua webhook SePay. Cần cấu hình SEPAY_WEBHOOK_SECRET trước khi bật. Khi tắt, admin vẫn xác nhận thanh toán thủ công như bình thường ở trang \"Đơn hàng\".",
       adminManagementTitle: "Quản lý Admin",
       adminManagementDescription: "Cấp/thu hồi quyền admin cho tài khoản, xem toàn bộ thông tin từng admin.",
+      whiteboardsTitle: "Bảng vẽ",
+      whiteboardsDescription:
+        "Bật/tắt tính năng bảng vẽ cộng tác (sơ đồ, mindmap, ghi chú) cho Super Admin, Admin, học viên và học sinh. Khi tắt, toàn bộ tính năng ẩn đi với mọi người, kể cả Super Admin.",
     },
     dashboardHomePage: {
       welcomeBack: "Chào mừng trở lại,",
@@ -159,6 +165,7 @@ export const dictionaries = {
       adminManagement: "Admin management",
       settings: "Settings",
       backToStudentPage: "Back to student view",
+      whiteboards: "Whiteboards",
     },
     dashboardNav: {
       fiveLevelTraining: "5-Level training",
@@ -170,6 +177,7 @@ export const dictionaries = {
       levelUp: "Request level-up",
       profile: "Profile",
       goToAdmin: "Go to Admin",
+      whiteboards: "Whiteboards",
     },
     hocSinhNav: {
       home: "Home",
@@ -179,6 +187,7 @@ export const dictionaries = {
       products: "Products",
       joinFiveLevel: "Join the 5-level system",
       profile: "Profile",
+      whiteboards: "Whiteboards",
     },
     guestNav: {
       home: "Home",
@@ -213,6 +222,9 @@ export const dictionaries = {
         'Turn on to auto-confirm an order once a matching bank transfer arrives via the SePay webhook. Requires SEPAY_WEBHOOK_SECRET to be configured first. When off, admins still confirm payments manually as usual on the "Orders" page.',
       adminManagementTitle: "Admin management",
       adminManagementDescription: "Grant or revoke admin permissions per account, and view each admin's full details.",
+      whiteboardsTitle: "Whiteboards",
+      whiteboardsDescription:
+        "Turn the collaborative whiteboard feature (diagrams, mindmaps, notes) on or off for Super Admin, Admin, students, and prospective students. When off, the whole feature is hidden from everyone, Super Admin included.",
     },
     dashboardHomePage: {
       welcomeBack: "Welcome back,",

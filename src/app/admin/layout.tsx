@@ -17,12 +17,15 @@ import {
   Receipt,
   Package,
   Phone,
+  Presentation,
 } from "lucide-react";
-import { requireAnyAdminAccess, isChatEnabled, isSalesEnabled } from "@/lib/access";
+import { requireAnyAdminAccess, isChatEnabled, isSalesEnabled, isWhiteboardsEnabled } from "@/lib/access";
 import { getAdminSupportInbox } from "@/lib/chat";
 import { getAdminGuestChatInbox } from "@/lib/guest-chat";
 import { getDictionary } from "@/lib/i18n/get-locale";
 import { Sidebar, SidebarProvider, SidebarToggle, type NavItem } from "@/components/ui/sidebar";
+import { AppHeader } from "@/components/ui/admin-header";
+import { MainContent } from "@/components/ui/main-content";
 import { BrandLogo } from "@/components/brand-logo";
 import { LogoutButton } from "@/components/logout-button";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
@@ -30,6 +33,11 @@ import { InstallAppButton } from "@/components/install-app-button";
 import type { AdminPermissionKind } from "@prisma/client";
 
 const iconClass = "h-4 w-4";
+
+// The whiteboards LIST page (/admin/whiteboards, no boardId) deliberately
+// keeps the normal padded card-grid look; only the editor route opts out of
+// the padded/max-width wrapper (see MainContent's own comment for why).
+const ADMIN_FULL_BLEED_PATTERN = "^/admin/whiteboards/[^/]+$";
 
 // Every admin page reads live, per-admin data (permissions, unread chat
 // counts, toggleable settings) through this layout — it must never be
@@ -55,6 +63,7 @@ export default async function AdminLayout({
   const canManageChat = chatEnabled && canManage("MANAGE_CHAT");
   const salesEnabled = await isSalesEnabled();
   const canManageOrders = salesEnabled && canManage("MANAGE_ORDERS");
+  const whiteboardsEnabled = await isWhiteboardsEnabled();
   const [supportThreads, guestThreads] = canManageChat
     ? await Promise.all([getAdminSupportInbox(admin.id), getAdminGuestChatInbox(admin.id)])
     : [[], []];
@@ -67,6 +76,12 @@ export default async function AdminLayout({
   // that specific slice (or the caller is a full Super Admin).
   const ALL_NAV_ITEMS: { item: NavItem; permission?: AdminPermissionKind }[] = [
     { item: { href: "/admin", label: t.adminNav.overview, icon: <LayoutDashboard className={iconClass} />, exact: true } },
+    // No `permission` — unconditionally visible to anyone who reached
+    // /admin at all (this app has no MANAGE_WHITEBOARDS permission; the
+    // only gate is the whiteboardsEnabled master switch, checked below).
+    ...(whiteboardsEnabled
+      ? [{ item: { href: "/admin/whiteboards", label: t.adminNav.whiteboards, icon: <Presentation className={iconClass} /> } }]
+      : []),
     {
       item: {
         href: "/admin/prospective-students",
@@ -179,33 +194,34 @@ export default async function AdminLayout({
         brand={<BrandLogo subtitle={t.brandSubtitle.admin} variant="navy" />}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-8 sm:py-4">
-          <SidebarToggle />
-          <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
-            {!isSuperAdmin && !admin.adminOnly && (
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-primary/50 hover:text-foreground"
-              >
-                <GraduationCap className="h-3.5 w-3.5" />
-                {t.adminNav.backToStudentPage}
-              </Link>
-            )}
-            <span className="flex min-w-0 items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs text-muted">
-              <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-primary" />
-              <span className="truncate">{admin.name}</span>
-              <span className="hidden shrink-0 text-foreground sm:inline">
-                ({isSuperAdmin ? t.common.superAdmin : isAdminManager ? t.common.adminManager : t.common.admin})
+        <AppHeader
+          fullBleedPattern={ADMIN_FULL_BLEED_PATTERN}
+          left={<SidebarToggle />}
+          right={
+            <>
+              {!isSuperAdmin && !admin.adminOnly && (
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-primary/50 hover:text-foreground"
+                >
+                  <GraduationCap className="h-3.5 w-3.5" />
+                  {t.adminNav.backToStudentPage}
+                </Link>
+              )}
+              <span className="flex min-w-0 items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs text-muted">
+                <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-primary" />
+                <span className="truncate">{admin.name}</span>
+                <span className="hidden shrink-0 text-foreground sm:inline">
+                  ({isSuperAdmin ? t.common.superAdmin : isAdminManager ? t.common.adminManager : t.common.admin})
+                </span>
               </span>
-            </span>
-            <InstallAppButton />
-            <LanguageSwitcher />
-            <LogoutButton label={t.common.logout} />
-          </div>
-        </header>
-        <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">
-          <div className="mx-auto w-full max-w-7xl">{children}</div>
-        </main>
+              <InstallAppButton />
+              <LanguageSwitcher />
+              <LogoutButton label={t.common.logout} />
+            </>
+          }
+        />
+        <MainContent fullBleedPattern={ADMIN_FULL_BLEED_PATTERN}>{children}</MainContent>
       </div>
     </SidebarProvider>
   );

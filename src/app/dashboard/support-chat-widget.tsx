@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { MessageCircle, X, Loader2 } from "lucide-react";
 import { useChatBroadcast } from "@/lib/use-chat-broadcast";
 import { ChatMessageList, type ChatMessageRow } from "@/components/chat-message-list";
@@ -13,6 +14,7 @@ import { openSupportChatAction, fetchSupportMessagesAction, sendSupportMessageAc
 // no sidebar/chat nav item. Deliberately mirrors GuestChatWidget's UI/layout
 // so the experience matches what the student already saw as a guest.
 export function SupportChatWidget({ studentId }: { studentId: string }) {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [hasOpenedOnce, setHasOpenedOnce] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -40,6 +42,12 @@ export function SupportChatWidget({ studentId }: { studentId: string }) {
     setMessages(await fetchSupportMessagesAction());
     return undefined;
   }
+
+  // Same full-bleed whiteboard editor route as DASHBOARD_FULL_BLEED_PATTERN
+  // in dashboard/layout.tsx — the canvas fills the whole viewport and the
+  // editor already has its own floating chrome; a chat bubble here would sit
+  // on top of the canvas and its own toolbar, not the page around it.
+  if (pathname && /^\/dashboard\/whiteboards\/[^/]+$/.test(pathname)) return null;
 
   return (
     <div className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-[calc(1.25rem+env(safe-area-inset-right))] z-40 flex flex-col items-end gap-3">

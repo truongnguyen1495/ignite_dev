@@ -75,6 +75,16 @@ export async function setAutoPaymentEnabledAction(autoPaymentEnabled: boolean) {
   revalidatePath("/admin/settings");
 }
 
+export async function setWhiteboardsEnabledAction(whiteboardsEnabled: boolean) {
+  await requireActiveSuperAdmin();
+  await prisma.settings.upsert({
+    where: { id: 1 },
+    update: { whiteboardsEnabled },
+    create: { id: 1, whiteboardsEnabled },
+  });
+  revalidatePath("/admin/settings");
+}
+
 const bankInfoSchema = z.object({
   bankName: z.string().trim().optional(),
   bankAccountNumber: z.string().trim().optional(),
