@@ -138,32 +138,33 @@ model User {
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
-  quizAttempts            QuizAttempt[]
-  emailVerificationTokens EmailVerificationToken[] @relation("EmailVerificationTokens")
-  passwordResetTokens     PasswordResetToken[]     @relation("PasswordResetTokens")
-  levelUpRequests         LevelUpRequest[]         @relation("StudentRequests")
-  reviewedRequests        LevelUpRequest[]         @relation("ReviewerActions")
-  courseGrants            CourseAccessGrant[]      @relation("CourseGrants")
-  courseGrantsGiven       CourseAccessGrant[]      @relation("CourseGrantsGiven")
-  courseLessonCompletions CourseLessonCompletion[] @relation("CourseLessonCompletions")
-  courseLevelGrantsGiven  CourseLevelGrant[]       @relation("CourseLevelGrantsGiven")
-  announcementReads       AnnouncementRead[]
-  libraryGrants           LibraryAccessGrant[]     @relation("LibraryGrants")
-  libraryGrantsGiven      LibraryAccessGrant[]     @relation("LibraryGrantsGiven")
-  libraryLevelGrantsGiven LibraryLevelGrant[]      @relation("LibraryLevelGrantsGiven")
-  chatMessagesSent        ChatMessage[]            @relation("ChatMessagesSent")
-  chatThreadReads         ChatThreadRead[]         @relation("ChatThreadReads")
-  supportThread           ChatThread?              @relation("SupportThreadOfStudent")
-  directThreadsAsUserA    ChatThread[]             @relation("DirectThreadAsUserA")
-  directThreadsAsUserB    ChatThread[]             @relation("DirectThreadAsUserB")
-  adminPermissions        AdminPermission[]        @relation("AdminPermissions")
-  adminPermissionsGranted AdminPermission[]        @relation("AdminPermissionsGranted")
-  guestChatMessagesSent   GuestChatMessage[]       @relation("GuestChatMessagesSent")
-  guestChatThreadReads    GuestChatThreadRead[]    @relation("GuestChatThreadReads")
-  orders                  Order[]                  @relation("StudentOrders")
-  ordersConfirmed         Order[]                  @relation("OrderConfirmedBy")
-  cartItems               CartItem[]
-  consultationRequests    ConsultationRequest[]
+  quizAttempts              QuizAttempt[]
+  emailVerificationTokens   EmailVerificationToken[]    @relation("EmailVerificationTokens")
+  passwordResetTokens       PasswordResetToken[]        @relation("PasswordResetTokens")
+  levelUpRequests           LevelUpRequest[]            @relation("StudentRequests")
+  reviewedRequests          LevelUpRequest[]            @relation("ReviewerActions")
+  courseGrants              CourseAccessGrant[]         @relation("CourseGrants")
+  courseGrantsGiven         CourseAccessGrant[]         @relation("CourseGrantsGiven")
+  courseLessonCompletions   CourseLessonCompletion[]    @relation("CourseLessonCompletions")
+  courseLessonWatchProgress CourseLessonWatchProgress[] @relation("CourseLessonWatchProgress")
+  courseLevelGrantsGiven    CourseLevelGrant[]          @relation("CourseLevelGrantsGiven")
+  announcementReads         AnnouncementRead[]
+  libraryGrants             LibraryAccessGrant[]        @relation("LibraryGrants")
+  libraryGrantsGiven        LibraryAccessGrant[]        @relation("LibraryGrantsGiven")
+  libraryLevelGrantsGiven   LibraryLevelGrant[]         @relation("LibraryLevelGrantsGiven")
+  chatMessagesSent          ChatMessage[]               @relation("ChatMessagesSent")
+  chatThreadReads           ChatThreadRead[]            @relation("ChatThreadReads")
+  supportThread             ChatThread?                 @relation("SupportThreadOfStudent")
+  directThreadsAsUserA      ChatThread[]                @relation("DirectThreadAsUserA")
+  directThreadsAsUserB      ChatThread[]                @relation("DirectThreadAsUserB")
+  adminPermissions          AdminPermission[]           @relation("AdminPermissions")
+  adminPermissionsGranted   AdminPermission[]           @relation("AdminPermissionsGranted")
+  guestChatMessagesSent     GuestChatMessage[]          @relation("GuestChatMessagesSent")
+  guestChatThreadReads      GuestChatThreadRead[]       @relation("GuestChatThreadReads")
+  orders                    Order[]                     @relation("StudentOrders")
+  ordersConfirmed           Order[]                     @relation("OrderConfirmedBy")
+  cartItems                 CartItem[]
+  consultationRequests      ConsultationRequest[]
 
   @@index([role])
 }
@@ -328,30 +329,30 @@ model LevelUpRequest {
 }
 
 model Settings {
-  id                       Int      @id @default(1)
-  passPercentage           Int      @default(80)
-  chatEnabled              Boolean  @default(true)
+  id                             Int      @id @default(1)
+  passPercentage                 Int      @default(80)
+  chatEnabled                    Boolean  @default(true)
   // Master switch for public self-registration at /register — toggled from
   // /admin/settings (see isRegistrationEnabled in src/lib/access.ts). When
   // false, new signups are rejected; existing accounts are unaffected.
-  registrationEnabled      Boolean  @default(true)
+  registrationEnabled            Boolean  @default(true)
   // Master switch for the "Mua ngay" buy flow (see isSalesEnabled in
   // src/lib/access.ts) — defaults off since bank info below starts empty;
   // Super Admin turns it on once bankName/bankAccountNumber are filled in.
   // Never hides /admin/orders or a student's own order history, only new
   // purchases.
-  salesEnabled             Boolean  @default(false)
+  salesEnabled                   Boolean  @default(false)
   // Master switch for the bilingual (Tiếng Việt/English) UI — toggled from
   // /admin/settings (see isBilingualEnabled in src/lib/access.ts). When
   // false, every area always renders Vietnamese regardless of a visitor's
   // saved language cookie, and the language switcher is hidden.
-  bilingualEnabled         Boolean  @default(false)
+  bilingualEnabled               Boolean  @default(false)
   // Master switch for requiring email verification before login — toggled
   // from /admin/settings (see isEmailVerificationEnabled in src/lib/access.ts).
   // Defaults off so nothing changes until a Super Admin opts in (needs a
   // working RESEND_API_KEY configured first). When off, authorize() never
   // checks User.emailVerified at all.
-  emailVerificationEnabled Boolean  @default(false)
+  emailVerificationEnabled       Boolean  @default(false)
   // Master switch for the "Đăng nhập bằng Google" button and the Google
   // OAuth flow itself (see isGoogleLoginEnabled in src/lib/access.ts and the
   // signIn callback in src/lib/auth.ts). Defaults off so nothing changes
@@ -359,11 +360,11 @@ model Settings {
   // first). A brand-new account is only auto-created on first Google
   // sign-in if registrationEnabled is ALSO on — reuses that existing switch
   // rather than adding a second "who can register" toggle.
-  googleLoginEnabled       Boolean  @default(false)
-  bankName                 String?
-  bankAccountNumber        String?
-  bankAccountHolder        String?
-  bankQrImageUrl           String?
+  googleLoginEnabled             Boolean  @default(false)
+  bankName                       String?
+  bankAccountNumber              String?
+  bankAccountHolder              String?
+  bankQrImageUrl                 String?
   // Master switch for auto-confirming orders via the SePay bank-transfer
   // webhook (see isAutoPaymentEnabled in src/lib/access.ts and
   // src/app/api/webhooks/sepay/route.ts). Read fresh at webhook-processing
@@ -374,8 +375,27 @@ model Settings {
   // falling back to the pre-existing manual admin confirm
   // (confirmOrderPaidAction), which always stays available regardless of
   // this switch. Defaults off — needs SEPAY_WEBHOOK_SECRET configured first.
-  autoPaymentEnabled       Boolean  @default(false)
-  updatedAt                DateTime @updatedAt
+  autoPaymentEnabled             Boolean  @default(false)
+  // Video-watch gate for course lessons (see CourseLessonWatchProgress) —
+  // a student must accumulate this % of a lesson's real, actually-playing
+  // watch time before "Đánh dấu hoàn thành" unlocks. Percent is global (one
+  // knob, not per-course/per-lesson) to keep the admin UI simple; only
+  // takes effect on a lesson that has a YouTube video AND a known
+  // CourseLesson.durationSeconds (see fetchYoutubeDurationSeconds) — a
+  // lesson missing either just behaves as before (button never locked).
+  lessonWatchThresholdPercent    Int      @default(80)
+  // Whether the "Đã xem N%" badge renders at all for anonymous guests on
+  // /guest/* — guests have no account to persist progress against, so this
+  // is purely a same-session, never-saved display; it can never lock
+  // anything for a guest (there's no completion button to lock there).
+  showLessonWatchProgressToGuest Boolean  @default(true)
+  // Independent per-audience switches — a "học sinh" (grantedLevel null)
+  // and a "học viên" (grantedLevel set) can be gated separately, matching
+  // this app's existing học-sinh/học-viên split everywhere else (course
+  // access grants, level rules, etc.).
+  enforceLessonWatchForHocSinh   Boolean  @default(true)
+  enforceLessonWatchForHocVien   Boolean  @default(true)
+  updatedAt                      DateTime @updatedAt
 }
 
 // One-time link token emailed on registration (and by the "Gửi lại email
@@ -513,7 +533,8 @@ model CourseLesson {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
-  completions CourseLessonCompletion[]
+  completions   CourseLessonCompletion[]
+  watchProgress CourseLessonWatchProgress[]
 
   @@index([courseId, order])
   @@index([chapterId])
@@ -526,6 +547,32 @@ model CourseLessonCompletion {
   courseLessonId String
   courseLesson   CourseLesson @relation(fields: [courseLessonId], references: [id], onDelete: Cascade)
   completedAt    DateTime     @default(now())
+
+  @@unique([studentId, courseLessonId])
+  @@index([studentId])
+}
+
+// Separate from CourseLessonCompletion on purpose — this row exists (and
+// keeps getting upserted) from the very first tick of playback, long
+// before a lesson is actually complete, whereas every existing
+// `courseLessonCompletion.findMany(...)` call site across the app treats
+// "a row exists for this lesson" as shorthand for "done" (progress
+// bars/counts, sidebar checkmarks). Reusing that model here would have
+// meant auditing and fixing every one of those call sites; a parallel
+// model is the established convention in this schema for exactly this
+// situation (see the CourseLesson-vs-Lesson split note in the same spot).
+// `watchedSeconds` is monotonic (never decreases — see
+// syncLessonWatchProgressAction) and is real accumulated wall-clock time
+// spent actively PLAYING, not "furthest point ever reached" — resistant to
+// a student seeking straight to the 80% mark without actually watching.
+model CourseLessonWatchProgress {
+  id             String       @id @default(cuid())
+  studentId      String
+  student        User         @relation("CourseLessonWatchProgress", fields: [studentId], references: [id], onDelete: Cascade)
+  courseLessonId String
+  courseLesson   CourseLesson @relation(fields: [courseLessonId], references: [id], onDelete: Cascade)
+  watchedSeconds Int          @default(0)
+  updatedAt      DateTime     @updatedAt
 
   @@unique([studentId, courseLessonId])
   @@index([studentId])

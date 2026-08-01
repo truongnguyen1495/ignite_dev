@@ -117,3 +117,36 @@ export async function setBankInfoAction(
   revalidatePath("/admin/settings");
   return undefined;
 }
+
+const lessonWatchSettingsSchema = z.object({
+  lessonWatchThresholdPercent: z.coerce.number().int().min(1, "Ngưỡng phải từ 1 đến 100.").max(100, "Ngưỡng phải từ 1 đến 100."),
+});
+
+export async function setLessonWatchSettingsAction(
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  await requireActiveSuperAdmin();
+
+  const parsed = lessonWatchSettingsSchema.safeParse({
+    lessonWatchThresholdPercent: formData.get("lessonWatchThresholdPercent"),
+  });
+  if (!parsed.success) {
+    return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
+  }
+
+  const data = {
+    lessonWatchThresholdPercent: parsed.data.lessonWatchThresholdPercent,
+    showLessonWatchProgressToGuest: formData.get("showLessonWatchProgressToGuest") === "on",
+    enforceLessonWatchForHocSinh: formData.get("enforceLessonWatchForHocSinh") === "on",
+    enforceLessonWatchForHocVien: formData.get("enforceLessonWatchForHocVien") === "on",
+  };
+
+  await prisma.settings.upsert({
+    where: { id: 1 },
+    update: data,
+    create: { id: 1, ...data },
+  });
+  revalidatePath("/admin/settings");
+  return undefined;
+}

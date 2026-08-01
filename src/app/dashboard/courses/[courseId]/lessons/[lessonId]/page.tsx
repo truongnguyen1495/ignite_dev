@@ -3,7 +3,8 @@ import { ArrowLeft, ChevronLeft, ChevronRight, PlayCircle, ExternalLink } from "
 import { requireCourseLessonAccess, isSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { getPricing } from "@/lib/pricing";
-import { YoutubeEmbed } from "@/components/youtube-embed";
+import { YoutubeTrackedEmbed } from "@/components/youtube-tracked-embed";
+import { LessonWatchProgressProvider } from "@/components/lesson-watch-progress-provider";
 import { LessonMarkdown } from "@/components/lesson-markdown";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { BuyButton } from "@/components/buy-button";
@@ -20,23 +21,38 @@ export default async function StudentCourseLessonPage({
   const { student, lesson, accessLevel } = await requireCourseLessonAccess(lessonId);
   const isTrial = accessLevel === "trial";
 
-  const [course, siblingLessons, completions, courseChapters, salesEnabled] = await Promise.all([
-    prisma.course.findUnique({ where: { id: lesson.courseId } }),
-    prisma.courseLesson.findMany({
-      where: { courseId: lesson.courseId },
-      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
-    }),
-    prisma.courseLessonCompletion.findMany({
-      where: { studentId: student.id, courseLesson: { courseId: lesson.courseId } },
-      select: { courseLessonId: true },
-    }),
-    prisma.courseChapter.findMany({
-      where: { courseId: lesson.courseId },
-      orderBy: { order: "asc" },
-      select: { id: true, title: true },
-    }),
-    isSalesEnabled(),
-  ]);
+  const [course, siblingLessons, completions, courseChapters, salesEnabled, settings, watchProgress] =
+    await Promise.all([
+      prisma.course.findUnique({ where: { id: lesson.courseId } }),
+      prisma.courseLesson.findMany({
+        where: { courseId: lesson.courseId },
+        orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+      }),
+      prisma.courseLessonCompletion.findMany({
+        where: { studentId: student.id, courseLesson: { courseId: lesson.courseId } },
+        select: { courseLessonId: true },
+      }),
+      prisma.courseChapter.findMany({
+        where: { courseId: lesson.courseId },
+        orderBy: { order: "asc" },
+        select: { id: true, title: true },
+      }),
+      isSalesEnabled(),
+      prisma.settings.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } }),
+      prisma.courseLessonWatchProgress.findUnique({
+        where: { studentId_courseLessonId: { studentId: student.id, courseLessonId: lessonId } },
+        select: { watchedSeconds: true },
+      }),
+    ]);
+
+  // See Settings.lessonWatchThresholdPercent in schema.prisma — only
+  // applies when the lesson actually has a video with a known duration;
+  // missing either and the "Đánh dấu hoàn thành" button behaves exactly as
+  // it did before this feature existed.
+  const watchGateEnforced =
+    !!(lesson.youtubeId && lesson.durationSeconds) &&
+    (student.grantedLevel === null ? settings.enforceLessonWatchForHocSinh : settings.enforceLessonWatchForHocVien);
+  const initialWatchedSeconds = watchProgress?.watchedSeconds ?? 0;
 
   const completedLessonIds = new Set(completions.map((c) => c.courseLessonId));
   const currentIndex = siblingLessons.findIndex((l) => l.id === lessonId);
@@ -83,6 +99,11 @@ export default async function StudentCourseLessonPage({
   const pricing = course ? getPricing(course) : { forSale: false as const };
 
   return (
+    <LessonWatchProgressProvider
+      lessonId={lesson.id}
+      durationSeconds={lesson.durationSeconds}
+      initialWatchedSeconds={initialWatchedSeconds}
+    >
     <div className="rounded-2xl border border-border bg-surface p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
@@ -123,7 +144,11 @@ export default async function StudentCourseLessonPage({
         <div className="min-w-0 space-y-4">
           <div className="relative">
             {lesson.youtubeId ? (
-              <YoutubeEmbed videoId={lesson.youtubeId} />
+              <YoutubeTrackedEmbed
+                videoId={lesson.youtubeId}
+                durationSeconds={lesson.durationSeconds}
+                initialWatchedSeconds={initialWatchedSeconds}
+              />
             ) : (
               <div className="flex aspect-video w-full items-center justify-center rounded-lg border border-border bg-faint-bg">
                 <PlayCircle className="h-10 w-10 text-muted" />
@@ -166,7 +191,12 @@ export default async function StudentCourseLessonPage({
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-            <MarkCompleteButton lessonId={lesson.id} completed={completedLessonIds.has(lesson.id)} />
+            <MarkCompleteButton
+              lessonId={lesson.id}
+              completed={completedLessonIds.has(lesson.id)}
+              enforced={watchGateEnforced}
+              thresholdPercent={settings.lessonWatchThresholdPercent}
+            />
 
             <div className="flex items-center gap-2">
               {prevLesson ? (
@@ -244,5 +274,6 @@ export default async function StudentCourseLessonPage({
         </aside>
       </div>
     </div>
+    </LessonWatchProgressProvider>
   );
 }

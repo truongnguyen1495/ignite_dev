@@ -13,6 +13,7 @@ import { EmailVerificationToggle } from "./email-verification-toggle";
 import { GoogleLoginToggle } from "./google-login-toggle";
 import { BankInfoForm } from "./bank-info-form";
 import { AutoPaymentToggle } from "./auto-payment-toggle";
+import { LessonWatchProgressForm } from "./lesson-watch-progress-form";
 
 export default async function SettingsPage() {
   await requireActiveSuperAdmin();
@@ -50,6 +51,14 @@ export default async function SettingsPage() {
       </Card>
       <Card className="max-w-lg">
         <AutoPaymentToggle autoPaymentEnabled={settings.autoPaymentEnabled} />
+      </Card>
+      <Card className="max-w-lg">
+        <LessonWatchProgressForm
+          lessonWatchThresholdPercent={settings.lessonWatchThresholdPercent}
+          showLessonWatchProgressToGuest={settings.showLessonWatchProgressToGuest}
+          enforceLessonWatchForHocSinh={settings.enforceLessonWatchForHocSinh}
+          enforceLessonWatchForHocVien={settings.enforceLessonWatchForHocVien}
+        />
       </Card>
       <Link
         href="/admin/admins"

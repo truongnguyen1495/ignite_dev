@@ -3,6 +3,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { requireGuestCourseLessonAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { YoutubeEmbed } from "@/components/youtube-embed";
+import { YoutubeTrackedEmbed } from "@/components/youtube-tracked-embed";
 import { LessonMarkdown } from "@/components/lesson-markdown";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { groupLessonsByChapter } from "@/lib/course-lessons";
@@ -23,7 +24,7 @@ export default async function GuestCourseLessonPage({
   // Lists every lesson in the course so guests can see the full curriculum
   // shape — locked ones (visibleToGuest: false) render with a lock icon and
   // aren't linked, matching requireGuestCourseLessonAccess's gate.
-  const [siblingLessons, courseChapters] = await Promise.all([
+  const [siblingLessons, courseChapters, settings] = await Promise.all([
     prisma.courseLesson.findMany({
       where: { courseId: lesson.courseId },
       orderBy: [{ order: "asc" }, { createdAt: "asc" }],
@@ -33,7 +34,14 @@ export default async function GuestCourseLessonPage({
       orderBy: { order: "asc" },
       select: { id: true, title: true },
     }),
+    prisma.settings.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } }),
   ]);
+
+  // Guests have no account to persist watch progress against — this badge
+  // is purely a same-session, never-saved display, and can never lock
+  // anything (there's no completion button on the guest page at all). See
+  // Settings.showLessonWatchProgressToGuest in schema.prisma.
+  const showWatchBadge = settings.showLessonWatchProgressToGuest && lesson.durationSeconds != null;
 
   // A free course opens every lesson to guests (see requireGuestCourseLessonAccess
   // in src/lib/access.ts) — treat every sibling as visible instead of only
@@ -78,7 +86,12 @@ export default async function GuestCourseLessonPage({
 
       <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-4">
-          {lesson.youtubeId && <YoutubeEmbed videoId={lesson.youtubeId} />}
+          {lesson.youtubeId &&
+            (showWatchBadge ? (
+              <YoutubeTrackedEmbed videoId={lesson.youtubeId} durationSeconds={lesson.durationSeconds} />
+            ) : (
+              <YoutubeEmbed videoId={lesson.youtubeId} />
+            ))}
 
           <div>
             {currentIndex >= 0 && (
