@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { setBankInfoAction } from "./actions";
 import { CoverImageInput } from "@/components/ui/cover-image-input";
 import { Input, Select } from "@/components/ui/form";
@@ -19,6 +19,42 @@ export function BankInfoForm({
   bankQrImageUrl: string | null;
 }) {
   const [error, formAction, pending] = useActionState(setBankInfoAction, undefined);
+  const [isDirty, setIsDirty] = useState(false);
+  const wasPending = useRef(false);
+
+  useEffect(() => {
+    if (wasPending.current && !pending && !error) {
+      setIsDirty(false);
+    }
+    wasPending.current = pending;
+  }, [pending, error]);
+
+  // Controlled (not defaultValue) so the field visibly re-syncs to the
+  // fresh server value the instant a save round-trips — an uncontrolled
+  // `defaultValue` only applies at first mount, so a save that revalidates
+  // this same already-mounted component's props left the <select> quietly
+  // showing whatever it displayed before, which looked like the pick
+  // hadn't taken effect even though the DB write succeeded. Same
+  // "resync local state when the prop actually changes" technique as
+  // course-outline-section.tsx's prevChapters/prevLessons tracking.
+  const [bankNameValue, setBankNameValue] = useState(bankName ?? "");
+  const [prevBankName, setPrevBankName] = useState(bankName);
+  if (bankName !== prevBankName) {
+    setPrevBankName(bankName);
+    setBankNameValue(bankName ?? "");
+  }
+  const [accountNumberValue, setAccountNumberValue] = useState(bankAccountNumber ?? "");
+  const [prevAccountNumber, setPrevAccountNumber] = useState(bankAccountNumber);
+  if (bankAccountNumber !== prevAccountNumber) {
+    setPrevAccountNumber(bankAccountNumber);
+    setAccountNumberValue(bankAccountNumber ?? "");
+  }
+  const [accountHolderValue, setAccountHolderValue] = useState(bankAccountHolder ?? "");
+  const [prevAccountHolder, setPrevAccountHolder] = useState(bankAccountHolder);
+  if (bankAccountHolder !== prevAccountHolder) {
+    setPrevAccountHolder(bankAccountHolder);
+    setAccountHolderValue(bankAccountHolder ?? "");
+  }
 
   return (
     <form action={formAction} className="space-y-4">
@@ -29,7 +65,16 @@ export function BankInfoForm({
           đơn hàng, admin vào &quot;Đơn hàng&quot; xác nhận đã nhận tiền để mở khóa.
         </p>
       </div>
-      <Select id="bankName" name="bankName" defaultValue={bankName ?? ""} label="Tên ngân hàng">
+      <Select
+        id="bankName"
+        name="bankName"
+        value={bankNameValue}
+        onChange={(e) => {
+          setBankNameValue(e.target.value);
+          setIsDirty(true);
+        }}
+        label="Tên ngân hàng"
+      >
         <option value="">— Chọn ngân hàng —</option>
         {VIETQR_BANKS.map((bank) => (
           <option key={bank.label} value={bank.label}>
@@ -43,13 +88,21 @@ export function BankInfoForm({
       <Input
         id="bankAccountNumber"
         name="bankAccountNumber"
-        defaultValue={bankAccountNumber ?? ""}
+        value={accountNumberValue}
+        onChange={(e) => {
+          setAccountNumberValue(e.target.value);
+          setIsDirty(true);
+        }}
         label="Số tài khoản"
       />
       <Input
         id="bankAccountHolder"
         name="bankAccountHolder"
-        defaultValue={bankAccountHolder ?? ""}
+        value={accountHolderValue}
+        onChange={(e) => {
+          setAccountHolderValue(e.target.value);
+          setIsDirty(true);
+        }}
         label="Chủ tài khoản"
       />
       <CoverImageInput
@@ -57,10 +110,16 @@ export function BankInfoForm({
         label="Ảnh mã QR chuyển khoản (tùy chọn)"
         alt="Mã QR chuyển khoản"
         defaultValue={bankQrImageUrl ?? ""}
+        onChange={() => setIsDirty(true)}
       />
       {error && <p className="text-sm text-danger">{error}</p>}
-      <Button type="submit" disabled={pending} isLoading={pending}>
-        {pending ? "Đang lưu..." : "Lưu thông tin chuyển khoản"}
+      <Button
+        type="submit"
+        variant={isDirty ? "primary" : "secondary"}
+        disabled={pending || !isDirty}
+        isLoading={pending}
+      >
+        {pending ? "Đang lưu..." : isDirty ? "Lưu thông tin chuyển khoản" : "Đã lưu"}
       </Button>
     </form>
   );
