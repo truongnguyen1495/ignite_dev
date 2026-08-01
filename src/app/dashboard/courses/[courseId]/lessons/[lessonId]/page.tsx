@@ -83,11 +83,11 @@ export default async function StudentCourseLessonPage({
   const pricing = course ? getPricing(course) : { forSale: false as const };
 
   return (
-    <div className="rounded-2xl border border-dark-border bg-dark-surface-raised p-4 sm:p-6">
+    <div className="rounded-2xl border border-border bg-surface p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/dashboard/courses"
-          className="inline-flex items-center gap-1.5 text-sm text-dark-muted hover:text-dark-foreground"
+          className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
           Quay lại
@@ -125,8 +125,8 @@ export default async function StudentCourseLessonPage({
             {lesson.youtubeId ? (
               <YoutubeEmbed videoId={lesson.youtubeId} />
             ) : (
-              <div className="flex aspect-video w-full items-center justify-center rounded-lg border border-dark-border bg-dark-surface">
-                <PlayCircle className="h-10 w-10 text-dark-muted" />
+              <div className="flex aspect-video w-full items-center justify-center rounded-lg border border-border bg-faint-bg">
+                <PlayCircle className="h-10 w-10 text-muted" />
               </div>
             )}
             {lessonChapterNumber && (
@@ -141,7 +141,7 @@ export default async function StudentCourseLessonPage({
               href={`https://www.youtube.com/watch?v=${lesson.youtubeId}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-dark-muted hover:text-dark-foreground"
+              className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-foreground"
             >
               <ExternalLink className="h-3.5 w-3.5" />
               Xem trên YouTube
@@ -154,18 +154,18 @@ export default async function StudentCourseLessonPage({
                 Bài {currentIndex + 1} / {totalLessons}
               </p>
             )}
-            <h1 className="mt-1 text-xl font-semibold text-dark-foreground">{lesson.title}</h1>
+            <h1 className="mt-1 text-xl font-semibold text-foreground">{lesson.title}</h1>
           </div>
 
           {lesson.content && (
-            <CollapsibleSection title="Nội dung bài học" variant="dark">
-              <div className="rounded-xl border border-dark-border bg-dark-surface p-6">
-                <LessonMarkdown content={lesson.content} variant="dark" />
+            <CollapsibleSection title="Nội dung bài học">
+              <div className="rounded-xl border border-border bg-background p-6">
+                <LessonMarkdown content={lesson.content} />
               </div>
             </CollapsibleSection>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-dark-border pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
             <MarkCompleteButton lessonId={lesson.id} completed={completedLessonIds.has(lesson.id)} />
 
             <div className="flex items-center gap-2">
@@ -173,13 +173,13 @@ export default async function StudentCourseLessonPage({
                 <Link
                   href={`/dashboard/courses/${courseId}/lessons/${prevLesson.id}`}
                   prefetch={false}
-                  className="inline-flex items-center gap-1 rounded-lg border border-dark-border px-3 py-2 text-sm text-dark-muted hover:bg-dark-surface-raised"
+                  className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm text-muted hover:bg-surface-hover"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Bài trước
                 </Link>
               ) : (
-                <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-dark-border px-3 py-2 text-sm text-dark-muted/50">
+                <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm text-muted/50">
                   <ChevronLeft className="h-4 w-4" />
                   Bài trước
                 </span>
@@ -194,7 +194,7 @@ export default async function StudentCourseLessonPage({
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               ) : (
-                <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-dark-border px-3 py-2 text-sm text-dark-muted/50">
+                <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm text-muted/50">
                   Bài sau
                   <ChevronRight className="h-4 w-4" />
                 </span>
@@ -204,13 +204,11 @@ export default async function StudentCourseLessonPage({
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-          <div className="rounded-xl border border-dark-border bg-dark-surface p-4">
+          <div className="rounded-xl border border-border bg-background p-4">
             {course && (
-              <p className="truncate text-xs font-medium uppercase tracking-wide text-dark-muted">
-                {course.title}
-              </p>
+              <p className="truncate text-xs font-medium uppercase tracking-wide text-muted">{course.title}</p>
             )}
-            <p className="mt-1 text-sm text-dark-muted">
+            <p className="mt-1 text-sm text-muted">
               {completedLessonIds.size}/{totalLessons} bài đã hoàn thành
             </p>
             <div className="mt-4">
@@ -219,15 +217,14 @@ export default async function StudentCourseLessonPage({
                 showChapterHeadings={showChapterHeadings}
                 lessonBasePath={`/dashboard/courses/${courseId}/lessons`}
                 lockedMessage="Cần được cấp quyền để xem"
-                variant="dark"
               />
             </div>
           </div>
 
           {course && isTrial && salesEnabled && pricing.forSale && lockedCount > 0 && (
             <div className="rounded-xl border border-primary/30 bg-primary-bg p-4 text-center">
-              <p className="text-sm font-medium text-dark-foreground">Mở khóa {lockedCount} bài còn lại</p>
-              <p className="text-xs text-dark-muted">Học trọn bộ {course.title}</p>
+              <p className="text-sm font-medium text-foreground">Mở khóa {lockedCount} bài còn lại</p>
+              <p className="text-xs text-muted">Học trọn bộ {course.title}</p>
               <BuyButton
                 kind="COURSE"
                 itemId={course.id}
