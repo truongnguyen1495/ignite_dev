@@ -12,7 +12,8 @@ export function CourseLessonForm({
   title = "",
   content = "",
   youtubeId = "",
-  order = 0,
+  chapterId = "",
+  chapters,
   onSuccess,
   onCancel,
 }: {
@@ -21,7 +22,8 @@ export function CourseLessonForm({
   title?: string;
   content?: string;
   youtubeId?: string | null;
-  order?: number;
+  chapterId?: string | null;
+  chapters: { id: string; title: string }[];
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
@@ -45,14 +47,23 @@ export function CourseLessonForm({
       <section className="space-y-4">
         <h2 className="text-sm font-semibold text-foreground">Thông tin bài học</h2>
         <Input id="title" name="title" defaultValue={title} required label="Tiêu đề" />
-        <Input
-          id="order"
-          name="order"
-          type="number"
-          defaultValue={order}
-          className="max-w-[200px]"
-          label="Thứ tự hiển thị"
-        />
+        {chapters.length > 0 && (
+          <label className="block text-sm">
+            <span className="mb-1.5 block font-medium text-foreground">Chương (tùy chọn)</span>
+            <select
+              name="chapterId"
+              defaultValue={chapterId ?? ""}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+            >
+              <option value="">Không thuộc chương nào</option>
+              {chapters.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </section>
 
       <hr className="border-border" />

@@ -454,32 +454,69 @@ model Course {
   updatedAt                 DateTime @updatedAt
 
   lessons     CourseLesson[]
+  chapters    CourseChapter[]
   grants      CourseAccessGrant[]
   levelGrants CourseLevelGrant[]
   orderItems  OrderItem[]
   cartItems   CartItem[]
 }
 
+// Optional grouping of lessons within a course (e.g. "Chương 01: Nhập môn")
+// — purely organizational, nullable on CourseLesson so every lesson created
+// before this existed just renders with no chapter badge, no backfill
+// needed. The display number ("Chương N") is always derived from a
+// chapter's 1-indexed position among its course's chapters ordered by
+// `order`, never stored — same convention as CourseLesson's own "Bài N/Total"
+// numbering, so reordering chapters can't leave a stale number sitting in
+// the database.
+model CourseChapter {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title     String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lessons CourseLesson[]
+
+  @@index([courseId, order])
+}
+
 model CourseLesson {
-  id             String   @id @default(cuid())
-  courseId       String
-  course         Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  title          String
-  content        String   @db.Text
-  youtubeId      String?
-  order          Int      @default(0)
+  id              String         @id @default(cuid())
+  courseId        String
+  course          Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title           String
+  content         String         @db.Text
+  youtubeId       String?
+  // Fetched automatically from the YouTube Data API (contentDetails.duration,
+  // ISO-8601 → seconds) whenever youtubeId is set/changed — see
+  // fetchYoutubeDurationSeconds in src/lib/youtube-duration.ts. Never typed in
+  // by an admin by hand. Null when youtubeId is null, or when the API call
+  // failed (missing/invalid YOUTUBE_API_KEY, video not found, quota
+  // exceeded) — the sidebar simply omits the duration badge in that case
+  // rather than blocking the lesson save on an external API being reachable.
+  durationSeconds Int?
+  order           Int            @default(0)
   // Independent of student access entirely — only gates the /guest/* public
   // view, and only takes effect when the parent Course isn't hiddenFromGuest.
   // This is now the primary "which lessons can guests try" control (set via
   // the "Cấp quyền học thử cho khách" form on the course edit page), no
   // longer a secondary opt-in nested under a course-level visibility flag.
-  visibleToGuest Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  visibleToGuest  Boolean        @default(false)
+  // Nullable — a lesson not (yet) assigned to any chapter. SetNull rather
+  // than Cascade on delete: deleting a chapter should never take its
+  // lessons down with it, just un-group them.
+  chapterId       String?
+  chapter         CourseChapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   completions CourseLessonCompletion[]
 
   @@index([courseId, order])
+  @@index([chapterId])
 }
 
 model CourseLessonCompletion {

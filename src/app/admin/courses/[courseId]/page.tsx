@@ -13,7 +13,7 @@ import {
   RevokeLevelAccessButton,
   ToggleOpenToProspectiveStudents,
 } from "./access-grants";
-import { CourseLessonsSection } from "./course-lessons-section";
+import { CourseOutlineSection } from "./course-outline-section";
 import { CourseGuestAccessForm } from "./course-guest-access-form";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,7 @@ export default async function EditCoursePage({
     where: { id: courseId },
     include: {
       lessons: { orderBy: { order: "asc" } },
+      chapters: { orderBy: { order: "asc" } },
       grants: {
         include: { student: true, orderItem: { include: { order: true } } },
         orderBy: { grantedAt: "desc" },
@@ -83,7 +84,7 @@ export default async function EditCoursePage({
         canManageOrders={canManageOrders}
       />
 
-      <CourseLessonsSection courseId={course.id} lessons={course.lessons} />
+      <CourseOutlineSection courseId={course.id} chapters={course.chapters} lessons={course.lessons} />
 
       <CourseGuestAccessForm
         courseId={course.id}

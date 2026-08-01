@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { ArrowLeft, ChevronLeft, ChevronRight, Lock } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { requireGuestCourseLessonAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { YoutubeEmbed } from "@/components/youtube-embed";
 import { LessonMarkdown } from "@/components/lesson-markdown";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
+import { groupLessonsByChapter } from "@/lib/course-lessons";
+import { CourseLessonSidebar, type SidebarGroup } from "@/components/course-lesson-sidebar";
 
 // See src/app/guest/courses/page.tsx — forces per-request rendering instead
 // of a build-time static snapshot of the (admin-toggleable) guest flag.
@@ -21,10 +23,17 @@ export default async function GuestCourseLessonPage({
   // Lists every lesson in the course so guests can see the full curriculum
   // shape — locked ones (visibleToGuest: false) render with a lock icon and
   // aren't linked, matching requireGuestCourseLessonAccess's gate.
-  const siblingLessons = await prisma.courseLesson.findMany({
-    where: { courseId: lesson.courseId },
-    orderBy: [{ order: "asc" }, { createdAt: "asc" }],
-  });
+  const [siblingLessons, courseChapters] = await Promise.all([
+    prisma.courseLesson.findMany({
+      where: { courseId: lesson.courseId },
+      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+    }),
+    prisma.courseChapter.findMany({
+      where: { courseId: lesson.courseId },
+      orderBy: { order: "asc" },
+      select: { id: true, title: true },
+    }),
+  ]);
 
   // A free course opens every lesson to guests (see requireGuestCourseLessonAccess
   // in src/lib/access.ts) — treat every sibling as visible instead of only
@@ -38,6 +47,24 @@ export default async function GuestCourseLessonPage({
   // Prev/next navigation only follows lessons a guest can actually open.
   const prevLesson = isFullyOpen || prevCandidate?.visibleToGuest ? prevCandidate : null;
   const nextLesson = isFullyOpen || nextCandidate?.visibleToGuest ? nextCandidate : null;
+
+  // Same "only show headings when chapters are actually used" convention as
+  // the student lesson page — see groupLessonsByChapter's own comment.
+  const lessonGroups = groupLessonsByChapter(siblingLessons, courseChapters);
+  const showChapterHeadings = lessonGroups.length > 1;
+  const sidebarGroups: SidebarGroup[] = lessonGroups.map((group) => ({
+    chapterId: group.chapterId,
+    chapterTitle: group.chapterTitle,
+    lessons: group.lessons.map((l) => ({
+      id: l.id,
+      title: l.title,
+      youtubeId: l.youtubeId,
+      durationSeconds: l.durationSeconds,
+      locked: !isFullyOpen && !l.visibleToGuest,
+      isCurrent: l.id === lessonId,
+      number: siblingLessons.findIndex((s) => s.id === l.id) + 1,
+    })),
+  }));
 
   return (
     <div className="rounded-2xl border border-dark-border bg-dark-surface-raised p-4 sm:p-6">
@@ -112,53 +139,16 @@ export default async function GuestCourseLessonPage({
               {lesson.course.title}
             </p>
             <p className="mt-1 text-sm text-dark-muted">{totalLessons} bài học</p>
-            <ul className="mt-4 space-y-1">
-              {siblingLessons.map((l, index) => {
-                const isCurrent = l.id === lessonId;
-
-                if (!isFullyOpen && !l.visibleToGuest) {
-                  return (
-                    <li key={l.id}>
-                      <Link
-                        href="/login"
-                        className="flex items-start gap-3 rounded-lg px-3 py-2.5 text-sm text-dark-muted/50 transition-colors hover:bg-dark-surface-raised hover:text-dark-muted"
-                      >
-                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-dark-border">
-                          <Lock className="h-2.5 w-2.5" />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="line-clamp-2 block">{l.title}</span>
-                          <span className="mt-0.5 block text-xs italic text-dark-muted/40">
-                            Cần đăng nhập để xem
-                          </span>
-                        </span>
-                      </Link>
-                    </li>
-                  );
-                }
-
-                return (
-                  <li key={l.id}>
-                    <Link
-                      href={`/guest/courses/${courseId}/lessons/${l.id}`}
-                      prefetch={false}
-                      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                        isCurrent ? "bg-primary-bg-strong text-dark-foreground" : "text-dark-muted hover:bg-dark-surface-raised"
-                      }`}
-                    >
-                      <span
-                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[10px] ${
-                          isCurrent ? "border-primary text-primary" : "border-dark-border text-dark-muted"
-                        }`}
-                      >
-                        {index + 1}
-                      </span>
-                      <span className="line-clamp-2">{l.title}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+            <div className="mt-4">
+              <CourseLessonSidebar
+                groups={sidebarGroups}
+                showChapterHeadings={showChapterHeadings}
+                lessonBasePath={`/guest/courses/${courseId}/lessons`}
+                lockedHref="/login"
+                lockedMessage="Cần đăng nhập để xem"
+                variant="dark"
+              />
+            </div>
           </div>
         </aside>
       </div>

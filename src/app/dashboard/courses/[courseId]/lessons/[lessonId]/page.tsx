@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { ArrowLeft, ChevronLeft, ChevronRight, CheckCircle2, Lock } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { requireCourseLessonAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { YoutubeEmbed } from "@/components/youtube-embed";
 import { LessonMarkdown } from "@/components/lesson-markdown";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
+import { groupLessonsByChapter } from "@/lib/course-lessons";
+import { CourseLessonSidebar, type SidebarGroup } from "@/components/course-lesson-sidebar";
 import { MarkCompleteButton } from "./mark-complete-button";
 
 export default async function StudentCourseLessonPage({
@@ -16,7 +18,7 @@ export default async function StudentCourseLessonPage({
   const { student, lesson, accessLevel } = await requireCourseLessonAccess(lessonId);
   const isTrial = accessLevel === "trial";
 
-  const [course, siblingLessons, completions] = await Promise.all([
+  const [course, siblingLessons, completions, courseChapters] = await Promise.all([
     prisma.course.findUnique({ where: { id: lesson.courseId } }),
     prisma.courseLesson.findMany({
       where: { courseId: lesson.courseId },
@@ -25,6 +27,11 @@ export default async function StudentCourseLessonPage({
     prisma.courseLessonCompletion.findMany({
       where: { studentId: student.id, courseLesson: { courseId: lesson.courseId } },
       select: { courseLessonId: true },
+    }),
+    prisma.courseChapter.findMany({
+      where: { courseId: lesson.courseId },
+      orderBy: { order: "asc" },
+      select: { id: true, title: true },
     }),
   ]);
 
@@ -40,6 +47,28 @@ export default async function StudentCourseLessonPage({
     currentIndex >= 0 && currentIndex < totalLessons - 1 ? siblingLessons[currentIndex + 1] : null;
   const prevLesson = prevCandidate && isReachable(prevCandidate) ? prevCandidate : null;
   const nextLesson = nextCandidate && isReachable(nextCandidate) ? nextCandidate : null;
+
+  // Groups the sidebar list under its chapter headings, matching the admin
+  // editor's merged outline — but only when the course actually uses
+  // chapters (a single group means every lesson landed in it, i.e. no real
+  // grouping to show), so a course with no chapters at all looks exactly
+  // like it always has, no empty "Chưa xếp chương" heading added for it.
+  const lessonGroups = groupLessonsByChapter(siblingLessons, courseChapters);
+  const showChapterHeadings = lessonGroups.length > 1;
+  const sidebarGroups: SidebarGroup[] = lessonGroups.map((group) => ({
+    chapterId: group.chapterId,
+    chapterTitle: group.chapterTitle,
+    lessons: group.lessons.map((l) => ({
+      id: l.id,
+      title: l.title,
+      youtubeId: l.youtubeId,
+      durationSeconds: l.durationSeconds,
+      locked: isTrial && !l.visibleToGuest,
+      isCurrent: l.id === lessonId,
+      isDone: completedLessonIds.has(l.id),
+      number: siblingLessons.findIndex((s) => s.id === l.id) + 1,
+    })),
+  }));
 
   return (
     <div className="rounded-2xl border border-dark-border bg-dark-surface-raised p-4 sm:p-6">
@@ -127,55 +156,15 @@ export default async function StudentCourseLessonPage({
             <p className="mt-1 text-sm text-dark-muted">
               {completedLessonIds.size}/{totalLessons} bài đã hoàn thành
             </p>
-            <ul className="mt-4 space-y-1">
-              {siblingLessons.map((l, index) => {
-                const isCurrent = l.id === lessonId;
-                const isDone = completedLessonIds.has(l.id);
-
-                if (isTrial && !l.visibleToGuest) {
-                  return (
-                    <li key={l.id}>
-                      <div className="flex items-start gap-3 rounded-lg px-3 py-2.5 text-sm text-dark-muted/50">
-                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-dark-border">
-                          <Lock className="h-2.5 w-2.5" />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="line-clamp-2 block">{l.title}</span>
-                          <span className="mt-0.5 block text-xs italic text-dark-muted/40">
-                            Cần được cấp quyền để xem
-                          </span>
-                        </span>
-                      </div>
-                    </li>
-                  );
-                }
-
-                return (
-                  <li key={l.id}>
-                    <Link
-                      href={`/dashboard/courses/${courseId}/lessons/${l.id}`}
-                      prefetch={false}
-                      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                        isCurrent ? "bg-primary-bg-strong text-dark-foreground" : "text-dark-muted hover:bg-dark-surface-raised"
-                      }`}
-                    >
-                      {isDone ? (
-                        <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
-                      ) : (
-                        <span
-                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[10px] ${
-                            isCurrent ? "border-primary text-primary" : "border-dark-border text-dark-muted"
-                          }`}
-                        >
-                          {index + 1}
-                        </span>
-                      )}
-                      <span className="line-clamp-2">{l.title}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+            <div className="mt-4">
+              <CourseLessonSidebar
+                groups={sidebarGroups}
+                showChapterHeadings={showChapterHeadings}
+                lessonBasePath={`/dashboard/courses/${courseId}/lessons`}
+                lockedMessage="Cần được cấp quyền để xem"
+                variant="dark"
+              />
+            </div>
           </div>
         </aside>
       </div>

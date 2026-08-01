@@ -7,6 +7,7 @@ import type { Level } from "@prisma/client";
 import { requireAdminPermission, hasAdminPermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { parseYoutubeId } from "@/lib/youtube";
+import { fetchYoutubeDurationSeconds } from "@/lib/youtube-duration";
 
 const courseSchema = z.object({
   title: z.string().trim().min(1, "Tiêu đề không được để trống."),
@@ -175,13 +176,77 @@ function resolveYoutubeId(raw: string | undefined): string | null | "invalid" {
   return id ?? "invalid";
 }
 
+// Chapters are pure grouping metadata for CourseLesson — see the comment on
+// the CourseChapter model in schema.prisma for why chapter NUMBERS are
+// always derived from list position rather than stored.
+export async function createCourseChapterAction(courseId: string, title: string): Promise<string | undefined> {
+  await requireAdminPermission("MANAGE_COURSES");
+  const trimmed = title.trim();
+  if (!trimmed) return "Tên chương không được để trống.";
+
+  const { _max } = await prisma.courseChapter.aggregate({ where: { courseId }, _max: { order: true } });
+  const nextOrder = (_max.order ?? -1) + 1;
+  await prisma.courseChapter.create({ data: { courseId, title: trimmed, order: nextOrder } });
+
+  revalidatePath(`/admin/courses/${courseId}`);
+  return undefined;
+}
+
+export async function renameCourseChapterAction(
+  chapterId: string,
+  courseId: string,
+  title: string
+): Promise<string | undefined> {
+  await requireAdminPermission("MANAGE_COURSES");
+  const trimmed = title.trim();
+  if (!trimmed) return "Tên chương không được để trống.";
+
+  await prisma.courseChapter.update({ where: { id: chapterId }, data: { title: trimmed } });
+  revalidatePath(`/admin/courses/${courseId}`);
+  return undefined;
+}
+
+// Lessons in this chapter aren't deleted — CourseLesson.chapterId just goes
+// back to null via the schema's onDelete: SetNull (see schema.prisma).
+export async function deleteCourseChapterAction(chapterId: string, courseId: string) {
+  await requireAdminPermission("MANAGE_COURSES");
+  await prisma.courseChapter.delete({ where: { id: chapterId } });
+  revalidatePath(`/admin/courses/${courseId}`);
+}
+
+export async function reorderCourseChaptersAction(courseId: string, orderedIds: string[]) {
+  await requireAdminPermission("MANAGE_COURSES");
+  const chapters = await prisma.courseChapter.findMany({ where: { courseId }, select: { id: true } });
+  const validIds = new Set(chapters.map((c) => c.id));
+  if (orderedIds.length !== validIds.size || !orderedIds.every((id) => validIds.has(id))) {
+    throw new Error("Danh sách chương không hợp lệ.");
+  }
+  await prisma.$transaction(
+    orderedIds.map((id, index) => prisma.courseChapter.update({ where: { id }, data: { order: index } }))
+  );
+  revalidatePath(`/admin/courses/${courseId}`);
+}
+
 const courseLessonSchema = z.object({
   courseId: z.string().min(1),
   title: z.string().trim().min(1, "Tiêu đề không được để trống."),
   content: z.string().trim().optional(),
   youtube: z.string().trim().optional(),
-  order: z.coerce.number().int().default(0),
+  // "" (the select's own "Không thuộc chương nào" option) means no chapter —
+  // not passed to zod as an enum since chapter ids are dynamic per course.
+  chapterId: z.string().trim().optional(),
 });
+
+// "" (or missing) means no chapter. Re-checks the chapter actually belongs
+// to this course — a stale/tampered chapterId from a form submitted against
+// the wrong course must never silently attach a lesson to another course's
+// chapter, same defensive pattern as reorderCourseLessonsAction's id check.
+async function resolveChapterId(courseId: string, raw: string | undefined): Promise<string | null | "invalid"> {
+  if (!raw) return null;
+  const chapter = await prisma.courseChapter.findUnique({ where: { id: raw }, select: { courseId: true } });
+  if (!chapter || chapter.courseId !== courseId) return "invalid";
+  return raw;
+}
 
 export async function createCourseLessonAction(
   _prevState: string | undefined,
@@ -194,7 +259,7 @@ export async function createCourseLessonAction(
     title: formData.get("title"),
     content: formData.get("content") || undefined,
     youtube: formData.get("youtube") || undefined,
-    order: formData.get("order") || 0,
+    chapterId: formData.get("chapterId") || undefined,
   });
   if (!parsed.success) {
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
@@ -207,13 +272,29 @@ export async function createCourseLessonAction(
 
   const { courseId } = parsed.data;
 
+  const chapterId = await resolveChapterId(courseId, parsed.data.chapterId);
+  if (chapterId === "invalid") {
+    return "Chương không hợp lệ.";
+  }
+
+  // New lessons always land at the end — order is no longer a free-text
+  // field an admin types in (see reorderCourseLessonsAction below, backing
+  // the lesson list's own drag-and-drop, same convention as
+  // reorderCoursesAction/ReorderModal for the course list itself).
+  const { _max } = await prisma.courseLesson.aggregate({ where: { courseId }, _max: { order: true } });
+  const nextOrder = (_max.order ?? -1) + 1;
+
+  const durationSeconds = youtubeId ? await fetchYoutubeDurationSeconds(youtubeId) : null;
+
   await prisma.courseLesson.create({
     data: {
       courseId,
       title: parsed.data.title,
       content: parsed.data.content ?? "",
       youtubeId,
-      order: parsed.data.order,
+      durationSeconds,
+      order: nextOrder,
+      chapterId,
     },
   });
 
@@ -239,7 +320,7 @@ export async function updateCourseLessonAction(
     title: formData.get("title"),
     content: formData.get("content") || undefined,
     youtube: formData.get("youtube") || undefined,
-    order: formData.get("order") || 0,
+    chapterId: formData.get("chapterId") || undefined,
   });
   if (!parsed.success) {
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
@@ -252,13 +333,33 @@ export async function updateCourseLessonAction(
 
   const { lessonId, courseId } = parsed.data;
 
+  const chapterId = await resolveChapterId(courseId, parsed.data.chapterId);
+  if (chapterId === "invalid") {
+    return "Chương không hợp lệ.";
+  }
+
+  // Only re-fetches duration when youtubeId actually changed (including
+  // clearing it) — re-hitting the YouTube API on every text-only edit of an
+  // otherwise-unchanged video would just burn quota for no reason.
+  const existing = await prisma.courseLesson.findUnique({
+    where: { id: lessonId },
+    select: { youtubeId: true, durationSeconds: true },
+  });
+  const durationSeconds =
+    youtubeId === (existing?.youtubeId ?? null)
+      ? (existing?.durationSeconds ?? null)
+      : youtubeId
+        ? await fetchYoutubeDurationSeconds(youtubeId)
+        : null;
+
   await prisma.courseLesson.update({
     where: { id: lessonId },
     data: {
       title: parsed.data.title,
       content: parsed.data.content ?? "",
       youtubeId,
-      order: parsed.data.order,
+      durationSeconds,
+      chapterId,
     },
   });
 
@@ -271,6 +372,69 @@ export async function updateCourseLessonAction(
 export async function deleteCourseLessonAction(lessonId: string, courseId: string) {
   await requireAdminPermission("MANAGE_COURSES");
   await prisma.courseLesson.delete({ where: { id: lessonId } });
+  revalidatePath(`/admin/courses/${courseId}`);
+}
+
+// Persists a direct drag-and-drop reorder from CourseOutlineSection's own
+// list (no modal, unlike ReorderModal — the user wanted dragging right in
+// place). Each id's new `order` is just its index; verified to all belong
+// to courseId first so a stale/tampered id list can't touch another
+// course's lessons.
+export async function reorderCourseLessonsAction(courseId: string, orderedIds: string[]) {
+  await requireAdminPermission("MANAGE_COURSES");
+  const lessons = await prisma.courseLesson.findMany({ where: { courseId }, select: { id: true } });
+  const validIds = new Set(lessons.map((l) => l.id));
+  if (orderedIds.length !== validIds.size || !orderedIds.every((id) => validIds.has(id))) {
+    throw new Error("Danh sách bài học không hợp lệ.");
+  }
+  await prisma.$transaction(
+    orderedIds.map((id, index) => prisma.courseLesson.update({ where: { id }, data: { order: index } }))
+  );
+  revalidatePath(`/admin/courses/${courseId}`);
+}
+
+// Backs CourseOutlineSection's merged chapter+lesson view — a cross-chapter
+// drag changes both a lesson's chapterId AND its global `order` in one
+// gesture, so both need to land in the same transaction (updating just one
+// of the two would let a concurrent read briefly see a lesson re-grouped
+// but not yet reordered, or vice versa). `groups` is every chapter (in its
+// current display order) plus one trailing `chapterId: null` group for
+// "Chưa xếp chương" — order is assigned by flattening every group's
+// lessonIds in sequence, same convention as reorderCourseLessonsAction
+// above (index = new `order`), so a plain reorderCourseLessonsAction call
+// elsewhere in the app still sees a consistent, chapter-grouped sequence.
+export async function reorderCourseOutlineAction(
+  courseId: string,
+  groups: { chapterId: string | null; lessonIds: string[] }[]
+) {
+  await requireAdminPermission("MANAGE_COURSES");
+
+  const [lessons, chapters] = await Promise.all([
+    prisma.courseLesson.findMany({ where: { courseId }, select: { id: true } }),
+    prisma.courseChapter.findMany({ where: { courseId }, select: { id: true } }),
+  ]);
+  const validLessonIds = new Set(lessons.map((l) => l.id));
+  const validChapterIds = new Set(chapters.map((c) => c.id));
+  const allLessonIds = groups.flatMap((g) => g.lessonIds);
+
+  if (
+    allLessonIds.length !== validLessonIds.size ||
+    !allLessonIds.every((id) => validLessonIds.has(id)) ||
+    !groups.every((g) => g.chapterId === null || validChapterIds.has(g.chapterId))
+  ) {
+    throw new Error("Danh sách bài học không hợp lệ.");
+  }
+
+  let order = 0;
+  const updates = groups.flatMap((group) =>
+    group.lessonIds.map((lessonId) =>
+      prisma.courseLesson.update({
+        where: { id: lessonId },
+        data: { chapterId: group.chapterId, order: order++ },
+      })
+    )
+  );
+  await prisma.$transaction(updates);
   revalidatePath(`/admin/courses/${courseId}`);
 }
 
