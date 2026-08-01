@@ -75,10 +75,10 @@ export default async function GuestCourseLessonPage({
   }));
 
   return (
-    <div className="rounded-2xl border border-dark-border bg-dark-surface-raised p-4 sm:p-6">
+    <div className="rounded-2xl border border-border bg-surface p-4 sm:p-6">
       <Link
         href="/guest/courses"
-        className="inline-flex items-center gap-1.5 text-sm text-dark-muted hover:text-dark-foreground"
+        className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
         Quay lại
@@ -99,30 +99,30 @@ export default async function GuestCourseLessonPage({
                 Bài {currentIndex + 1} / {totalLessons}
               </p>
             )}
-            <h1 className="mt-1 text-xl font-semibold text-dark-foreground">{lesson.title}</h1>
+            <h1 className="mt-1 text-xl font-semibold text-foreground">{lesson.title}</h1>
           </div>
 
           {lesson.content && (
-            <CollapsibleSection title="Nội dung bài học" variant="dark">
-              <div className="rounded-xl border border-dark-border bg-dark-surface p-6">
-                <LessonMarkdown content={lesson.content} variant="dark" />
+            <CollapsibleSection title="Nội dung bài học">
+              <div className="rounded-xl border border-border bg-background p-6">
+                <LessonMarkdown content={lesson.content} />
               </div>
             </CollapsibleSection>
           )}
 
-          <div className="flex flex-wrap items-center justify-end gap-3 border-t border-dark-border pt-4">
+          <div className="flex flex-wrap items-center justify-end gap-3 border-t border-border pt-4">
             <div className="flex items-center gap-2">
               {prevLesson ? (
                 <Link
                   href={`/guest/courses/${courseId}/lessons/${prevLesson.id}`}
                   prefetch={false}
-                  className="inline-flex items-center gap-1 rounded-lg border border-dark-border px-3 py-2 text-sm text-dark-muted hover:bg-dark-surface-raised"
+                  className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm text-muted hover:bg-surface-hover"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Bài trước
                 </Link>
               ) : (
-                <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-dark-border px-3 py-2 text-sm text-dark-muted/50">
+                <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm text-muted/50">
                   <ChevronLeft className="h-4 w-4" />
                   Bài trước
                 </span>
@@ -137,7 +137,7 @@ export default async function GuestCourseLessonPage({
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               ) : (
-                <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-dark-border px-3 py-2 text-sm text-dark-muted/50">
+                <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm text-muted/50">
                   Bài sau
                   <ChevronRight className="h-4 w-4" />
                 </span>
@@ -147,11 +147,11 @@ export default async function GuestCourseLessonPage({
         </div>
 
         <aside className="lg:sticky lg:top-6 lg:self-start">
-          <div className="rounded-xl border border-dark-border bg-dark-surface p-4">
-            <p className="truncate text-xs font-medium uppercase tracking-wide text-dark-muted">
+          <div className="rounded-xl border border-border bg-background p-4">
+            <p className="truncate text-xs font-medium uppercase tracking-wide text-muted">
               {lesson.course.title}
             </p>
-            <p className="mt-1 text-sm text-dark-muted">{totalLessons} bài học</p>
+            <p className="mt-1 text-sm text-muted">{totalLessons} bài học</p>
             <div className="mt-4">
               <CourseLessonSidebar
                 groups={sidebarGroups}
@@ -159,7 +159,6 @@ export default async function GuestCourseLessonPage({
                 lessonBasePath={`/guest/courses/${courseId}/lessons`}
                 lockedHref="/login"
                 lockedMessage="Cần đăng nhập để xem"
-                variant="dark"
               />
             </div>
           </div>
