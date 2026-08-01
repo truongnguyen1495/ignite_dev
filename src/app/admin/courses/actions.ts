@@ -469,7 +469,12 @@ export async function setCourseGuestAccessAction(
   if (typeof courseId !== "string" || !courseId) {
     return "Thiếu mã khóa học.";
   }
-  const hiddenFromGuest = formData.get("hiddenFromGuest") === "on";
+  // Form field is the positive framing ("Hiển thị cho khách xem") — DB
+  // column stays hiddenFromGuest (the negative/"master hide switch" is what
+  // every access-check elsewhere in the app already reads), so invert once
+  // right here rather than renaming the column.
+  const visibleToGuest = formData.get("visibleToGuest") === "on";
+  const hiddenFromGuest = !visibleToGuest;
   const featuredOnHome = formData.get("featuredOnHome") === "on";
   const trialLessonIds = formData.getAll("trialLessonIds").filter((v): v is string => typeof v === "string");
 

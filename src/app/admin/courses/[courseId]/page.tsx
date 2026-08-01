@@ -90,6 +90,7 @@ export default async function EditCoursePage({
         courseId={course.id}
         hiddenFromGuest={course.hiddenFromGuest}
         featuredOnHome={course.featuredOnHome}
+        chapters={course.chapters}
         lessons={course.lessons}
       />
 
