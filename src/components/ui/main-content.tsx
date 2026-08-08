@@ -19,28 +19,20 @@ import { usePathname } from "next/navigation";
 // serializable values as props to a "use client" component like this one;
 // an actual RegExp instance fails at runtime ("Only plain objects... can be
 // passed to Client Components").
-//
-// `className`/`innerClassName` override the default padded/max-w-7xl shell
-// for a route section whose normal (non-full-bleed) layout looks different
-// — dashboard/layout.tsx's "học sinh" branch uses a narrower max-w-5xl with
-// no separate inner wrapper div (innerClassName: null) instead of this
-// component's admin/dashboard-leveled default.
 export function MainContent({
   children,
   fullBleedPattern,
-  className,
-  innerClassName,
 }: {
   children: React.ReactNode;
   fullBleedPattern: string;
-  className?: string;
-  innerClassName?: string | null;
 }) {
   const pathname = usePathname();
   if (new RegExp(fullBleedPattern).test(pathname)) {
     return <main className="min-h-0 flex-1">{children}</main>;
   }
-  const outerClass = className ?? "flex-1 px-4 py-6 sm:px-8 sm:py-8";
-  const inner = innerClassName === undefined ? "mx-auto w-full max-w-7xl" : innerClassName;
-  return <main className={outerClass}>{inner ? <div className={inner}>{children}</div> : children}</main>;
+  return (
+    <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">
+      <div className="mx-auto w-full max-w-7xl">{children}</div>
+    </main>
+  );
 }

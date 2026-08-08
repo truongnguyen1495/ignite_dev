@@ -25,11 +25,8 @@ export const ANNOUNCEMENT_CATEGORY_BADGE_COLOR: Record<AnnouncementCategory, "da
 // src/lib/access.ts. Does NOT check visibleToStudents (the master hide
 // switch) — callers combine that separately since it applies before this.
 export function announcementVisibleTo(
-  announcement: { visibleToProspective: boolean; visibleToLeveled: boolean; minLevel: Level | null },
-  grantedLevel: Level | null
+  announcement: { visibleToLeveled: boolean; minLevel: Level | null },
+  grantedLevel: Level
 ): boolean {
-  if (grantedLevel === null) {
-    return announcement.visibleToProspective;
-  }
   return announcement.visibleToLeveled && (!announcement.minLevel || hasLevelAccess(grantedLevel, announcement.minLevel));
 }

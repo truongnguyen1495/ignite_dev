@@ -70,7 +70,7 @@ export async function getGuestCourseItems({
 
   // Batched (fixed query count) instead of one getCourseAccessLevel call per
   // course — a per-course Promise.all fan-out here once blew through
-  // DATABASE_URL's connection_limit=1 on /dashboard/home's featured teaser.
+  // DATABASE_URL's connection_limit=1 on a featured-items teaser page.
   const [accessLevels, salesEnabled, completions] = await Promise.all([
     student ? getCourseAccessLevels(student, courses.map((course) => course.id)) : Promise.resolve(null),
     isSalesEnabled(),

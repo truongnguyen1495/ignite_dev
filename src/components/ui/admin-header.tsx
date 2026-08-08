@@ -14,32 +14,18 @@ import { usePathname } from "next/navigation";
 // an accepted trade-off for keeping this page's chrome minimal. Shared by
 // both admin/layout.tsx and dashboard/layout.tsx (each passes its own
 // fullBleedPattern) rather than duplicated, same reasoning as MainContent.
-// `children` is an escape hatch for a header shape that doesn't fit the
-// left/right two-column layout at all — dashboard/layout.tsx's "học sinh"
-// (grantedLevel null) branch renders a brand logo + actions row AND a
-// second nav row (HocSinhNav) stacked inside one <header>, not a simple
-// left/right split. When `children` is passed, `className` replaces the
-// default header classes wholesale (its own header isn't the padded
-// flex row the default shell renders) and left/right are ignored.
 export function AppHeader({
   left,
   right,
   fullBleedPattern,
-  className,
-  children,
 }: {
   left?: React.ReactNode;
   right?: React.ReactNode;
   fullBleedPattern: string;
-  className?: string;
-  children?: React.ReactNode;
 }) {
   const pathname = usePathname();
   if (new RegExp(fullBleedPattern).test(pathname)) {
     return null;
-  }
-  if (children) {
-    return <header className={className ?? "border-b border-border bg-surface"}>{children}</header>;
   }
   return (
     <header className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-8 sm:py-4">

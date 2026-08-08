@@ -55,7 +55,6 @@ export async function createAnnouncementAction(
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       category: parsed.data.category,
       visibleToGuest: formData.get("visibleToGuest") === "on",
-      visibleToProspective: formData.get("visibleToProspective") === "on",
       visibleToLeveled,
       minLevel: visibleToLeveled ? resolveMinLevel(parsed.data.minLevel) : null,
       // New announcements always start visible to students — hiding one is
@@ -106,7 +105,6 @@ export async function updateAnnouncementAction(
       coverImageUrl: parsed.data.coverImageUrl ?? null,
       category: parsed.data.category,
       visibleToGuest: formData.get("visibleToGuest") === "on",
-      visibleToProspective: formData.get("visibleToProspective") === "on",
       visibleToLeveled,
       minLevel: visibleToLeveled ? resolveMinLevel(parsed.data.minLevel) : null,
       // visibleToStudents is intentionally left untouched here — it's owned

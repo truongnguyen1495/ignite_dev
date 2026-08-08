@@ -11,14 +11,13 @@ import { FloatingCartButton } from "@/components/floating-cart-button";
 // its own full-bleed nav/hero with no sidebar/header squeezing it, which
 // dashboard/layout.tsx's shell can't opt out of per-route (Next.js layouts
 // always wrap their whole subtree). Public: no require*() gate here anymore
-// (removed the old requireLeveledStudent() call, and /product/:path* was
-// dropped from middleware.ts's matcher) — khách and "học sinh" (no-cấp
-// students) can both view the page now, same as /guest/*. Buying still
-// requires an account: ProductBuyButton/ConsultationButton call Server
-// Actions that each do their own requireActiveStudent()/requireLeveledStudent()
-// and redirect to /login on click if there's no session — that's the real,
-// DB-checked boundary, this page only ever controls whether the page itself
-// renders.
+// (removed the old require*Student() call, and /product/:path* was dropped
+// from middleware.ts's matcher) — khách can view the page too, same as
+// /guest/*. Buying still requires an account: ProductBuyButton/
+// ConsultationButton call Server Actions that each do their own
+// requireActiveStudent() and redirect to /login on click if there's no
+// session — that's the real, DB-checked boundary, this page only ever
+// controls whether the page itself renders.
 //
 // Four bespoke templates exist today ("sanarey-aria", "sanarey-activa",
 // "sanarey-simetra", "sanarey-br9") — explicit one-off scope decision, not

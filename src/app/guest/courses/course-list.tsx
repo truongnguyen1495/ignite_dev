@@ -30,10 +30,10 @@ function ProgressBar({ course }: { course: GuestCourseItem }) {
   );
 }
 
-// `isLoggedIn` switches the purchase footer between a real BuyButton (creates
-// an order against the current session) for the học sinh home teaser and a
-// GuestBuyButton (just routes to /login) for the anonymous /guest/* catalog —
-// same courses/data either way, just no session to place an order against.
+// `isLoggedIn` switches the purchase footer between a real BuyButton
+// (creates an order against the current session) and a GuestBuyButton (just
+// routes to /login) for the anonymous /guest/* catalog — same courses/data
+// either way, just no session to place an order against.
 export function GuestCourseList({
   courses,
   isLoggedIn = false,

@@ -142,10 +142,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       let dbUser = await prisma.user.findUnique({ where: { email: user.email } });
       if (!dbUser) {
-        // First time this Google email has ever signed in — auto-create a
-        // "chưa xếp cấp" account, same shape as public self-registration,
-        // gated by the same registrationEnabled switch rather than a
-        // second "who can join" toggle.
+        // First time this Google email has ever signed in — auto-create an
+        // account at Cấp 1, same shape as public self-registration, gated
+        // by the same registrationEnabled switch rather than a second "who
+        // can join" toggle.
         if (!(settings.registrationEnabled ?? true)) {
           return false;
         }
@@ -155,7 +155,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             name: user.name ?? user.email.split("@")[0],
             role: "STUDENT",
             status: "ACTIVE",
-            grantedLevel: null,
+            grantedLevel: "CUSTOMER",
             // Google already proved ownership of this address.
             emailVerified: new Date(),
           },

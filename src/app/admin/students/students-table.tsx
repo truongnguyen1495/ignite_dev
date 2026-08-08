@@ -7,7 +7,7 @@ import type { AccountStatus, Level } from "@prisma/client";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ORDERED_LEVELS, LEVEL_LABELS, levelRank } from "@/lib/levels";
-import { ToggleStudentStatusButton, DeleteStudentButton, DemoteStudentButton } from "./[studentId]/danger-actions";
+import { ToggleStudentStatusButton, DeleteStudentButton } from "./[studentId]/danger-actions";
 
 export type StudentRow = {
   id: string;
@@ -16,9 +16,6 @@ export type StudentRow = {
   username: string | null;
   grantedLevel: Level;
   status: AccountStatus;
-  // When this student was admitted into the 5-cấp system — the reviewedAt
-  // of their approved join request, or createdAt for a học viên an admin
-  // created directly (never went through a join request at all).
   joinedAt: Date;
 };
 
@@ -30,7 +27,7 @@ const STATUS_OPTIONS: { value: AccountStatus | "ALL"; label: string }[] = [
   { value: "LOCKED", label: "Đã khóa" },
 ];
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "joinedAt", label: "Ngày tham gia hệ thống 5 cấp" },
+  { value: "joinedAt", label: "Ngày tham gia" },
   { value: "level", label: "Cấp độ" },
 ];
 
@@ -38,12 +35,10 @@ export function StudentsTable({
   students,
   canLock,
   canDelete,
-  canDemote,
 }: {
   students: StudentRow[];
   canLock: boolean;
   canDelete: boolean;
-  canDemote: boolean;
 }) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
@@ -255,9 +250,6 @@ export function StudentsTable({
                       >
                         <Eye className="h-4 w-4" />
                       </Link>
-                      {canDemote && (
-                        <DemoteStudentButton studentId={student.id} studentName={student.name} iconOnly />
-                      )}
                       {canLock && (
                         <ToggleStudentStatusButton
                           studentId={student.id}

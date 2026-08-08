@@ -15,12 +15,10 @@ export const dictionaries = {
     brandSubtitle: {
       admin: "Quản trị viên",
       hocVien: "Học viên",
-      hocSinh: "Học sinh",
       guest: "Khách",
     },
     adminNav: {
       overview: "Tổng quan",
-      prospectiveStudents: "Học sinh",
       students: "Học viên",
       lessons: "Bài học",
       results: "Kết quả",
@@ -47,16 +45,6 @@ export const dictionaries = {
       levelUp: "Xin lên cấp",
       profile: "Thông tin cá nhân",
       goToAdmin: "Vào trang Admin",
-      whiteboards: "Bảng vẽ",
-    },
-    hocSinhNav: {
-      home: "Trang chủ",
-      announcements: "Bản tin",
-      exclusiveCourses: "Khóa học độc quyền",
-      library: "Thư viện",
-      products: "Sản phẩm",
-      joinFiveLevel: "Tham gia hệ thống 5 cấp",
-      profile: "Thông tin cá nhân",
       whiteboards: "Bảng vẽ",
     },
     guestNav: {
@@ -94,18 +82,7 @@ export const dictionaries = {
       adminManagementDescription: "Cấp/thu hồi quyền admin cho tài khoản, xem toàn bộ thông tin từng admin.",
       whiteboardsTitle: "Bảng vẽ",
       whiteboardsDescription:
-        "Bật/tắt tính năng bảng vẽ cộng tác (sơ đồ, mindmap, ghi chú) cho Super Admin, Admin, học viên và học sinh. Khi tắt, toàn bộ tính năng ẩn đi với mọi người, kể cả Super Admin.",
-    },
-    dashboardHomePage: {
-      welcomeBack: "Chào mừng trở lại,",
-      hocSinhIntro:
-        "Bạn đang là học sinh — khám phá bản tin và khóa học độc quyền, hoặc xin tham gia hệ thống đào tạo 5 cấp để mở khóa toàn bộ lộ trình.",
-      joinFiveLevel: "Tham gia hệ thống đào tạo 5 cấp",
-      latestAnnouncements: "Bản tin mới nhất",
-      viewAll: "Xem tất cả",
-      noAnnouncements: "Chưa có bản tin nào.",
-      featuredCourses: "Khóa học nổi bật",
-      featuredEbooks: "Ebook nổi bật",
+        "Bật/tắt tính năng bảng vẽ cộng tác (sơ đồ, mindmap, ghi chú) cho Super Admin, Admin và học viên. Khi tắt, toàn bộ tính năng ẩn đi với mọi người, kể cả Super Admin.",
     },
     dashboardLevelsPage: {
       accessDenied: "Bạn không có quyền truy cập nội dung đó.",
@@ -145,12 +122,10 @@ export const dictionaries = {
     brandSubtitle: {
       admin: "Admin",
       hocVien: "Student",
-      hocSinh: "Prospective student",
       guest: "Guest",
     },
     adminNav: {
       overview: "Overview",
-      prospectiveStudents: "Prospective students",
       students: "Students",
       lessons: "Lessons",
       results: "Results",
@@ -177,16 +152,6 @@ export const dictionaries = {
       levelUp: "Request level-up",
       profile: "Profile",
       goToAdmin: "Go to Admin",
-      whiteboards: "Whiteboards",
-    },
-    hocSinhNav: {
-      home: "Home",
-      announcements: "Announcements",
-      exclusiveCourses: "Exclusive courses",
-      library: "Library",
-      products: "Products",
-      joinFiveLevel: "Join the 5-level system",
-      profile: "Profile",
       whiteboards: "Whiteboards",
     },
     guestNav: {
@@ -224,18 +189,7 @@ export const dictionaries = {
       adminManagementDescription: "Grant or revoke admin permissions per account, and view each admin's full details.",
       whiteboardsTitle: "Whiteboards",
       whiteboardsDescription:
-        "Turn the collaborative whiteboard feature (diagrams, mindmaps, notes) on or off for Super Admin, Admin, students, and prospective students. When off, the whole feature is hidden from everyone, Super Admin included.",
-    },
-    dashboardHomePage: {
-      welcomeBack: "Welcome back,",
-      hocSinhIntro:
-        "You're a prospective student — explore announcements and exclusive courses, or request to join the 5-level training system to unlock the full path.",
-      joinFiveLevel: "Join the 5-level training system",
-      latestAnnouncements: "Latest announcements",
-      viewAll: "View all",
-      noAnnouncements: "No announcements yet.",
-      featuredCourses: "Featured courses",
-      featuredEbooks: "Featured ebooks",
+        "Turn the collaborative whiteboard feature (diagrams, mindmaps, notes) on or off for Super Admin, Admin, and students. When off, the whole feature is hidden from everyone, Super Admin included.",
     },
     dashboardLevelsPage: {
       accessDenied: "You don't have access to that content.",

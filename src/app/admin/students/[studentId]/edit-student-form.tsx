@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { updateStudentAction } from "../actions";
-import { ORDERED_LEVELS, LEVEL_LABELS, NO_LEVEL_VALUE } from "@/lib/levels";
+import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
 import type { AccountStatus, Level } from "@prisma/client";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { LevelBadge } from "@/components/ui/level-badge";
@@ -23,36 +23,20 @@ export function EditStudentForm({
   username,
   dateOfBirthLabel,
   canEdit,
-  canDemote,
-  isHocVien,
 }: {
   studentId: string;
   name: string;
   email: string;
   phoneNumber: string | null;
-  grantedLevel: Level | null;
+  grantedLevel: Level;
   status: AccountStatus;
   hasRegistrationInfo: boolean;
   username: string | null;
   dateOfBirthLabel: string | null;
-  // EDIT_STUDENTS/EDIT_PROSPECTIVE_STUDENTS (or Super Admin) — without it
-  // this renders as a read-only view: fields disabled, no submit button.
-  // updateStudentAction enforces the same check server-side regardless.
+  // EDIT_STUDENTS (or Super Admin) — without it this renders as a read-only
+  // view: fields disabled, no submit button. updateStudentAction enforces
+  // the same check server-side regardless.
   canEdit: boolean;
-  // Whether the current admin may demote a học viên back to học sinh
-  // (DEMOTE_STUDENTS permission or Super Admin) — hides the "Học sinh"
-  // option below for a currently-leveled student otherwise, so this form
-  // can't be used to bypass demoteStudentAction's permission boundary.
-  // Irrelevant (always shown) for a student who's already học sinh, since
-  // re-selecting the same value isn't a demotion.
-  canDemote: boolean;
-  // A "học sinh" (grantedLevel null) edit view hides the password reset
-  // field and the level dropdown entirely, per explicit user request —
-  // promoting a học sinh into the 5-level system is expected to go through
-  // the join-request approval queue (/admin/level-up-requests) instead of
-  // this shared form. grantedLevel is still submitted as a hidden NONE
-  // input so updateStudentAction's required field still validates.
-  isHocVien: boolean;
 }) {
   const [error, formAction, pending] = useActionState(updateStudentAction, undefined);
   const [isDirty, setIsDirty] = useState(false);
@@ -142,36 +126,27 @@ export function EditStudentForm({
             placeholder="0xxxxxxxxx hoặc +84xxxxxxxxx"
             disabled={!canEdit}
           />
-          {isHocVien ? (
-            <>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                label="Mật khẩu mới (để trống nếu không đổi)"
-                minLength={8}
-                disabled={!canEdit}
-              />
-              <Select
-                id="grantedLevel"
-                name="grantedLevel"
-                label="Cấp được cấp quyền"
-                defaultValue={grantedLevel ?? NO_LEVEL_VALUE}
-                disabled={!canEdit}
-              >
-                {ORDERED_LEVELS.map((level) => (
-                  <option key={level} value={level}>
-                    {LEVEL_LABELS[level]}
-                  </option>
-                ))}
-                {(canDemote || grantedLevel === null) && (
-                  <option value={NO_LEVEL_VALUE}>Học sinh (chưa tham gia đào tạo 5 cấp)</option>
-                )}
-              </Select>
-            </>
-          ) : (
-            <input type="hidden" name="grantedLevel" value={NO_LEVEL_VALUE} />
-          )}
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            label="Mật khẩu mới (để trống nếu không đổi)"
+            minLength={8}
+            disabled={!canEdit}
+          />
+          <Select
+            id="grantedLevel"
+            name="grantedLevel"
+            label="Cấp được cấp quyền"
+            defaultValue={grantedLevel}
+            disabled={!canEdit}
+          >
+            {ORDERED_LEVELS.map((level) => (
+              <option key={level} value={level}>
+                {LEVEL_LABELS[level]}
+              </option>
+            ))}
+          </Select>
           {error && <p className="text-sm text-danger">{error}</p>}
           {canEdit && (
             <Button

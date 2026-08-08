@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { MessageSquare, ChevronRight } from "lucide-react";
-import { requireLeveledStudent, requireChatEnabled } from "@/lib/access";
+import { requireActiveStudent, requireChatEnabled } from "@/lib/access";
 import { getStudentChatInbox } from "@/lib/chat";
 import { PageHeader } from "@/components/ui/page-header";
 import { BackLink } from "@/components/ui/back-link";
 import { Card } from "@/components/ui/card";
 
 export default async function DirectMessageListPage() {
-  const student = await requireLeveledStudent();
+  const student = await requireActiveStudent();
   await requireChatEnabled("/dashboard");
   const inbox = await getStudentChatInbox(student);
 

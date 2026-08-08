@@ -14,18 +14,14 @@ import { Button } from "@/components/ui/button";
 
 export default async function LevelUpRequestsPage() {
   await requireAdminPermission("MANAGE_LEVEL_UP_REQUESTS");
-  // Join requests (fromLevel null — a "học sinh" account with no cấp yet
-  // asking to join) are reviewed on /admin/prospective-students instead —
-  // this page is exclusively for existing "học viên" requesting the next
-  // level.
   const [pending, history] = await Promise.all([
     prisma.levelUpRequest.findMany({
-      where: { status: "PENDING", fromLevel: { not: null } },
+      where: { status: "PENDING" },
       orderBy: { requestedAt: "asc" },
       include: { student: true },
     }),
     prisma.levelUpRequest.findMany({
-      where: { status: { in: ["APPROVED", "REJECTED"] }, fromLevel: { not: null } },
+      where: { status: { in: ["APPROVED", "REJECTED"] } },
       orderBy: { reviewedAt: "desc" },
       take: 20,
       include: { student: true },
@@ -34,8 +30,7 @@ export default async function LevelUpRequestsPage() {
 
   const completionByRequest = new Map(
     await Promise.all(
-      // fromLevel is guaranteed non-null here by the query filter above.
-      pending.map(async (req) => [req.id, await getLevelCompletionStatus(req.studentId, req.fromLevel!)] as const)
+      pending.map(async (req) => [req.id, await getLevelCompletionStatus(req.studentId, req.fromLevel)] as const)
     )
   );
 
@@ -49,7 +44,7 @@ export default async function LevelUpRequestsPage() {
           <ul className="space-y-3">
             {pending.map((req) => {
               const completion = completionByRequest.get(req.id)!;
-              const fromLevel = req.fromLevel!;
+              const fromLevel = req.fromLevel;
               return (
                 <li key={req.id}>
                   <Card className="border-l-4 border-l-warning">

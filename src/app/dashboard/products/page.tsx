@@ -5,9 +5,7 @@ import { ProductList, type StudentProductItem } from "./product-list";
 
 // Products have no per-item access grant/level gating (unlike Course/
 // LibraryItem) — every signed-in student sees every product regardless of
-// level, so requireActiveStudent() (not requireLeveledStudent()) is the
-// entire access rule here. "Học sinh" (no-cấp) reach this route too now via
-// the "Sản phẩm" entry in dashboard/layout.tsx's học-sinh nav; a fully
+// level, so requireActiveStudent() is the entire access rule here. A fully
 // anonymous khách gets the separate public /guest/products catalog instead,
 // since this page still lives under /dashboard and needs a session.
 export default async function ProductsPage() {

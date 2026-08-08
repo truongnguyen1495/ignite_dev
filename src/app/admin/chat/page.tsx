@@ -61,8 +61,6 @@ export default async function AdminChatPage() {
     getAdminGroupRooms(admin.id),
     getAdminGuestChatInbox(admin.id),
   ]);
-  const hocSinhThreads = threads.filter((t) => t.student.grantedLevel === null);
-  const hocVienThreads = threads.filter((t) => t.student.grantedLevel !== null);
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
@@ -80,15 +78,9 @@ export default async function AdminChatPage() {
       />
 
       <SupportThreadCard
-        title="Hỗ trợ học sinh"
-        emptyLabel="Chưa có học sinh nào nhắn tin hỗ trợ."
-        threads={hocSinhThreads}
-      />
-
-      <SupportThreadCard
         title="Hỗ trợ học viên"
         emptyLabel="Chưa có học viên nào nhắn tin hỗ trợ."
-        threads={hocVienThreads}
+        threads={threads}
       />
 
       <Card className="space-y-2">

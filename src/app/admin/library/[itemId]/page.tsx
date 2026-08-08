@@ -12,7 +12,6 @@ import {
   GrantAccessForm,
   GrantLevelAccessForm,
   RevokeLevelAccessButton,
-  ToggleOpenToProspectiveStudents,
 } from "./access-grants";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -46,15 +45,6 @@ export default async function EditLibraryItemPage({
     where: { role: "STUDENT", adminOnly: false, id: { notIn: [...grantedStudentIds] } },
     orderBy: { name: "asc" },
   });
-
-  // Same "Học sinh" (chưa xếp cấp) vs "Học viên" (đã xếp cấp) split as the
-  // course edit page — two independent lists/pickers, see
-  // ToggleOpenToProspectiveStudents below for the "grant to all học sinh at
-  // once" continuous rule.
-  const hocVienGrants = item.grants.filter((g) => g.student.grantedLevel !== null);
-  const hocSinhGrants = item.grants.filter((g) => g.student.grantedLevel === null);
-  const ungrantedHocVien = ungrantedStudents.filter((s) => s.grantedLevel !== null);
-  const ungrantedHocSinh = ungrantedStudents.filter((s) => s.grantedLevel === null);
 
   // Passed to RevokeAccessButton so its confirm dialog can name the actual
   // order instead of a generic warning — null for admin-granted rows.
@@ -100,70 +90,24 @@ export default async function EditLibraryItemPage({
         <Card padding="lg" className="space-y-1">
           <h2 className="text-sm font-semibold text-foreground">Mục này đang miễn phí</h2>
           <p className="text-xs text-muted">
-            Mọi học viên &amp; học sinh (kể cả đăng ký sau này) tự động có toàn quyền xem, nên các phần cấp
-            quyền riêng bên dưới đang tạm ẩn. Bỏ tick &ldquo;Miễn phí&rdquo; ở form phía trên để dùng lại.
+            Mọi học viên (kể cả đăng ký sau này) tự động có toàn quyền xem, nên các phần cấp quyền riêng bên
+            dưới đang tạm ẩn. Bỏ tick &ldquo;Miễn phí&rdquo; ở form phía trên để dùng lại.
           </p>
         </Card>
       )}
 
       {!item.isFree && (
       <>
-      <Card padding="lg" className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">
-          Học sinh được cấp quyền ({hocSinhGrants.length})
-        </h2>
-        <p className="text-xs text-muted">
-          Học sinh (tài khoản chưa xếp cấp) không thuộc thang 5 cấp nên không dùng được luật &ldquo;Cấp quyền
-          theo cấp&rdquo; ở dưới — dùng công tắc bên dưới để mở cho tất cả, hoặc cấp riêng từng người.
-        </p>
-        <ToggleOpenToProspectiveStudents libraryItemId={item.id} open={item.openToProspectiveStudents} />
-        {hocSinhGrants.length === 0 ? (
-          <p className="text-sm text-muted">Chưa cấp quyền riêng cho học sinh nào.</p>
-        ) : (
-          <ul className="space-y-2">
-            {hocSinhGrants.map((grant) => (
-              <li
-                key={grant.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background p-3 text-sm"
-              >
-                <div>
-                  <p className="flex items-center gap-1.5 text-foreground">
-                    {grant.student.name}
-                    {grant.orderItem && <Badge color="info">Đã mua</Badge>}
-                  </p>
-                  <p className="text-muted">{grant.student.email}</p>
-                </div>
-                <RevokeAccessButton
-                  grantId={grant.id}
-                  libraryItemId={item.id}
-                  studentName={grant.student.name}
-                  orderInfo={orderInfoFor(grant)}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {ungrantedHocSinh.length > 0 && (
-          <GrantAccessForm
-            libraryItemId={item.id}
-            students={ungrantedHocSinh}
-            placeholder="Chọn học sinh..."
-            submitLabel="Cấp quyền"
-          />
-        )}
-      </Card>
-
       <Card padding="lg" className="space-y-5">
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-foreground">
-            Học viên được cấp quyền ({hocVienGrants.length})
+            Học viên được cấp quyền ({item.grants.length})
           </h2>
-          {hocVienGrants.length === 0 ? (
+          {item.grants.length === 0 ? (
             <p className="text-sm text-muted">Chưa cấp quyền cho học viên nào.</p>
           ) : (
             <ul className="space-y-2">
-              {hocVienGrants.map((grant) => (
+              {item.grants.map((grant) => (
                 <li
                   key={grant.id}
                   className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background p-3 text-sm"
@@ -186,8 +130,8 @@ export default async function EditLibraryItemPage({
             </ul>
           )}
 
-          {ungrantedHocVien.length > 0 && (
-            <GrantAccessForm libraryItemId={item.id} students={ungrantedHocVien} />
+          {ungrantedStudents.length > 0 && (
+            <GrantAccessForm libraryItemId={item.id} students={ungrantedStudents} />
           )}
         </div>
 

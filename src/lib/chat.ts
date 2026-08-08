@@ -197,7 +197,7 @@ export async function getStudentChatInbox(student: User): Promise<StudentChatInb
 
 export type AdminSupportInboxRow = {
   threadId: string;
-  student: { id: string; name: string; grantedLevel: Level | null };
+  student: { id: string; name: string; grantedLevel: Level };
   lastMessagePreview: string | null;
   lastMessageAt: Date;
   unreadCount: number;

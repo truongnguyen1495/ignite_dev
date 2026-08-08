@@ -1,10 +1,10 @@
-import { requireAnyAdminPermission } from "@/lib/access";
+import { requireAdminPermission } from "@/lib/access";
 import { BackLink } from "@/components/ui/back-link";
 import { Card } from "@/components/ui/card";
 import { CreateStudentForm } from "./create-student-form";
 
 export default async function NewStudentPage() {
-  await requireAnyAdminPermission(["MANAGE_STUDENTS", "MANAGE_PROSPECTIVE_STUDENTS"]);
+  await requireAdminPermission("MANAGE_STUDENTS");
   return (
     <div className="space-y-6">
       <div>

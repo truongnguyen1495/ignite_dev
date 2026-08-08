@@ -3,8 +3,6 @@ import { getWhiteboardsForUser } from "@/lib/whiteboards";
 import { PageHeader } from "@/components/ui/page-header";
 import { MyWhiteboardList, type MyWhiteboardListItem } from "./whiteboard-list";
 
-// Deliberately requireActiveStudent, not requireLeveledStudent — a "học
-// sinh" (grantedLevel null) must see this too, per the access model.
 export default async function MyWhiteboardsPage() {
   const student = await requireActiveStudent();
   await requireWhiteboardsEnabled("/dashboard?denied=1");

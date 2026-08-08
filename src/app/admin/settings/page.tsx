@@ -60,7 +60,6 @@ export default async function SettingsPage() {
         <LessonWatchProgressForm
           lessonWatchThresholdPercent={settings.lessonWatchThresholdPercent}
           showLessonWatchProgressToGuest={settings.showLessonWatchProgressToGuest}
-          enforceLessonWatchForHocSinh={settings.enforceLessonWatchForHocSinh}
           enforceLessonWatchForHocVien={settings.enforceLessonWatchForHocVien}
         />
       </Card>

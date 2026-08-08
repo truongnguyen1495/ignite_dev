@@ -34,7 +34,7 @@ export default async function AdminDetailPage({ params }: { params: Promise<{ ad
   if (!isSuperAdmin && admin.isAdminManager) {
     notFound();
   }
-  const isEligibleForAdminManager = !admin.adminOnly && admin.grantedLevel !== null;
+  const isEligibleForAdminManager = !admin.adminOnly;
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
@@ -67,9 +67,7 @@ export default async function AdminDetailPage({ params }: { params: Promise<{ ad
           </div>
           <div className="min-w-0">
             <dt className="text-xs text-muted">Cấp học viên</dt>
-            <dd className="text-foreground">
-              {admin.grantedLevel ? LEVEL_LABELS[admin.grantedLevel] : "Học sinh"}
-            </dd>
+            <dd className="text-foreground">{admin.adminOnly ? "—" : LEVEL_LABELS[admin.grantedLevel]}</dd>
           </div>
           <div className="min-w-0">
             <dt className="text-xs text-muted">Ngày tạo</dt>

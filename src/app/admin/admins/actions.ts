@@ -35,12 +35,9 @@ export async function searchAccountsForPermissionAction(query: string): Promise<
     where: {
       role: "STUDENT",
       status: "ACTIVE",
-      // Admin permission grants are for "học viên" only, not "học sinh"
-      // (grantedLevel null) — explicit policy decision. adminOnly accounts
-      // have grantedLevel null too but aren't found through this picker at
-      // all (they're created directly via createAdminAccountAction), so
-      // this filter only ever excludes real học sinh here.
-      grantedLevel: { not: null },
+      // adminOnly accounts aren't found through this picker at all (they're
+      // created directly via createAdminAccountAction).
+      adminOnly: false,
       // An Admin Manager must not even find another Admin Manager in this
       // picker — same boundary as assertManageableByCaller below.
       ...(isSuperAdmin ? {} : { isAdminManager: false }),
@@ -54,7 +51,7 @@ export async function searchAccountsForPermissionAction(query: string): Promise<
     take: 20,
     orderBy: { name: "asc" },
   });
-  return rows.map((r) => ({ ...r, grantedLevel: r.grantedLevel! }));
+  return rows;
 }
 
 // Suggested-candidates list shown as soon as the "Tài khoản có sẵn" tab opens,
@@ -75,7 +72,7 @@ export async function listCoreLeaderCandidatesAction(): Promise<AccountSearchRes
     select: { id: true, name: true, email: true, username: true, grantedLevel: true },
     orderBy: { name: "asc" },
   });
-  return rows.map((r) => ({ ...r, grantedLevel: r.grantedLevel! }));
+  return rows;
 }
 
 const createAdminAccountSchema = z.object({
@@ -117,6 +114,10 @@ export async function createAdminAccountAction(input: {
         role: "STUDENT",
         status: "ACTIVE",
         adminOnly: parsed.data.adminOnly,
+        // Irrelevant for an adminOnly account (it never reaches /dashboard,
+        // see requireActiveStudent) but the column has no default — Cấp 1
+        // is a harmless placeholder, same as every other new account.
+        grantedLevel: "CUSTOMER",
       },
       select: { id: true, name: true, email: true },
     });
@@ -155,16 +156,6 @@ export async function setAccountPermissionsAction(
   if (targetError) return targetError;
 
   const unique = Array.from(new Set(permissions));
-
-  // Granting (not revoking) admin permission is "học viên" only — a "học
-  // sinh" (grantedLevel null, adminOnly false) must go through
-  // convertAdminOnlyAccountAction/the join-request flow to become a real
-  // học viên first, not be handed admin capability while still no-cấp.
-  // Only blocks a non-empty grant; reducing an existing (grandfathered)
-  // set down to zero must still always be allowed.
-  if (unique.length > 0 && !target.adminOnly && target.grantedLevel === null) {
-    return "Chỉ có thể cấp quyền admin cho học viên đã có cấp — tài khoản này đang là học sinh (chưa xếp cấp).";
-  }
 
   const existingByPermission = new Map(target.adminPermissions.map((p) => [p.permission, p]));
 
@@ -309,27 +300,20 @@ export async function deleteAdminAccountAction(userId: string) {
 
 // The other option offered alongside deleteAdminAccountAction when an
 // adminOnly (no real student identity) account is removed from admin duty —
-// instead of deleting the row outright, turns it into a genuine "học sinh"
-// or "học viên" account. Always strips every trace of admin capability in
-// the same update (explicit user decision: converting means becoming a
-// normal student, not staying a dual-role admin), same soft-revoke
-// convention as setAccountPermissionsAction above.
-export async function convertAdminOnlyAccountAction(
-  userId: string,
-  target: "HOC_SINH" | "HOC_VIEN",
-  level?: Level
-): Promise<string | undefined> {
+// instead of deleting the row outright, turns it into a genuine "học viên"
+// account. Always strips every trace of admin capability in the same update
+// (explicit user decision: converting means becoming a normal student, not
+// staying a dual-role admin), same soft-revoke convention as
+// setAccountPermissionsAction above.
+export async function convertAdminOnlyAccountAction(userId: string, level: Level): Promise<string | undefined> {
   const { isSuperAdmin } = await requireAdminManagementAccess();
   const account = await prisma.user.findUnique({ where: { id: userId, role: "STUDENT" } });
   if (!account) return "Không tìm thấy tài khoản này.";
   if (!account.adminOnly) {
-    return "Tài khoản này đã là học viên/học sinh thật — không cần chuyển đổi.";
+    return "Tài khoản này đã là học viên thật — không cần chuyển đổi.";
   }
   const targetError = assertManageableByCaller(isSuperAdmin, account);
   if (targetError) return targetError;
-  if (target === "HOC_VIEN" && !level) {
-    return "Cần chọn cấp độ cho học viên.";
-  }
 
   await prisma.$transaction([
     prisma.user.update({
@@ -338,7 +322,7 @@ export async function convertAdminOnlyAccountAction(
         adminOnly: false,
         isAdminManager: false,
         canManageAdmins: false,
-        grantedLevel: target === "HOC_VIEN" ? level : null,
+        grantedLevel: level,
       },
     }),
     prisma.adminPermission.updateMany({
@@ -349,7 +333,6 @@ export async function convertAdminOnlyAccountAction(
 
   revalidatePath("/admin/admins");
   revalidatePath("/admin/students");
-  revalidatePath("/admin/prospective-students");
   redirect("/admin/admins");
 }
 
@@ -357,9 +340,9 @@ export async function convertAdminOnlyAccountAction(
 // only action, never delegable through canManageAdmins — kept as its own
 // requireActiveSuperAdmin gate, separate from requireAdminManagementAccess
 // which the rest of this file uses. Eligibility (a real học viên: adminOnly
-// false, grantedLevel set) is only enforced when turning the flag ON;
-// revoking is always allowed. canManageAdmins is meaningless without
-// isAdminManager, so turning the latter off always clears the former too.
+// false) is only enforced when turning the flag ON; revoking is always
+// allowed. canManageAdmins is meaningless without isAdminManager, so
+// turning the latter off always clears the former too.
 export async function setAdminManagerAction(
   userId: string,
   isAdminManager: boolean,
@@ -370,8 +353,8 @@ export async function setAdminManagerAction(
   if (!target || target.role !== "STUDENT") {
     return "Không tìm thấy tài khoản học viên này.";
   }
-  if (isAdminManager && (target.adminOnly || target.grantedLevel === null)) {
-    return "Chỉ có thể chỉ định Admin Manager cho tài khoản học viên đã có cấp (không phải tài khoản chỉ-admin hoặc học sinh).";
+  if (isAdminManager && target.adminOnly) {
+    return "Chỉ có thể chỉ định Admin Manager cho tài khoản học viên (không phải tài khoản chỉ-admin).";
   }
 
   await prisma.user.update({

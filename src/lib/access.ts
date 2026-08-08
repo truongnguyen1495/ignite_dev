@@ -78,20 +78,6 @@ export async function getActiveStudentOrNull(): Promise<User | null> {
   return user;
 }
 
-// A "no cấp" student (grantedLevel null — a self-registered account not yet
-// admitted into the 5-level system) is restricted to exclusive
-// courses/library/announcements/profile and the join-request page at
-// /dashboard/level-up. Every level-ladder area (dashboard home,
-// lessons/quizzes, chat) requires a real grantedLevel, enforced here as the
-// single choke point so those areas don't need their own null checks.
-export async function requireLeveledStudent(): Promise<User & { grantedLevel: Level }> {
-  const student = await requireActiveStudent();
-  if (student.grantedLevel === null) {
-    redirect("/dashboard/home");
-  }
-  return student as User & { grantedLevel: Level };
-}
-
 export async function requireActiveSuperAdmin(): Promise<User> {
   return requireRole("SUPER_ADMIN");
 }
@@ -155,24 +141,6 @@ export async function requireAdminPermission(permission: AdminPermissionKind): P
   return user;
 }
 
-// Same as requireAdminPermission, but passes if the admin holds any one of
-// several permissions — used by shared plumbing (the student detail/edit
-// page and its create/update/lock/delete actions) that both MANAGE_STUDENTS
-// ("Học viên") and MANAGE_PROSPECTIVE_STUDENTS ("Học sinh") admins need,
-// even though their list pages and request-review queues stay strictly
-// separate.
-export async function requireAnyAdminPermission(permissions: AdminPermissionKind[]): Promise<User> {
-  const user = await requireAnyActiveAccount();
-  if (hasFullAdminAccess(user)) {
-    return user;
-  }
-  const granted = await getAdminPermissions(user.id);
-  if (!permissions.some((permission) => granted.has(permission))) {
-    redirect("/admin?denied=1");
-  }
-  return user;
-}
-
 // Non-redirecting check for a page that's already gated by one permission
 // (e.g. MANAGE_COURSES) but needs to know, in addition, whether the caller
 // also holds a second one (e.g. MANAGE_ORDERS) — to conditionally show/edit
@@ -230,8 +198,7 @@ export async function requireAnyAdminAccess(): Promise<{
 // revoking their AdminPermission rows) — narrower than requireAnyAdminAccess
 // on purpose: an Admin Manager's isAdminManager flag alone is NOT enough
 // here, since "manage other admins" is a separate, explicitly-grantable
-// capability (canManageAdmins) per Super Admin's decision, same spirit as
-// DEMOTE_STUDENTS being separate from plain MANAGE_STUDENTS above.
+// capability (canManageAdmins) per Super Admin's decision.
 export async function requireAdminManagementAccess(): Promise<{ user: User; isSuperAdmin: boolean }> {
   const user = await requireAnyActiveAccount();
   if (user.role === "SUPER_ADMIN") {
@@ -262,10 +229,9 @@ export async function requireChatEnabled(redirectTo: string): Promise<void> {
 // toggled from /admin/settings (Super Admin only) — same fresh-from-DB
 // convention as isChatEnabled. Deliberately NOT split by audience the way
 // most other toggles in this file are: off makes the feature unreachable
-// for literally everyone, Super Admin included; on opens it to all 4
-// non-guest audiences (Super Admin, Admin, học viên, học sinh) at once,
-// subject to each board's own per-board sharing (see requireWhiteboardAccess
-// below).
+// for literally everyone, Super Admin included; on opens it to all 3
+// non-guest audiences (Super Admin, Admin, học viên) at once, subject to
+// each board's own per-board sharing (see requireWhiteboardAccess below).
 export async function isWhiteboardsEnabled(): Promise<boolean> {
   const settings = await prisma.settings.findUnique({ where: { id: 1 } });
   return settings?.whiteboardsEnabled ?? false;
@@ -341,7 +307,7 @@ export async function isAutoPaymentEnabled(): Promise<boolean> {
 }
 
 export async function requireLevelAccess(requestedLevel: Level): Promise<User> {
-  const student = await requireLeveledStudent();
+  const student = await requireActiveStudent();
   if (!hasLevelAccess(student.grantedLevel, requestedLevel)) {
     redirect("/dashboard?denied=1");
   }
@@ -349,7 +315,7 @@ export async function requireLevelAccess(requestedLevel: Level): Promise<User> {
 }
 
 export async function requireLessonAccess(lessonId: string) {
-  const student = await requireLeveledStudent();
+  const student = await requireActiveStudent();
   const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
   if (!lesson) {
     redirect("/dashboard?denied=1");
@@ -361,7 +327,7 @@ export async function requireLessonAccess(lessonId: string) {
 }
 
 export async function requireQuizAccess(quizId: string) {
-  const student = await requireLeveledStudent();
+  const student = await requireActiveStudent();
   const quiz = await prisma.quiz.findUnique({
     where: { id: quizId },
     include: { lesson: true },
@@ -384,17 +350,16 @@ export async function requireQuizAccess(quizId: string) {
 //
 // "trial" is a third tier for anyone who isn't "full" yet — a course not
 // hidden from anonymous guests (!hiddenFromGuest) is at least as open to any
-// signed-in student, học viên or học sinh, as it is to a guest: only the
-// same subset of lessons a guest gets (CourseLesson.visibleToGuest), not the
-// whole course. A student only reaches "full" once explicitly granted, same
-// as anyone else — via CourseAccessGrant, a level rule, or
-// openToProspectiveStudents for học sinh specifically.
+// signed-in student as it is to a guest: only the same subset of lessons a
+// guest gets (CourseLesson.visibleToGuest), not the whole course. A student
+// only reaches "full" once explicitly granted, same as anyone else — via
+// CourseAccessGrant or a level rule.
 export type CourseAccessLevel = "none" | "trial" | "full";
 
 // Batched sibling of getCourseAccessLevel below — 3 queries total regardless
 // of courseIds.length, instead of 3 *per course*. Added after a real
-// connection-pool timeout was reproduced on /dashboard/home (DATABASE_URL's
-// connection_limit=1 couldn't keep up with getGuestCourseItems/
+// connection-pool timeout was reproduced on a featured-items teaser page
+// (DATABASE_URL's connection_limit=1 couldn't keep up with getGuestCourseItems/
 // getGuestLibraryItems firing one getCourseAccessLevel/getLibraryItemAccessLevel
 // per featured item, each doing its own 3-query Promise.all, all concurrently).
 // getCourseAccessLevel itself is now a thin single-id wrapper around this, so
@@ -410,7 +375,7 @@ export async function getCourseAccessLevels(
     prisma.courseLevelGrant.findMany({ where: { courseId: { in: courseIds } } }),
     prisma.course.findMany({
       where: { id: { in: courseIds } },
-      select: { id: true, openToProspectiveStudents: true, hiddenFromGuest: true, isFree: true },
+      select: { id: true, hiddenFromGuest: true, isFree: true },
     }),
   ]);
 
@@ -431,10 +396,9 @@ export async function getCourseAccessLevels(
       result.set(course.id, "full");
       continue;
     }
-    const isFullViaLevel =
-      student.grantedLevel === null
-        ? course.openToProspectiveStudents
-        : (levelGrantsByCourse.get(course.id) ?? []).some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel));
+    const isFullViaLevel = (levelGrantsByCourse.get(course.id) ?? []).some((lg) =>
+      hasLevelAccess(student.grantedLevel, lg.minLevel)
+    );
     result.set(course.id, isFullViaLevel ? "full" : !course.hiddenFromGuest ? "trial" : "none");
   }
   return result;
@@ -474,9 +438,9 @@ export async function requireCourseLessonAccess(lessonId: string) {
 // Library items (books/documents) use the exact same grant model as
 // courses — a direct per-student grant OR a "Level >= minLevel" rule, plus
 // the same "trial" tier: an item open to anonymous guests (visibleToGuest +
-// an actual previewFilePath) is at least as open to any signed-in student,
-// học viên or học sinh, as it is to a guest — same truncated preview PDF,
-// not the full file. Mirrors getCourseAccessLevel exactly.
+// an actual previewFilePath) is at least as open to any signed-in student
+// as it is to a guest — same truncated preview PDF, not the full file.
+// Mirrors getCourseAccessLevel exactly.
 export type LibraryAccessLevel = "none" | "trial" | "full";
 
 // Batched sibling of getLibraryItemAccessLevel below — same reasoning as
@@ -496,7 +460,6 @@ export async function getLibraryItemAccessLevels(
       where: { id: { in: libraryItemIds } },
       select: {
         id: true,
-        openToProspectiveStudents: true,
         isFree: true,
         visibleToGuest: true,
         previewFilePath: true,
@@ -522,10 +485,9 @@ export async function getLibraryItemAccessLevels(
       result.set(item.id, "full");
       continue;
     }
-    const isFullViaLevel =
-      student.grantedLevel === null
-        ? item.openToProspectiveStudents
-        : (levelGrantsByItem.get(item.id) ?? []).some((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel));
+    const isFullViaLevel = (levelGrantsByItem.get(item.id) ?? []).some((lg) =>
+      hasLevelAccess(student.grantedLevel, lg.minLevel)
+    );
     if (isFullViaLevel) {
       result.set(item.id, "full");
       continue;
@@ -615,9 +577,9 @@ export async function requireGuestCourseAccess(courseId: string) {
 //
 // A free course (Course.isFree) is the one exception to the per-lesson
 // visibleToGuest gate: "Miễn phí" means every lesson opens for guests too,
-// same as it does for học viên/học sinh (getCourseAccessLevel above) —
-// hiddenFromGuest still applies, since that's the separate "don't show this
-// course to guests at all" switch, not overridden by isFree.
+// same as it does for học viên (getCourseAccessLevel above) — hiddenFromGuest
+// still applies, since that's the separate "don't show this course to
+// guests at all" switch, not overridden by isFree.
 export async function requireGuestCourseLessonAccess(lessonId: string) {
   const lesson = await prisma.courseLesson.findUnique({
     where: { id: lessonId },
@@ -692,9 +654,6 @@ export function userCanAccessChatThread(
 }
 
 export async function requireOwnSupportThreadAccess() {
-  // Deliberately requireActiveStudent, not requireLeveledStudent — a "học
-  // sinh" (grantedLevel null) can also reach admin support chat, unlike
-  // DIRECT/GROUP threads which stay leveled-only.
   const student = await requireActiveStudent();
   await requireChatEnabled("/dashboard");
   const thread = await getOrCreateSupportThread(student.id);
@@ -714,7 +673,7 @@ export async function requireAdminSupportThreadAccess(threadId: string) {
 }
 
 export async function requireDirectThreadAccess(threadId: string) {
-  const student = await requireLeveledStudent();
+  const student = await requireActiveStudent();
   await requireChatEnabled("/dashboard");
   const thread = await prisma.chatThread.findUnique({ where: { id: threadId } });
   if (!thread || thread.kind !== "DIRECT" || !userCanAccessChatThread(student, thread)) {
@@ -724,7 +683,7 @@ export async function requireDirectThreadAccess(threadId: string) {
 }
 
 export async function requireGroupThreadAccess(level: Level) {
-  const student = await requireLeveledStudent();
+  const student = await requireActiveStudent();
   await requireChatEnabled("/dashboard");
   if (!hasLevelAccess(student.grantedLevel, level)) {
     redirect("/dashboard/chat?denied=1");

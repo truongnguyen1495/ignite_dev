@@ -37,19 +37,13 @@ export default async function StudentLibraryPage({
       .filter((lg) => hasLevelAccess(student.grantedLevel, lg.minLevel))
       .map((lg) => lg.libraryItemId)
   );
-  // "Học sinh" (grantedLevel null) never match levelGrants (Level-typed) —
-  // openToProspectiveStudents is their only other path to "full", same rule
-  // as getLibraryItemAccessLevel (src/lib/access.ts), kept in sync here
-  // purely for this listing's badge.
-  const isHocSinh = student.grantedLevel === null;
 
   const listItems: StudentLibraryItem[] = items.map((item, index) => {
     let accessLevel: LibraryAccessLevel;
     if (item.isFree || grantedItemIds.has(item.id)) {
       accessLevel = "full";
     } else {
-      const fullViaLevel = isHocSinh ? item.openToProspectiveStudents : levelUnlockedItemIds.has(item.id);
-      accessLevel = fullViaLevel
+      accessLevel = levelUnlockedItemIds.has(item.id)
         ? "full"
         : item.visibleToGuest && item.previewFilePath
           ? "trial"

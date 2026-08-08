@@ -148,7 +148,6 @@ export async function setLessonWatchSettingsAction(
   const data = {
     lessonWatchThresholdPercent: parsed.data.lessonWatchThresholdPercent,
     showLessonWatchProgressToGuest: formData.get("showLessonWatchProgressToGuest") === "on",
-    enforceLessonWatchForHocSinh: formData.get("enforceLessonWatchForHocSinh") === "on",
     enforceLessonWatchForHocVien: formData.get("enforceLessonWatchForHocVien") === "on",
   };
 

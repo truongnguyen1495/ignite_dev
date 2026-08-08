@@ -17,7 +17,6 @@ export default async function AnnouncementsPage() {
     category: a.category,
     minLevel: a.minLevel,
     visibleToGuest: a.visibleToGuest,
-    visibleToProspective: a.visibleToProspective,
     visibleToLeveled: a.visibleToLeveled,
     visibleToStudents: a.visibleToStudents,
     publishedAtLabel: formatDateVN(a.publishedAt),

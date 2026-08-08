@@ -8,7 +8,6 @@ import {
   Library,
   MessageCircle,
   ShieldCheck,
-  Home,
   ShoppingBag,
   Package,
   Presentation,
@@ -28,8 +27,6 @@ import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { InstallAppButton } from "@/components/install-app-button";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { LevelUpWatcher } from "./level-up-watcher";
-import { HocSinhNav, type HocSinhNavItem } from "./hoc-sinh-nav";
-import { SupportChatWidget } from "./support-chat-widget";
 
 const iconClass = "h-4 w-4";
 
@@ -37,7 +34,6 @@ const iconClass = "h-4 w-4";
 // normal padded card-grid/nav look; only the editor route opts out of the
 // padded/max-width wrapper — same convention as admin/layout.tsx's own
 // full-bleed pattern (see MainContent's comment in src/components/ui/main-content.tsx).
-// Shared by both the "học sinh" and leveled-student render branches below.
 const DASHBOARD_FULL_BLEED_PATTERN = "^/dashboard/whiteboards/[^/]+$";
 
 // Same reasoning as admin/layout.tsx: reads live, per-student data (chat,
@@ -56,7 +52,7 @@ export default async function DashboardLayout({
   const [announcements, reads, chatEnabled, salesEnabled, whiteboardsEnabled, adminPermissions, cartCount] =
     await Promise.all([
       prisma.announcement.findMany({
-        select: { id: true, minLevel: true, visibleToStudents: true, visibleToProspective: true, visibleToLeveled: true },
+        select: { id: true, minLevel: true, visibleToStudents: true, visibleToLeveled: true },
       }),
       prisma.announcementRead.findMany({
         where: { studentId: student.id },
@@ -72,8 +68,7 @@ export default async function DashboardLayout({
   // table entirely (see hasFullAdminAccess in src/lib/access.ts), so its size
   // alone would miss them here.
   const hasAdminAccess = adminPermissions.size > 0 || student.isAdminManager;
-  const isLeveled = student.grantedLevel !== null;
-  const chatInbox = chatEnabled && isLeveled ? await getStudentChatInbox(student) : null;
+  const chatInbox = chatEnabled ? await getStudentChatInbox(student) : null;
   const readIds = new Set(reads.map((r) => r.announcementId));
   const unreadAnnouncementCount = announcements.filter(
     (a) => a.visibleToStudents && announcementVisibleTo(a, student.grantedLevel) && !readIds.has(a.id)
@@ -83,91 +78,6 @@ export default async function DashboardLayout({
       chatInbox.directThreads.reduce((sum, t) => sum + t.unreadCount, 0) +
       chatInbox.groupRooms.reduce((sum, r) => sum + r.unreadCount, 0)
     : 0;
-
-  // "Học sinh" (grantedLevel null) get a page kế thừa từ khung trang khách
-  // (/guest) — thanh nav ngang đơn giản, không sidebar — cộng thêm các tab
-  // chỉ dành cho tài khoản đã đăng nhập: Tham gia hệ thống 5 cấp, Thông tin
-  // cá nhân, Hồ sơ học sinh. "Học viên" (đã có cấp) giữ nguyên khung sidebar
-  // hiện có, xem nhánh bên dưới.
-  if (!isLeveled) {
-    const hocSinhNavItems: HocSinhNavItem[] = [
-      { href: "/dashboard/home", label: t.hocSinhNav.home, icon: <Home className="h-4 w-4" />, exact: true },
-      { href: "/dashboard/announcements", label: t.hocSinhNav.announcements, icon: <Megaphone className="h-4 w-4" /> },
-      { href: "/dashboard/courses", label: t.hocSinhNav.exclusiveCourses, icon: <Video className="h-4 w-4" /> },
-      { href: "/dashboard/library", label: t.hocSinhNav.library, icon: <Library className="h-4 w-4" /> },
-      { href: "/dashboard/products", label: t.hocSinhNav.products, icon: <Package className="h-4 w-4" /> },
-      ...(whiteboardsEnabled
-        ? [{ href: "/dashboard/whiteboards", label: t.hocSinhNav.whiteboards, icon: <Presentation className="h-4 w-4" /> }]
-        : []),
-      {
-        href: "/dashboard/level-up",
-        label: t.hocSinhNav.joinFiveLevel,
-        icon: <ArrowUpCircle className="h-4 w-4" />,
-      },
-      { href: "/dashboard/profile", label: t.hocSinhNav.profile, icon: <UserCircle className="h-4 w-4" /> },
-    ];
-    return (
-      <div className="flex min-h-screen flex-col bg-background">
-        <AppHeader fullBleedPattern={DASHBOARD_FULL_BLEED_PATTERN}>
-          <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 px-4 pt-4 sm:px-8">
-            <BrandLogo subtitle={t.brandSubtitle.hocSinh} />
-            <div className="flex flex-wrap items-center gap-3 text-sm">
-              {hasAdminAccess && (
-                <Link
-                  href="/admin"
-                  className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-primary-border-hover hover:text-foreground"
-                >
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  {t.dashboardNav.goToAdmin}
-                </Link>
-              )}
-              <span className="flex min-w-0 items-center gap-2 rounded-full border border-border py-1 pl-1 pr-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-bg text-xs font-semibold text-primary">
-                  {student.name.charAt(0).toUpperCase()}
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-xs font-medium text-foreground">{student.name}</span>
-                  <span className="flex items-center gap-1.5">
-                    {student.username && (
-                      <span className="truncate text-[11px] text-muted">@{student.username}</span>
-                    )}
-                    <LevelBadge level={student.grantedLevel} />
-                  </span>
-                </span>
-              </span>
-              {salesEnabled && (
-                <Link
-                  href="/dashboard/cart"
-                  title="Giỏ hàng"
-                  className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border text-muted transition-colors hover:border-primary-border-hover hover:text-foreground"
-                >
-                  <ShoppingBag className="h-4 w-4" />
-                  {cartCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-on-dark-strong">
-                      {cartCount}
-                    </span>
-                  )}
-                  <span className="sr-only">Giỏ hàng</span>
-                </Link>
-              )}
-              <InstallAppButton />
-              <LanguageSwitcher />
-              <LogoutButton label={t.common.logout} />
-            </div>
-          </div>
-          <HocSinhNav items={hocSinhNavItems} />
-        </AppHeader>
-        <MainContent
-          fullBleedPattern={DASHBOARD_FULL_BLEED_PATTERN}
-          className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-8"
-          innerClassName={null}
-        >
-          {children}
-        </MainContent>
-        {chatEnabled && <SupportChatWidget studentId={student.id} />}
-      </div>
-    );
-  }
 
   const NAV_ITEMS: NavItem[] = [
     { href: "/dashboard", label: t.dashboardNav.fiveLevelTraining, icon: <LayoutDashboard className={iconClass} />, exact: true },
@@ -201,8 +111,8 @@ export default async function DashboardLayout({
     <SidebarProvider>
       <LevelUpWatcher
         studentId={student.id}
-        level={student.grantedLevel!}
-        label={LEVEL_LABELS[student.grantedLevel!]}
+        level={student.grantedLevel}
+        label={LEVEL_LABELS[student.grantedLevel]}
       />
       <Sidebar items={NAV_ITEMS} brand={<BrandLogo subtitle={t.brandSubtitle.hocVien} />} />
       <div className="flex min-w-0 flex-1 flex-col">

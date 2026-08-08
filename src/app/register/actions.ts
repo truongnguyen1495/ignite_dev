@@ -77,9 +77,9 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
         passwordHash,
         role: "STUDENT",
         status: "ACTIVE",
-        // No cấp — not on the 5-level ladder until an admin approves a join
-        // request from /dashboard/level-up (see requireLeveledStudent).
-        grantedLevel: null,
+        // Every self-registered account starts at Cấp 1 immediately — no
+        // manual admin approval gate for new signups.
+        grantedLevel: "CUSTOMER",
         // Only left unverified when the toggle is actually on — otherwise
         // this account should never be retroactively affected if the
         // toggle gets turned on later (same reasoning as the pre-existing

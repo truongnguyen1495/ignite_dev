@@ -37,9 +37,8 @@ export default auth((req) => {
 export const config = {
   // /product/:path* (bespoke product landing pages, src/app/product/[slug]/
   // page.tsx) is intentionally NOT matched here — those pages are public
-  // now (khách and "học sinh" no-cấp students can both view them), same as
-  // /guest/*. The real boundary for buying still lives in the Server
-  // Actions those pages call (each does its own requireActiveStudent()/
-  // requireLeveledStudent()), never in this Edge-only fast path.
+  // now (khách can view them too), same as /guest/*. The real boundary for
+  // buying still lives in the Server Actions those pages call (each does
+  // its own requireActiveStudent()), never in this Edge-only fast path.
   matcher: ["/dashboard/:path*", "/admin/:path*"],
 };

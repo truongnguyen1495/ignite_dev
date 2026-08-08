@@ -8,12 +8,10 @@ import { Button } from "@/components/ui/button";
 export function LessonWatchProgressForm({
   lessonWatchThresholdPercent,
   showLessonWatchProgressToGuest,
-  enforceLessonWatchForHocSinh,
   enforceLessonWatchForHocVien,
 }: {
   lessonWatchThresholdPercent: number;
   showLessonWatchProgressToGuest: boolean;
-  enforceLessonWatchForHocSinh: boolean;
   enforceLessonWatchForHocVien: boolean;
 }) {
   const [error, formAction, pending] = useActionState(setLessonWatchSettingsAction, undefined);
@@ -54,20 +52,11 @@ export function LessonWatchProgressForm({
         <label className="flex items-center gap-2 text-sm text-foreground">
           <input
             type="checkbox"
-            name="enforceLessonWatchForHocSinh"
-            defaultChecked={enforceLessonWatchForHocSinh}
-            className="h-4 w-4 accent-primary"
-          />
-          Bắt buộc với học sinh (tài khoản chưa xếp cấp)
-        </label>
-        <label className="flex items-center gap-2 text-sm text-foreground">
-          <input
-            type="checkbox"
             name="enforceLessonWatchForHocVien"
             defaultChecked={enforceLessonWatchForHocVien}
             className="h-4 w-4 accent-primary"
           />
-          Bắt buộc với học viên (tài khoản đã xếp cấp)
+          Bắt buộc với học viên
         </label>
       </div>
 

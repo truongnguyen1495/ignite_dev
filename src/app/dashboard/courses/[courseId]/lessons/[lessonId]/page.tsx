@@ -50,8 +50,7 @@ export default async function StudentCourseLessonPage({
   // missing either and the "Đánh dấu hoàn thành" button behaves exactly as
   // it did before this feature existed.
   const watchGateEnforced =
-    !!(lesson.youtubeId && lesson.durationSeconds) &&
-    (student.grantedLevel === null ? settings.enforceLessonWatchForHocSinh : settings.enforceLessonWatchForHocVien);
+    !!(lesson.youtubeId && lesson.durationSeconds) && settings.enforceLessonWatchForHocVien;
   const initialWatchedSeconds = watchProgress?.watchedSeconds ?? 0;
 
   const completedLessonIds = new Set(completions.map((c) => c.courseLessonId));

@@ -22,16 +22,15 @@ export type AnnouncementListItem = {
   category: AnnouncementCategory;
   minLevel: Level | null;
   visibleToGuest: boolean;
-  visibleToProspective: boolean;
   visibleToLeveled: boolean;
   visibleToStudents: boolean;
   publishedAtLabel: string;
 };
 
-// "PROSPECTIVE" and "NO_LEVELED" stand in for the two boolean audience flags
-// so they can live in the same Set as the real Level values (which filter by
-// minLevel, only meaningful when visibleToLeveled is true).
-type AudienceFilterValue = "PROSPECTIVE" | "NO_LEVELED" | Level;
+// "NO_LEVELED" stands in for the visibleToLeveled boolean flag so it can
+// live in the same Set as the real Level values (which filter by minLevel,
+// only meaningful when visibleToLeveled is true).
+type AudienceFilterValue = "NO_LEVELED" | Level;
 type GuestFilterValue = "public" | "private";
 type HiddenFilterValue = "hidden" | "visible";
 
@@ -74,7 +73,6 @@ export function AnnouncementsList({ announcements }: { announcements: Announceme
       if (categoryFilter.size > 0 && !categoryFilter.has(a.category)) return false;
       if (audienceFilter.size > 0) {
         const keys: AudienceFilterValue[] = [];
-        if (a.visibleToProspective) keys.push("PROSPECTIVE");
         if (a.visibleToLeveled && a.minLevel) {
           keys.push(a.minLevel);
         } else if (!a.visibleToLeveled) {
@@ -142,15 +140,6 @@ export function AnnouncementsList({ announcements }: { announcements: Announceme
 
               <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted">Đối tượng xem</p>
-                <label className="flex items-center gap-2 text-sm text-foreground">
-                  <input
-                    type="checkbox"
-                    className={checkboxClass}
-                    checked={audienceFilter.has("PROSPECTIVE")}
-                    onChange={() => setAudienceFilter((s) => toggleInSet(s, "PROSPECTIVE"))}
-                  />
-                  Học sinh
-                </label>
                 <label className="flex items-center gap-2 text-sm text-foreground">
                   <input
                     type="checkbox"
@@ -277,15 +266,12 @@ export function AnnouncementsList({ announcements }: { announcements: Announceme
                     <Badge color={ANNOUNCEMENT_CATEGORY_BADGE_COLOR[announcement.category]}>
                       {ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}
                     </Badge>
-                    {announcement.visibleToProspective && <Badge color="muted">Học sinh</Badge>}
                     {announcement.visibleToLeveled && announcement.minLevel && (
                       <Badge color="primary">{LEVEL_LABELS[announcement.minLevel]} trở lên</Badge>
                     )}
-                    {!announcement.visibleToGuest &&
-                      !announcement.visibleToProspective &&
-                      !announcement.visibleToLeveled && (
-                        <Badge color="warning">Chưa cấp quyền cho ai</Badge>
-                      )}
+                    {!announcement.visibleToGuest && !announcement.visibleToLeveled && (
+                      <Badge color="warning">Chưa cấp quyền cho ai</Badge>
+                    )}
                     {hidden && <Badge color="warning">Đã ẩn</Badge>}
                     {announcement.visibleToGuest && <Badge color="info">Công khai</Badge>}
                     <span className="text-xs text-muted">{announcement.publishedAtLabel}</span>

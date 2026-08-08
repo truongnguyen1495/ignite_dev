@@ -10,10 +10,7 @@ const LEVEL_COLORS: Record<Level, BadgeColor> = {
   CORE_LEADER: "level5",
 };
 
-export function LevelBadge({ level, full = false }: { level: Level | null; full?: boolean }) {
-  if (!level) {
-    return <Badge color="muted">{full ? "Học sinh" : "HS"}</Badge>;
-  }
+export function LevelBadge({ level, full = false }: { level: Level; full?: boolean }) {
   return (
     <Badge color={LEVEL_COLORS[level]}>
       {full ? LEVEL_LABELS[level] : `CẤP ${LEVEL_ORDER[level]}`}

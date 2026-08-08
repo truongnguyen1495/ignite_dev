@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { requireLeveledStudent } from "@/lib/access";
+import { requireActiveStudent } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 
 // "Đặt lịch tư vấn" on the product landing pages (bespoke + generic) —
@@ -20,7 +20,7 @@ export async function requestConsultationAction(
   phone: string,
   preferredTime: string
 ): Promise<{ error?: string }> {
-  const student = await requireLeveledStudent();
+  const student = await requireActiveStudent();
 
   const parsed = consultationSchema.safeParse({ name, phone, preferredTime });
   if (!parsed.success) {

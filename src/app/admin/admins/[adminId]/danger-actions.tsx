@@ -72,12 +72,12 @@ export function RemoveAdminRoleButton({ adminId, adminName }: { adminId: string;
   );
 }
 
-type Mode = "delete" | "to_hocsinh" | "to_hocvien";
+type Mode = "delete" | "to_hocvien";
 
 // Only rendered for an adminOnly account (no real student identity) —
 // unlike RemoveAdminRoleButton above, there's no underlying học viên to
 // "go back to", so the admin picks explicitly between deleting the account
-// outright or turning it into a genuine học sinh/học viên (see
+// outright or turning it into a genuine học viên (see
 // convertAdminOnlyAccountAction — always strips admin capability either way).
 export function DeleteAdminAccountButton({ adminId, adminName }: { adminId: string; adminName: string }) {
   const [open, setOpen] = useState(false);
@@ -97,7 +97,7 @@ export function DeleteAdminAccountButton({ adminId, adminName }: { adminId: stri
       const result =
         mode === "delete"
           ? await deleteAdminAccountAction(adminId)
-          : await convertAdminOnlyAccountAction(adminId, mode === "to_hocsinh" ? "HOC_SINH" : "HOC_VIEN", level || undefined);
+          : await convertAdminOnlyAccountAction(adminId, level as Level);
       if (typeof result === "string") {
         setError(result);
         return;
@@ -126,7 +126,7 @@ export function DeleteAdminAccountButton({ adminId, adminName }: { adminId: stri
             <div>
               <h2 className="text-base font-semibold text-foreground">Xóa tài khoản admin &quot;{adminName}&quot;</h2>
               <p className="mt-1 text-sm text-muted">
-                Tài khoản này không phải học viên/học sinh thật — chọn một trong các lựa chọn dưới đây.
+                Tài khoản này không phải học viên thật — chọn một trong các lựa chọn dưới đây.
               </p>
             </div>
 
@@ -142,22 +142,6 @@ export function DeleteAdminAccountButton({ adminId, adminName }: { adminId: stri
                 <span>
                   <span className="block font-medium text-foreground">Xóa tài khoản hoàn toàn</span>
                   <span className="block text-xs text-muted">Xóa vĩnh viễn, không thể khôi phục.</span>
-                </span>
-              </label>
-
-              <label className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm">
-                <input
-                  type="radio"
-                  name="mode"
-                  className="mt-0.5 accent-primary"
-                  checked={mode === "to_hocsinh"}
-                  onChange={() => setMode("to_hocsinh")}
-                />
-                <span>
-                  <span className="block font-medium text-foreground">Chuyển thành Học sinh</span>
-                  <span className="block text-xs text-muted">
-                    Không còn là admin — trở thành tài khoản học sinh (chưa xếp cấp) bình thường.
-                  </span>
                 </span>
               </label>
 

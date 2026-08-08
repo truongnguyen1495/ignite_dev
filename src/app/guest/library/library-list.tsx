@@ -15,9 +15,9 @@ const TYPE_ICON: Record<LibraryItemType, typeof BookOpen> = {
   DOCUMENT: FileText,
 };
 
-// `isLoggedIn` switches the purchase footer between a real BuyButton (creates
-// an order against the current session) for the học sinh home teaser and a
-// GuestBuyButton (just routes to /login) for the anonymous /guest/* catalog.
+// `isLoggedIn` switches the purchase footer between a real BuyButton
+// (creates an order against the current session) and a GuestBuyButton (just
+// routes to /login) for the anonymous /guest/* catalog.
 export function GuestLibraryList({
   items,
   isLoggedIn = false,

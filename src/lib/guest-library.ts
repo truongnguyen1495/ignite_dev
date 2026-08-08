@@ -69,7 +69,7 @@ export async function getGuestLibraryItems({
 
   // Batched (3 queries total) instead of one getLibraryItemAccessLevel call
   // per item — a per-item Promise.all fan-out here once blew through
-  // DATABASE_URL's connection_limit=1 on /dashboard/home's featured teaser.
+  // DATABASE_URL's connection_limit=1 on a featured-items teaser page.
   const [accessLevels, salesEnabled] = await Promise.all([
     student ? getLibraryItemAccessLevels(student, items.map((item) => item.id)) : Promise.resolve(null),
     isSalesEnabled(),

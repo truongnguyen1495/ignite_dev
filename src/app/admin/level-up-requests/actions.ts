@@ -20,11 +20,7 @@ export async function approveLevelUpRequestAction(formData: FormData) {
   }
 
   const request = await prisma.levelUpRequest.findUnique({ where: { id: requestId } });
-  // fromLevel null is a join request from a "học sinh" (no cấp) account —
-  // reviewed on /admin/prospective-students instead, under a separate
-  // permission. Defensive check so MANAGE_LEVEL_UP_REQUESTS alone can't act
-  // on those.
-  if (!request || request.status !== "PENDING" || request.fromLevel === null) {
+  if (!request || request.status !== "PENDING") {
     redirect("/admin/level-up-requests");
   }
 
@@ -68,7 +64,7 @@ export async function rejectLevelUpRequestAction(
   }
 
   const request = await prisma.levelUpRequest.findUnique({ where: { id: parsed.data.requestId } });
-  if (!request || request.status !== "PENDING" || request.fromLevel === null) {
+  if (!request || request.status !== "PENDING") {
     return "Yêu cầu không còn hợp lệ (có thể đã được xử lý).";
   }
 

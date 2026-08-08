@@ -8,8 +8,6 @@ import { GenericProductDetail } from "./generic-product-detail";
 // custom nav/hero, no sidebar. This route just redirects there so the
 // catalog card's stable /dashboard/products/{id} link keeps working either
 // way. Everything else renders inline, in the normal dashboard shell.
-// requireActiveStudent() (not requireLeveledStudent()), same reasoning as
-// ../page.tsx — "học sinh" (no-cấp) can reach this too.
 export default async function ProductDetailPage({
   params,
 }: {

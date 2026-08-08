@@ -18,7 +18,6 @@ export function EditAnnouncementForm({
   category,
   minLevel,
   visibleToGuest,
-  visibleToProspective,
   visibleToLeveled,
 }: {
   announcementId: string;
@@ -28,7 +27,6 @@ export function EditAnnouncementForm({
   category: AnnouncementCategory;
   minLevel: Level | null;
   visibleToGuest: boolean;
-  visibleToProspective: boolean;
   visibleToLeveled: boolean;
 }) {
   const [error, formAction, pending] = useActionState(updateAnnouncementAction, undefined);
@@ -49,7 +47,6 @@ export function EditAnnouncementForm({
         </Select>
         <AnnouncementAudienceFields
           defaultVisibleToGuest={visibleToGuest}
-          defaultVisibleToProspective={visibleToProspective}
           defaultVisibleToLeveled={visibleToLeveled}
           defaultMinLevel={minLevel}
         />

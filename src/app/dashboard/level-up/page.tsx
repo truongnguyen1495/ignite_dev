@@ -23,15 +23,11 @@ export default async function LevelUpPage() {
   });
   const hasPending = latestRequest?.status === "PENDING";
 
-  // latestRequest only ever indexes toLevel (always a real Level, even for a
-  // join request), so this card is identical for both a no-cấp account and a
-  // leveled one — computed once and reused by both branches below.
   const latestRequestCard = latestRequest && (
     <Card className="text-sm">
       <div className="flex items-center justify-between gap-3">
         <p className="text-foreground">
-          Yêu cầu gần nhất: {latestRequest.fromLevel ? "lên" : "vào"}{" "}
-          <span className="font-medium">{LEVEL_LABELS[latestRequest.toLevel]}</span>
+          Yêu cầu gần nhất: lên <span className="font-medium">{LEVEL_LABELS[latestRequest.toLevel]}</span>
         </p>
         {latestRequest.status === "APPROVED" ? (
           <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-success-bg px-2.5 py-1 text-xs font-medium text-success">
@@ -54,31 +50,6 @@ export default async function LevelUpPage() {
       )}
     </Card>
   );
-
-  // No cấp yet — this is the join-request path, not the level-up path.
-  // There's no current level, so none of the max-level/quiz-completion UI
-  // below applies.
-  if (student.grantedLevel === null) {
-    return (
-      <div className="max-w-xl space-y-6">
-        <PageHeader
-          title="Tham gia hệ thống đào tạo 5 cấp"
-          description="Bạn đang là học sinh — chưa tham gia hệ thống đào tạo 5 cấp."
-        />
-
-        {latestRequestCard}
-
-        {hasPending ? (
-          <Card className="flex items-center gap-3 text-sm">
-            <Clock className="h-5 w-5 shrink-0 text-warning" />
-            <p className="text-foreground">Yêu cầu của bạn đang chờ Super Admin duyệt.</p>
-          </Card>
-        ) : (
-          <RequestLevelUpButton label="Yêu cầu tham gia hệ thống đào tạo 5 cấp" />
-        )}
-      </div>
-    );
-  }
 
   const atMaxLevel = isMaxLevel(student.grantedLevel);
   const upcoming = nextLevel(student.grantedLevel);

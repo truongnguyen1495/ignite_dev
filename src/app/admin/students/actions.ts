@@ -5,24 +5,12 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Prisma, type Level } from "@prisma/client";
-import { requireAnyAdminPermission, requireAdminPermission } from "@/lib/access";
+import { requireAdminPermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
-import { ORDERED_LEVELS, NO_LEVEL_VALUE } from "@/lib/levels";
+import { ORDERED_LEVELS } from "@/lib/levels";
 import { optionalPhoneNumberSchema } from "@/lib/validation";
-import type { AdminPermissionKind } from "@prisma/client";
-
-// Create/update/lock/delete are shared plumbing between the "Học viên"
-// (MANAGE_STUDENTS) and "Học sinh" (MANAGE_PROSPECTIVE_STUDENTS) admin
-// areas — both list pages and request-review queues stay separate, but
-// either kind of admin needs to be able to manage the account record itself.
-const STUDENT_MANAGEMENT_PERMISSIONS: AdminPermissionKind[] = ["MANAGE_STUDENTS", "MANAGE_PROSPECTIVE_STUDENTS"];
 
 const levelEnum = z.enum(ORDERED_LEVELS as [Level, ...Level[]]);
-// NO_LEVEL_VALUE ("NONE") represents "no cấp" (grantedLevel: null) in the
-// admin create/edit student forms — not a real Level.
-const grantedLevelField = z
-  .union([levelEnum, z.literal(NO_LEVEL_VALUE)])
-  .transform((v): Level | null => (v === NO_LEVEL_VALUE ? null : v));
 
 // An Admin Manager (or any lesser admin holding EDIT_STUDENTS/LOCK_STUDENTS/
 // etc.) must never mutate another Admin Manager's account — same boundary
@@ -54,14 +42,14 @@ const createSchema = z.object({
   email: z.string().trim().email("Email không hợp lệ."),
   phoneNumber: optionalPhoneNumberSchema,
   password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự."),
-  grantedLevel: grantedLevelField,
+  grantedLevel: levelEnum,
 });
 
 export async function createStudentAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  await requireAnyAdminPermission(STUDENT_MANAGEMENT_PERMISSIONS);
+  await requireAdminPermission("MANAGE_STUDENTS");
 
   const parsed = createSchema.safeParse({
     name: formData.get("name"),
@@ -97,7 +85,6 @@ export async function createStudentAction(
   }
 
   revalidatePath("/admin/students");
-  revalidatePath("/admin/prospective-students");
   redirect("/admin/students");
 }
 
@@ -106,7 +93,7 @@ const updateSchema = z.object({
   name: z.string().trim().min(1, "Tên không được để trống."),
   email: z.string().trim().email("Email không hợp lệ."),
   phoneNumber: optionalPhoneNumberSchema,
-  grantedLevel: grantedLevelField,
+  grantedLevel: levelEnum,
   password: z.union([z.string().min(8), z.literal("")]),
 });
 
@@ -114,7 +101,8 @@ export async function updateStudentAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  const admin = await requireAnyAdminPermission(STUDENT_MANAGEMENT_PERMISSIONS);
+  const admin = await requireAdminPermission("MANAGE_STUDENTS");
+  await requireAdminPermission("EDIT_STUDENTS");
 
   const parsed = updateSchema.safeParse({
     studentId: formData.get("studentId"),
@@ -130,40 +118,17 @@ export async function updateStudentAction(
 
   const { studentId, name, email, phoneNumber, grantedLevel, password } = parsed.data;
 
-  // Editing an existing học viên vs. học sinh needs its own permission
-  // (EDIT_STUDENTS / EDIT_PROSPECTIVE_STUDENTS) — MANAGE_STUDENTS/
-  // MANAGE_PROSPECTIVE_STUDENTS above only cover viewing + creating, not
-  // editing an existing account. Decided by the target's *current* kind,
-  // read fresh from the DB, never the caller's assumed context.
   const current = await prisma.user.findUnique({
     where: { id: studentId },
-    select: { grantedLevel: true, isAdminManager: true },
+    select: { isAdminManager: true },
   });
-  await requireAdminPermission(current?.grantedLevel !== null ? "EDIT_STUDENTS" : "EDIT_PROSPECTIVE_STUDENTS");
   if (isBlockedAdminManagerTarget(admin.role === "SUPER_ADMIN", current)) {
     return "Bạn không có quyền thao tác trên tài khoản Admin Manager.";
-  }
-
-  // Pushing a currently-leveled "học viên" back to "học sinh" (grantedLevel
-  // -> null) via this shared edit form is the same demotion the dedicated
-  // DemoteStudentButton performs — gate it identically, or that button's
-  // permission boundary would be trivially bypassable through this form.
-  if (current?.grantedLevel !== null && grantedLevel === null) {
-    await requireAdminPermission("DEMOTE_STUDENTS");
   }
 
   const data: Prisma.UserUpdateInput = { name, email, phoneNumber, grantedLevel };
   if (password) {
     data.passwordHash = await bcrypt.hash(password, 10);
-  }
-  // Demoting back to "học sinh" through this shared form must clear
-  // isAdminManager/canManageAdmins the same as demoteStudentAction below —
-  // an Admin Manager is by definition a real học viên (grantedLevel set),
-  // so losing that would otherwise leave the flag stale on an ineligible
-  // account.
-  if (current?.grantedLevel !== null && grantedLevel === null) {
-    data.isAdminManager = false;
-    data.canManageAdmins = false;
   }
 
   try {
@@ -177,34 +142,22 @@ export async function updateStudentAction(
   }
 
   revalidatePath("/admin/students");
-  revalidatePath("/admin/prospective-students");
   redirect("/admin/students");
 }
 
-// Locking/deleting an existing học viên/học sinh each need their own
-// permission (LOCK_STUDENTS/DELETE_STUDENTS or the _PROSPECTIVE_ variants)
-// — independent grants, e.g. an admin can be trusted to lock but never
-// delete. Always re-read grantedLevel fresh from the DB rather than
-// trusting the caller's page context, same "never trust the client for an
-// authorization decision" rule as the rest of the app's access control.
+// Locking/deleting an existing học viên each need their own permission
+// (LOCK_STUDENTS/DELETE_STUDENTS) — independent grants, e.g. an admin can
+// be trusted to lock but never delete.
 async function targetInfo(studentId: string) {
   return prisma.user.findUnique({
     where: { id: studentId },
-    select: { grantedLevel: true, isAdminManager: true },
+    select: { isAdminManager: true },
   });
-}
-
-function permissionFor(
-  target: { grantedLevel: Level | null } | null,
-  forHocVien: AdminPermissionKind,
-  forHocSinh: AdminPermissionKind
-): AdminPermissionKind {
-  return target?.grantedLevel !== null ? forHocVien : forHocSinh;
 }
 
 export async function setStudentStatusAction(studentId: string, locked: boolean) {
   const target = await targetInfo(studentId);
-  const admin = await requireAdminPermission(permissionFor(target, "LOCK_STUDENTS", "LOCK_PROSPECTIVE_STUDENTS"));
+  const admin = await requireAdminPermission("LOCK_STUDENTS");
   if (isBlockedAdminManagerTarget(admin.role === "SUPER_ADMIN", target)) {
     redirect("/admin/students?denied=1");
   }
@@ -213,41 +166,15 @@ export async function setStudentStatusAction(studentId: string, locked: boolean)
     data: { status: locked ? "LOCKED" : "ACTIVE" },
   });
   revalidatePath("/admin/students");
-  revalidatePath("/admin/prospective-students");
   revalidatePath(`/admin/students/${studentId}`);
 }
 
 export async function deleteStudentAction(studentId: string) {
   const target = await targetInfo(studentId);
-  const admin = await requireAdminPermission(
-    permissionFor(target, "DELETE_STUDENTS", "DELETE_PROSPECTIVE_STUDENTS")
-  );
+  const admin = await requireAdminPermission("DELETE_STUDENTS");
   if (isBlockedAdminManagerTarget(admin.role === "SUPER_ADMIN", target)) {
     redirect("/admin/students?denied=1");
   }
   await prisma.user.delete({ where: { id: studentId, role: "STUDENT" } });
   revalidatePath("/admin/students");
-  revalidatePath("/admin/prospective-students");
-}
-
-// Explicit "revoke a học viên's level, push back to học sinh" action — same
-// end state as picking "Học sinh" in the edit form's level dropdown, but as
-// a dedicated one-click button (see DemoteStudentButton). Gated by its own
-// permission rather than plain MANAGE_STUDENTS, per explicit user decision:
-// Super Admin decides which admins may demote a học viên.
-export async function demoteStudentAction(studentId: string) {
-  const admin = await requireAdminPermission("DEMOTE_STUDENTS");
-  const target = await prisma.user.findUnique({ where: { id: studentId }, select: { isAdminManager: true } });
-  if (isBlockedAdminManagerTarget(admin.role === "SUPER_ADMIN", target)) {
-    redirect("/admin/students?denied=1");
-  }
-  await prisma.user.update({
-    where: { id: studentId, role: "STUDENT" },
-    // Clears isAdminManager/canManageAdmins too — see the comment on the
-    // equivalent branch in updateStudentAction above.
-    data: { grantedLevel: null, isAdminManager: false, canManageAdmins: false },
-  });
-  revalidatePath("/admin/students");
-  revalidatePath("/admin/prospective-students");
-  revalidatePath(`/admin/students/${studentId}`);
 }

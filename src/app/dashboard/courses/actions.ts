@@ -47,10 +47,8 @@ export async function markCourseLessonCompleteAction(
   // before this feature existed, no gate at all.
   if (lesson.youtubeId && lesson.durationSeconds) {
     const settings = await prisma.settings.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
-    const enforced =
-      student.grantedLevel === null ? settings.enforceLessonWatchForHocSinh : settings.enforceLessonWatchForHocVien;
 
-    if (enforced) {
+    if (settings.enforceLessonWatchForHocVien) {
       const progress = await prisma.courseLessonWatchProgress.findUnique({
         where: { studentId_courseLessonId: { studentId: student.id, courseLessonId: lessonId } },
         select: { watchedSeconds: true },
