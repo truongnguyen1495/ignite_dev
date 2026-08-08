@@ -91,18 +91,18 @@ enum WhiteboardAccessRole {
 // use-whiteboard-broadcast.ts) validated by whiteboardElementsPayloadSchema
 // in src/lib/whiteboard-elements.ts — not enforced at the DB layer.
 model Whiteboard {
-  id             String   @id @default(cuid())
-  title          String
-  createdById    String?
-  createdBy      User?    @relation("WhiteboardsCreated", fields: [createdById], references: [id], onDelete: SetNull)
-  lastEditedById String?
-  lastEditedBy   User?    @relation("WhiteboardsEdited", fields: [lastEditedById], references: [id], onDelete: SetNull)
-  elements       Json     @default("[]")
-  viewportX      Float    @default(0)
-  viewportY      Float    @default(0)
-  viewportZoom   Float    @default(1)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                String                @id @default(cuid())
+  title             String
+  createdById       String?
+  createdBy         User?                 @relation("WhiteboardsCreated", fields: [createdById], references: [id], onDelete: SetNull)
+  lastEditedById    String?
+  lastEditedBy      User?                 @relation("WhiteboardsEdited", fields: [lastEditedById], references: [id], onDelete: SetNull)
+  elements          Json                  @default("[]")
+  viewportX         Float                 @default(0)
+  viewportY         Float                 @default(0)
+  viewportZoom      Float                 @default(1)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
   // null = "Hạn chế" (restricted to the owner + named collaborators only,
   // the default for a newly created board) — a non-null value opens the
   // board to anyone signed in with the link, at that role (see
@@ -287,11 +287,25 @@ model User {
   cartItems                 CartItem[]
   consultationRequests      ConsultationRequest[]
 
-  whiteboardsCreated            Whiteboard[]              @relation("WhiteboardsCreated")
-  whiteboardsEdited             Whiteboard[]              @relation("WhiteboardsEdited")
-  whiteboardCollaborations      WhiteboardCollaborator[]  @relation("WhiteboardCollaboratorUser")
-  whiteboardCollaboratorsAdded  WhiteboardCollaborator[]  @relation("WhiteboardCollaboratorAddedBy")
-  whiteboardComments            WhiteboardComment[]
+  whiteboardsCreated           Whiteboard[]             @relation("WhiteboardsCreated")
+  whiteboardsEdited            Whiteboard[]             @relation("WhiteboardsEdited")
+  whiteboardCollaborations     WhiteboardCollaborator[] @relation("WhiteboardCollaboratorUser")
+  whiteboardCollaboratorsAdded WhiteboardCollaborator[] @relation("WhiteboardCollaboratorAddedBy")
+  whiteboardComments           WhiteboardComment[]
+
+  // "Nhóm của tôi" — see the Group/DailyTask/CheckIn/PersonalityResult/
+  // SpinResult/WeeklyRewardEntry models below for what each relation backs.
+  groupMembership             GroupMembership?      @relation("GroupMembershipUser")
+  dailyTasksCreated           DailyTask[]           @relation("DailyTasksCreated")
+  dailyTaskAssignments        DailyTaskAssignee[]   @relation("DailyTaskAssignees")
+  dailyTaskCompletions        DailyTaskCompletion[] @relation("DailyTaskCompletions")
+  dailyTaskExplanationReviews DailyTaskCompletion[] @relation("DailyTaskExplanationReviews")
+  checkIns                    CheckIn[]             @relation("CheckIns")
+  personalityResults          PersonalityResult[]   @relation("PersonalityResults")
+  personalityResultsEntered   PersonalityResult[]   @relation("PersonalityResultsEntered")
+  spinResults                 SpinResult[]          @relation("SpinResults")
+  weeklyRewardsReceived       WeeklyRewardEntry[]   @relation("WeeklyRewardsReceived")
+  weeklyRewardsSettled        WeeklyRewardEntry[]   @relation("WeeklyRewardsSettled")
 
   @@index([role])
 }
@@ -330,6 +344,21 @@ enum AdminPermissionKind {
   // level gating), chỉ hiển thị cho học viên (xem requireLeveledStudent() ở
   // dashboard/products).
   MANAGE_PRODUCTS
+  // Cấu trúc "Nhóm của tôi" (/admin/groups) — tạo nhóm, thêm/xóa thành viên,
+  // phong/hạ trưởng-phó nhóm. Đổi cấu trúc tổ chức nên tách khỏi quyền soạn
+  // nhiệm vụ hàng ngày / duyệt giải trình bên dưới, cái đó KHÔNG cần
+  // AdminPermission — nó tự động đi kèm GroupMembership.role (LEADER/DEPUTY)
+  // của chính người đó trong nhóm họ đang ở, xem requireOwnGroupLeadership
+  // trong src/lib/access.ts.
+  MANAGE_GROUPS
+  // Nhập/sửa/xóa kết quả trắc nghiệm DISC/MBTI/IQ/EQ (/admin/tests) — dữ
+  // liệu cá nhân nhạy cảm, tách riêng khỏi MANAGE_GROUPS để không phải admin
+  // quản lý nhóm nào cũng xem được kết quả tâm lý của học viên.
+  MANAGE_TESTS
+  // Cấu hình vòng quay may mắn + chốt/trao thưởng bảng xếp hạng tuần
+  // (/admin/minigame) — ảnh hưởng ngân sách/quà thật nên tách riêng, kiểm
+  // soát tập trung thay vì để từng trưởng nhóm tự chỉnh tỉ lệ thưởng.
+  MANAGE_MINIGAME
 }
 
 model AdminPermission {
@@ -507,7 +536,7 @@ model Settings {
   // included; on opens it to all 3 non-guest audiences (Super Admin, Admin,
   // học viên) at once, subject to each board's own per-board sharing
   // (Whiteboard.generalAccessRole / WhiteboardCollaborator).
-  whiteboardsEnabled              Boolean  @default(false)
+  whiteboardsEnabled             Boolean  @default(false)
   updatedAt                      DateTime @updatedAt
 }
 
@@ -546,38 +575,38 @@ model PasswordResetToken {
 // level-up gating) — a sequence of video lessons only visible to students
 // the Super Admin explicitly grants access to via CourseAccessGrant.
 model Course {
-  id                        String   @id @default(cuid())
-  title                     String
-  description               String?  @db.Text
-  coverImageUrl             String?
-  order                     Int      @default(0)
+  id              String   @id @default(cuid())
+  title           String
+  description     String?  @db.Text
+  coverImageUrl   String?
+  order           Int      @default(0)
   // Master hide switch for the /guest/* public site: true removes the course
   // from the guest listing and blocks direct access entirely, regardless of
   // any CourseLesson.visibleToGuest flags below. Default false = listed. This
   // is intentionally NOT what gates individual trial lessons — that's driven
   // purely by CourseLesson.visibleToGuest now (see requireGuestCourseAccess /
   // requireGuestCourseLessonAccess in src/lib/access.ts).
-  hiddenFromGuest           Boolean  @default(false)
+  hiddenFromGuest Boolean  @default(false)
   // Admin-curated, independent of hiddenFromGuest: only checked by the guest
   // homepage's "Khóa học nổi bật" section, which shows exactly the courses
   // opted in here rather than just the first few by `order`.
-  featuredOnHome            Boolean  @default(false)
+  featuredOnHome  Boolean  @default(false)
   // VND, 0 = "không bán" (khóa học vẫn hoạt động như cũ, chỉ cấp qua
   // grant/level-rule như trước giờ) — xem OrderItem cho snapshot giá lúc mua.
-  price                     Int      @default(0)
+  price           Int      @default(0)
   // Optional discounted price, must be < price when set — the actual amount
   // charged at checkout (see getPricing in src/lib/pricing.ts). Null = no
   // discount, full price applies. Irrelevant when isFree is true.
-  salePrice                 Int?
+  salePrice       Int?
   // Master "free for everyone" switch — distinct from price = 0 ("không
   // bán", still admin-grant-only). True grants every student full access
   // outright, no order/checkout involved — checked first in
   // getCourseAccessLevel (src/lib/access.ts). Does not affect guest access,
   // which stays governed by hiddenFromGuest/CourseLesson.visibleToGuest
   // independently.
-  isFree                    Boolean  @default(false)
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
+  isFree          Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   lessons     CourseLesson[]
   chapters    CourseChapter[]
@@ -839,48 +868,48 @@ model ConsultationRequest {
 // paths point at objects in a private Supabase bucket, never a public URL —
 // everything is served through our own authenticated route handlers.
 model LibraryItem {
-  id                        String            @id @default(cuid())
-  title                     String
-  author                    String?
-  description               String?           @db.Text
-  type                      LibraryItemType   @default(BOOK)
+  id                String            @id @default(cuid())
+  title             String
+  author            String?
+  description       String?           @db.Text
+  type              LibraryItemType   @default(BOOK)
   // Defaults to PDF so every existing row keeps behaving exactly as before.
   // INTERACTIVE items have no filePath/previewFilePath — see LibraryBookPage
   // and requireGuestLibraryItemAccess/getLibraryItemAccessLevel in
   // src/lib/access.ts for the format-aware branches.
-  format                    LibraryItemFormat @default(PDF)
-  coverImageUrl             String?
+  format            LibraryItemFormat @default(PDF)
+  coverImageUrl     String?
   // Only set (and required, enforced at the action layer, not by the
   // schema) when format is PDF — INTERACTIVE items have no uploaded file.
-  filePath                  String?
+  filePath          String?
   // "N trang" for list views either way — for INTERACTIVE items this is
   // just pages.length, kept in sync on every saveLibraryBookPagesAction.
-  pageCount                 Int?
+  pageCount         Int?
   // Fixed design-pixel canvas size for an INTERACTIVE item, chosen once in
   // the editor and not resizable after (every element's x/y/width/height in
   // LibraryBookPage.elements is relative to this). Null for PDF items.
-  bookWidth                 Int?
-  bookHeight                Int?
-  previewFilePath           String?
-  guestPreviewPages         Int?
-  order                     Int               @default(0)
-  visibleToGuest            Boolean           @default(false)
+  bookWidth         Int?
+  bookHeight        Int?
+  previewFilePath   String?
+  guestPreviewPages Int?
+  order             Int               @default(0)
+  visibleToGuest    Boolean           @default(false)
   // Master hide switch, same convention as Announcement.visibleToStudents:
   // false pulls the item from student and guest access alike (overriding
   // visibleToGuest and any grants) without deleting it or touching grants.
   // Defaults true so existing rows keep showing up unchanged.
-  visibleToStudents         Boolean           @default(true)
+  visibleToStudents Boolean           @default(true)
   // Admin-curated, independent of visibleToGuest: only checked by the guest
   // homepage's "Ebook nổi bật" section, same convention as Course.featuredOnHome.
-  featuredOnHome            Boolean           @default(false)
+  featuredOnHome    Boolean           @default(false)
   // VND, 0 = "không bán", same convention as Course.price.
-  price                     Int               @default(0)
+  price             Int               @default(0)
   // Optional discounted price, same convention as Course.salePrice.
-  salePrice                 Int?
+  salePrice         Int?
   // Master "free for everyone" switch, same convention as Course.isFree.
-  isFree                    Boolean           @default(false)
-  createdAt                 DateTime          @default(now())
-  updatedAt                 DateTime          @updatedAt
+  isFree            Boolean           @default(false)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   grants      LibraryAccessGrant[]
   levelGrants LibraryLevelGrant[]
@@ -1053,30 +1082,30 @@ model CartItem {
 // independently opt-in per post, no per-student overrides since nothing
 // has asked for that yet.
 model Announcement {
-  id                   String               @id @default(cuid())
-  title                String
-  content              String               @db.Text
-  coverImageUrl        String?
-  category             AnnouncementCategory @default(GENERAL)
+  id                String               @id @default(cuid())
+  title             String
+  content           String               @db.Text
+  coverImageUrl     String?
+  category          AnnouncementCategory @default(GENERAL)
   // Only meaningful when visibleToLeveled is true — the admin form always
   // submits a concrete Level in that case (picking the lowest level, Cấp 1,
   // is how "every học viên" is expressed; there is no separate "no minimum"
   // state). Stays nullable because pre-migration rows were backfilled with
   // minLevel left as-is (see the migration for how their effective
   // visibility was preserved).
-  minLevel             Level?
-  visibleToGuest       Boolean              @default(false)
+  minLevel          Level?
+  visibleToGuest    Boolean              @default(false)
   // False means no học viên can see this announcement at all, regardless of
   // minLevel. See announcementVisibleTo() in src/lib/announcements.ts.
-  visibleToLeveled     Boolean              @default(false)
+  visibleToLeveled  Boolean              @default(false)
   // Master hide switch: false pulls the announcement from every audience at
   // once (students AND guests), overriding visibleToGuest/visibleToLeveled —
   // without deleting it. Defaults true so existing rows keep showing up
   // unchanged.
-  visibleToStudents    Boolean              @default(true)
-  publishedAt          DateTime             @default(now())
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
+  visibleToStudents Boolean              @default(true)
+  publishedAt       DateTime             @default(now())
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
 
   reads AnnouncementRead[]
 
@@ -1240,4 +1269,291 @@ model GuestChatThreadRead {
 
   @@unique([threadId, adminId])
   @@index([adminId])
+}
+
+// ============================================================================
+// "Nhóm của tôi" — team structure, daily tasks, check-in/streak, personality
+// results (admin-entered, no scoring engine), and the spin-to-win mini-game.
+// Independent of the 5-level ladder (Level) and of ChatThreadKind.GROUP
+// (level-based chat rooms) — Group here is an organizational team a
+// SUPER_ADMIN/MANAGE_GROUPS admin assigns students into.
+// ============================================================================
+
+enum GroupRole {
+  LEADER
+  DEPUTY
+  MEMBER
+}
+
+// A team every đối tác chính thức can be assigned into. Admin-managed only
+// (MANAGE_GROUPS) — there is no self-service "join a group" flow.
+model Group {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships         GroupMembership[]
+  dailyTasks          DailyTask[]
+  weeklyRewardEntries WeeklyRewardEntry[]
+
+  @@index([name])
+}
+
+// One row per student per group — a student belongs to at most one group at
+// a time (@@unique([userId])); moving someone to another group is an update
+// of this row's groupId, not a new row. `role` is the single source of
+// truth for whether this person can author DailyTask/review explanations
+// for the group (LEADER/DEPUTY, see requireOwnGroupLeadership in
+// src/lib/access.ts) — deliberately NOT modeled via AdminPermission, since
+// every leader needs this for their own group with zero admin setup.
+model GroupMembership {
+  id       String    @id @default(cuid())
+  groupId  String
+  group    Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId   String    @unique
+  user     User      @relation("GroupMembershipUser", fields: [userId], references: [id], onDelete: Cascade)
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime  @default(now())
+
+  @@index([groupId])
+}
+
+enum DailyTaskCategory {
+  CALL
+  READING
+  EXERCISE
+  NOTE
+  OTHER
+}
+
+enum DailyTaskFrequency {
+  ONCE
+  DAILY
+  WEEKLY_DAYS
+}
+
+// A to-do a group's LEADER/DEPUTY assigns to their group — completion is
+// tracked per member per day via DailyTaskCompletion, not on this row.
+// `frequency` decides which calendar days this task is "live" starting from
+// `startDate`: ONCE only that date itself, DAILY every day from then on,
+// WEEKLY_DAYS only the ISO weekdays (1=Mon..7=Sun) listed in `weekdays`.
+// `category` is purely cosmetic (which icon the student dashboard shows).
+model DailyTask {
+  id                 String             @id @default(cuid())
+  groupId            String
+  group              Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  title              String
+  description        String?            @db.Text
+  category           DailyTaskCategory  @default(OTHER)
+  frequency          DailyTaskFrequency @default(DAILY)
+  // Only meaningful when frequency = WEEKLY_DAYS; ISO weekday numbers
+  // stored as a plain array rather than a join table — small, fixed-size,
+  // never queried on its own.
+  weekdays           Int[]
+  startDate          DateTime           @db.Date
+  // "HH:MM" 24h text, not a DateTime — this is a daily-recurring deadline,
+  // not tied to one calendar date. Compared against the current time in the
+  // app layer to decide when an untouched day flips from "due" to "missed".
+  dueTime            String             @default("23:59")
+  // Whether the audience is the group's entire live membership (evaluated
+  // fresh each time, never snapshotted — someone added to the group later
+  // still gets an assignAllMembers task automatically) or the explicit
+  // subset in DailyTaskAssignee below.
+  assignAllMembers   Boolean            @default(true)
+  requireExplanation Boolean            @default(true)
+  points             Int                @default(0)
+  createdById        String
+  createdBy          User               @relation("DailyTasksCreated", fields: [createdById], references: [id])
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  assignees   DailyTaskAssignee[]
+  completions DailyTaskCompletion[]
+
+  @@index([groupId])
+}
+
+// Only rows exist when DailyTask.assignAllMembers = false — an explicit
+// subset of the group's members this task applies to.
+model DailyTaskAssignee {
+  id     String    @id @default(cuid())
+  taskId String
+  task   DailyTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId String
+  user   User      @relation("DailyTaskAssignees", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@index([userId])
+}
+
+enum DailyTaskCompletionStatus {
+  DONE
+  MISSED
+  EXPLAINED_PENDING
+  EXPLAINED_APPROVED
+  EXPLAINED_REJECTED
+}
+
+// One row per (task, student, date) — created lazily the first time a
+// student interacts with a task on a given day (ticking done, or
+// submitting an explanation). A day with no row for an assigned student
+// reads as MISSED once dueTime has passed, without needing a row to exist.
+// `date` is the specific calendar day this completion is for (not
+// DailyTask.startDate) since a DAILY/WEEKLY_DAYS task produces a fresh
+// completion each day it's live.
+model DailyTaskCompletion {
+  id     String                    @id @default(cuid())
+  taskId String
+  task   DailyTask                 @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId String
+  user   User                      @relation("DailyTaskCompletions", fields: [userId], references: [id], onDelete: Cascade)
+  date   DateTime                  @db.Date
+  status DailyTaskCompletionStatus @default(MISSED)
+
+  explanationText String?   @db.Text
+  explainedAt     DateTime?
+  reviewedById    String?
+  reviewedBy      User?     @relation("DailyTaskExplanationReviews", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt      DateTime?
+
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([taskId, userId, date])
+  @@index([userId, date])
+}
+
+// One row per student per calendar day they checked in. Current/best streak
+// are both derived at query time from consecutive rows here, never stored
+// as a counter — same "derive, don't snapshot" convention as
+// hasLevelAccess/getCourseAccessLevel elsewhere in this app.
+model CheckIn {
+  id     String   @id @default(cuid())
+  userId String
+  user   User     @relation("CheckIns", fields: [userId], references: [id], onDelete: Cascade)
+  date   DateTime @db.Date
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId])
+}
+
+enum PersonalityTestType {
+  DISC
+  MBTI
+  IQ
+  EQ
+}
+
+// Purely descriptive, admin-authored metadata for one of the 4 fixed "Khám
+// phá bản thân" cards — title/description/estimatedMinutes/questionCount
+// are plain display text, NOT derived from a real question bank. This app
+// deliberately does not implement DISC/MBTI/IQ/EQ scoring — see
+// PersonalityResult, which an admin fills in by hand per student instead.
+model PersonalityTest {
+  id               String              @id @default(cuid())
+  type             PersonalityTestType @unique
+  title            String
+  description      String?             @db.Text
+  estimatedMinutes Int?
+  questionCount    Int?
+  updatedAt        DateTime            @updatedAt
+
+  results PersonalityResult[]
+}
+
+// A student's result for one PersonalityTest, typed in by an admin
+// (MANAGE_TESTS) after the student takes the test somewhere outside this
+// app. `note` is admin-only context, never shown to the student.
+model PersonalityResult {
+  id          String          @id @default(cuid())
+  testId      String
+  test        PersonalityTest @relation(fields: [testId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User            @relation("PersonalityResults", fields: [userId], references: [id], onDelete: Cascade)
+  resultLabel String
+  note        String?         @db.Text
+  enteredById String
+  enteredBy   User            @relation("PersonalityResultsEntered", fields: [enteredById], references: [id])
+  enteredAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([testId, userId])
+  @@index([userId])
+}
+
+enum SpinRewardType {
+  POINTS
+  EXTRA_SPIN
+  NONE
+}
+
+// One wheel segment (MANAGE_MINIGAME) — `weightPercent` across all rows
+// should sum to 100 (enforced in the app layer only, not a DB constraint);
+// `order` decides the wheel's visual position, matching the admin editor's
+// row order.
+model SpinReward {
+  id            String         @id @default(cuid())
+  label         String
+  type          SpinRewardType @default(POINTS)
+  value         Int            @default(0)
+  weightPercent Int            @default(0)
+  order         Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  results SpinResult[]
+
+  @@index([order])
+}
+
+// One row per spin a student takes — the immutable history backing "lượt
+// quay còn lại hôm nay" (count today's rows against the daily allowance
+// computed in the app layer) and the points a spin awarded (reward.type =
+// POINTS, folded into the same weekly-points derivation as
+// DailyTaskCompletion).
+model SpinResult {
+  id       String     @id @default(cuid())
+  userId   String
+  user     User       @relation("SpinResults", fields: [userId], references: [id], onDelete: Cascade)
+  rewardId String
+  reward   SpinReward @relation(fields: [rewardId], references: [id])
+  spunAt   DateTime   @default(now())
+
+  @@index([userId, spunAt])
+}
+
+enum WeeklyRewardScope {
+  ALL
+  GROUP
+}
+
+// One row per winner per settled week, created by the admin "Chốt & trao
+// thưởng tuần này" action (MANAGE_MINIGAME). `scope`/`groupId` record
+// whether that settlement was for the whole system or one specific group;
+// weekStart is always that week's Monday. The unique constraint below only
+// actually stops a duplicate week+scope+rank for the GROUP scope — standard
+// SQL uniqueness never treats two NULLs as equal, so it's silently inert
+// when groupId is NULL (the ALL scope). settleWeeklyRewardsAction guards
+// that case itself with a Serializable transaction around its own
+// check-then-insert instead of relying on this constraint.
+model WeeklyRewardEntry {
+  id          String            @id @default(cuid())
+  weekStart   DateTime          @db.Date
+  scope       WeeklyRewardScope
+  groupId     String?
+  group       Group?            @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  rank        Int
+  userId      String
+  user        User              @relation("WeeklyRewardsReceived", fields: [userId], references: [id], onDelete: Cascade)
+  prizeText   String
+  settledById String
+  settledBy   User              @relation("WeeklyRewardsSettled", fields: [settledById], references: [id])
+  settledAt   DateTime          @default(now())
+
+  @@unique([weekStart, scope, groupId, rank])
+  @@index([userId])
 }

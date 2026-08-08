@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   Package,
   Presentation,
+  Users,
 } from "lucide-react";
 import { requireActiveStudent, isChatEnabled, isSalesEnabled, isWhiteboardsEnabled, getAdminPermissions } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
@@ -82,6 +83,7 @@ export default async function DashboardLayout({
 
   const NAV_ITEMS: NavItem[] = [
     { href: "/dashboard", label: t.dashboardNav.fiveLevelTraining, icon: <LayoutDashboard className={iconClass} />, exact: true },
+    { href: "/dashboard/my-group", label: t.dashboardNav.myGroup, icon: <Users className={iconClass} /> },
     { href: "/dashboard/courses", label: t.dashboardNav.exclusiveCourses, icon: <Video className={iconClass} /> },
     { href: "/dashboard/library", label: t.dashboardNav.library, icon: <Library className={iconClass} /> },
     { href: "/dashboard/products", label: t.dashboardNav.products, icon: <Package className={iconClass} /> },

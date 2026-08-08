@@ -852,3 +852,33 @@ export async function canManageWhiteboardSharing(
 export function canEditWhiteboard(role: WhiteboardResolvedRole): boolean {
   return role === "OWNER" || role === "EDITOR";
 }
+
+// Gate for the read-only "Nhóm của tôi" area (/dashboard/my-group) — every
+// active student may open it, membership is just null if they haven't been
+// assigned to a group yet (rendered as an empty state, not a redirect).
+export async function requireOwnGroupMembership() {
+  const student = await requireActiveStudent();
+  const membership = await prisma.groupMembership.findUnique({
+    where: { userId: student.id },
+    include: { group: true },
+  });
+  return { student, membership };
+}
+
+// Gate for the leader-only actions inside "Nhóm của tôi" (soạn nhiệm vụ,
+// duyệt giải trình) — deliberately NOT an AdminPermission: every
+// LEADER/DEPUTY needs this for their own group with zero admin setup, see
+// GroupMembership.role in schema.prisma. A SUPER_ADMIN or an admin holding
+// MANAGE_GROUPS reaches the same actions for ANY group through
+// /admin/groups instead (requireAdminPermission("MANAGE_GROUPS")), not this.
+export async function requireOwnGroupLeadership() {
+  const student = await requireActiveStudent();
+  const membership = await prisma.groupMembership.findUnique({
+    where: { userId: student.id },
+    include: { group: true },
+  });
+  if (!membership || (membership.role !== "LEADER" && membership.role !== "DEPUTY")) {
+    redirect("/dashboard/my-group?denied=1");
+  }
+  return { student, membership };
+}

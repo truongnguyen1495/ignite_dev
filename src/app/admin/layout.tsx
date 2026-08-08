@@ -17,6 +17,9 @@ import {
   Package,
   Phone,
   Presentation,
+  UsersRound,
+  Brain,
+  Gift,
 } from "lucide-react";
 import { requireAnyAdminAccess, isChatEnabled, isSalesEnabled, isWhiteboardsEnabled } from "@/lib/access";
 import { getAdminSupportInbox } from "@/lib/chat";
@@ -148,6 +151,7 @@ export default async function AdminLayout({
       : []),
   ];
 
+  const studentInsertCount = canManage("MANAGE_STUDENTS") ? 1 : studentChildren.length;
   if (canManage("MANAGE_STUDENTS")) {
     NAV_ITEMS.splice(1, 0, {
       href: "/admin/students",
@@ -157,6 +161,35 @@ export default async function AdminLayout({
     });
   } else {
     NAV_ITEMS.splice(1, 0, ...studentChildren);
+  }
+
+  // "Nhóm của tôi" admin surfaces — "Khám phá bản thân" (nhập kết quả trắc
+  // nghiệm) and "Mini-game & thưởng" nest under "Danh sách nhóm" the same
+  // way lessons/results/level-up nest under "Học viên" above, including the
+  // same flat-fallback for a limited admin who holds MANAGE_TESTS/
+  // MANAGE_MINIGAME but not MANAGE_GROUPS itself. Deliberately does NOT
+  // include "Soạn nhiệm vụ mới"/"Giải trình chờ duyệt" — those are reached
+  // per-group from inside /admin/groups/[groupId] (admin) or
+  // /dashboard/my-group (the group's own LEADER/DEPUTY, gated by
+  // requireOwnGroupLeadership, not an AdminPermission — see src/lib/access.ts).
+  const groupChildren: NavItem[] = [
+    ...(canManage("MANAGE_TESTS")
+      ? [{ href: "/admin/tests", label: t.adminNav.tests, icon: <Brain className={iconClass} /> }]
+      : []),
+    ...(canManage("MANAGE_MINIGAME")
+      ? [{ href: "/admin/minigame", label: t.adminNav.minigame, icon: <Gift className={iconClass} /> }]
+      : []),
+  ];
+  const groupInsertIndex = 1 + studentInsertCount;
+  if (canManage("MANAGE_GROUPS")) {
+    NAV_ITEMS.splice(groupInsertIndex, 0, {
+      href: "/admin/groups",
+      label: t.adminNav.groups,
+      icon: <UsersRound className={iconClass} />,
+      children: groupChildren.length > 0 ? groupChildren : undefined,
+    });
+  } else {
+    NAV_ITEMS.splice(groupInsertIndex, 0, ...groupChildren);
   }
 
   // Admin management needs its own explicit canManageAdmins grant even for
