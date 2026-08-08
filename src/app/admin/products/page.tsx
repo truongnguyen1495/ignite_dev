@@ -7,7 +7,13 @@ import { PageHeader } from "@/components/ui/page-header";
 
 export default async function AdminProductsPage() {
   await requireAdminPermission("MANAGE_PRODUCTS");
-  const products = await prisma.product.findMany({ orderBy: { order: "asc" } });
+  const products = await prisma.product.findMany({
+    orderBy: { order: "asc" },
+    include: {
+      levelGrants: { select: { minLevel: true }, orderBy: { minLevel: "asc" } },
+      _count: { select: { accessGrants: true } },
+    },
+  });
 
   const items: AdminProductItem[] = products.map((product) => ({
     id: product.id,
@@ -19,6 +25,9 @@ export default async function AdminProductsPage() {
     salePrice: product.salePrice,
     cv: product.cv,
     slug: product.slug,
+    hiddenFromGuest: product.hiddenFromGuest,
+    levelGrants: product.levelGrants.map((lg) => lg.minLevel),
+    accessGrantsCount: product._count.accessGrants,
   }));
 
   return (

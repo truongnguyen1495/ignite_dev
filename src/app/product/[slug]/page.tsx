@@ -1,23 +1,27 @@
 import { notFound } from "next/navigation";
-import { isSalesEnabled } from "@/lib/access";
+import { isSalesEnabled, getActiveStudentOrNull, canViewProduct } from "@/lib/access";
+import { levelRank } from "@/lib/levels";
 import { prisma } from "@/lib/prisma";
 import { AriaLandingPage } from "@/components/product-landing/aria-landing";
 import { ActivaLandingPage } from "@/components/product-landing/activa-landing";
 import { SimetraLandingPage } from "@/components/product-landing/simetra-landing";
 import { Br9LandingPage } from "@/components/product-landing/br9-landing";
+import { ProductLockedNotice } from "@/components/product-landing/product-locked-notice";
 import { FloatingCartButton } from "@/components/floating-cart-button";
 
 // Deliberately outside /dashboard entirely — a bespoke landing page needs
 // its own full-bleed nav/hero with no sidebar/header squeezing it, which
 // dashboard/layout.tsx's shell can't opt out of per-route (Next.js layouts
-// always wrap their whole subtree). Public: no require*() gate here anymore
-// (removed the old require*Student() call, and /product/:path* was dropped
-// from middleware.ts's matcher) — khách can view the page too, same as
-// /guest/*. Buying still requires an account: ProductBuyButton/
+// always wrap their whole subtree). No require*() session gate here
+// (/product/:path* was dropped from middleware.ts's matcher) — khách can
+// still land on the route, same as /guest/*. Whether the actual page
+// content renders is controlled by canViewProduct() below (hiddenFromGuest +
+// level/individual grants, admin-configurable per product) — a viewer who
+// fails that check gets ProductLockedNotice instead of the landing page, not
+// a redirect. Buying still requires an account: ProductBuyButton/
 // ConsultationButton call Server Actions that each do their own
 // requireActiveStudent() and redirect to /login on click if there's no
-// session — that's the real, DB-checked boundary, this page only ever
-// controls whether the page itself renders.
+// session — that's a separate, DB-checked boundary from view access.
 //
 // Four bespoke templates exist today ("sanarey-aria", "sanarey-activa",
 // "sanarey-simetra", "sanarey-br9") — explicit one-off scope decision, not
@@ -29,12 +33,29 @@ export default async function ProductLandingPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [product, salesEnabled] = await Promise.all([
-    prisma.product.findUnique({ where: { slug } }),
+  const [product, salesEnabled, student] = await Promise.all([
+    prisma.product.findUnique({ where: { slug }, include: { levelGrants: true } }),
     isSalesEnabled(),
+    getActiveStudentOrNull(),
   ]);
   if (!product) {
     notFound();
+  }
+
+  if (!(await canViewProduct(student, product.id))) {
+    const lowestRequiredLevel = product.levelGrants.length
+      ? product.levelGrants.reduce((lowest, lg) =>
+          levelRank(lg.minLevel) < levelRank(lowest) ? lg.minLevel : lowest,
+          product.levelGrants[0].minLevel
+        )
+      : null;
+    return (
+      <ProductLockedNotice
+        isLoggedIn={!!student}
+        minLevel={lowestRequiredLevel}
+        currentLevel={student?.grantedLevel}
+      />
+    );
   }
 
   if (product.slug === "sanarey-aria") {

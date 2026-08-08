@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
+import { Prisma, type Level } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminPermission } from "@/lib/access";
@@ -175,5 +175,71 @@ export async function updateProductAction(
 export async function deleteProductAction(productId: string) {
   await requireAdminPermission("MANAGE_PRODUCTS");
   await prisma.product.delete({ where: { id: productId } });
+  revalidatePath("/admin/products");
+}
+
+// Same shape as setCourseGuestAccessAction (src/app/admin/courses/actions.ts)
+// minus featuredOnHome/trialLessonIds — a Product has no sub-content to
+// trial, so the only field here is the guest-visibility master switch.
+export async function setProductGuestAccessAction(
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  await requireAdminPermission("MANAGE_PRODUCTS");
+
+  const productId = formData.get("productId");
+  if (typeof productId !== "string" || !productId) {
+    return "Thiếu mã sản phẩm.";
+  }
+  // Form field is the positive framing ("Hiển thị cho khách xem") — DB
+  // column stays hiddenFromGuest, same convention as Course/LibraryItem.
+  const visibleToGuest = formData.get("visibleToGuest") === "on";
+
+  await prisma.product.update({
+    where: { id: productId },
+    data: { hiddenFromGuest: !visibleToGuest },
+  });
+  revalidatePath(`/admin/products/${productId}`);
+  revalidatePath("/admin/products");
+  return undefined;
+}
+
+export async function grantProductAccessAction(productId: string, studentId: string) {
+  const admin = await requireAdminPermission("MANAGE_PRODUCTS");
+  if (!studentId) {
+    return;
+  }
+
+  await prisma.productAccessGrant.upsert({
+    where: { studentId_productId: { studentId, productId } },
+    create: { studentId, productId, grantedById: admin.id },
+    update: {},
+  });
+  revalidatePath(`/admin/products/${productId}`);
+  revalidatePath("/admin/products");
+}
+
+export async function revokeProductAccessAction(grantId: string, productId: string) {
+  await requireAdminPermission("MANAGE_PRODUCTS");
+  await prisma.productAccessGrant.delete({ where: { id: grantId } });
+  revalidatePath(`/admin/products/${productId}`);
+  revalidatePath("/admin/products");
+}
+
+export async function grantProductLevelAccessAction(productId: string, minLevel: Level) {
+  const admin = await requireAdminPermission("MANAGE_PRODUCTS");
+  await prisma.productLevelGrant.upsert({
+    where: { productId_minLevel: { productId, minLevel } },
+    create: { productId, minLevel, grantedById: admin.id },
+    update: {},
+  });
+  revalidatePath(`/admin/products/${productId}`);
+  revalidatePath("/admin/products");
+}
+
+export async function revokeProductLevelAccessAction(grantId: string, productId: string) {
+  await requireAdminPermission("MANAGE_PRODUCTS");
+  await prisma.productLevelGrant.delete({ where: { id: grantId } });
+  revalidatePath(`/admin/products/${productId}`);
   revalidatePath("/admin/products");
 }

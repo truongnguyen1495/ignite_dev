@@ -533,6 +533,64 @@ export async function requireLibraryItemAccess(libraryItemId: string) {
   return { student, libraryItem, accessLevel };
 }
 
+// Products have no "trial" tier (unlike Course/LibraryItem) — a product page
+// has no partial content to preview, so visibility is a plain boolean
+// instead of a 3-tier CourseAccessLevel/LibraryAccessLevel. `student` is
+// null for an anonymous khách; a product with hiddenFromGuest === false is
+// visible to everyone (guest or student) without even touching the grant
+// tables. Batched the same way as getCourseAccessLevels/
+// getLibraryItemAccessLevels (one query per table, not per product) for the
+// same connection-pool reason documented above them.
+export async function getVisibleProductIds(
+  student: User | null,
+  productIds: string[]
+): Promise<Set<string>> {
+  if (productIds.length === 0) return new Set();
+
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds } },
+    select: { id: true, hiddenFromGuest: true },
+  });
+
+  const visible = new Set(products.filter((p) => !p.hiddenFromGuest).map((p) => p.id));
+  if (!student) return visible;
+
+  const restrictedIds = products.filter((p) => p.hiddenFromGuest).map((p) => p.id);
+  if (restrictedIds.length === 0) return visible;
+
+  const [levelGrants, accessGrants] = await Promise.all([
+    prisma.productLevelGrant.findMany({ where: { productId: { in: restrictedIds } } }),
+    prisma.productAccessGrant.findMany({
+      where: { productId: { in: restrictedIds }, studentId: student.id },
+    }),
+  ]);
+
+  const grantedViaAccess = new Set(accessGrants.map((g) => g.productId));
+  const levelGrantsByProduct = new Map<string, Level[]>();
+  for (const lg of levelGrants) {
+    const list = levelGrantsByProduct.get(lg.productId);
+    if (list) list.push(lg.minLevel);
+    else levelGrantsByProduct.set(lg.productId, [lg.minLevel]);
+  }
+
+  for (const id of restrictedIds) {
+    if (grantedViaAccess.has(id)) {
+      visible.add(id);
+      continue;
+    }
+    const minLevels = levelGrantsByProduct.get(id) ?? [];
+    if (minLevels.some((minLevel) => hasLevelAccess(student.grantedLevel, minLevel))) {
+      visible.add(id);
+    }
+  }
+  return visible;
+}
+
+export async function canViewProduct(student: User | null, productId: string): Promise<boolean> {
+  const visible = await getVisibleProductIds(student, [productId]);
+  return visible.has(productId);
+}
+
 export async function requireAnnouncementAccess(announcementId: string) {
   const student = await requireActiveStudent();
   const announcement = await prisma.announcement.findUnique({ where: { id: announcementId } });

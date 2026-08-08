@@ -16,7 +16,7 @@ export default async function GuestProductsPage() {
   // just bounce them to /login. None exist yet; if one gets added it simply
   // won't appear on this public list until it also gets a public route.
   const products = await prisma.product.findMany({
-    where: { slug: { not: null } },
+    where: { slug: { not: null }, hiddenFromGuest: false },
     orderBy: { order: "asc" },
   });
 

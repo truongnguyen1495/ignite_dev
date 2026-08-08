@@ -1,7 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Package, Sparkles } from "lucide-react";
+import type { Level } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
+import { LEVEL_LABELS } from "@/lib/levels";
 import { getPricing } from "@/lib/pricing";
 import { formatVND } from "@/lib/currency";
 
@@ -15,7 +17,32 @@ export type AdminProductItem = {
   salePrice: number | null;
   cv: number;
   slug: string | null;
+  hiddenFromGuest: boolean;
+  levelGrants: Level[];
+  accessGrantsCount: number;
 };
+
+// Same convention as AccessBadges in admin/courses/course-list.tsx — always
+// its own row under the title so admins can see at a glance who can reach
+// this product's page.
+function VisibilityBadges({ product }: { product: AdminProductItem }) {
+  const hasAnyRestriction =
+    product.hiddenFromGuest || product.levelGrants.length > 0 || product.accessGrantsCount > 0;
+  return (
+    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+      {product.hiddenFromGuest && <Badge color="muted">Ẩn khỏi khách</Badge>}
+      {product.levelGrants.map((level) => (
+        <Badge key={level} color="primary">
+          {LEVEL_LABELS[level]} trở lên
+        </Badge>
+      ))}
+      {product.accessGrantsCount > 0 && (
+        <Badge color="warning">{product.accessGrantsCount} học viên ngoại lệ</Badge>
+      )}
+      {!hasAnyRestriction && <Badge color="success">Công khai</Badge>}
+    </div>
+  );
+}
 
 function Thumbnail({ product, className }: { product: AdminProductItem; className: string }) {
   if (product.imageUrl) {
@@ -62,14 +89,15 @@ export function ProductList({ products }: { products: AdminProductItem[] }) {
             <div className="flex flex-1 flex-col p-5">
               <p className="font-semibold text-dark-foreground">{product.title}</p>
               {product.subtitle && <p className="mt-0.5 text-sm text-dark-muted">{product.subtitle}</p>}
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                {product.slug && (
+              {product.slug && (
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                   <Badge color="primary">
                     <Sparkles className="mr-1 inline h-3 w-3" />
                     Landing page riêng
                   </Badge>
-                )}
-              </div>
+                </div>
+              )}
+              <VisibilityBadges product={product} />
               <div className="mt-auto flex flex-nowrap items-center justify-between gap-3 pt-4">
                 {pricing.forSale ? (
                   <span className="text-sm font-semibold text-dark-foreground">

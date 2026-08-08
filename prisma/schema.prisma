@@ -270,6 +270,9 @@ model User {
   libraryGrants             LibraryAccessGrant[]        @relation("LibraryGrants")
   libraryGrantsGiven        LibraryAccessGrant[]        @relation("LibraryGrantsGiven")
   libraryLevelGrantsGiven   LibraryLevelGrant[]         @relation("LibraryLevelGrantsGiven")
+  productGrants             ProductAccessGrant[]        @relation("ProductGrants")
+  productGrantsGiven        ProductAccessGrant[]        @relation("ProductGrantsGiven")
+  productLevelGrantsGiven   ProductLevelGrant[]         @relation("ProductLevelGrantsGiven")
   chatMessagesSent          ChatMessage[]               @relation("ChatMessagesSent")
   chatThreadReads           ChatThreadRead[]            @relation("ChatThreadReads")
   supportThread             ChatThread?                 @relation("SupportThreadOfStudent")
@@ -720,14 +723,16 @@ model CourseLevelGrant {
   @@index([courseId])
 }
 
-// A separate, simpler catalog of physical products — not digital content,
-// so unlike Course/LibraryItem there is no access-grant/level-gating model
-// at all: every học viên sees every product, and that's the entire access
-// rule (see requireLeveledStudent() in dashboard/products/*). No lessons, no
-// access grants — a paid PRODUCT order (see OrderItem) only ever flips the
-// Order to PAID, fulfillment (shipping the physical item) happens outside
-// the system using Order.shipping* + the student's own phoneNumber, the
-// same manual-trust model as payment confirmation itself.
+// A separate, simpler catalog of physical products — not digital content, so
+// a paid PRODUCT order (see OrderItem) only ever flips the Order to PAID;
+// fulfillment (shipping the physical item) happens outside the system using
+// Order.shipping* + the student's own phoneNumber, the same manual-trust
+// model as payment confirmation itself. *Viewing* the product page/catalog,
+// though, uses the exact same access-grant/level-gating shape as
+// Course/LibraryItem (see hiddenFromGuest + ProductLevelGrant/
+// ProductAccessGrant below, checked via getVisibleProductIds in
+// src/lib/access.ts) — every product defaults fully public (hiddenFromGuest:
+// false) so existing rows are unaffected.
 model Product {
   id                 String   @id @default(cuid())
   title              String
@@ -754,12 +759,56 @@ model Product {
   lifestyleImage1Url String?
   lifestyleImage2Url String?
   lifestyleImage3Url String?
+  // Same convention as Course.hiddenFromGuest/LibraryItem.hiddenFromGuest —
+  // a signed-in student sees at least as much as a guest does, so this only
+  // ever restricts guests; students additionally need a levelGrant or
+  // accessGrant once it's true (see getVisibleProductIds).
+  hiddenFromGuest    Boolean  @default(false)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
   orderItems           OrderItem[]
   cartItems            CartItem[]
   consultationRequests ConsultationRequest[]
+  levelGrants          ProductLevelGrant[]
+  accessGrants         ProductAccessGrant[]
+}
+
+// Per-student exception list — lets an admin open a single product up to a
+// specific học viên regardless of level (e.g. a preview before a launch).
+// No orderItemId link (unlike CourseAccessGrant/LibraryAccessGrant): buying
+// a product never auto-grants view access here, since visibility and
+// purchase are unrelated concerns for physical products.
+model ProductAccessGrant {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     User     @relation("ProductGrants", fields: [studentId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  grantedAt   DateTime @default(now())
+  grantedById String?
+  grantedBy   User?    @relation("ProductGrantsGiven", fields: [grantedById], references: [id])
+
+  @@unique([studentId, productId])
+  @@index([studentId])
+}
+
+// A continuous rule ("this product is visible to Level >= minLevel"), same
+// shape as CourseLevelGrant/LibraryLevelGrant — checked fresh alongside
+// ProductAccessGrant in getVisibleProductIds (src/lib/access.ts), so a
+// student who levels up later automatically gains visibility with no
+// backfill needed.
+model ProductLevelGrant {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  minLevel    Level
+  grantedAt   DateTime @default(now())
+  grantedById String?
+  grantedBy   User?    @relation("ProductLevelGrantsGiven", fields: [grantedById], references: [id])
+
+  @@unique([productId, minLevel])
+  @@index([productId])
 }
 
 // A student asking to be called back about a product ("Đặt lịch tư vấn" on
