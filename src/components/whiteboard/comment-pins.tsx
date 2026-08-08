@@ -178,6 +178,10 @@ function Pin({
 
   function onPointerDown(e: React.MouseEvent) {
     e.stopPropagation();
+    // Without this, dragging the pin is interpreted as a native
+    // text-selection drag — same fix as the connector anchor dots in
+    // whiteboard-canvas.tsx.
+    e.preventDefault();
     const startClientX = e.clientX;
     const startClientY = e.clientY;
     let moved = false;

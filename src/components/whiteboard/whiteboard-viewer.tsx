@@ -154,6 +154,10 @@ export function WhiteboardViewer({
             className={`relative h-full w-full overflow-hidden bg-white ${isPanning ? "cursor-grabbing" : "cursor-grab"}`}
             onMouseDown={(e) => {
               if (e.button !== 0 && e.button !== 1) return;
+              // Without this, panning is interpreted as a native
+              // text-selection drag — same fix as whiteboard-canvas.tsx's
+              // own pan-start.
+              e.preventDefault();
               // A click that lands on the bare canvas (not an element — see
               // each element's own onMouseDown below, which stops
               // propagation before this ever runs) deselects, same as

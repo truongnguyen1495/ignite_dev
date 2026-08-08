@@ -144,6 +144,11 @@ function AnchorDots({
           key={anchor}
           onMouseDown={(e) => {
             e.stopPropagation();
+            // Without this, the subsequent mousemove is interpreted by the
+            // browser as a native text-selection drag — every "Ghi chú..."
+            // placeholder and label on the board visibly highlights blue as
+            // the cursor sweeps across them while dragging out a connector.
+            e.preventDefault();
             onStartConnect(anchor, e);
           }}
           className="absolute z-20 flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-crosshair items-center justify-center"
@@ -169,6 +174,8 @@ function RotateHandle({ onStart }: { onStart: (e: React.MouseEvent) => void }) {
     <div
       onMouseDown={(e) => {
         e.stopPropagation();
+        // Same native-text-selection guard as AnchorDots above.
+        e.preventDefault();
         onStart(e);
       }}
       className="absolute left-1/2 top-0 z-20 h-3 w-3 -translate-x-1/2 -translate-y-6 cursor-grab rounded-full border-2 border-primary bg-white"
@@ -898,6 +905,7 @@ export function WhiteboardCanvas({
         if (tool === "connector") return;
         const target = e.target as HTMLElement;
         if (e.target !== e.currentTarget && target.dataset?.canvasBg === undefined) return;
+        e.preventDefault();
         const world = toWorld(e.clientX, e.clientY);
         setMarquee({ startX: world.x, startY: world.y, x: world.x, y: world.y });
         if (!e.shiftKey) onSelectElementIds([]);
@@ -1087,6 +1095,9 @@ export function WhiteboardCanvas({
                 // how a click on an anchor dot doesn't change it either.
                 if (tool === "connector") {
                   e.stopPropagation();
+                  // Same native-text-selection guard as AnchorDots' own
+                  // connector-drag start.
+                  e.preventDefault();
                   const world = toWorld(e.clientX, e.clientY);
                   setConnecting({ sourceId: element.id, sourceAnchor: nearestEdgeAnchor(element, world), toWorld: world });
                   return;
