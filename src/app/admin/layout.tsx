@@ -29,6 +29,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { LogoutButton } from "@/components/logout-button";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { InstallAppButton } from "@/components/install-app-button";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import type { AdminPermissionKind } from "@prisma/client";
 
 const iconClass = "h-4 w-4";
@@ -191,7 +192,8 @@ export default async function AdminLayout({
                   {t.adminNav.backToStudentPage}
                 </Link>
               )}
-              <span className="flex min-w-0 items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs text-muted">
+              <span className="flex min-w-0 items-center gap-2 rounded-full border border-border py-1 pl-1 pr-3 text-xs text-muted">
+                <UserAvatar src={admin.avatarUrl} name={admin.name} size={24} className="text-[10px]" />
                 <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-primary" />
                 <span className="truncate">{admin.name}</span>
                 <span className="hidden shrink-0 text-foreground sm:inline">

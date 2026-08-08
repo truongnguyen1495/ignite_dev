@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { ADMIN_PERMISSION_LABELS } from "@/lib/admin-permissions";
 import { formatDateVN } from "@/lib/date";
 import { RevokeAllPermissionsButton } from "./revoke-all-permissions-button";
@@ -40,6 +41,7 @@ export default async function AdminsPage() {
       adminOnly: true,
       isAdminManager: true,
       createdAt: true,
+      avatarUrl: true,
       adminPermissions: { select: { permission: true, revokedAt: true } },
     },
     orderBy: { name: "asc" },
@@ -77,9 +79,7 @@ export default async function AdminsPage() {
                 className="flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-primary/50"
               >
                 <Link href={`/admin/admins/${admin.id}`} className="flex min-w-0 flex-1 items-center gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-bg text-sm font-semibold text-primary">
-                    {admin.name.charAt(0).toUpperCase()}
-                  </span>
+                  <UserAvatar src={admin.avatarUrl} name={admin.name} size={40} className="text-sm" />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <p className="truncate text-sm font-medium text-foreground">{admin.name}</p>

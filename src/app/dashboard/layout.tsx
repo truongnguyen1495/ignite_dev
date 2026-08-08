@@ -26,6 +26,7 @@ import { LogoutButton } from "@/components/logout-button";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { InstallAppButton } from "@/components/install-app-button";
 import { LevelBadge } from "@/components/ui/level-badge";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { LevelUpWatcher } from "./level-up-watcher";
 
 const iconClass = "h-4 w-4";
@@ -131,9 +132,7 @@ export default async function DashboardLayout({
                 </Link>
               )}
               <span className="flex min-w-0 items-center gap-2 rounded-full border border-border py-1 pl-1 pr-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-bg text-xs font-semibold text-primary">
-                  {student.name.charAt(0).toUpperCase()}
-                </span>
+                <UserAvatar src={student.avatarUrl} name={student.name} size={28} className="text-xs" />
                 <span className="min-w-0">
                   <span className="block truncate text-xs font-medium text-foreground">{student.name}</span>
                   <span className="flex items-center gap-1.5">

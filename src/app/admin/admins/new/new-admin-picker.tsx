@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { LevelBadge } from "@/components/ui/level-badge";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   searchAccountsForPermissionAction,
   listCoreLeaderCandidatesAction,
@@ -147,9 +148,7 @@ export function NewAdminPicker() {
                 onClick={() => handleSelect(account.id)}
                 className="flex w-full items-center gap-3 rounded-lg border border-border bg-background p-3 text-left transition-colors hover:border-primary/50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-bg text-sm font-semibold text-primary">
-                  {account.name.charAt(0).toUpperCase()}
-                </span>
+                <UserAvatar src={account.avatarUrl} name={account.name} size={32} className="text-sm" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm text-foreground">{account.name}</p>
                   <p className="truncate text-xs text-muted">{account.email}</p>

@@ -13,7 +13,7 @@ export default async function SupportChatPage() {
 
   const messages = await prisma.chatMessage.findMany({
     where: { threadId: thread.id },
-    include: { sender: { select: { id: true, name: true } } },
+    include: { sender: { select: { id: true, name: true, avatarUrl: true } } },
     orderBy: { createdAt: "asc" },
     take: 100,
   });

@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   Copy,
   Trash2,
-  Minus,
-  Plus,
+  MessageCircle,
   Bold,
   Italic,
   Underline,
@@ -36,6 +35,87 @@ const iconBtnClass =
 
 function toggleBtnClass(active: boolean) {
   return active ? `${iconBtnClass} bg-primary-bg text-primary hover:bg-primary-bg hover:text-primary` : iconBtnClass;
+}
+
+const FONT_SIZE_PRESETS = [4, 8, 10, 12, 14, 18, 24, 32, 48, 64];
+
+// Replaces the old −/number/+ stepper — same dropdown-under-a-toggle-button
+// shape as ShapeKindPicker above. "Auto" (autoFontSize) sits above the
+// preset list; picking a concrete size below it turns Auto back off, same
+// "explicit choice always wins over the automatic one" convention as most
+// editors' own font-size pickers.
+function FontSizePicker({
+  autoFontSize,
+  fontSize,
+  onChange,
+}: {
+  autoFontSize: boolean;
+  fontSize: number;
+  onChange: (patch: { autoFontSize: boolean; fontSize?: number }) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocMouseDown(e: MouseEvent) {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    window.addEventListener("mousedown", onDocMouseDown);
+    return () => window.removeEventListener("mousedown", onDocMouseDown);
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        title="Cỡ chữ"
+        aria-label="Cỡ chữ"
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={() => setOpen((o) => !o)}
+        className={`flex h-8 min-w-11 items-center justify-center rounded-lg px-2 text-xs font-semibold transition-colors ${
+          open ? "bg-primary-bg text-primary" : "text-muted hover:bg-surface-hover hover:text-foreground"
+        }`}
+      >
+        {autoFontSize ? "Auto" : fontSize}
+      </button>
+      {open && (
+        <div
+          onMouseDown={(e) => e.stopPropagation()}
+          className="absolute left-1/2 top-full z-20 mt-1 max-h-64 w-16 -translate-x-1/2 space-y-0.5 overflow-y-auto rounded-xl border border-border bg-surface p-1.5 shadow-lg"
+        >
+          <button
+            type="button"
+            onClick={() => {
+              onChange({ autoFontSize: true });
+              setOpen(false);
+            }}
+            className={`block w-full rounded-lg py-1.5 text-center text-xs font-semibold ${
+              autoFontSize ? "bg-primary-bg text-primary" : "text-foreground hover:bg-surface-hover"
+            }`}
+          >
+            Auto
+          </button>
+          <div className="my-1 h-px bg-border" />
+          {FONT_SIZE_PRESETS.map((size) => (
+            <button
+              key={size}
+              type="button"
+              onClick={() => {
+                onChange({ autoFontSize: false, fontSize: size });
+                setOpen(false);
+              }}
+              className={`block w-full rounded-lg py-1.5 text-center text-xs ${
+                !autoFontSize && fontSize === size ? "bg-primary-bg font-semibold text-primary" : "text-foreground hover:bg-surface-hover"
+              }`}
+            >
+              {size}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 const SHAPE_KIND_OPTIONS: { value: "sticky" | ShapeKind; label: string; icon: typeof StickyNote }[] = [
@@ -391,6 +471,7 @@ export function SelectionToolbar({
   onDuplicate,
   onDelete,
   editingSelection,
+  onComment,
 }: {
   element: PositionedWhiteboardElement;
   screenX: number;
@@ -404,6 +485,11 @@ export function SelectionToolbar({
   // ref) — only meaningful for element.type === "text", null otherwise/when
   // not editing. Backs TextLinkButton above.
   editingSelection: { start: number; end: number } | null;
+  // Arms a new comment pin on this element (composer opens at its default
+  // corner — see comment-pins.tsx) — always available regardless of
+  // element type, matching the reference video showing it on both a text
+  // note and a plain shape.
+  onComment: () => void;
 }) {
   return (
     <div
@@ -460,13 +546,7 @@ export function SelectionToolbar({
             <Underline className="h-4 w-4" />
           </button>
           <div className="mx-0.5 h-5 w-px bg-border" />
-          <button type="button" onClick={() => onUpdateElement({ fontSize: Math.max(8, element.fontSize - 2) })} title="Chữ nhỏ hơn" aria-label="Chữ nhỏ hơn" className={iconBtnClass}>
-            <Minus className="h-4 w-4" />
-          </button>
-          <span className="w-6 text-center text-xs text-muted">{element.fontSize}</span>
-          <button type="button" onClick={() => onUpdateElement({ fontSize: Math.min(72, element.fontSize + 2) })} title="Chữ lớn hơn" aria-label="Chữ lớn hơn" className={iconBtnClass}>
-            <Plus className="h-4 w-4" />
-          </button>
+          <FontSizePicker autoFontSize={element.autoFontSize} fontSize={element.fontSize} onChange={(patch) => onUpdateElement(patch)} />
           <div className="mx-0.5 h-5 w-px bg-border" />
         </>
       )}
@@ -531,13 +611,7 @@ export function SelectionToolbar({
             onApplyLink={(start, end, url) => onUpdateElement({ links: applyTextLink(element.links, start, end, url) })}
           />
           <div className="mx-0.5 h-5 w-px bg-border" />
-          <button type="button" onClick={() => onUpdateElement({ fontSize: Math.max(8, element.fontSize - 2) })} title="Chữ nhỏ hơn" aria-label="Chữ nhỏ hơn" className={iconBtnClass}>
-            <Minus className="h-4 w-4" />
-          </button>
-          <span className="w-6 text-center text-xs text-muted">{element.fontSize}</span>
-          <button type="button" onClick={() => onUpdateElement({ fontSize: Math.min(140, element.fontSize + 2) })} title="Chữ lớn hơn" aria-label="Chữ lớn hơn" className={iconBtnClass}>
-            <Plus className="h-4 w-4" />
-          </button>
+          <FontSizePicker autoFontSize={element.autoFontSize} fontSize={element.fontSize} onChange={(patch) => onUpdateElement(patch)} />
           <div className="mx-0.5 h-5 w-px bg-border" />
         </>
       )}
@@ -582,6 +656,10 @@ export function SelectionToolbar({
           <div className="mx-0.5 h-5 w-px bg-border" />
         </>
       )}
+      <button type="button" onClick={onComment} title="Bình luận" aria-label="Bình luận" className={iconBtnClass}>
+        <MessageCircle className="h-4 w-4" />
+      </button>
+      <div className="mx-0.5 h-5 w-px bg-border" />
       <button type="button" onClick={onDuplicate} title="Nhân bản (Ctrl+D)" aria-label="Nhân bản" className={iconBtnClass}>
         <Copy className="h-4 w-4" />
       </button>

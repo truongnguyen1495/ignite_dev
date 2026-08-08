@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import type { WhiteboardElement } from "@/lib/whiteboard-elements";
+import type { WhiteboardCommentThreadItem } from "@/lib/whiteboard-comment-actions";
 
-export type WhiteboardPresenceUser = { userId: string; name: string };
+export type WhiteboardPresenceUser = { userId: string; name: string; avatarUrl: string | null };
 
 // Live collaboration for one board — modeled on src/lib/use-chat-broadcast.ts
 // (same getSupabaseBrowser() anon-key client, same Realtime Broadcast
@@ -23,7 +24,12 @@ export type WhiteboardPresenceUser = { userId: string; name: string };
 export function useWhiteboardBroadcast(
   boardId: string,
   currentUser: WhiteboardPresenceUser,
-  onRemoteElements: (elements: WhiteboardElement[]) => void
+  onRemoteElements: (elements: WhiteboardElement[]) => void,
+  // Optional — only the editor/viewer's comment layer cares about this
+  // event; every other caller (there are none besides those two right now)
+  // can simply omit it and the "comment_change" listener below just never
+  // fires anything.
+  onRemoteComments?: (threads: WhiteboardCommentThreadItem[]) => void
 ) {
   // Ref, not a dep — the channel's own broadcast listener is set up once per
   // boardId (see the effect below) and must always call the LATEST
@@ -33,6 +39,10 @@ export function useWhiteboardBroadcast(
   useEffect(() => {
     onRemoteElementsRef.current = onRemoteElements;
   }, [onRemoteElements]);
+  const onRemoteCommentsRef = useRef(onRemoteComments);
+  useEffect(() => {
+    onRemoteCommentsRef.current = onRemoteComments;
+  }, [onRemoteComments]);
 
   const channelRef = useRef<ReturnType<ReturnType<typeof getSupabaseBrowser>["channel"]> | null>(null);
   const [presentUsers, setPresentUsers] = useState<WhiteboardPresenceUser[]>([]);
@@ -42,6 +52,13 @@ export function useWhiteboardBroadcast(
       .channel(`whiteboard-${boardId}`)
       .on("broadcast", { event: "element_change" }, ({ payload }) => {
         onRemoteElementsRef.current((payload as { elements: WhiteboardElement[] }).elements);
+      })
+      // Sent after ANY comment mutation (new thread, reply, resolve toggle —
+      // see broadcastComments below) with the board's full current thread
+      // list, same "whole array, not a diff" convention as element_change —
+      // comment volume is small enough that this is simpler than patching.
+      .on("broadcast", { event: "comment_change" }, ({ payload }) => {
+        onRemoteCommentsRef.current?.((payload as { threads: WhiteboardCommentThreadItem[] }).threads);
       })
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState<WhiteboardPresenceUser>();
@@ -75,5 +92,9 @@ export function useWhiteboardBroadcast(
     channelRef.current?.send({ type: "broadcast", event: "element_change", payload: { elements } });
   }, []);
 
-  return { presentUsers, broadcastElements };
+  const broadcastComments = useCallback((threads: WhiteboardCommentThreadItem[]) => {
+    channelRef.current?.send({ type: "broadcast", event: "comment_change", payload: { threads } });
+  }, []);
+
+  return { presentUsers, broadcastElements, broadcastComments };
 }

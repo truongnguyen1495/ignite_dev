@@ -1,4 +1,5 @@
 import type { WhiteboardPresenceUser } from "@/lib/use-whiteboard-broadcast";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 // Extracted out of whiteboard-editor.tsx (its original home) so
 // whiteboard-viewer.tsx can render the exact same "who's here right now"
@@ -12,12 +13,13 @@ export function PresenceAvatars({ users }: { users: WhiteboardPresenceUser[] }) 
       <span className="h-4 w-px bg-border" />
       <div className="flex items-center -space-x-2" title={users.map((u) => u.name).join(", ")}>
         {users.slice(0, 4).map((user) => (
-          <span
+          <UserAvatar
             key={user.userId}
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-surface bg-primary-bg text-[10px] font-semibold text-primary"
-          >
-            {user.name.charAt(0).toUpperCase()}
-          </span>
+            src={user.avatarUrl}
+            name={user.name}
+            size={24}
+            className="border-2 border-surface text-[10px]"
+          />
         ))}
         {users.length > 4 && (
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-surface bg-border text-[10px] font-semibold text-muted">

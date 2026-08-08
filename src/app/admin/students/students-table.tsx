@@ -6,6 +6,7 @@ import { Eye, Filter, ArrowUpDown } from "lucide-react";
 import type { AccountStatus, Level } from "@prisma/client";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { ORDERED_LEVELS, LEVEL_LABELS, levelRank } from "@/lib/levels";
 import { ToggleStudentStatusButton, DeleteStudentButton } from "./[studentId]/danger-actions";
 
@@ -14,6 +15,7 @@ export type StudentRow = {
   name: string;
   email: string;
   username: string | null;
+  avatarUrl: string | null;
   grantedLevel: Level;
   status: AccountStatus;
   joinedAt: Date;
@@ -228,7 +230,12 @@ export function StudentsTable({
             <tbody>
               {rows.map((student) => (
                 <tr key={student.id} className="border-b border-border last:border-0 hover:bg-surface-hover">
-                  <td className="px-4 py-4 sm:px-6 font-medium text-foreground">{student.name}</td>
+                  <td className="px-4 py-4 sm:px-6 font-medium text-foreground">
+                    <div className="flex items-center gap-2.5">
+                      <UserAvatar src={student.avatarUrl} name={student.name} size={30} className="text-xs" />
+                      {student.name}
+                    </div>
+                  </td>
                   <td className="px-4 py-4 sm:px-6 text-muted">
                     {student.email}
                     {student.username && (

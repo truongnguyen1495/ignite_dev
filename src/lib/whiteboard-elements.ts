@@ -36,6 +36,12 @@ const stickyElementSchema = baseElementSchema.extend({
   bgColor: z.string().default("#fef08a"),
   textColor: z.string().default("#111111"),
   fontSize: z.number().positive().default(16),
+  // When true, `fontSize` above is ignored at render time in favor of the
+  // largest size that still fits the element's current width/height (see
+  // useAutoFitFontSize) — recomputed live as the box is resized, same
+  // mechanic as Miro's own "Auto" font size. Off by default so existing
+  // boards keep rendering at their exact saved fontSize unchanged.
+  autoFontSize: z.boolean().default(false),
   bold: z.boolean().default(false),
   underline: z.boolean().default(false),
 });
@@ -53,6 +59,7 @@ const shapeElementSchema = baseElementSchema.extend({
   content: z.string().default(""),
   textColor: z.string().default("#111111"),
   fontSize: z.number().positive().default(16),
+  autoFontSize: z.boolean().default(false),
   bold: z.boolean().default(false),
   underline: z.boolean().default(false),
 });
@@ -73,6 +80,7 @@ const textElementSchema = baseElementSchema.extend({
   // hand straight to backgroundColor with no empty-string special-casing.
   bgColor: z.string().default("transparent"),
   fontSize: z.number().positive().default(24),
+  autoFontSize: z.boolean().default(false),
   bold: z.boolean().default(false),
   italic: z.boolean().default(false),
   underline: z.boolean().default(false),
@@ -266,6 +274,7 @@ export function convertTextElementKind(element: TextElement, target: "sticky" | 
     content: element.content,
     textColor: element.textColor,
     fontSize: element.fontSize,
+    autoFontSize: element.autoFontSize,
     bold: element.bold,
     underline: element.underline,
   };
@@ -310,7 +319,7 @@ export function createDefaultElement(
   const base = { id, x: at?.x ?? 40, y: at?.y ?? 40, rotation: 0, zIndex: 0, groupId: null };
   switch (type) {
     case "sticky":
-      return { ...base, width: 200, height: 160, type: "sticky", content: "", bgColor: "#fef08a", textColor: "#111111", fontSize: 16, bold: false, underline: false };
+      return { ...base, width: 200, height: 160, type: "sticky", content: "", bgColor: "#fef08a", textColor: "#111111", fontSize: 16, autoFontSize: false, bold: false, underline: false };
     case "shape":
       return {
         ...base,
@@ -324,6 +333,7 @@ export function createDefaultElement(
         content: "",
         textColor: "#111111",
         fontSize: 16,
+        autoFontSize: false,
         bold: false,
         underline: false,
       };
@@ -337,6 +347,7 @@ export function createDefaultElement(
         textColor: "#111111",
         bgColor: "transparent",
         fontSize: 24,
+        autoFontSize: false,
         bold: false,
         italic: false,
         underline: false,
@@ -348,7 +359,7 @@ export function createDefaultElement(
     case "image":
       return { ...base, width: 240, height: 160, type: "image", url: "", alt: "" };
     case "video":
-      return { ...base, width: 320, height: 180, type: "video", youtubeId: "", url: "" };
+      return { ...base, width: 560, height: 315, type: "video", youtubeId: "", url: "" };
     case "linkCard":
       return { ...base, width: 260, height: 90, type: "linkCard", url: "", domain: "", title: "" };
   }

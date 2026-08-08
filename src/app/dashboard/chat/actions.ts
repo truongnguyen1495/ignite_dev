@@ -96,7 +96,9 @@ export async function startDirectThreadAction(otherStudentId: string): Promise<s
   redirect(`/dashboard/chat/dm/${thread.id}`);
 }
 
-export async function searchStudentsAction(query: string): Promise<{ id: string; name: string; username: string | null }[]> {
+export async function searchStudentsAction(
+  query: string
+): Promise<{ id: string; name: string; username: string | null; avatarUrl: string | null }[]> {
   const student = await requireActiveStudent();
   const trimmed = query.trim();
   if (trimmed.length < 2) return [];
@@ -112,7 +114,7 @@ export async function searchStudentsAction(query: string): Promise<{ id: string;
         { email: { contains: trimmed, mode: "insensitive" } },
       ],
     },
-    select: { id: true, name: true, username: true },
+    select: { id: true, name: true, username: true, avatarUrl: true },
     take: 20,
     orderBy: { name: "asc" },
   });

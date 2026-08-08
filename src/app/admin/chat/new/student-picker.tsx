@@ -3,9 +3,10 @@
 import { useEffect, useState, useTransition } from "react";
 import { Search, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { searchStudentsForSupportAction, startSupportThreadAction } from "../actions";
 
-type StudentResult = { id: string; name: string; username: string | null };
+type StudentResult = { id: string; name: string; username: string | null; avatarUrl: string | null };
 
 export function StudentPicker() {
   const [query, setQuery] = useState("");
@@ -73,9 +74,7 @@ export function StudentPicker() {
             onClick={() => handleSelect(student.id)}
             className="flex w-full items-center gap-3 rounded-lg border border-border bg-background p-3 text-left transition-colors hover:border-primary/50 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-bg text-sm font-semibold text-primary">
-              {student.name.charAt(0).toUpperCase()}
-            </span>
+            <UserAvatar src={student.avatarUrl} name={student.name} size={32} className="text-sm" />
             <div className="min-w-0">
               <p className="truncate text-sm text-foreground">{student.name}</p>
               {student.username && <p className="truncate text-xs text-muted">@{student.username}</p>}

@@ -111,9 +111,58 @@ model Whiteboard {
   // board this way, mirroring real Google Drive's "Shared with me").
   generalAccessRole WhiteboardAccessRole?
 
-  collaborators WhiteboardCollaborator[]
+  collaborators  WhiteboardCollaborator[]
+  commentThreads WhiteboardCommentThread[]
 
   @@index([updatedAt])
+}
+
+// One pinned discussion attached to a specific element — created from that
+// element's own selection toolbar (see comment-pins.tsx), so the pin moves
+// and scales along with it, same as the reference video's behavior. No FK
+// to an actual element row: elements live inside Whiteboard.elements' JSON
+// blob, not their own table, so this is just a plain string id resolved
+// client-side against that array — a thread whose element was since
+// deleted simply stops rendering, same "just no-ops" convention as a
+// connector pointing at a deleted element. Anyone who can open the board at
+// all (VIEWER/COMMENTER/EDITOR/OWNER — see canManageWhiteboardSharing in
+// src/lib/access.ts, which this does NOT gate behind) can create one and
+// reply to any thread; only content edits stay gated behind canEditWhiteboard.
+model WhiteboardCommentThread {
+  id           String     @id @default(cuid())
+  whiteboardId String
+  whiteboard   Whiteboard @relation(fields: [whiteboardId], references: [id], onDelete: Cascade)
+  elementId    String
+  // Anchor position as a FRACTION of the element's own width/height (0/0 =
+  // top-left corner, 1/1 = bottom-right) rather than absolute px — this is
+  // what makes the pin track the element correctly through both a move AND
+  // a resize, not just a move. Can sit slightly outside [0, 1] (see
+  // DEFAULT_ANCHOR_U/V in comment-pins.tsx) so the default placement reads
+  // just outside a corner instead of on top of the element's own content;
+  // draggable afterward to anywhere around the element (see the pin's own
+  // onPointerDown in comment-pins.tsx), matching "di chuyển quanh đối
+  // tượng" from the reference video.
+  anchorU      Float      @default(1)
+  anchorV      Float      @default(0)
+  resolved     Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+
+  comments WhiteboardComment[]
+
+  @@index([whiteboardId])
+  @@index([elementId])
+}
+
+model WhiteboardComment {
+  id        String                  @id @default(cuid())
+  threadId  String
+  thread    WhiteboardCommentThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User                    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime                @default(now())
+
+  @@index([threadId])
 }
 
 // One row per named person a board's owner (or a Super Admin) has explicitly
@@ -148,6 +197,11 @@ model User {
   passwordHash        String?
   name                String
   username            String?       @unique
+  // Public URL of a 512x512 image in the "avatars" Supabase Storage bucket
+  // (see src/lib/supabase-avatar-storage.ts) — null renders as the existing
+  // initials-circle fallback (see src/components/ui/user-avatar.tsx)
+  // everywhere a user's identity is shown.
+  avatarUrl           String?
   dateOfBirth         DateTime?     @db.Date
   phoneNumber         String?       @unique
   role                Role
@@ -234,6 +288,7 @@ model User {
   whiteboardsEdited             Whiteboard[]              @relation("WhiteboardsEdited")
   whiteboardCollaborations      WhiteboardCollaborator[]  @relation("WhiteboardCollaboratorUser")
   whiteboardCollaboratorsAdded  WhiteboardCollaborator[]  @relation("WhiteboardCollaboratorAddedBy")
+  whiteboardComments            WhiteboardComment[]
 
   @@index([role])
 }

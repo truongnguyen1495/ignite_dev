@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { MessageCircle } from "lucide-react";
 import { BackLink } from "@/components/ui/back-link";
 import type { WhiteboardElement } from "@/lib/whiteboard-elements";
 import { isConnector } from "@/lib/whiteboard-elements";
@@ -9,6 +10,14 @@ import { ConnectorLayer } from "./connector-layer";
 import { MIN_ZOOM, MAX_ZOOM, type Viewport } from "./whiteboard-canvas";
 import { useWhiteboardBroadcast } from "@/lib/use-whiteboard-broadcast";
 import { PresenceAvatars } from "./presence-avatars";
+import { CommentPins, DEFAULT_ANCHOR_U, DEFAULT_ANCHOR_V } from "./comment-pins";
+import {
+  createWhiteboardCommentThreadAction,
+  addWhiteboardCommentReplyAction,
+  setWhiteboardCommentThreadResolvedAction,
+  moveWhiteboardCommentThreadAnchorAction,
+  type WhiteboardCommentThreadItem,
+} from "@/lib/whiteboard-comment-actions";
 
 const ZOOM_STEP = 0.01;
 
@@ -34,6 +43,7 @@ export function WhiteboardViewer({
   title,
   initialElements,
   initialViewport,
+  initialCommentThreads,
   backHref,
   currentUser,
 }: {
@@ -41,16 +51,64 @@ export function WhiteboardViewer({
   title: string;
   initialElements: WhiteboardElement[];
   initialViewport: Viewport;
+  initialCommentThreads: WhiteboardCommentThreadItem[];
   backHref: string;
-  currentUser: { id: string; name: string };
+  currentUser: { id: string; name: string; avatarUrl: string | null };
 }) {
   const [elements, setElements] = useState<WhiteboardElement[]>(initialElements);
   const [viewport, setViewport] = useState<Viewport>(initialViewport);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const panStateRef = useRef<{ startClientX: number; startClientY: number; startPanX: number; startPanY: number } | null>(null);
   const [isPanning, setIsPanning] = useState(false);
+  const [commentThreads, setCommentThreads] = useState<WhiteboardCommentThreadItem[]>(initialCommentThreads);
+  // No tool system or real selection here at all (unlike the editor) — just
+  // enough click-to-pick to know WHICH element a VIEWER/COMMENTER-role
+  // person (who only ever reaches this component — see
+  // requireWhiteboardAccess's role tiers) wants to comment on, since that's
+  // the only interactive thing this view supports.
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+  const [composingCommentElementId, setComposingCommentElementId] = useState<string | null>(null);
 
-  const { presentUsers } = useWhiteboardBroadcast(boardId, { userId: currentUser.id, name: currentUser.name }, setElements);
+  const { presentUsers, broadcastComments } = useWhiteboardBroadcast(
+    boardId,
+    { userId: currentUser.id, name: currentUser.name, avatarUrl: currentUser.avatarUrl },
+    setElements,
+    setCommentThreads
+  );
+
+  async function placeCommentThread(content: string) {
+    if (!composingCommentElementId) return;
+    const result = await createWhiteboardCommentThreadAction(boardId, composingCommentElementId, DEFAULT_ANCHOR_U, DEFAULT_ANCHOR_V, content);
+    if (result.threads) {
+      setCommentThreads(result.threads);
+      broadcastComments(result.threads);
+    }
+    setComposingCommentElementId(null);
+  }
+
+  async function replyToComment(threadId: string, content: string) {
+    const result = await addWhiteboardCommentReplyAction(boardId, threadId, content);
+    if (result.threads) {
+      setCommentThreads(result.threads);
+      broadcastComments(result.threads);
+    }
+  }
+
+  async function toggleCommentResolved(threadId: string, resolved: boolean) {
+    const result = await setWhiteboardCommentThreadResolvedAction(boardId, threadId, resolved);
+    if (result.threads) {
+      setCommentThreads(result.threads);
+      broadcastComments(result.threads);
+    }
+  }
+
+  async function moveCommentAnchor(threadId: string, anchorU: number, anchorV: number) {
+    const result = await moveWhiteboardCommentThreadAnchorAction(boardId, threadId, anchorU, anchorV);
+    if (result.threads) {
+      setCommentThreads(result.threads);
+      broadcastComments(result.threads);
+    }
+  }
 
   const positioned = useMemo(() => elements.filter((el) => !isConnector(el)), [elements]);
   const connectors = useMemo(() => elements.filter(isConnector), [elements]);
@@ -96,6 +154,11 @@ export function WhiteboardViewer({
             className={`relative h-full w-full overflow-hidden bg-white ${isPanning ? "cursor-grabbing" : "cursor-grab"}`}
             onMouseDown={(e) => {
               if (e.button !== 0 && e.button !== 1) return;
+              // A click that lands on the bare canvas (not an element — see
+              // each element's own onMouseDown below, which stops
+              // propagation before this ever runs) deselects, same as
+              // clicking away from a selection anywhere else in the app.
+              setSelectedElementId(null);
               panStateRef.current = { startClientX: e.clientX, startClientY: e.clientY, startPanX: viewport.x, startPanY: viewport.y };
               setIsPanning(true);
             }}
@@ -134,13 +197,22 @@ export function WhiteboardViewer({
               {positioned.map((element) => (
                 <div
                   key={element.id}
-                  className="absolute"
+                  onMouseDown={(e) => {
+                    // Selects instead of starting a pan-drag — same
+                    // stopPropagation-to-claim-the-gesture convention the
+                    // editor's own per-element onMouseDown uses in
+                    // whiteboard-canvas.tsx.
+                    e.stopPropagation();
+                    setSelectedElementId(element.id);
+                  }}
+                  className="absolute cursor-pointer"
                   style={{
                     left: element.x,
                     top: element.y,
                     width: element.width,
                     height: element.height,
                     zIndex: element.zIndex,
+                    outline: selectedElementId === element.id ? "2px solid var(--primary)" : "none",
                     transform: element.rotation ? `rotate(${element.rotation}deg)` : undefined,
                   }}
                 >
@@ -148,6 +220,39 @@ export function WhiteboardViewer({
                 </div>
               ))}
             </div>
+            {selectedElementId &&
+              !composingCommentElementId &&
+              (() => {
+                const box = elementsById.get(selectedElementId);
+                if (!box) return null;
+                return (
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={() => setComposingCommentElementId(selectedElementId)}
+                    title="Bình luận"
+                    aria-label="Bình luận"
+                    className="pointer-events-auto absolute flex h-8 w-8 -translate-x-1/2 -translate-y-full items-center justify-center rounded-full border border-primary-border bg-surface text-primary shadow-lg"
+                    style={{
+                      left: (box.x + box.width / 2) * viewport.zoom + viewport.x,
+                      top: box.y * viewport.zoom + viewport.y - 8,
+                    }}
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </button>
+                );
+              })()}
+            <CommentPins
+              threads={commentThreads}
+              elementsById={elementsById}
+              viewport={viewport}
+              composingForElementId={composingCommentElementId}
+              onCancelComposing={() => setComposingCommentElementId(null)}
+              onPlaceThread={placeCommentThread}
+              onReply={replyToComment}
+              onToggleResolved={toggleCommentResolved}
+              onMoveAnchor={moveCommentAnchor}
+            />
           </div>
 
           <div className="pointer-events-none absolute inset-0">

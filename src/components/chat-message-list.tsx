@@ -1,5 +1,6 @@
 import { ChatAttachment } from "./chat-attachment";
 import { formatTimeVN } from "@/lib/date";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 export type ChatMessageRow = {
   id: string;
@@ -8,7 +9,7 @@ export type ChatMessageRow = {
   attachmentName: string | null;
   attachmentMime: string | null;
   createdAt: Date;
-  sender: { id: string; name: string };
+  sender: { id: string; name: string; avatarUrl: string | null };
 };
 
 export function ChatMessageList({
@@ -31,26 +32,29 @@ export function ChatMessageList({
       {messages.map((message) => {
         const mine = message.sender.id === currentUserId;
         return (
-          <div key={message.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
-            {!mine && <span className="mb-0.5 px-1 text-xs text-muted">{message.sender.name}</span>}
-            <div
-              className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
-                mine ? "bg-primary text-primary-foreground" : "bg-surface-hover text-foreground"
-              }`}
-            >
-              {message.body && <p className="whitespace-pre-wrap break-words">{message.body}</p>}
-              {message.attachmentPath && (
-                <ChatAttachment
-                  messageId={message.id}
-                  name={message.attachmentName ?? "Tệp đính kèm"}
-                  mime={message.attachmentMime}
-                  mine={mine}
-                />
-              )}
+          <div key={message.id} className={`flex items-end gap-2 ${mine ? "flex-row-reverse" : "flex-row"}`}>
+            {!mine && <UserAvatar src={message.sender.avatarUrl} name={message.sender.name} size={28} className="mb-4 text-xs" />}
+            <div className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
+              {!mine && <span className="mb-0.5 px-1 text-xs text-muted">{message.sender.name}</span>}
+              <div
+                className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
+                  mine ? "bg-primary text-primary-foreground" : "bg-surface-hover text-foreground"
+                }`}
+              >
+                {message.body && <p className="whitespace-pre-wrap break-words">{message.body}</p>}
+                {message.attachmentPath && (
+                  <ChatAttachment
+                    messageId={message.id}
+                    name={message.attachmentName ?? "Tệp đính kèm"}
+                    mime={message.attachmentMime}
+                    mine={mine}
+                  />
+                )}
+              </div>
+              <span className="mt-0.5 px-1 text-[11px] text-faint">
+                {formatTimeVN(message.createdAt)}
+              </span>
             </div>
-            <span className="mt-0.5 px-1 text-[11px] text-faint">
-              {formatTimeVN(message.createdAt)}
-            </span>
           </div>
         );
       })}

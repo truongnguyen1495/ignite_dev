@@ -25,7 +25,7 @@ export default async function DirectMessageThreadPage({
     prisma.user.findUnique({ where: { id: otherUserId }, select: { name: true } }),
     prisma.chatMessage.findMany({
       where: { threadId: thread.id },
-      include: { sender: { select: { id: true, name: true } } },
+      include: { sender: { select: { id: true, name: true, avatarUrl: true } } },
       orderBy: { createdAt: "asc" },
       take: 100,
     }),

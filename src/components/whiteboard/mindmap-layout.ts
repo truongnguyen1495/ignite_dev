@@ -3,8 +3,6 @@ import { isConnector } from "@/lib/whiteboard-elements";
 
 const CHILD_GUTTER_X = 80;
 const SIBLING_GAP_Y = 24;
-const DEFAULT_CHILD_WIDTH = 180;
-const DEFAULT_CHILD_HEIGHT = 60;
 
 // A mindmap "node" is just a regular positioned element; its parent is
 // whichever connector currently targets it — assumes at most one incoming
@@ -28,12 +26,17 @@ export function findChildElements(
 // children it already has, vertically centered on the parent when it has
 // none yet. Deliberately not a general tree-layout solver: "good enough" to
 // avoid overlap for the common case of building out a mindmap top-down.
+// Sized to match `parent` (same idea as placeNewSibling matching `node`
+// below) rather than a fixed default — a child branched off a large node
+// otherwise came out tiny enough that its own anchor dots (a fixed screen
+// size regardless of zoom, see AnchorDots in whiteboard-canvas.tsx) visibly
+// overlapped each other.
 export function placeNewChild(
   parent: PositionedWhiteboardElement,
   existingChildren: PositionedWhiteboardElement[]
 ): { x: number; y: number; width: number; height: number } {
-  const width = DEFAULT_CHILD_WIDTH;
-  const height = DEFAULT_CHILD_HEIGHT;
+  const width = parent.width;
+  const height = parent.height;
   const x = parent.x + parent.width + CHILD_GUTTER_X;
 
   if (existingChildren.length === 0) {

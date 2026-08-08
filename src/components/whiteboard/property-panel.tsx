@@ -107,9 +107,19 @@ export function PropertyPanel({
             id="sticky-fontsize"
             type="number"
             label="Cỡ chữ (px)"
+            disabled={selectedElement.autoFontSize}
             defaultValue={selectedElement.fontSize}
             onChange={(e) => onUpdateElement({ fontSize: Number(e.target.value) || 16 })}
           />
+          <label className="flex items-center gap-2 text-xs text-foreground">
+            <input
+              type="checkbox"
+              checked={selectedElement.autoFontSize}
+              onChange={(e) => onUpdateElement({ autoFontSize: e.target.checked })}
+              className="h-3.5 w-3.5 accent-primary"
+            />
+            Cỡ chữ tự động (vừa khung)
+          </label>
           <div className="flex gap-2">
             <button
               type="button"
@@ -223,9 +233,19 @@ export function PropertyPanel({
             id="text-fontsize"
             type="number"
             label="Cỡ chữ (px)"
+            disabled={selectedElement.autoFontSize}
             defaultValue={selectedElement.fontSize}
             onChange={(e) => onUpdateElement({ fontSize: Number(e.target.value) || 24 })}
           />
+          <label className="flex items-center gap-2 text-xs text-foreground">
+            <input
+              type="checkbox"
+              checked={selectedElement.autoFontSize}
+              onChange={(e) => onUpdateElement({ autoFontSize: e.target.checked })}
+              className="h-3.5 w-3.5 accent-primary"
+            />
+            Cỡ chữ tự động (vừa khung)
+          </label>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"

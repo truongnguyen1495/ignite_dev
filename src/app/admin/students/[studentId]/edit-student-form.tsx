@@ -11,10 +11,12 @@ import { LevelBadge } from "@/components/ui/level-badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/form";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 export function EditStudentForm({
   studentId,
   name,
+  avatarUrl,
   email,
   phoneNumber,
   grantedLevel,
@@ -26,6 +28,7 @@ export function EditStudentForm({
 }: {
   studentId: string;
   name: string;
+  avatarUrl: string | null;
   email: string;
   phoneNumber: string | null;
   grantedLevel: Level;
@@ -60,9 +63,7 @@ export function EditStudentForm({
           Quay lại
         </Link>
         <div className="mt-3 flex items-center gap-4">
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary-bg text-lg font-semibold text-primary">
-            {name.charAt(0).toUpperCase()}
-          </span>
+          <UserAvatar src={avatarUrl} name={name} size={56} className="text-lg" />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-semibold text-foreground">{name}</h1>

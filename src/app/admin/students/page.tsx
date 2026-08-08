@@ -33,6 +33,7 @@ export default async function StudentsPage() {
     name: s.name,
     email: s.email,
     username: s.username,
+    avatarUrl: s.avatarUrl,
     grantedLevel: s.grantedLevel,
     status: s.status,
     joinedAt: s.createdAt,

@@ -14,6 +14,7 @@ export type AccountSearchResult = {
   email: string;
   username: string | null;
   grantedLevel: Level;
+  avatarUrl: string | null;
 };
 
 // An Admin Manager reaching this page (canManageAdmins) must never see, let
@@ -47,7 +48,7 @@ export async function searchAccountsForPermissionAction(query: string): Promise<
         { email: { contains: trimmed, mode: "insensitive" } },
       ],
     },
-    select: { id: true, name: true, email: true, username: true, grantedLevel: true },
+    select: { id: true, name: true, email: true, username: true, grantedLevel: true, avatarUrl: true },
     take: 20,
     orderBy: { name: "asc" },
   });
@@ -69,7 +70,7 @@ export async function listCoreLeaderCandidatesAction(): Promise<AccountSearchRes
       grantedLevel: "CORE_LEADER",
       ...(isSuperAdmin ? {} : { isAdminManager: false }),
     },
-    select: { id: true, name: true, email: true, username: true, grantedLevel: true },
+    select: { id: true, name: true, email: true, username: true, grantedLevel: true, avatarUrl: true },
     orderBy: { name: "asc" },
   });
   return rows;

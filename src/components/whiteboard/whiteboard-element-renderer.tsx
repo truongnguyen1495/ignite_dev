@@ -3,6 +3,7 @@
 import { Fragment, useRef, useState } from "react";
 import { ExternalLink, Pause, Play } from "lucide-react";
 import type { PositionedWhiteboardElement, ShapeKind, TextLink } from "@/lib/whiteboard-elements";
+import { useAutoFitFontSize } from "./use-auto-fit-font-size";
 
 // Slices one line of a standalone Text element's content against its
 // per-range links (element.links, character offsets into the FULL content
@@ -69,8 +70,9 @@ function UploadedVideo({ url }: { url: string }) {
       <video
         ref={videoRef}
         src={url}
-        className="h-full w-full"
+        className="h-full w-full object-contain"
         playsInline
+        preload="metadata"
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => setPlaying(false)}
@@ -81,9 +83,9 @@ function UploadedVideo({ url }: { url: string }) {
         aria-label={playing ? "Tạm dừng" : "Phát video"}
         onMouseDown={(e) => e.stopPropagation()}
         onClick={toggle}
-        className="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+        className="absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full bg-white text-black shadow-md ring-1 ring-black/10 hover:bg-white/90"
       >
-        {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+        {playing ? <Pause className="h-4 w-4" fill="currentColor" /> : <Play className="h-4 w-4" fill="currentColor" />}
       </button>
     </div>
   );
@@ -151,9 +153,9 @@ function YoutubeEmbed({ youtubeId, isSelected }: { youtubeId: string; isSelected
         aria-label="Phát video"
         onMouseDown={(e) => e.stopPropagation()}
         onClick={() => setActivated(true)}
-        className="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+        className="absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full bg-white text-black shadow-md ring-1 ring-black/10 hover:bg-white/90"
       >
-        <Play className="h-4 w-4" />
+        <Play className="h-4 w-4" fill="currentColor" />
       </button>
     </div>
   );
@@ -174,6 +176,25 @@ const SHAPE_CLIP_PATHS: Record<ShapeKind, string | undefined> = {
 // are never routed through here — they're a derived SVG overlay, see
 // connector-layer.tsx.
 export function WhiteboardElementRenderer({ element, isSelected }: { element: PositionedWhiteboardElement; isSelected: boolean }) {
+  // Called unconditionally (hooks can't live inside the switch below) with
+  // inert values for every non-text type — `enabled` is only ever true for
+  // sticky/shape/text, so the hook just returns `fallback` untouched for
+  // everything else, no measurement work done. Padding mirrors each case's
+  // own p-3/p-4/p-1 Tailwind class further down so the measured box matches
+  // what's actually rendered.
+  const isTextBearing = element.type === "sticky" || element.type === "shape" || element.type === "text";
+  const autoFitPadding = element.type === "sticky" ? 24 : element.type === "shape" ? 32 : element.type === "text" ? 8 : 0;
+  const effectiveFontSize = useAutoFitFontSize({
+    enabled: isTextBearing && element.autoFontSize,
+    content: isTextBearing ? element.content : "",
+    width: element.width,
+    height: element.height,
+    paddingX: autoFitPadding,
+    paddingY: autoFitPadding,
+    bold: isTextBearing ? element.bold : false,
+    fallback: isTextBearing ? element.fontSize : 16,
+  });
+
   switch (element.type) {
     case "sticky":
       // A plain non-focusable div, not a readOnly <textarea> — a readOnly
@@ -189,7 +210,7 @@ export function WhiteboardElementRenderer({ element, isSelected }: { element: Po
           style={{
             backgroundColor: element.bgColor,
             color: element.textColor,
-            fontSize: element.fontSize,
+            fontSize: effectiveFontSize,
             fontWeight: element.bold ? 700 : undefined,
             textDecoration: element.underline ? "underline" : undefined,
           }}
@@ -213,7 +234,7 @@ export function WhiteboardElementRenderer({ element, isSelected }: { element: Po
               className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden whitespace-pre-wrap break-words p-4 text-center"
               style={{
                 color: element.textColor,
-                fontSize: element.fontSize,
+                fontSize: effectiveFontSize,
                 fontWeight: element.bold ? 700 : undefined,
                 textDecoration: element.underline ? "underline" : undefined,
               }}
@@ -231,7 +252,7 @@ export function WhiteboardElementRenderer({ element, isSelected }: { element: Po
       const lineOffsets = lines.map((_, i) => lines.slice(0, i).reduce((sum, l) => sum + l.length + 1, 0));
       const textStyle: React.CSSProperties = {
         color: element.textColor,
-        fontSize: element.fontSize,
+        fontSize: effectiveFontSize,
         fontWeight: element.bold ? 700 : undefined,
         fontStyle: element.italic ? "italic" : undefined,
         textDecoration:

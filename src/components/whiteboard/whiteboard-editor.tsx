@@ -33,6 +33,13 @@ import {
 } from "@/lib/whiteboard-elements";
 import { uploadWhiteboardFile } from "@/lib/whiteboard-client-utils";
 import { useWhiteboardBroadcast } from "@/lib/use-whiteboard-broadcast";
+import {
+  createWhiteboardCommentThreadAction,
+  addWhiteboardCommentReplyAction,
+  setWhiteboardCommentThreadResolvedAction,
+  moveWhiteboardCommentThreadAnchorAction,
+  type WhiteboardCommentThreadItem,
+} from "@/lib/whiteboard-comment-actions";
 import { findChildElements, findParentConnector, placeNewChild, placeNewSibling } from "./mindmap-layout";
 import { ElementToolbar, type WhiteboardTool } from "./element-toolbar";
 import { WhiteboardCanvas, type Viewport, MIN_ZOOM, MAX_ZOOM } from "./whiteboard-canvas";
@@ -135,6 +142,7 @@ export function WhiteboardEditor({
   title,
   initialElements,
   initialViewport,
+  initialCommentThreads,
   onSave,
   onRename,
   backHref,
@@ -145,6 +153,7 @@ export function WhiteboardEditor({
   title: string;
   initialElements: WhiteboardElement[];
   initialViewport: Viewport;
+  initialCommentThreads: WhiteboardCommentThreadItem[];
   // Admin and student routes each wire their own server action here (their
   // access checks/gating differ — see requireWhiteboardAccess in
   // src/lib/access.ts) — this component itself stays route-agnostic, which
@@ -162,7 +171,7 @@ export function WhiteboardEditor({
   canManageSharing: boolean;
   // Drives presence ("who's here right now") and lets the live-sync hook
   // below tell this viewer's own broadcasts apart from a peer's.
-  currentUser: { id: string; name: string };
+  currentUser: { id: string; name: string; avatarUrl: string | null };
 }) {
   const [elements, setElements] = useState<WhiteboardElement[]>(initialElements);
   const [viewport, setViewport] = useState<Viewport>(initialViewport);
@@ -310,11 +319,50 @@ export function WhiteboardEditor({
     setElements(remote);
   }, []);
 
-  const { presentUsers, broadcastElements } = useWhiteboardBroadcast(
+  const [commentThreads, setCommentThreads] = useState<WhiteboardCommentThreadItem[]>(initialCommentThreads);
+
+  const { presentUsers, broadcastElements, broadcastComments } = useWhiteboardBroadcast(
     boardId,
-    { userId: currentUser.id, name: currentUser.name },
-    applyRemoteElements
+    { userId: currentUser.id, name: currentUser.name, avatarUrl: currentUser.avatarUrl },
+    applyRemoteElements,
+    // Comments have no local undo/dirty-tracking of their own (each
+    // mutation already round-trips the DB via a server action, unlike
+    // elements' local-first + debounced-autosave model), so a remote update
+    // just replaces state directly — no skip-flag/history dance needed.
+    setCommentThreads
   );
+
+  async function placeCommentThread(elementId: string, anchorU: number, anchorV: number, content: string) {
+    const result = await createWhiteboardCommentThreadAction(boardId, elementId, anchorU, anchorV, content);
+    if (result.threads) {
+      setCommentThreads(result.threads);
+      broadcastComments(result.threads);
+    }
+  }
+
+  async function replyToComment(threadId: string, content: string) {
+    const result = await addWhiteboardCommentReplyAction(boardId, threadId, content);
+    if (result.threads) {
+      setCommentThreads(result.threads);
+      broadcastComments(result.threads);
+    }
+  }
+
+  async function toggleCommentResolved(threadId: string, resolved: boolean) {
+    const result = await setWhiteboardCommentThreadResolvedAction(boardId, threadId, resolved);
+    if (result.threads) {
+      setCommentThreads(result.threads);
+      broadcastComments(result.threads);
+    }
+  }
+
+  async function moveCommentAnchor(threadId: string, anchorU: number, anchorV: number) {
+    const result = await moveWhiteboardCommentThreadAnchorAction(boardId, threadId, anchorU, anchorV);
+    if (result.threads) {
+      setCommentThreads(result.threads);
+      broadcastComments(result.threads);
+    }
+  }
 
   // Broadcasts every LOCAL change to `elements` (commitElements, undo,
   // redo — every local mutation path funnels through one of these three
@@ -1116,6 +1164,11 @@ export function WhiteboardEditor({
             onDeleteSelected={deleteSelected}
             onConvertSelectedKind={convertSelectedKind}
             onCreateStickyAt={addStickyAt}
+            commentThreads={commentThreads}
+            onPlaceCommentThread={placeCommentThread}
+            onReplyComment={replyToComment}
+            onToggleCommentResolved={toggleCommentResolved}
+            onMoveCommentAnchor={moveCommentAnchor}
           />
 
           {/* Floating chrome over the canvas (Miro-style) — a wrapper with

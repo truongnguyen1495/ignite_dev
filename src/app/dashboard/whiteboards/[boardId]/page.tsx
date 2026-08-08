@@ -7,6 +7,7 @@ import {
   canEditWhiteboard,
 } from "@/lib/access";
 import type { WhiteboardElement } from "@/lib/whiteboard-elements";
+import { getWhiteboardCommentThreadsAction } from "@/lib/whiteboard-comment-actions";
 import { WhiteboardEditor } from "@/components/whiteboard/whiteboard-editor";
 import { WhiteboardViewer } from "@/components/whiteboard/whiteboard-viewer";
 import { saveMyWhiteboardAction, renameMyWhiteboardAction } from "../actions";
@@ -30,6 +31,7 @@ export default async function MyWhiteboardEditorPage({
   // whiteboardElementsPayloadSchema before writing — same trust convention
   // as the admin editor page's identical comment.
   const elements = board.elements as WhiteboardElement[];
+  const initialCommentThreads = await getWhiteboardCommentThreadsAction(boardId);
 
   if (!canEditWhiteboard(access.role)) {
     return (
@@ -38,8 +40,9 @@ export default async function MyWhiteboardEditorPage({
         title={board.title}
         initialElements={elements}
         initialViewport={{ x: board.viewportX, y: board.viewportY, zoom: board.viewportZoom }}
+        initialCommentThreads={initialCommentThreads}
         backHref="/dashboard/whiteboards"
-        currentUser={{ id: access.user.id, name: access.user.name }}
+        currentUser={{ id: access.user.id, name: access.user.name, avatarUrl: access.user.avatarUrl }}
       />
     );
   }
@@ -52,11 +55,12 @@ export default async function MyWhiteboardEditorPage({
       title={board.title}
       initialElements={elements}
       initialViewport={{ x: board.viewportX, y: board.viewportY, zoom: board.viewportZoom }}
+      initialCommentThreads={initialCommentThreads}
       onSave={saveMyWhiteboardAction}
       onRename={renameMyWhiteboardAction}
       backHref="/dashboard/whiteboards"
       canManageSharing={canManageSharing}
-      currentUser={{ id: access.user.id, name: access.user.name }}
+      currentUser={{ id: access.user.id, name: access.user.name, avatarUrl: access.user.avatarUrl }}
     />
   );
 }

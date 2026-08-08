@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import type { WhiteboardAccessRole } from "@prisma/client";
 import { Users, Search, X, Loader2, Link2, Check } from "lucide-react";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   getWhiteboardShareInfoAction,
   searchUsersForWhiteboardShareAction,
@@ -230,9 +231,7 @@ export function ShareDialog({ boardId }: { boardId: string }) {
                     onClick={() => handleAdd(user.id)}
                     className="flex w-full items-center gap-3 rounded-lg border border-border bg-background p-2 text-left text-sm transition-colors hover:border-primary/50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-bg text-xs font-semibold text-primary">
-                      {user.name.charAt(0).toUpperCase()}
-                    </span>
+                    <UserAvatar src={user.avatarUrl} name={user.name} size={28} className="text-xs" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-foreground">{user.name}</p>
                       <p className="truncate text-xs text-muted">{user.email}</p>
@@ -261,9 +260,7 @@ export function ShareDialog({ boardId }: { boardId: string }) {
                       key={collab.id}
                       className="flex items-center gap-3 rounded-lg border border-border bg-background p-2 text-sm"
                     >
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-bg text-xs font-semibold text-primary">
-                        {collab.name.charAt(0).toUpperCase()}
-                      </span>
+                      <UserAvatar src={collab.avatarUrl} name={collab.name} size={28} className="text-xs" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-foreground">{collab.name}</p>
                         <p className="truncate text-xs text-muted">{collab.email}</p>

@@ -2,6 +2,7 @@ import { requireActiveStudent } from "@/lib/access";
 import { toDateOnlyISOString } from "@/lib/date";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { ProfileForm } from "./profile-form";
+import { AvatarSection } from "./avatar-section";
 import { SetPasswordForm } from "./set-password-form";
 import { ChangePasswordForm } from "./change-password-form";
 import { PageHeader } from "@/components/ui/page-header";
@@ -19,6 +20,9 @@ export default async function ProfilePage() {
 
       <Card>
         <h2 className="mb-4 text-sm font-semibold text-foreground">Thông tin tài khoản</h2>
+        <div className="mb-6 border-b border-border pb-6">
+          <AvatarSection name={student.name} avatarUrl={student.avatarUrl} />
+        </div>
         <ProfileForm
           name={student.name}
           email={student.email}

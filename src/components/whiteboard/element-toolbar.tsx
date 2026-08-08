@@ -174,7 +174,6 @@ export function ElementToolbar({
       >
         <Eraser className="h-5 w-5" />
       </button>
-      <div className="my-1 h-px w-8 bg-border" />
       {TOOLS.map(({ type, label, icon: Icon }) => (
         <button
           key={type}

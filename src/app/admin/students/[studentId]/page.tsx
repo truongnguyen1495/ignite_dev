@@ -181,6 +181,7 @@ export default async function EditStudentPage({
       <EditStudentForm
         studentId={student.id}
         name={student.name}
+        avatarUrl={student.avatarUrl}
         email={student.email}
         phoneNumber={student.phoneNumber}
         grantedLevel={student.grantedLevel}

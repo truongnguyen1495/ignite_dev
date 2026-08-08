@@ -10,6 +10,8 @@ import { ConnectorLayer } from "./connector-layer";
 import { ConnectorToolbar } from "./connector-toolbar";
 import { SelectionToolbar } from "./selection-toolbar";
 import type { WhiteboardTool } from "./element-toolbar";
+import { CommentPins, DEFAULT_ANCHOR_U, DEFAULT_ANCHOR_V } from "./comment-pins";
+import type { WhiteboardCommentThreadItem } from "@/lib/whiteboard-comment-actions";
 
 export type Viewport = { x: number; y: number; zoom: number };
 
@@ -33,7 +35,11 @@ type DrawingStroke = { x: number; y: number }[] | null;
 type GroupResizeCorner = "topLeft" | "topRight" | "bottomLeft" | "bottomRight";
 type GroupMemberSnapshot = { id: string; x: number; y: number; width: number; height: number; rotation: number };
 type GroupBox = { x: number; y: number; width: number; height: number };
-type SelectedGroup = { groupId: string; members: PositionedWhiteboardElement[]; box: GroupBox };
+// `groupId` is non-null only when every member shares one real saved group
+// (see selectedGroup below) — purely informational, nothing here reads it
+// back out, so an ad-hoc multi-select (no shared group) still gets the same
+// combined resize/rotate box with `groupId: null`.
+type SelectedGroup = { groupId: string | null; members: PositionedWhiteboardElement[]; box: GroupBox };
 // A group resize/rotate gesture, captured once at mousedown (see
 // startGroupResize/startGroupRotate) and read from a ref inside the window
 // mousemove/mouseup listeners below — same "ref alongside state" pattern
@@ -98,9 +104,13 @@ function resizeFixedEdges(direction: string): { x: "start" | "end" | null; y: "s
 // never visually disagree with where its anchor dot sits.
 function AnchorDots({
   box,
+  zoom,
   onStartConnect,
 }: {
   box: { width: number; height: number };
+  // Counter-scales the dot below so it stays a constant on-screen size
+  // regardless of canvas zoom — see the comment further down for why.
+  zoom: number;
   onStartConnect: (anchor: ConnectorAnchor, e: React.MouseEvent) => void;
 }) {
   const positions: Record<Exclude<ConnectorAnchor, "center">, { left: string | number; top: string | number }> = {
@@ -109,6 +119,17 @@ function AnchorDots({
     bottom: { left: "50%", top: box.height },
     left: { left: 0, top: "50%" },
   };
+  // This whole tree lives inside the world div's `scale(viewport.zoom)`
+  // transform a few hundred lines up, so the 24px/14px sizes below — sized
+  // for a 100%-zoom view — shrink right along with everything else once the
+  // board is zoomed out. At e.g. 30% zoom a "24px" hit target is really only
+  // ~7px on screen: too small to reliably land a click-drag on, so an
+  // attempted connector-drag misses the dot and starts a canvas marquee
+  // instead (grabbing the outer div's click, not the dot). Scaling the
+  // visible+hit area by 1/zoom here cancels the ancestor's scale-down,
+  // keeping a constant ~24px screen target at any zoom level — invisible at
+  // 100% zoom (1/1 = no-op) and increasingly needed the further out you go.
+  const inverseScale = 1 / zoom;
   return (
     <>
       {ANCHORS.map((anchor) => (
@@ -128,7 +149,15 @@ function AnchorDots({
           className="absolute z-20 flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-crosshair items-center justify-center"
           style={positions[anchor]}
         >
-          <span className="h-3.5 w-3.5 rounded-full border-2 border-primary bg-white" />
+          {/* A separate inner div (not a transform merged onto the outer
+              one) so this scale composes independently of the outer div's
+              own translate(-50%,-50%) centering — an inline `transform`
+              would otherwise replace, not combine with, that Tailwind
+              utility's transform. Scaling around this inner box's own
+              center keeps the anchor point stationary either way. */}
+          <div className="flex h-6 w-6 items-center justify-center" style={{ transform: `scale(${inverseScale})` }}>
+            <span className="h-3.5 w-3.5 rounded-full border-2 border-primary bg-white" />
+          </div>
         </div>
       ))}
     </>
@@ -171,6 +200,11 @@ export function WhiteboardCanvas({
   onDeleteSelected,
   onConvertSelectedKind,
   onCreateStickyAt,
+  commentThreads,
+  onPlaceCommentThread,
+  onReplyComment,
+  onToggleCommentResolved,
+  onMoveCommentAnchor,
 }: {
   elements: WhiteboardElement[];
   selectedElementIds: string[];
@@ -223,8 +257,18 @@ export function WhiteboardCanvas({
   // coordinate is all this needs, whiteboard-editor.tsx owns actually
   // creating the element and opening it for editing.
   onCreateStickyAt: (worldX: number, worldY: number) => void;
+  commentThreads: WhiteboardCommentThreadItem[];
+  onPlaceCommentThread: (elementId: string, anchorU: number, anchorV: number, content: string) => void;
+  onReplyComment: (threadId: string, content: string) => void;
+  onToggleCommentResolved: (threadId: string, resolved: boolean) => void;
+  onMoveCommentAnchor: (threadId: string, anchorU: number, anchorV: number) => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  // Non-null while the SelectionToolbar's comment button has armed a
+  // brand-new pin on that element — composer open, not saved yet. Local
+  // state (not lifted to whiteboard-editor.tsx) since nothing outside this
+  // component needs to know about it.
+  const [composingCommentElementId, setComposingCommentElementId] = useState<string | null>(null);
   // Mirrored every render (not just on mount) so the wheel listener below
   // can read the truly-latest viewport/callback without re-subscribing on
   // every change — re-subscribing on each viewport update left a window
@@ -242,24 +286,28 @@ export function WhiteboardCanvas({
   const connectors = useMemo(() => elements.filter(isConnector), [elements]);
   const elementsById = useMemo(() => new Map(positioned.map((el) => [el.id, el])), [positioned]);
 
-  // Non-null only when the CURRENT selection is exactly one whole saved
-  // group (every member, no more no less) — an ad-hoc marquee/shift-click
-  // multi-select of ungrouped elements (or a partial slice of a group) stays
-  // null, so it keeps today's existing "move together, no combined resize/
-  // rotate UI" behavior untouched. Drives the group bounding-box overlay
-  // (resize corners + rotate handle) further down.
+  // Non-null for ANY 2+ selection — a saved group (Ctrl+G) and a plain
+  // ad-hoc marquee/shift-click multi-select both get the same combined
+  // bounding-box overlay (resize corners + rotate handle) further down;
+  // moving multiple elements together already worked for both cases
+  // (isGroupDrag below), this just extends resize/rotate to match. Real
+  // saved groups always show up here with every member already included —
+  // clicking or marqueeing any one member auto-expands the selection to the
+  // whole group (see the marquee hit-test and Rnd onMouseDown below) — so
+  // there's no "partial slice of a group" case to special-case separately
+  // from a plain multi-select.
   const selectedGroup: SelectedGroup | null = useMemo(() => {
     if (selectedElementIds.length < 2) return null;
-    const groupId = elementsById.get(selectedElementIds[0])?.groupId;
-    if (!groupId) return null;
-    const allMembers = positioned.filter((el) => el.groupId === groupId);
-    if (allMembers.length !== selectedElementIds.length) return null;
-    if (!allMembers.every((el) => selectedElementIds.includes(el.id))) return null;
-    const minX = Math.min(...allMembers.map((el) => el.x));
-    const minY = Math.min(...allMembers.map((el) => el.y));
-    const maxX = Math.max(...allMembers.map((el) => el.x + el.width));
-    const maxY = Math.max(...allMembers.map((el) => el.y + el.height));
-    return { groupId, members: allMembers, box: { x: minX, y: minY, width: maxX - minX, height: maxY - minY } };
+    const selectedSet = new Set(selectedElementIds);
+    const members = positioned.filter((el) => selectedSet.has(el.id));
+    if (members.length < 2) return null;
+    const minX = Math.min(...members.map((el) => el.x));
+    const minY = Math.min(...members.map((el) => el.y));
+    const maxX = Math.max(...members.map((el) => el.x + el.width));
+    const maxY = Math.max(...members.map((el) => el.y + el.height));
+    const firstGroupId = elementsById.get(selectedElementIds[0])?.groupId ?? null;
+    const groupId = firstGroupId && members.every((el) => el.groupId === firstGroupId) ? firstGroupId : null;
+    return { groupId, members, box: { x: minX, y: minY, width: maxX - minX, height: maxY - minY } };
   }, [selectedElementIds, positioned, elementsById]);
 
   // Tracks the canvas container's actual on-screen size (via ResizeObserver,
@@ -1228,6 +1276,7 @@ export function WhiteboardCanvas({
                 <>
                   <AnchorDots
                     box={element}
+                    zoom={viewport.zoom}
                     onStartConnect={(anchor, e) => {
                       const world = toWorld(e.clientX, e.clientY);
                       setConnecting({ sourceId: element.id, sourceAnchor: anchor, toWorld: world });
@@ -1303,26 +1352,40 @@ export function WhiteboardCanvas({
               { corner: "bottomLeft", left: 0, top: box.height, cursor: "nesw-resize" },
               { corner: "bottomRight", left: box.width, top: box.height, cursor: "nwse-resize" },
             ];
+            // Border width and the corner/rotate dots are all authored for
+            // a 100%-zoom view; this whole overlay lives inside the world
+            // div's scale(viewport.zoom) transform (same story as
+            // AnchorDots above), so at a zoomed-out view they'd otherwise
+            // shrink to a barely-visible hairline and a few-pixel dot.
+            // Dividing by zoom here cancels that shrink, same "counter-scale
+            // to stay a constant screen size" fix as AnchorDots.
+            const inverseScale = 1 / viewport.zoom;
             return (
               <div
-                className="pointer-events-none absolute z-20 border-2 border-dashed border-primary"
-                style={{ left: box.x, top: box.y, width: box.width, height: box.height }}
+                className="pointer-events-none absolute z-20 border-dashed border-primary"
+                style={{ left: box.x, top: box.y, width: box.width, height: box.height, borderWidth: 2 * inverseScale }}
               >
                 {corners.map(({ corner, left, top, cursor }) => (
                   <div
                     key={corner}
                     onMouseDown={startGroupResize(corner, group)}
-                    className="pointer-events-auto absolute flex h-4 w-4 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+                    className="pointer-events-auto absolute flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
                     style={{ left, top, cursor }}
                   >
-                    <span className="h-3.5 w-3.5 rounded-full border-2 border-primary bg-white" />
+                    <div className="flex h-6 w-6 items-center justify-center" style={{ transform: `scale(${inverseScale})` }}>
+                      <span className="h-3.5 w-3.5 rounded-full border-2 border-primary bg-white" />
+                    </div>
                   </div>
                 ))}
                 <div
                   onMouseDown={startGroupRotate(group)}
-                  className="pointer-events-auto absolute left-1/2 top-0 h-3 w-3 -translate-x-1/2 -translate-y-6 cursor-grab rounded-full border-2 border-primary bg-white"
+                  className="pointer-events-auto absolute left-1/2 top-0 flex h-6 w-6 -translate-x-1/2 -translate-y-8 cursor-grab items-center justify-center"
                   title="Xoay cả nhóm"
-                />
+                >
+                  <div className="flex h-6 w-6 items-center justify-center" style={{ transform: `scale(${inverseScale})` }}>
+                    <span className="h-3 w-3 rounded-full border-2 border-primary bg-white" />
+                  </div>
+                </div>
               </div>
             );
           })()}
@@ -1344,6 +1407,7 @@ export function WhiteboardCanvas({
               onDuplicate={onDuplicateSelected}
               onDelete={onDeleteSelected}
               editingSelection={selected.id === editingElementId ? editingSelection : null}
+              onComment={() => setComposingCommentElementId(selected.id)}
             />
           );
         })()}
@@ -1428,6 +1492,21 @@ export function WhiteboardCanvas({
           }}
         />
       )}
+      <CommentPins
+        threads={commentThreads}
+        elementsById={elementsById}
+        viewport={viewport}
+        composingForElementId={composingCommentElementId}
+        onCancelComposing={() => setComposingCommentElementId(null)}
+        onPlaceThread={(content) => {
+          if (!composingCommentElementId) return;
+          onPlaceCommentThread(composingCommentElementId, DEFAULT_ANCHOR_U, DEFAULT_ANCHOR_V, content);
+          setComposingCommentElementId(null);
+        }}
+        onReply={onReplyComment}
+        onToggleResolved={onToggleCommentResolved}
+        onMoveAnchor={onMoveCommentAnchor}
+      />
     </div>
   );
 }

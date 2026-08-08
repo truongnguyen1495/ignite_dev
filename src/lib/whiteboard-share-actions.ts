@@ -38,6 +38,7 @@ export type WhiteboardCollaboratorItem = {
   // below, which is what THIS BOARD grants them.
   accountRole: Role;
   shareRole: WhiteboardAccessRole;
+  avatarUrl: string | null;
 };
 
 export type WhiteboardUserSearchResult = {
@@ -45,6 +46,7 @@ export type WhiteboardUserSearchResult = {
   name: string;
   email: string;
   accountRole: Role;
+  avatarUrl: string | null;
 };
 
 export type WhiteboardShareInfo = {
@@ -55,7 +57,7 @@ export type WhiteboardShareInfo = {
 async function listCollaborators(boardId: string): Promise<WhiteboardCollaboratorItem[]> {
   const rows = await prisma.whiteboardCollaborator.findMany({
     where: { whiteboardId: boardId },
-    include: { user: { select: { id: true, name: true, email: true, role: true } } },
+    include: { user: { select: { id: true, name: true, email: true, role: true, avatarUrl: true } } },
     orderBy: { addedAt: "asc" },
   });
   return rows.map((row) => ({
@@ -65,6 +67,7 @@ async function listCollaborators(boardId: string): Promise<WhiteboardCollaborato
     email: row.user.email,
     accountRole: row.user.role,
     shareRole: row.role,
+    avatarUrl: row.user.avatarUrl,
   }));
 }
 
@@ -104,11 +107,11 @@ export async function searchUsersForWhiteboardShareAction(
         { email: { contains: trimmed, mode: "insensitive" } },
       ],
     },
-    select: { id: true, name: true, email: true, role: true },
+    select: { id: true, name: true, email: true, role: true, avatarUrl: true },
     take: 20,
     orderBy: { name: "asc" },
   });
-  return users.map((u) => ({ id: u.id, name: u.name, email: u.email, accountRole: u.role }));
+  return users.map((u) => ({ id: u.id, name: u.name, email: u.email, accountRole: u.role, avatarUrl: u.avatarUrl }));
 }
 
 function revalidateBoth(boardId: string) {

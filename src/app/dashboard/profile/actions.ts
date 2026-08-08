@@ -49,6 +49,18 @@ export async function updateOwnProfileAction(input: {
   return undefined;
 }
 
+// The upload itself happens client-side against /api/profile/upload-avatar
+// (a fetch()-driven route, same convention as every other image upload in
+// this app — needed for the multipart file body). Clearing the field back
+// to null needs no file handling, so it's a plain server action instead,
+// matching updateOwnProfileAction/setOwnPasswordAction below.
+export async function removeOwnAvatarAction(): Promise<string | undefined> {
+  const student = await requireActiveStudent();
+  await prisma.user.update({ where: { id: student.id }, data: { avatarUrl: null } });
+  revalidatePath("/dashboard/profile");
+  return undefined;
+}
+
 const setPasswordSchema = z
   .object({
     password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự."),
