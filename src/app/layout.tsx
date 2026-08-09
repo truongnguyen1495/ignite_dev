@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ConfirmDialogProvider } from "@/components/ui/confirm-dialog";
 import { ToastProvider } from "@/components/ui/toast";
 import { LocaleProvider } from "@/components/i18n/locale-provider";
+import { InstallPromptProvider } from "@/components/install-app-provider";
 import { getLocale } from "@/lib/i18n/get-locale";
 import "./globals.css";
 
@@ -50,7 +51,9 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <LocaleProvider initialLocale={locale} bilingualEnabled={bilingualEnabled}>
           <ToastProvider>
-            <ConfirmDialogProvider>{children}</ConfirmDialogProvider>
+            <ConfirmDialogProvider>
+              <InstallPromptProvider>{children}</InstallPromptProvider>
+            </ConfirmDialogProvider>
           </ToastProvider>
         </LocaleProvider>
       </body>
