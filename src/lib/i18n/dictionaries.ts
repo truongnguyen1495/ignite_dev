@@ -101,6 +101,12 @@ export const dictionaries = {
       iosStep2: "Chọn \"Thêm vào MH chính\" (Add to Home Screen).",
       iosStep3: "Nhấn \"Thêm\" ở góc trên bên phải.",
       close: "Đã hiểu",
+      nonSafariTitle: "Mở bằng Safari để cài đặt",
+      nonSafariBody:
+        "Trên iPhone/iPad, việc thêm ứng dụng vào màn hình chính chỉ thực hiện được trong Safari. Bạn đang mở trang này bằng trình duyệt khác (Chrome, hoặc trình duyệt trong Zalo/Facebook/Messenger...) — hãy mở đường link này bằng Safari rồi thử lại.",
+      macSafariTitle: "Thêm vào Dock để cài đặt",
+      macSafariBody:
+        "Trên Mac, mở menu File của Safari rồi chọn \"Thêm vào Dock…\" (Add to Dock) để cài ứng dụng như một app riêng.",
     },
     guestHomePage: {
       welcomeTitle: "Chào mừng đến với",
@@ -212,6 +218,12 @@ export const dictionaries = {
       iosStep2: "Choose \"Add to Home Screen\".",
       iosStep3: "Tap \"Add\" in the top-right corner.",
       close: "Got it",
+      nonSafariTitle: "Open in Safari to install",
+      nonSafariBody:
+        "On iPhone/iPad, adding the app to your home screen only works in Safari. You're viewing this page in another browser (Chrome, or a browser embedded in Zalo/Facebook/Messenger...) — open this link in Safari and try again.",
+      macSafariTitle: "Add to Dock to install",
+      macSafariBody:
+        "On Mac, open Safari's File menu and choose \"Add to Dock…\" to install the app as its own window.",
     },
     guestHomePage: {
       welcomeTitle: "Welcome to",
