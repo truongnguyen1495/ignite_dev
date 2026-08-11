@@ -77,7 +77,7 @@ export function EditorPreview({
           <ChevronLeft className="h-4 w-4" />
         </button>
         <span>
-          Trang {index + 1}/{pages.length} — đúng như học viên nhìn thấy (kể cả thay đổi chưa lưu)
+          Trang {index + 1}/{pages.length} — đúng như thành viên nhìn thấy (kể cả thay đổi chưa lưu)
         </span>
         <button
           type="button"

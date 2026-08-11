@@ -147,7 +147,7 @@ export function AnnouncementsList({ announcements }: { announcements: Announceme
                     checked={audienceFilter.has("NO_LEVELED")}
                     onChange={() => setAudienceFilter((s) => toggleInSet(s, "NO_LEVELED"))}
                   />
-                  Không cấp quyền học viên
+                  Không cấp quyền thành viên
                 </label>
                 {ORDERED_LEVELS.map((level) => (
                   <label key={level} className="flex items-center gap-2 text-sm text-foreground">

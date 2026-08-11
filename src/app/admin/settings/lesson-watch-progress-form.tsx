@@ -21,7 +21,7 @@ export function LessonWatchProgressForm({
       <div>
         <p className="text-sm font-medium text-foreground">Theo dõi tiến độ xem video bài học</p>
         <p className="text-sm text-muted">
-          Đo thời gian thực học viên thực sự để video phát (không tính khi tua nhanh) trên các bài học
+          Đo thời gian thực thành viên thực sự để video phát (không tính khi tua nhanh) trên các bài học
           khóa học có video YouTube. Nút &quot;Đánh dấu hoàn thành&quot; bị khóa cho tới khi xem đủ % dưới
           đây — chỉ áp dụng cho bài học đã lấy được thời lượng video (xem link YouTube ở bài học đó để
           ngưỡng có hiệu lực).
@@ -56,7 +56,7 @@ export function LessonWatchProgressForm({
             defaultChecked={enforceLessonWatchForHocVien}
             className="h-4 w-4 accent-primary"
           />
-          Bắt buộc với học viên
+          Bắt buộc với thành viên
         </label>
       </div>
 

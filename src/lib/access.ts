@@ -230,7 +230,7 @@ export async function requireChatEnabled(redirectTo: string): Promise<void> {
 // convention as isChatEnabled. Deliberately NOT split by audience the way
 // most other toggles in this file are: off makes the feature unreachable
 // for literally everyone, Super Admin included; on opens it to all 3
-// non-guest audiences (Super Admin, Admin, học viên) at once, subject to
+// non-guest audiences (Super Admin, Admin, thành viên) at once, subject to
 // each board's own per-board sharing (see requireWhiteboardAccess below).
 export async function isWhiteboardsEnabled(): Promise<boolean> {
   const settings = await prisma.settings.findUnique({ where: { id: 1 } });
@@ -635,7 +635,7 @@ export async function requireGuestCourseAccess(courseId: string) {
 //
 // A free course (Course.isFree) is the one exception to the per-lesson
 // visibleToGuest gate: "Miễn phí" means every lesson opens for guests too,
-// same as it does for học viên (getCourseAccessLevel above) — hiddenFromGuest
+// same as it does for thành viên (getCourseAccessLevel above) — hiddenFromGuest
 // still applies, since that's the separate "don't show this course to
 // guests at all" switch, not overridden by isFree.
 export async function requireGuestCourseLessonAccess(lessonId: string) {

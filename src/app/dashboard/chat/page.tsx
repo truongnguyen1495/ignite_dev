@@ -23,7 +23,7 @@ export default async function ChatInboxPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
-      <PageHeader title="Nhắn tin" description="Hỗ trợ từ admin, nhắn tin với học viên khác, và chat nhóm theo cấp độ." />
+      <PageHeader title="Nhắn tin" description="Hỗ trợ từ admin, nhắn tin với thành viên khác, và chat nhóm theo cấp độ." />
 
       <Card className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground">Hỗ trợ</h2>

@@ -37,10 +37,10 @@ export function ToggleAdminStatusButton({ adminId, locked }: { adminId: string; 
   );
 }
 
-// Only rendered for a real học viên (adminOnly false) — "xóa tài khoản
+// Only rendered for a real thành viên (adminOnly false) — "xóa tài khoản
 // admin" here can never mean deleting the underlying student account (that
 // stays exclusively /admin/students' call), just stripping every trace of
-// admin capability so it goes back to being a plain học viên, AND removing
+// admin capability so it goes back to being a plain thành viên, AND removing
 // it from /admin/admins entirely (removeFromAdminListAction) — distinct
 // from the list page's plain revoke-all icon, which deliberately keeps the
 // row visible with a Restore option instead.
@@ -53,7 +53,7 @@ export function RemoveAdminRoleButton({ adminId, adminName }: { adminId: string;
     const ok = await confirm({
       title: `Xóa tài khoản admin của "${adminName}"?`,
       description:
-        "Tài khoản sẽ mất hết quyền admin và không còn hiện trong danh sách Quản lý Admin nữa — về lại làm học viên bình thường, cấp độ và dữ liệu học tập được giữ nguyên. Muốn cấp lại thì tìm qua \"Thêm admin\".",
+        "Tài khoản sẽ mất hết quyền admin và không còn hiện trong danh sách Quản lý Admin nữa — về lại làm thành viên bình thường, cấp độ và dữ liệu học tập được giữ nguyên. Muốn cấp lại thì tìm qua \"Thêm admin\".",
       confirmLabel: "Xóa tài khoản admin",
       tone: "danger",
     });
@@ -75,9 +75,9 @@ export function RemoveAdminRoleButton({ adminId, adminName }: { adminId: string;
 type Mode = "delete" | "to_hocvien";
 
 // Only rendered for an adminOnly account (no real student identity) —
-// unlike RemoveAdminRoleButton above, there's no underlying học viên to
+// unlike RemoveAdminRoleButton above, there's no underlying thành viên to
 // "go back to", so the admin picks explicitly between deleting the account
-// outright or turning it into a genuine học viên (see
+// outright or turning it into a genuine thành viên (see
 // convertAdminOnlyAccountAction — always strips admin capability either way).
 export function DeleteAdminAccountButton({ adminId, adminName }: { adminId: string; adminName: string }) {
   const [open, setOpen] = useState(false);
@@ -126,7 +126,7 @@ export function DeleteAdminAccountButton({ adminId, adminName }: { adminId: stri
             <div>
               <h2 className="text-base font-semibold text-foreground">Xóa tài khoản admin &quot;{adminName}&quot;</h2>
               <p className="mt-1 text-sm text-muted">
-                Tài khoản này không phải học viên thật — chọn một trong các lựa chọn dưới đây.
+                Tài khoản này không phải thành viên thật — chọn một trong các lựa chọn dưới đây.
               </p>
             </div>
 
@@ -154,7 +154,7 @@ export function DeleteAdminAccountButton({ adminId, adminName }: { adminId: stri
                   onChange={() => setMode("to_hocvien")}
                 />
                 <span className="flex-1">
-                  <span className="block font-medium text-foreground">Chuyển thành Học viên (5 cấp)</span>
+                  <span className="block font-medium text-foreground">Chuyển thành Thành viên (5 cấp)</span>
                   <span className="block text-xs text-muted">Không còn là admin — chọn cấp độ bắt đầu.</span>
                   {mode === "to_hocvien" && (
                     <Select

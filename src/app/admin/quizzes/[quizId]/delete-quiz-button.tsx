@@ -24,7 +24,7 @@ export function DeleteQuizButton({
       onClick={async () => {
         const ok = await confirm({
           title: "Xóa bài test này?",
-          description: "Toàn bộ câu hỏi và điểm test của học viên sẽ bị xóa.",
+          description: "Toàn bộ câu hỏi và điểm test của thành viên sẽ bị xóa.",
           confirmLabel: "Xóa bài test",
           tone: "danger",
         });

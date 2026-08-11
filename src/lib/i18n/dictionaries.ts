@@ -14,12 +14,12 @@ export const dictionaries = {
     },
     brandSubtitle: {
       admin: "Quản trị viên",
-      hocVien: "Học viên",
+      hocVien: "Thành viên",
       guest: "Khách",
     },
     adminNav: {
       overview: "Tổng quan",
-      students: "Học viên",
+      students: "Thành viên",
       lessons: "Bài học",
       results: "Kết quả",
       levelUpRequests: "Yêu cầu lên cấp",
@@ -29,10 +29,10 @@ export const dictionaries = {
       orders: "Đơn hàng",
       consultations: "Tư vấn",
       announcements: "Bản tin",
-      support: "Hỗ trợ học viên",
+      support: "Hỗ trợ thành viên",
       adminManagement: "Quản lý Admin",
       settings: "Cài đặt",
-      backToStudentPage: "Về trang học viên",
+      backToStudentPage: "Về trang thành viên",
       whiteboards: "Bảng vẽ",
       groups: "Danh sách nhóm",
       tests: "Khám phá bản thân",
@@ -64,21 +64,21 @@ export const dictionaries = {
       title: "Cài đặt",
       chatTitle: "Tính năng chat",
       chatDescription:
-        "Bật/tắt nhắn tin hỗ trợ, nhắn tin trực tiếp, chat nhóm cho học viên và admin, và chat hỗ trợ cho khách chưa đăng nhập.",
+        "Bật/tắt nhắn tin hỗ trợ, nhắn tin trực tiếp, chat nhóm cho thành viên và admin, và chat hỗ trợ cho khách chưa đăng nhập.",
       registrationTitle: "Đăng ký tài khoản mới",
       registrationDescription:
         "Bật/tắt cho phép người dùng mới tự đăng ký tài khoản tại trang đăng ký. Khi tắt, tài khoản mới chỉ có thể được Admin tạo thủ công.",
       bilingualTitle: "Song ngữ (Tiếng Việt - English)",
-      bilingualDescription: "Cho phép học viên và admin chuyển đổi giao diện giữa tiếng Việt và tiếng Anh.",
+      bilingualDescription: "Cho phép thành viên và admin chuyển đổi giao diện giữa tiếng Việt và tiếng Anh.",
       emailVerificationTitle: "Bắt buộc xác thực email",
       emailVerificationDescription:
-        "Bật/tắt yêu cầu học viên xác thực email (bấm liên kết gửi qua Resend) trước khi đăng nhập được. Khi tắt, tài khoản mới dùng được ngay sau khi đăng ký.",
+        "Bật/tắt yêu cầu thành viên xác thực email (bấm liên kết gửi qua Resend) trước khi đăng nhập được. Khi tắt, tài khoản mới dùng được ngay sau khi đăng ký.",
       googleLoginTitle: "Đăng nhập bằng Google",
       googleLoginDescription:
         "Bật/tắt nút \"Đăng nhập bằng Google\" ở trang đăng nhập. Lần đầu đăng nhập bằng một email Google chưa từng có tài khoản sẽ tự tạo tài khoản mới nếu \"Đăng ký tài khoản mới\" ở trên cũng đang bật.",
       salesTitle: "Bán khóa học / thư viện",
       salesDescription:
-        'Bật/tắt toàn bộ tính năng bán hàng — nút "Mua ngay", trang "Đơn hàng của tôi" của học viên, và trang "Đơn hàng" của admin đều ẩn đi khi tắt. Chỉ bật sau khi đã điền đầy đủ thông tin chuyển khoản bên dưới. Nếu đang có đơn chờ xác nhận, phải bật lại công tắc này mới xử lý được.',
+        'Bật/tắt toàn bộ tính năng bán hàng — nút "Mua ngay", trang "Đơn hàng của tôi" của thành viên, và trang "Đơn hàng" của admin đều ẩn đi khi tắt. Chỉ bật sau khi đã điền đầy đủ thông tin chuyển khoản bên dưới. Nếu đang có đơn chờ xác nhận, phải bật lại công tắc này mới xử lý được.',
       autoPaymentTitle: "Thanh toán tự động (SePay)",
       autoPaymentDescription:
         "Bật/tắt tự động xác nhận đơn hàng khi có chuyển khoản khớp mã đơn qua webhook SePay. Cần cấu hình SEPAY_WEBHOOK_SECRET trước khi bật. Khi tắt, admin vẫn xác nhận thanh toán thủ công như bình thường ở trang \"Đơn hàng\".",
@@ -86,7 +86,7 @@ export const dictionaries = {
       adminManagementDescription: "Cấp/thu hồi quyền admin cho tài khoản, xem toàn bộ thông tin từng admin.",
       whiteboardsTitle: "Bảng vẽ",
       whiteboardsDescription:
-        "Bật/tắt tính năng bảng vẽ cộng tác (sơ đồ, mindmap, ghi chú) cho Super Admin, Admin và học viên. Khi tắt, toàn bộ tính năng ẩn đi với mọi người, kể cả Super Admin.",
+        "Bật/tắt tính năng bảng vẽ cộng tác (sơ đồ, mindmap, ghi chú) cho Super Admin, Admin và thành viên. Khi tắt, toàn bộ tính năng ẩn đi với mọi người, kể cả Super Admin.",
     },
     dashboardLevelsPage: {
       accessDenied: "Bạn không có quyền truy cập nội dung đó.",
@@ -131,12 +131,12 @@ export const dictionaries = {
     },
     brandSubtitle: {
       admin: "Admin",
-      hocVien: "Student",
+      hocVien: "Member",
       guest: "Guest",
     },
     adminNav: {
       overview: "Overview",
-      students: "Students",
+      students: "Members",
       lessons: "Lessons",
       results: "Results",
       levelUpRequests: "Level-up requests",
@@ -146,10 +146,10 @@ export const dictionaries = {
       orders: "Orders",
       consultations: "Consultations",
       announcements: "Announcements",
-      support: "Student support",
+      support: "Member support",
       adminManagement: "Admin management",
       settings: "Settings",
-      backToStudentPage: "Back to student view",
+      backToStudentPage: "Back to member view",
       whiteboards: "Whiteboards",
       groups: "Groups",
       tests: "Self-discovery tests",
@@ -181,21 +181,21 @@ export const dictionaries = {
       title: "Settings",
       chatTitle: "Chat",
       chatDescription:
-        "Turn support chat, direct messages, and group chat on or off for students and admins, plus support chat for signed-out guests.",
+        "Turn support chat, direct messages, and group chat on or off for members and admins, plus support chat for signed-out guests.",
       registrationTitle: "New account registration",
       registrationDescription:
         "Allow new users to self-register an account on the registration page. When off, new accounts can only be created manually by an Admin.",
       bilingualTitle: "Bilingual (Tiếng Việt - English)",
-      bilingualDescription: "Let students and admins switch the interface between Vietnamese and English.",
+      bilingualDescription: "Let members and admins switch the interface between Vietnamese and English.",
       emailVerificationTitle: "Require email verification",
       emailVerificationDescription:
-        "Require students to verify their email (via a link sent through Resend) before they can log in. When off, new accounts work immediately after registering.",
+        "Require members to verify their email (via a link sent through Resend) before they can log in. When off, new accounts work immediately after registering.",
       googleLoginTitle: "Google sign-in",
       googleLoginDescription:
         'Turn the "Sign in with Google" button on the login page on or off. The first time an unrecognized Google email signs in, a new account is auto-created only if "New account registration" above is also on.',
       salesTitle: "Course / library sales",
       salesDescription:
-        'Turn the whole sales feature on or off — the "Buy Now" button, a student\'s "My Orders" page, and the admin "Orders" page all hide when off. Only turn on after filling in the bank transfer details below. If there\'s a pending order, this switch must be back on to process it.',
+        'Turn the whole sales feature on or off — the "Buy Now" button, a member\'s "My Orders" page, and the admin "Orders" page all hide when off. Only turn on after filling in the bank transfer details below. If there\'s a pending order, this switch must be back on to process it.',
       autoPaymentTitle: "Automatic payment (SePay)",
       autoPaymentDescription:
         'Turn on to auto-confirm an order once a matching bank transfer arrives via the SePay webhook. Requires SEPAY_WEBHOOK_SECRET to be configured first. When off, admins still confirm payments manually as usual on the "Orders" page.',
@@ -203,7 +203,7 @@ export const dictionaries = {
       adminManagementDescription: "Grant or revoke admin permissions per account, and view each admin's full details.",
       whiteboardsTitle: "Whiteboards",
       whiteboardsDescription:
-        "Turn the collaborative whiteboard feature (diagrams, mindmaps, notes) on or off for Super Admin, Admin, and students. When off, the whole feature is hidden from everyone, Super Admin included.",
+        "Turn the collaborative whiteboard feature (diagrams, mindmaps, notes) on or off for Super Admin, Admin, and members. When off, the whole feature is hidden from everyone, Super Admin included.",
     },
     dashboardLevelsPage: {
       accessDenied: "You don't have access to that content.",

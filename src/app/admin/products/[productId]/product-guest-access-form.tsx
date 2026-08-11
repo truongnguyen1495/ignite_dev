@@ -39,7 +39,7 @@ export function ProductGuestAccessForm({
         Hiển thị cho khách xem
       </label>
       <p className="text-xs text-muted">
-        Tắt đi thì sản phẩm bị ẩn hoàn toàn khỏi trang khách — chỉ những học viên đủ điều kiện ở
+        Tắt đi thì sản phẩm bị ẩn hoàn toàn khỏi trang khách — chỉ những thành viên đủ điều kiện ở
         phần cấp quyền theo cấp/cấp riêng bên dưới mới xem được.
       </p>
 

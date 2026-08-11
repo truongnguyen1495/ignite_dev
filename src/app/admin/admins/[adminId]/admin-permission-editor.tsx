@@ -38,8 +38,8 @@ export function AdminPermissionEditor({
     });
   }
 
-  // Unchecking a group's parent (e.g. "Học viên") also clears its children
-  // ("Sửa/Khóa/Xóa học viên") — they'd be unreachable/meaningless anyway
+  // Unchecking a group's parent (e.g. "Thành viên") also clears its children
+  // ("Sửa/Khóa/Xóa thành viên") — they'd be unreachable/meaningless anyway
   // once the admin can't even view that page, so leaving them checked but
   // orphaned would just be confusing on the next visit to this screen.
   function toggleGroupParent(parent: AdminPermissionKind, children: AdminPermissionKind[]) {
@@ -95,7 +95,7 @@ export function AdminPermissionEditor({
           <span>
             <span className="block font-medium text-foreground">Chỉ làm admin</span>
             <span className="block text-xs text-muted">
-              Không vào được /dashboard, không hiện trong danh sách học viên.
+              Không vào được /dashboard, không hiện trong danh sách thành viên.
             </span>
           </span>
         </label>

@@ -90,7 +90,7 @@ export async function startDirectThreadAction(otherStudentId: string): Promise<s
   }
   const other = await prisma.user.findUnique({ where: { id: otherStudentId } });
   if (!other || other.role !== "STUDENT" || other.status !== "ACTIVE") {
-    return "Không tìm thấy học viên này.";
+    return "Không tìm thấy thành viên này.";
   }
   const thread = await getOrCreateDirectThread(student.id, other.id);
   redirect(`/dashboard/chat/dm/${thread.id}`);

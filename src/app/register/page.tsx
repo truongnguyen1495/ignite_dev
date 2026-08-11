@@ -23,7 +23,7 @@ export default async function RegisterPage() {
       <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-8">
         <div className="mb-8 flex flex-col items-center text-center">
           <BrandLogo />
-          <p className="mt-3 text-sm text-muted">Đăng ký tài khoản học viên</p>
+          <p className="mt-3 text-sm text-muted">Đăng ký tài khoản thành viên</p>
         </div>
         {registrationEnabled ? (
           <RegisterForm />

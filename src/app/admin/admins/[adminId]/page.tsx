@@ -44,7 +44,7 @@ export default async function AdminDetailPage({ params }: { params: Promise<{ ad
           <h1 className="text-xl font-semibold text-foreground">{admin.name}</h1>
           {admin.isAdminManager && <Badge color="primary">Admin Manager</Badge>}
           <Badge color={admin.adminOnly ? "warning" : "muted"}>
-            {admin.adminOnly ? "Chỉ admin" : "Học viên + Admin"}
+            {admin.adminOnly ? "Chỉ admin" : "Thành viên + Admin"}
           </Badge>
           <StatusBadge status={admin.status} />
         </div>
@@ -66,7 +66,7 @@ export default async function AdminDetailPage({ params }: { params: Promise<{ ad
             <dd className="break-words text-foreground">{admin.phoneNumber ?? "—"}</dd>
           </div>
           <div className="min-w-0">
-            <dt className="text-xs text-muted">Cấp học viên</dt>
+            <dt className="text-xs text-muted">Cấp thành viên</dt>
             <dd className="text-foreground">{admin.adminOnly ? "—" : LEVEL_LABELS[admin.grantedLevel]}</dd>
           </div>
           <div className="min-w-0">

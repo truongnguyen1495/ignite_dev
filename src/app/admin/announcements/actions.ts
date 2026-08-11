@@ -45,7 +45,7 @@ export async function createAnnouncementAction(
 
   const visibleToLeveled = formData.get("visibleToLeveled") === "on";
   if (visibleToLeveled && !parsed.data.minLevel) {
-    return "Vui lòng chọn cấp độ cho học viên.";
+    return "Vui lòng chọn cấp độ cho thành viên.";
   }
 
   await prisma.announcement.create({
@@ -94,7 +94,7 @@ export async function updateAnnouncementAction(
 
   const visibleToLeveled = formData.get("visibleToLeveled") === "on";
   if (visibleToLeveled && !parsed.data.minLevel) {
-    return "Vui lòng chọn cấp độ cho học viên.";
+    return "Vui lòng chọn cấp độ cho thành viên.";
   }
 
   await prisma.announcement.update({

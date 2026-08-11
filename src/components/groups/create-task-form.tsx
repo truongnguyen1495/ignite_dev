@@ -334,7 +334,7 @@ export function CreateTaskForm({
 
       <div className="space-y-2 rounded-2xl border border-border bg-surface p-5">
         <p className="text-[11px] font-bold uppercase tracking-wide text-faint">Xem trước</p>
-        <p className="text-xs text-muted">Trong &quot;Hoạt động hàng ngày&quot; của học viên</p>
+        <p className="text-xs text-muted">Trong &quot;Hoạt động hàng ngày&quot; của thành viên</p>
         <div className="rounded-xl border border-border bg-background p-4">
           <div className="mb-2.5 flex items-center justify-between">
             <span className="text-xs font-bold text-muted">Việc cần làm hôm nay</span>

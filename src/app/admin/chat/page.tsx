@@ -65,7 +65,7 @@ export default async function AdminChatPage() {
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
       <PageHeader
-        title="Hỗ trợ học viên"
+        title="Hỗ trợ thành viên"
         description="Mọi luồng chat hỗ trợ đều mở cho tất cả admin trả lời."
         actions={
           <Link
@@ -78,8 +78,8 @@ export default async function AdminChatPage() {
       />
 
       <SupportThreadCard
-        title="Hỗ trợ học viên"
-        emptyLabel="Chưa có học viên nào nhắn tin hỗ trợ."
+        title="Hỗ trợ thành viên"
+        emptyLabel="Chưa có thành viên nào nhắn tin hỗ trợ."
         threads={threads}
       />
 

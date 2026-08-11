@@ -63,7 +63,7 @@ export function StudentPicker() {
         </p>
       )}
       {!searching && query.trim().length >= 2 && visibleResults.length === 0 && (
-        <p className="text-sm text-muted">Không tìm thấy học viên nào.</p>
+        <p className="text-sm text-muted">Không tìm thấy thành viên nào.</p>
       )}
       <div className="space-y-1.5">
         {visibleResults.map((student) => (

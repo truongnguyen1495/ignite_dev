@@ -145,7 +145,7 @@ export async function updateStudentAction(
   redirect("/admin/students");
 }
 
-// Locking/deleting an existing học viên each need their own permission
+// Locking/deleting an existing thành viên each need their own permission
 // (LOCK_STUDENTS/DELETE_STUDENTS) — independent grants, e.g. an admin can
 // be trusted to lock but never delete.
 async function targetInfo(studentId: string) {

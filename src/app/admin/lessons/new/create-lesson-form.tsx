@@ -20,7 +20,7 @@ export function CreateLessonForm() {
           name="description"
           rows={2}
           label="Mô tả (tùy chọn)"
-          hint="Giới thiệu ngắn hiển thị cho học viên phía trên nội dung bài học."
+          hint="Giới thiệu ngắn hiển thị cho thành viên phía trên nội dung bài học."
         />
         <Select id="level" name="level" defaultValue={ORDERED_LEVELS[0]} label="Cấp">
           {ORDERED_LEVELS.map((level) => (

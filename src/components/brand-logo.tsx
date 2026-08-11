@@ -28,7 +28,7 @@ export function BrandLogo({
           <Zap className="h-4 w-4" />
         </span>
         <span className={`text-lg font-bold ${collapsibleClass} ${navy ? "text-sidebar-foreground" : "text-foreground"}`}>
-          IGNITE <span className="text-primary">VIETNAM</span>
+          IGNITE <span className="text-primary">RapidX</span>
         </span>
       </div>
       {subtitle && (

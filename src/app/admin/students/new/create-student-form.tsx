@@ -30,7 +30,7 @@ export function CreateStudentForm() {
       </Select>
       {error && <p className="text-sm text-danger">{error}</p>}
       <Button type="submit" disabled={pending} isLoading={pending}>
-        {pending ? "Đang tạo..." : "Tạo học viên"}
+        {pending ? "Đang tạo..." : "Tạo thành viên"}
       </Button>
     </form>
   );

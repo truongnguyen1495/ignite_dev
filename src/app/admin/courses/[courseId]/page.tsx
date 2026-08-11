@@ -88,7 +88,7 @@ export default async function EditCoursePage({
         <Card padding="lg" className="space-y-1">
           <h2 className="text-sm font-semibold text-foreground">Khóa học đang miễn phí</h2>
           <p className="text-xs text-muted">
-            Mọi học viên (kể cả đăng ký sau này) tự động có toàn quyền xem, nên các phần cấp quyền riêng bên
+            Mọi thành viên (kể cả đăng ký sau này) tự động có toàn quyền xem, nên các phần cấp quyền riêng bên
             dưới đang tạm ẩn. Bỏ tick &ldquo;Miễn phí&rdquo; ở form phía trên để dùng lại.
           </p>
         </Card>
@@ -99,10 +99,10 @@ export default async function EditCoursePage({
       <Card padding="lg" className="space-y-5">
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-foreground">
-            Học viên được cấp quyền ({course.grants.length})
+            Thành viên được cấp quyền ({course.grants.length})
           </h2>
           {course.grants.length === 0 ? (
-            <p className="text-sm text-muted">Chưa cấp quyền cho học viên nào.</p>
+            <p className="text-sm text-muted">Chưa cấp quyền cho thành viên nào.</p>
           ) : (
             <ul className="space-y-2">
               {course.grants.map((grant) => (
@@ -138,7 +138,7 @@ export default async function EditCoursePage({
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-foreground">Cấp quyền theo cấp</h2>
           <p className="text-xs text-muted">
-            Học viên đủ cấp — kể cả lên cấp sau này — sẽ tự động xem được khóa học này, không cần cấp lại thủ
+            Thành viên đủ cấp — kể cả lên cấp sau này — sẽ tự động xem được khóa học này, không cần cấp lại thủ
             công.
           </p>
           {course.levelGrants.length === 0 ? (

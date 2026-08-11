@@ -26,7 +26,7 @@ export function DeleteLibraryItemButton({
       onClick={async () => {
         const ok = await confirm({
           title: `Xóa "${libraryItemTitle}"?`,
-          description: "File PDF và toàn bộ quyền truy cập đã cấp cho học viên sẽ bị xóa vĩnh viễn.",
+          description: "File PDF và toàn bộ quyền truy cập đã cấp cho thành viên sẽ bị xóa vĩnh viễn.",
           confirmLabel: "Xóa",
           tone: "danger",
         });

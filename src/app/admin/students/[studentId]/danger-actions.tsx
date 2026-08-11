@@ -65,10 +65,10 @@ export function DeleteStudentButton({
 
   const onClick = async () => {
     const ok = await confirm({
-      title: `Xóa hẳn học viên "${studentName}"?`,
+      title: `Xóa hẳn thành viên "${studentName}"?`,
       description:
-        "Toàn bộ điểm test và lịch sử xin lên cấp của học viên này sẽ bị xóa vĩnh viễn và không thể khôi phục.",
-      confirmLabel: "Xóa học viên",
+        "Toàn bộ điểm test và lịch sử xin lên cấp của thành viên này sẽ bị xóa vĩnh viễn và không thể khôi phục.",
+      confirmLabel: "Xóa thành viên",
       tone: "danger",
     });
     if (!ok) return;
@@ -90,7 +90,7 @@ export function DeleteStudentButton({
         size="icon"
         disabled={pending}
         onClick={onClick}
-        title="Xóa học viên"
+        title="Xóa thành viên"
         className="hover:bg-danger-bg hover:text-danger"
       >
         <Trash2 className="h-4 w-4" />
@@ -100,7 +100,7 @@ export function DeleteStudentButton({
 
   return (
     <Button type="button" variant="danger" disabled={pending} onClick={onClick}>
-      {pending ? "Đang xóa..." : "Xóa học viên"}
+      {pending ? "Đang xóa..." : "Xóa thành viên"}
     </Button>
   );
 }

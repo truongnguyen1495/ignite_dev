@@ -199,7 +199,7 @@ export function MembersPanel({
               onChange={(e) => setSelectedNewMember(e.target.value)}
               className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-foreground"
             >
-              <option value="">Chọn học viên chưa có nhóm...</option>
+              <option value="">Chọn thành viên chưa có nhóm...</option>
               {unassignedStudents.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name} ({s.email})
@@ -227,7 +227,7 @@ export function MembersPanel({
           </div>
         )}
         {unassignedStudents.length === 0 && addPickerOpen && (
-          <p className="mt-2 text-xs text-muted">Không còn học viên nào chưa có nhóm.</p>
+          <p className="mt-2 text-xs text-muted">Không còn thành viên nào chưa có nhóm.</p>
         )}
         {error && <p className="mt-2 text-xs text-danger">{error}</p>}
       </div>

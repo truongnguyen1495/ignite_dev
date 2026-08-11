@@ -37,7 +37,7 @@ function VisibilityBadges({ product }: { product: AdminProductItem }) {
         </Badge>
       ))}
       {product.accessGrantsCount > 0 && (
-        <Badge color="warning">{product.accessGrantsCount} học viên ngoại lệ</Badge>
+        <Badge color="warning">{product.accessGrantsCount} thành viên ngoại lệ</Badge>
       )}
       {!hasAnyRestriction && <Badge color="success">Công khai</Badge>}
     </div>

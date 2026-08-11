@@ -56,10 +56,10 @@ export async function searchAccountsForPermissionAction(query: string): Promise<
 }
 
 // Suggested-candidates list shown as soon as the "Tài khoản có sẵn" tab opens,
-// before the admin manager types anything — Cấp 5 (Core Leader) học viên are
+// before the admin manager types anything — Cấp 5 (Core Leader) thành viên are
 // the intended admin candidates, so surfacing them upfront saves having to
 // know a name to search for. Purely a browse convenience: the search box
-// above still finds học viên of any cấp, unrestricted, once ≥2 chars are
+// above still finds thành viên of any cấp, unrestricted, once ≥2 chars are
 // typed (see searchAccountsForPermissionAction).
 export async function listCoreLeaderCandidatesAction(): Promise<AccountSearchResult[]> {
   const { isSuperAdmin } = await requireAdminManagementAccess();
@@ -151,7 +151,7 @@ export async function setAccountPermissionsAction(
     include: { adminPermissions: true },
   });
   if (!target || target.role !== "STUDENT") {
-    return "Không tìm thấy tài khoản học viên này.";
+    return "Không tìm thấy tài khoản thành viên này.";
   }
   const targetError = assertManageableByCaller(isSuperAdmin, target);
   if (targetError) return targetError;
@@ -164,7 +164,7 @@ export async function setAccountPermissionsAction(
     prisma.user.update({
       where: { id: userId },
       // Turning adminOnly on always clears isAdminManager/canManageAdmins in
-      // the same write — an Admin Manager is by definition a real học viên
+      // the same write — an Admin Manager is by definition a real thành viên
       // (see schema.prisma), so this keeps that invariant intact even though
       // only a Super Admin can reach this branch for an isAdminManager
       // target (assertManageableByCaller above already blocks an Admin
@@ -214,7 +214,7 @@ export async function removeFromAdminListAction(userId: string): Promise<string 
   const { isSuperAdmin } = await requireAdminManagementAccess();
   const target = await prisma.user.findUnique({ where: { id: userId }, include: { adminPermissions: true } });
   if (!target || target.role !== "STUDENT") {
-    return "Không tìm thấy tài khoản học viên này.";
+    return "Không tìm thấy tài khoản thành viên này.";
   }
   const targetError = assertManageableByCaller(isSuperAdmin, target);
   if (targetError) return targetError;
@@ -243,7 +243,7 @@ export async function restoreRevokedPermissionsAction(userId: string): Promise<s
   const { isSuperAdmin } = await requireAdminManagementAccess();
   const target = await prisma.user.findUnique({ where: { id: userId } });
   if (!target || target.role !== "STUDENT") {
-    return "Không tìm thấy tài khoản học viên này.";
+    return "Không tìm thấy tài khoản thành viên này.";
   }
   const targetError = assertManageableByCaller(isSuperAdmin, target);
   if (targetError) return targetError;
@@ -285,7 +285,7 @@ export async function setAdminAccountStatusAction(userId: string, locked: boolea
 // /admin/students' call (deleteStudentAction) so there's one place that
 // decides a student's account can disappear. adminOnly: true in the where
 // clause already excludes any Admin Manager account (which is always a real
-// học viên, adminOnly false — see schema.prisma), but the explicit check
+// thành viên, adminOnly false — see schema.prisma), but the explicit check
 // below keeps that boundary readable here too.
 export async function deleteAdminAccountAction(userId: string) {
   const { isSuperAdmin } = await requireAdminManagementAccess();
@@ -301,7 +301,7 @@ export async function deleteAdminAccountAction(userId: string) {
 
 // The other option offered alongside deleteAdminAccountAction when an
 // adminOnly (no real student identity) account is removed from admin duty —
-// instead of deleting the row outright, turns it into a genuine "học viên"
+// instead of deleting the row outright, turns it into a genuine "thành viên"
 // account. Always strips every trace of admin capability in the same update
 // (explicit user decision: converting means becoming a normal student, not
 // staying a dual-role admin), same soft-revoke convention as
@@ -311,7 +311,7 @@ export async function convertAdminOnlyAccountAction(userId: string, level: Level
   const account = await prisma.user.findUnique({ where: { id: userId, role: "STUDENT" } });
   if (!account) return "Không tìm thấy tài khoản này.";
   if (!account.adminOnly) {
-    return "Tài khoản này đã là học viên thật — không cần chuyển đổi.";
+    return "Tài khoản này đã là thành viên thật — không cần chuyển đổi.";
   }
   const targetError = assertManageableByCaller(isSuperAdmin, account);
   if (targetError) return targetError;
@@ -340,7 +340,7 @@ export async function convertAdminOnlyAccountAction(userId: string, level: Level
 // Designating (or revoking) the Admin Manager tier itself is a Super-Admin-
 // only action, never delegable through canManageAdmins — kept as its own
 // requireActiveSuperAdmin gate, separate from requireAdminManagementAccess
-// which the rest of this file uses. Eligibility (a real học viên: adminOnly
+// which the rest of this file uses. Eligibility (a real thành viên: adminOnly
 // false) is only enforced when turning the flag ON; revoking is always
 // allowed. canManageAdmins is meaningless without isAdminManager, so
 // turning the latter off always clears the former too.
@@ -352,10 +352,10 @@ export async function setAdminManagerAction(
   await requireActiveSuperAdmin();
   const target = await prisma.user.findUnique({ where: { id: userId } });
   if (!target || target.role !== "STUDENT") {
-    return "Không tìm thấy tài khoản học viên này.";
+    return "Không tìm thấy tài khoản thành viên này.";
   }
   if (isAdminManager && target.adminOnly) {
-    return "Chỉ có thể chỉ định Admin Manager cho tài khoản học viên (không phải tài khoản chỉ-admin).";
+    return "Chỉ có thể chỉ định Admin Manager cho tài khoản thành viên (không phải tài khoản chỉ-admin).";
   }
 
   await prisma.user.update({

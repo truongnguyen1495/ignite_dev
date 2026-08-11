@@ -34,7 +34,7 @@ export type WhiteboardCollaboratorItem = {
   name: string;
   email: string;
   // The person's own account type (STUDENT/SUPER_ADMIN) — display only (the
-  // little "Học viên"/"Admin" badge). NOT the same thing as `shareRole`
+  // little "Thành viên"/"Admin" badge). NOT the same thing as `shareRole`
   // below, which is what THIS BOARD grants them.
   accountRole: Role;
   shareRole: WhiteboardAccessRole;

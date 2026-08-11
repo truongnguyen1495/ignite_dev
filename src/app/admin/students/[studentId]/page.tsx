@@ -197,7 +197,7 @@ export default async function EditStudentPage({
           Khóa học độc quyền được cấp quyền ({grantedCourseInfos.length})
         </h2>
         {grantedCourseInfos.length === 0 ? (
-          <p className="text-sm text-muted">Học viên chưa được cấp quyền khóa học độc quyền nào.</p>
+          <p className="text-sm text-muted">Thành viên chưa được cấp quyền khóa học độc quyền nào.</p>
         ) : (
           <ul className="space-y-2">
             {grantedCourseInfos.map((info) => (
@@ -220,7 +220,7 @@ export default async function EditStudentPage({
           Thư viện đã được cấp quyền ({grantedLibraryInfos.length})
         </h2>
         {grantedLibraryInfos.length === 0 ? (
-          <p className="text-sm text-muted">Học viên chưa được cấp quyền tài liệu thư viện nào.</p>
+          <p className="text-sm text-muted">Thành viên chưa được cấp quyền tài liệu thư viện nào.</p>
         ) : (
           <ul className="space-y-2">
             {grantedLibraryInfos.map((info) => (
@@ -241,7 +241,7 @@ export default async function EditStudentPage({
       <Card>
         <CollapsibleSection title={`Lịch sử làm bài test (${attempts.length})`}>
           {groupedAttempts.length === 0 ? (
-            <p className="text-sm text-muted">Học viên chưa làm bài test nào.</p>
+            <p className="text-sm text-muted">Thành viên chưa làm bài test nào.</p>
           ) : (
             <ul className="space-y-2">
               {groupedAttempts.map(({ lessonTitle, latest, history }) => (
@@ -255,7 +255,7 @@ export default async function EditStudentPage({
       <Card>
         <CollapsibleSection title={`Lịch sử xin lên cấp (${levelUpRequests.length})`}>
           {levelUpRequests.length === 0 ? (
-            <p className="text-sm text-muted">Học viên chưa gửi yêu cầu lên cấp nào.</p>
+            <p className="text-sm text-muted">Thành viên chưa gửi yêu cầu lên cấp nào.</p>
           ) : (
             <ul className="space-y-2">
               {levelUpRequests.map((req) => (

@@ -21,7 +21,7 @@ export async function createGroupAction(name: string): Promise<string | undefine
 export async function addMemberAction(groupId: string, userId: string): Promise<string | undefined> {
   await requireAdminPermission("MANAGE_GROUPS");
   const existing = await prisma.groupMembership.findUnique({ where: { userId } });
-  if (existing) return "Học viên này đã thuộc một nhóm khác.";
+  if (existing) return "Thành viên này đã thuộc một nhóm khác.";
 
   await prisma.groupMembership.create({ data: { groupId, userId, role: "MEMBER" } });
   revalidatePath(`/admin/groups/${groupId}`);
@@ -72,7 +72,7 @@ export async function transferMemberAction(
   toGroupId: string
 ): Promise<string | undefined> {
   await requireAdminPermission("MANAGE_GROUPS");
-  if (fromGroupId === toGroupId) return "Học viên đã ở nhóm này rồi.";
+  if (fromGroupId === toGroupId) return "Thành viên đã ở nhóm này rồi.";
   const error = await assertMembershipInGroup(membershipId, fromGroupId);
   if (error) return error;
 

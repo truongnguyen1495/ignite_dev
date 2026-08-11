@@ -85,7 +85,7 @@ export default async function AdminsPage() {
                       <p className="truncate text-sm font-medium text-foreground">{admin.name}</p>
                       {admin.isAdminManager && <Badge color="primary">Admin Manager</Badge>}
                       <Badge color={admin.adminOnly ? "warning" : "muted"}>
-                        {admin.adminOnly ? "Chỉ admin" : "Học viên + Admin"}
+                        {admin.adminOnly ? "Chỉ admin" : "Thành viên + Admin"}
                       </Badge>
                       <StatusBadge status={admin.status} />
                     </div>

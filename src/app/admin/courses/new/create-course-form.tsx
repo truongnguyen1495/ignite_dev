@@ -31,7 +31,7 @@ export function CreateCourseForm({
             onChange={(e) => setIsFree(e.target.checked)}
             className="h-4 w-4 accent-primary"
           />
-          Miễn phí (cấp quyền xem đầy đủ cho toàn bộ học viên, không cần mua)
+          Miễn phí (cấp quyền xem đầy đủ cho toàn bộ thành viên, không cần mua)
         </label>
         {/* Giá gốc/giá khuyến mãi là chuyện tiền bạc, riêng với quyền quản lý
             khóa học — chỉ admin có quyền "Đơn hàng" mới thấy/sửa được, dù

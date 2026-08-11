@@ -7,7 +7,7 @@ import { StudentsTable, type StudentRow } from "./students-table";
 
 export default async function StudentsPage() {
   const admin = await requireAdminPermission("MANAGE_STUDENTS");
-  // Editing/locking/deleting a học viên each need their own permission —
+  // Editing/locking/deleting a thành viên each need their own permission —
   // stricter than the base MANAGE_STUDENTS gate on this page itself (which
   // only covers viewing the list + creating new accounts), so a limited
   // admin may see this list without being able to do any of them. Computed
@@ -42,20 +42,20 @@ export default async function StudentsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Danh sách Học viên (${students.length})`}
+        title={`Danh sách Thành viên (${students.length})`}
         actions={
           <Link
             href="/admin/students/new"
             className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
           >
             <Plus className="h-4 w-4" />
-            Thêm Học viên Mới
+            Thêm Thành viên Mới
           </Link>
         }
       />
 
       {students.length === 0 ? (
-        <p className="text-sm text-muted">Chưa có học viên nào.</p>
+        <p className="text-sm text-muted">Chưa có thành viên nào.</p>
       ) : (
         <StudentsTable students={studentRows} canLock={canLock} canDelete={canDelete} />
       )}

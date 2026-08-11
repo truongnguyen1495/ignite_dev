@@ -6,9 +6,9 @@ import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
 import { Select } from "@/components/ui/form";
 
 // Shared by create/edit forms — two independent audiences (khách, học
-// viên), each opt-in on its own. The "học viên" level dropdown only appears
+// viên), each opt-in on its own. The "thành viên" level dropdown only appears
 // once that checkbox is ticked; picking the lowest level (Cấp 1) is how
-// "every học viên" is expressed, there's no separate "tất cả" option.
+// "every thành viên" is expressed, there's no separate "tất cả" option.
 export function AnnouncementAudienceFields({
   defaultVisibleToGuest = false,
   defaultVisibleToLeveled = false,
@@ -43,7 +43,7 @@ export function AnnouncementAudienceFields({
             onChange={(e) => setVisibleToLeveled(e.target.checked)}
             className="h-4 w-4 accent-primary"
           />
-          Cấp quyền cho học viên xem
+          Cấp quyền cho thành viên xem
         </label>
         {visibleToLeveled && (
           <Select
@@ -52,7 +52,7 @@ export function AnnouncementAudienceFields({
             defaultValue={defaultMinLevel ?? ORDERED_LEVELS[0]}
             required
             label="Từ cấp nào trở lên"
-            hint="Học viên từ cấp này trở lên sẽ xem được — chọn Cấp 1 nếu muốn toàn bộ học viên."
+            hint="Thành viên từ cấp này trở lên sẽ xem được — chọn Cấp 1 nếu muốn toàn bộ thành viên."
             className="mt-2"
           >
             {ORDERED_LEVELS.map((level) => (

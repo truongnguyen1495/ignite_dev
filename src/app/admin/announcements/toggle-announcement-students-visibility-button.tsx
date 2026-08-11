@@ -21,7 +21,7 @@ export function ToggleAnnouncementStudentsVisibilityButton({
       type="button"
       variant="ghost"
       size="icon"
-      title={visibleToStudents ? "Đang hiển thị cho học viên — bấm để ẩn" : "Đang ẩn khỏi học viên — bấm để hiển thị"}
+      title={visibleToStudents ? "Đang hiển thị cho thành viên — bấm để ẩn" : "Đang ẩn khỏi thành viên — bấm để hiển thị"}
       disabled={pending}
       onClick={(e) => {
         e.preventDefault();
