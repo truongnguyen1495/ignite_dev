@@ -214,7 +214,7 @@ export function StudentsTable({
       </div>
 
       {rows.length === 0 ? (
-        <p className="text-sm text-muted">Không có học viên nào khớp bộ lọc.</p>
+        <p className="text-sm text-muted">Không có thành viên nào khớp bộ lọc.</p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="w-full whitespace-nowrap text-sm">

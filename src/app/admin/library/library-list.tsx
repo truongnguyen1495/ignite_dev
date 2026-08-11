@@ -81,7 +81,7 @@ function AccessBadges({ item }: { item: LibraryListItem }) {
         </Badge>
       ))}
       {item.manualGrantsCount > 0 && (
-        <Badge color="warning">{item.manualGrantsCount} học viên ngoại lệ</Badge>
+        <Badge color="warning">{item.manualGrantsCount} thành viên ngoại lệ</Badge>
       )}
       {item.purchasedGrantsCount > 0 && <Badge color="info">{item.purchasedGrantsCount} đã mua</Badge>}
       {!hasAnyGrant && <Badge color="muted">Chưa cấp quyền</Badge>}

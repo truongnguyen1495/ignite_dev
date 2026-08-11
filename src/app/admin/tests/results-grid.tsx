@@ -77,11 +77,11 @@ export function ResultsGrid({ students, tests }: { students: StudentRow[]; tests
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Tìm theo tên học viên..."
+          placeholder="Tìm theo tên thành viên..."
           className="w-full max-w-xs rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
         />
         <span className="text-xs text-muted">
-          {filtered.length}/{students.length} học viên
+          {filtered.length}/{students.length} thành viên
         </span>
       </div>
 
@@ -89,7 +89,7 @@ export function ResultsGrid({ students, tests }: { students: StudentRow[]; tests
         <table className="w-full whitespace-nowrap text-sm">
           <thead className="bg-surface-hover text-xs font-semibold uppercase text-muted">
             <tr>
-              <th className="px-4 py-3 text-left">Học viên</th>
+              <th className="px-4 py-3 text-left">Thành viên</th>
               {ORDERED_PERSONALITY_TEST_TYPES.map((type) => (
                 <th key={type} className="px-4 py-3 text-center">
                   {PERSONALITY_TEST_LABELS[type]}
@@ -152,10 +152,10 @@ export function ResultsGrid({ students, tests }: { students: StudentRow[]; tests
               placeholder="Ví dụ: D — Thống trị"
               className="w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
             />
-            <p className="mt-1.5 text-xs text-muted">Hiển thị trực tiếp trên thẻ trắc nghiệm bên dashboard học viên.</p>
+            <p className="mt-1.5 text-xs text-muted">Hiển thị trực tiếp trên thẻ trắc nghiệm bên dashboard thành viên.</p>
 
             <label className="mb-1.5 mt-4 block text-sm font-medium text-foreground">
-              Ghi chú thêm <span className="font-normal text-muted">(nội bộ, không hiện cho học viên)</span>
+              Ghi chú thêm <span className="font-normal text-muted">(nội bộ, không hiện cho thành viên)</span>
             </label>
             <textarea
               value={note}

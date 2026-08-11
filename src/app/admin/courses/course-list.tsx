@@ -70,7 +70,7 @@ function AccessBadges({ course }: { course: AdminCourseItem }) {
         </Badge>
       ))}
       {course.manualGrantsCount > 0 && (
-        <Badge color="warning">{course.manualGrantsCount} học viên ngoại lệ</Badge>
+        <Badge color="warning">{course.manualGrantsCount} thành viên ngoại lệ</Badge>
       )}
       {course.purchasedGrantsCount > 0 && (
         <Badge color="info">{course.purchasedGrantsCount} đã mua</Badge>
@@ -126,7 +126,7 @@ export function CourseList({ courses }: { courses: AdminCourseItem[] }) {
                   </span>
                   <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
                     <Users className="h-3.5 w-3.5" />
-                    {course.manualGrantsCount + course.purchasedGrantsCount} học viên
+                    {course.manualGrantsCount + course.purchasedGrantsCount} thành viên
                   </span>
                 </div>
               </div>
@@ -158,7 +158,7 @@ export function CourseList({ courses }: { courses: AdminCourseItem[] }) {
                 </span>
                 <span className="flex items-center gap-1 whitespace-nowrap">
                   <Users className="h-3.5 w-3.5" />
-                  {course.manualGrantsCount + course.purchasedGrantsCount} học viên
+                  {course.manualGrantsCount + course.purchasedGrantsCount} thành viên
                 </span>
               </div>
             </Link>

@@ -69,7 +69,7 @@ function OrderActions({ order }: { order: OrderListItem }) {
   const onCancel = async () => {
     const ok = await confirm({
       title: `Hủy đơn hàng ${formatOrderCode(order.orderNumber)}?`,
-      description: "Học viên sẽ không được cấp quyền từ đơn này. Có thể mua lại sau nếu cần.",
+      description: "Thành viên sẽ không được cấp quyền từ đơn này. Có thể mua lại sau nếu cần.",
       confirmLabel: "Hủy đơn",
       tone: "danger",
     });

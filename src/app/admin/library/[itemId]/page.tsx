@@ -90,7 +90,7 @@ export default async function EditLibraryItemPage({
         <Card padding="lg" className="space-y-1">
           <h2 className="text-sm font-semibold text-foreground">Mục này đang miễn phí</h2>
           <p className="text-xs text-muted">
-            Mọi học viên (kể cả đăng ký sau này) tự động có toàn quyền xem, nên các phần cấp quyền riêng bên
+            Mọi thành viên (kể cả đăng ký sau này) tự động có toàn quyền xem, nên các phần cấp quyền riêng bên
             dưới đang tạm ẩn. Bỏ tick &ldquo;Miễn phí&rdquo; ở form phía trên để dùng lại.
           </p>
         </Card>
@@ -101,10 +101,10 @@ export default async function EditLibraryItemPage({
       <Card padding="lg" className="space-y-5">
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-foreground">
-            Học viên được cấp quyền ({item.grants.length})
+            Thành viên được cấp quyền ({item.grants.length})
           </h2>
           {item.grants.length === 0 ? (
-            <p className="text-sm text-muted">Chưa cấp quyền cho học viên nào.</p>
+            <p className="text-sm text-muted">Chưa cấp quyền cho thành viên nào.</p>
           ) : (
             <ul className="space-y-2">
               {item.grants.map((grant) => (
@@ -140,7 +140,7 @@ export default async function EditLibraryItemPage({
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-foreground">Cấp quyền theo cấp</h2>
           <p className="text-xs text-muted">
-            Học viên đủ cấp — kể cả lên cấp sau này — sẽ tự động xem được mục này, không cần cấp lại thủ công.
+            Thành viên đủ cấp — kể cả lên cấp sau này — sẽ tự động xem được mục này, không cần cấp lại thủ công.
           </p>
           {item.levelGrants.length === 0 ? (
             <p className="text-sm text-muted">Chưa có luật cấp nào.</p>

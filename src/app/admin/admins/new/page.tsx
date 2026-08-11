@@ -13,7 +13,7 @@ export default async function NewAdminPage() {
         <div className="mt-2">
           <PageHeader
             title="Thêm admin"
-            description="Tìm một tài khoản học viên có sẵn để cấp quyền, hoặc tạo tài khoản mới."
+            description="Tìm một tài khoản thành viên có sẵn để cấp quyền, hoặc tạo tài khoản mới."
           />
         </div>
       </div>

@@ -69,7 +69,7 @@ export default async function EditProductPage({
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-foreground">Cấp quyền hiển thị</h2>
           <p className="text-xs text-muted">
-            Kiểm soát ai được xem trang sản phẩm này — trên trang khách, trang học viên và link
+            Kiểm soát ai được xem trang sản phẩm này — trên trang khách, trang thành viên và link
             chi tiết.
           </p>
           <ProductGuestAccessForm productId={product.id} hiddenFromGuest={product.hiddenFromGuest} />
@@ -80,7 +80,7 @@ export default async function EditProductPage({
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-foreground">Cấp quyền theo cấp</h2>
           <p className="text-xs text-muted">
-            Học viên đủ cấp — kể cả lên cấp sau này — sẽ tự động xem được sản phẩm này, không cần
+            Thành viên đủ cấp — kể cả lên cấp sau này — sẽ tự động xem được sản phẩm này, không cần
             cấp lại thủ công.
           </p>
           {product.levelGrants.length === 0 ? (
@@ -105,13 +105,13 @@ export default async function EditProductPage({
 
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-foreground">
-            Cấp quyền riêng cho từng học viên ({product.accessGrants.length})
+            Cấp quyền riêng cho từng thành viên ({product.accessGrants.length})
           </h2>
           <p className="text-xs text-muted">
-            Dành cho trường hợp ngoại lệ — một học viên chưa đủ cấp nhưng vẫn muốn cho xem trước.
+            Dành cho trường hợp ngoại lệ — một thành viên chưa đủ cấp nhưng vẫn muốn cho xem trước.
           </p>
           {product.accessGrants.length === 0 ? (
-            <p className="text-sm text-muted">Chưa cấp quyền riêng cho học viên nào.</p>
+            <p className="text-sm text-muted">Chưa cấp quyền riêng cho thành viên nào.</p>
           ) : (
             <ul className="space-y-2">
               {product.accessGrants.map((grant) => (

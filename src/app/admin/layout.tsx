@@ -127,11 +127,11 @@ export default async function AdminLayout({
     return canManage(permission);
   }).map(({ item }) => item);
 
-  // "Bài học" / "Kết quả" / "Yêu cầu lên cấp" nest under "Học viên" so the
+  // "Bài học" / "Kết quả" / "Yêu cầu lên cấp" nest under "Thành viên" so the
   // sidebar reads shorter, per user request — collapsed by default, the
   // Sidebar component auto-expands it while the active route is inside one
   // of them. A limited admin who can manage one of these but lacks
-  // MANAGE_STUDENTS itself (so has no "Học viên" row to nest under) falls
+  // MANAGE_STUDENTS itself (so has no "Thành viên" row to nest under) falls
   // back to flat top-level entries instead of losing access to the page.
   const studentChildren: NavItem[] = [
     ...(canManage("MANAGE_LESSONS_QUIZZES")
@@ -165,7 +165,7 @@ export default async function AdminLayout({
 
   // "Nhóm của tôi" admin surfaces — "Khám phá bản thân" (nhập kết quả trắc
   // nghiệm) and "Mini-game & thưởng" nest under "Danh sách nhóm" the same
-  // way lessons/results/level-up nest under "Học viên" above, including the
+  // way lessons/results/level-up nest under "Thành viên" above, including the
   // same flat-fallback for a limited admin who holds MANAGE_TESTS/
   // MANAGE_MINIGAME but not MANAGE_GROUPS itself. Deliberately does NOT
   // include "Soạn nhiệm vụ mới"/"Giải trình chờ duyệt" — those are reached

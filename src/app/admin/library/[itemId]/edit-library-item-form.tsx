@@ -114,12 +114,12 @@ export function EditLibraryItemForm({
                 onChange={(e) => setIsFree(e.target.checked)}
                 className="h-4 w-4 accent-primary"
               />
-              Miễn phí (cấp quyền xem đầy đủ cho toàn bộ học viên, không cần mua)
+              Miễn phí (cấp quyền xem đầy đủ cho toàn bộ thành viên, không cần mua)
             </label>
 
             {isFree && (
               <p className="text-xs text-muted">
-                Đang miễn phí — mọi học viên tự động có toàn quyền xem, các phần cấp quyền
+                Đang miễn phí — mọi thành viên tự động có toàn quyền xem, các phần cấp quyền
                 riêng bên dưới sẽ tạm ẩn.
               </p>
             )}

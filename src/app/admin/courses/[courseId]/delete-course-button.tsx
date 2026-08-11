@@ -20,7 +20,7 @@ export function DeleteCourseButton({ courseId, courseTitle }: { courseId: string
       onClick={async () => {
         const ok = await confirm({
           title: `Xóa khóa học "${courseTitle}"?`,
-          description: "Toàn bộ bài học và quyền truy cập đã cấp cho học viên sẽ bị xóa vĩnh viễn.",
+          description: "Toàn bộ bài học và quyền truy cập đã cấp cho thành viên sẽ bị xóa vĩnh viễn.",
           confirmLabel: "Xóa khóa học",
           tone: "danger",
         });

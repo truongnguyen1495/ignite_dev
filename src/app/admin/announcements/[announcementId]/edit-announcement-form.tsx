@@ -38,7 +38,7 @@ export function EditAnnouncementForm({
       <section className="space-y-4">
         <Input id="title" name="title" defaultValue={title} required label="Tiêu đề" />
         <CoverImageInput alt="Ảnh bìa bản tin" defaultValue={coverImageUrl ?? ""} />
-        <Select id="category" name="category" defaultValue={category} required label="Chuyên mục" hint="Chọn tab sẽ hiển thị bản tin này cho học viên.">
+        <Select id="category" name="category" defaultValue={category} required label="Chuyên mục" hint="Chọn tab sẽ hiển thị bản tin này cho thành viên.">
           {ORDERED_ANNOUNCEMENT_CATEGORIES.map((c) => (
             <option key={c} value={c}>
               {ANNOUNCEMENT_CATEGORY_LABELS[c]}

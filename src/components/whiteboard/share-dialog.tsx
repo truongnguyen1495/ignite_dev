@@ -18,7 +18,7 @@ import {
 const ACCOUNT_ROLE_LABEL: Record<string, string> = {
   SUPER_ADMIN: "Super Admin",
   ADMIN: "Admin",
-  STUDENT: "Học viên",
+  STUDENT: "Thành viên",
 };
 
 // COMMENTER has no real functionality yet (no comment feature exists on
@@ -323,7 +323,7 @@ export function ShareDialog({ boardId }: { boardId: string }) {
                 </button>
               )}
               <p className="mt-2 text-[11px] text-muted">
-                Áp dụng cho bất kỳ ai đã đăng nhập vào hệ thống (admin hoặc học viên) — không phải người ngoài chưa có
+                Áp dụng cho bất kỳ ai đã đăng nhập vào hệ thống (admin hoặc thành viên) — không phải người ngoài chưa có
                 tài khoản.
               </p>
             </div>

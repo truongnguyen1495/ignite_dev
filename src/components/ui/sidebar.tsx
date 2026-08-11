@@ -17,7 +17,7 @@ export type NavItem = {
   // rendered when > 0.
   badge?: number;
   // Nested items shown collapsed under the parent, e.g. "Bài học"/"Kết
-  // quả"/"Yêu cầu lên cấp" under "Học viên" — collapsed by default, expands
+  // quả"/"Yêu cầu lên cấp" under "Thành viên" — collapsed by default, expands
   // automatically when the active route is one of the children (see the
   // active-child check in Sidebar) so it never hides where you currently are.
   children?: NavItem[];

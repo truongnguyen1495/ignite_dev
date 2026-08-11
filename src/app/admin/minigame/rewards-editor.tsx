@@ -52,7 +52,7 @@ export function RewardsEditor({ initialRewards }: { initialRewards: SpinRewardIn
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-foreground">{rewards.length} ô trên vòng quay may mắn</h3>
-          <p className="text-xs text-muted">Mỗi học viên có lượt quay cơ bản mỗi ngày, thêm khi check-in và hoàn thành việc.</p>
+          <p className="text-xs text-muted">Mỗi thành viên có lượt quay cơ bản mỗi ngày, thêm khi check-in và hoàn thành việc.</p>
         </div>
         <button
           type="button"

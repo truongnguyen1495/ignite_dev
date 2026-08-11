@@ -12,7 +12,7 @@ export default async function NewSupportThreadPage() {
       <div>
         <BackLink href="/admin/chat">Quay lại</BackLink>
         <div className="mt-2">
-          <PageHeader title="Nhắn tin hỗ trợ mới" description="Tìm học viên theo tên, username hoặc email." />
+          <PageHeader title="Nhắn tin hỗ trợ mới" description="Tìm thành viên theo tên, username hoặc email." />
         </div>
       </div>
       <StudentPicker />

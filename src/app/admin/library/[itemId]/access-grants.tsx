@@ -18,7 +18,7 @@ import {
 export function GrantAccessForm({
   libraryItemId,
   students,
-  placeholder = "Chọn học viên...",
+  placeholder = "Chọn thành viên...",
   submitLabel = "Cấp quyền",
 }: {
   libraryItemId: string;
@@ -90,10 +90,10 @@ export function RevokeAccessButton({
       title="Thu hồi quyền truy cập"
       onClick={async () => {
         const ok = await confirm({
-          title: `Thu hồi quyền của ${studentName ?? "học viên này"}?`,
+          title: `Thu hồi quyền của ${studentName ?? "thành viên này"}?`,
           description: orderInfo ? (
             <>
-              Học viên này đã mua qua đơn{" "}
+              Thành viên này đã mua qua đơn{" "}
               <span className="font-medium text-foreground">{formatOrderCode(orderInfo.orderNumber)}</span> (
               {orderInfo.amountLabel}
               {orderInfo.paidAtLabel ? `, thanh toán ${orderInfo.paidAtLabel}` : ""}). Thu hồi sẽ{" "}

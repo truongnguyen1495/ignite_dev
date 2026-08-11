@@ -2,7 +2,7 @@ import type { AdminPermissionKind } from "@prisma/client";
 
 // Standalone permissions — each is one checkbox, no children. The two
 // student-related ones (MANAGE_STUDENTS/MANAGE_PROSPECTIVE_STUDENTS) and
-// the three nested under "Học viên" below (MANAGE_LESSONS_QUIZZES/
+// the three nested under "Thành viên" below (MANAGE_LESSONS_QUIZZES/
 // MANAGE_RESULTS/MANAGE_LEVEL_UP_REQUESTS) are deliberately excluded here —
 // they're rendered as group parents/children instead, see
 // STUDENT_PERMISSION_GROUPS. This is a UI-grouping-only change: each
@@ -31,8 +31,8 @@ export type PermissionGroup = {
 // permission editor UI (e.g. an admin can be trusted to edit + lock but
 // never delete). See the permission checks in
 // src/app/admin/students/actions.ts. Bài học/Kết quả/Yêu cầu lên cấp are
-// grouped under "Học viên" too, per user request — same content-vs-5-cấp
-// relationship that already grouped them under "Học viên" in the admin
+// grouped under "Thành viên" too, per user request — same content-vs-5-cấp
+// relationship that already grouped them under "Thành viên" in the admin
 // sidebar nav (admin/layout.tsx).
 export const STUDENT_PERMISSION_GROUPS: PermissionGroup[] = [
   {
@@ -52,10 +52,10 @@ export const ADMIN_PERMISSION_LABELS: Record<AdminPermissionKind, string> = {
   MANAGE_COURSES: "Khóa học độc quyền",
   MANAGE_LESSONS_QUIZZES: "Bài học & bài test",
   MANAGE_LIBRARY: "Thư viện",
-  MANAGE_STUDENTS: "Học viên (xem danh sách & tạo mới)",
-  EDIT_STUDENTS: "Sửa học viên",
-  LOCK_STUDENTS: "Khóa học viên",
-  DELETE_STUDENTS: "Xóa học viên",
+  MANAGE_STUDENTS: "Thành viên (xem danh sách & tạo mới)",
+  EDIT_STUDENTS: "Sửa thành viên",
+  LOCK_STUDENTS: "Khóa thành viên",
+  DELETE_STUDENTS: "Xóa thành viên",
   MANAGE_CHAT: "Chat & hỗ trợ",
   MANAGE_LEVEL_UP_REQUESTS: "Yêu cầu lên cấp",
   MANAGE_RESULTS: "Kết quả bài test",

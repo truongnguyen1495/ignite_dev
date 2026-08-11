@@ -136,7 +136,7 @@ export async function startSupportThreadAction(studentId: string): Promise<strin
   await requireChatEnabled("/admin");
   const student = await prisma.user.findUnique({ where: { id: studentId } });
   if (!student || student.role !== "STUDENT" || student.status !== "ACTIVE") {
-    return "Không tìm thấy học viên này.";
+    return "Không tìm thấy thành viên này.";
   }
   const thread = await getOrCreateSupportThread(student.id);
   redirect(`/admin/chat/${thread.id}`);

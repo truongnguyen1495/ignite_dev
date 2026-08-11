@@ -27,7 +27,7 @@ export default async function AdminOverviewPage() {
   const unreadSupportCount = inboxes[0].reduce((sum, t) => sum + t.unreadCount, 0) + inboxes[1].reduce((sum, t) => sum + t.unreadCount, 0);
 
   const stats = [
-    { label: "Học viên", value: studentCount, icon: Users, href: "/admin/students" },
+    { label: "Thành viên", value: studentCount, icon: Users, href: "/admin/students" },
     { label: "Yêu cầu lên cấp đang chờ", value: pendingRequests, icon: ArrowUpCircle, href: "/admin/level-up-requests" },
     { label: "Bài học", value: lessonCount, icon: BookOpen, href: "/admin/lessons" },
     { label: "Lượt làm bài test", value: attemptCount, icon: ClipboardList, href: "/admin/results" },
@@ -35,7 +35,7 @@ export default async function AdminOverviewPage() {
       ? [{ label: "Đơn hàng chờ xác nhận", value: pendingOrders, icon: Receipt, href: "/admin/orders" }]
       : []),
     ...(chatEnabled
-      ? [{ label: "Hỗ trợ học viên chưa đọc", value: unreadSupportCount, icon: MessageCircle, href: "/admin/chat" }]
+      ? [{ label: "Hỗ trợ thành viên chưa đọc", value: unreadSupportCount, icon: MessageCircle, href: "/admin/chat" }]
       : []),
   ];
 

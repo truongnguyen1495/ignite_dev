@@ -61,7 +61,7 @@ export function BankInfoForm({
       <div>
         <p className="text-sm font-medium text-foreground">Thông tin chuyển khoản</p>
         <p className="text-sm text-muted">
-          Hiển thị cho học viên khi tạo đơn mua khóa học/tài liệu — học viên chuyển khoản với nội dung là mã
+          Hiển thị cho thành viên khi tạo đơn mua khóa học/tài liệu — thành viên chuyển khoản với nội dung là mã
           đơn hàng, admin vào &quot;Đơn hàng&quot; xác nhận đã nhận tiền để mở khóa.
         </p>
       </div>

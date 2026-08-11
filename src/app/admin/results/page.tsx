@@ -42,7 +42,7 @@ export default async function ResultsPage() {
           <table className="w-full whitespace-nowrap text-sm">
             <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted">
               <tr>
-                <th className="px-4 py-3 font-medium sm:px-6">Học viên</th>
+                <th className="px-4 py-3 font-medium sm:px-6">Thành viên</th>
                 <th className="px-4 py-3 font-medium sm:px-6">Bài học</th>
                 <th className="px-4 py-3 font-medium sm:px-6">Điểm</th>
                 <th className="px-4 py-3 font-medium sm:px-6">Kết quả</th>

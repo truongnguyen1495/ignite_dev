@@ -30,7 +30,7 @@ export default async function AdminSupportThreadPage({
     <div className="chat-shell-height mx-auto flex w-full max-w-2xl flex-col">
       <div className="mb-4">
         <BackLink href="/admin/chat">Quay lại</BackLink>
-        <h1 className="mt-2 text-xl font-semibold text-foreground">{student?.name ?? "Học viên"}</h1>
+        <h1 className="mt-2 text-xl font-semibold text-foreground">{student?.name ?? "Thành viên"}</h1>
       </div>
       <ChatRealtimeRefresher threadId={thread.id} />
       <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-surface">

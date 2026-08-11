@@ -45,7 +45,7 @@ export default async function ProductsPage({
           Bạn không có quyền xem sản phẩm đó.
         </p>
       )}
-      <PageHeader title="Sản phẩm" description="Danh sách sản phẩm dành cho học viên." />
+      <PageHeader title="Sản phẩm" description="Danh sách sản phẩm dành cho thành viên." />
       <ProductList products={items} salesEnabled={salesEnabled} />
     </div>
   );

@@ -39,7 +39,7 @@ export function GrantProductAccessForm({
         className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
       >
         <option value="" disabled>
-          Chọn học viên...
+          Chọn thành viên...
         </option>
         {students.map((student) => (
           <option key={student.id} value={student.id}>
@@ -88,7 +88,7 @@ export function RevokeProductAccessButton({
       title="Thu hồi quyền xem"
       onClick={async () => {
         const ok = await confirm({
-          title: `Thu hồi quyền của ${studentName ?? "học viên này"}?`,
+          title: `Thu hồi quyền của ${studentName ?? "thành viên này"}?`,
           confirmLabel: "Thu hồi",
           tone: "danger",
         });

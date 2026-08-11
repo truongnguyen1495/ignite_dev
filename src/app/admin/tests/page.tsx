@@ -50,7 +50,7 @@ export default async function AdminTestsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Khám phá bản thân — Kết quả trắc nghiệm"
-        description="Admin tự nhập kết quả DISC / MBTI / IQ / EQ cho từng học viên — hệ thống không tự chấm điểm."
+        description="Admin tự nhập kết quả DISC / MBTI / IQ / EQ cho từng thành viên — hệ thống không tự chấm điểm."
       />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

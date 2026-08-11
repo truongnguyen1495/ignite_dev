@@ -31,7 +31,7 @@ export function ProductLockedNotice({
         <>
           <h1 className="max-w-md text-xl font-bold text-foreground">
             {minLevel
-              ? `Sản phẩm này dành cho học viên từ ${LEVEL_LABELS[minLevel]} trở lên`
+              ? `Sản phẩm này dành cho thành viên từ ${LEVEL_LABELS[minLevel]} trở lên`
               : "Bạn chưa được cấp quyền xem sản phẩm này"}
           </h1>
           {minLevel && <LevelBadge level={minLevel} full />}
@@ -49,7 +49,7 @@ export function ProductLockedNotice({
           <h1 className="max-w-md text-xl font-bold text-foreground">
             Vui lòng đăng nhập để xem sản phẩm này
           </h1>
-          <p className="max-w-sm text-sm text-muted">Sản phẩm này chỉ hiển thị cho học viên đã đăng nhập.</p>
+          <p className="max-w-sm text-sm text-muted">Sản phẩm này chỉ hiển thị cho thành viên đã đăng nhập.</p>
           <Link href="/login" className="mt-2">
             <Button>Đăng nhập</Button>
           </Link>

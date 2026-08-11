@@ -17,7 +17,7 @@ export function CreateAnnouncementForm() {
       <section className="space-y-4">
         <Input id="title" name="title" required label="Tiêu đề" />
         <CoverImageInput alt="Ảnh bìa bản tin" />
-        <Select id="category" name="category" defaultValue={ORDERED_ANNOUNCEMENT_CATEGORIES[0]} required label="Chuyên mục" hint="Chọn tab sẽ hiển thị bản tin này cho học viên.">
+        <Select id="category" name="category" defaultValue={ORDERED_ANNOUNCEMENT_CATEGORIES[0]} required label="Chuyên mục" hint="Chọn tab sẽ hiển thị bản tin này cho thành viên.">
           {ORDERED_ANNOUNCEMENT_CATEGORIES.map((category) => (
             <option key={category} value={category}>
               {ANNOUNCEMENT_CATEGORY_LABELS[category]}

@@ -121,7 +121,7 @@ export function NewAdminPicker() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Nhập tên, username hoặc email học viên..."
+              placeholder="Nhập tên, username hoặc email thành viên..."
               className="w-full rounded-lg border border-border-strong bg-background py-2 pl-9 pr-3 text-sm text-foreground focus:border-primary focus:outline-none"
             />
             {searching && (
@@ -130,9 +130,9 @@ export function NewAdminPicker() {
           </div>
           {showingCandidates ? (
             <>
-              <p className="text-xs text-muted">Gợi ý: học viên Cấp 5 (Core Leader)</p>
+              <p className="text-xs text-muted">Gợi ý: thành viên Cấp 5 (Core Leader)</p>
               {!loadingCandidates && candidates.length === 0 && (
-                <p className="text-sm text-muted">Chưa có học viên Cấp 5 nào.</p>
+                <p className="text-sm text-muted">Chưa có thành viên Cấp 5 nào.</p>
               )}
             </>
           ) : (
@@ -186,7 +186,7 @@ export function NewAdminPicker() {
               <span>
                 <span className="block font-medium text-foreground">Chỉ làm admin</span>
                 <span className="block text-xs text-muted">
-                  Không vào được /dashboard, không hiện trong danh sách học viên — chỉ dùng để làm việc.
+                  Không vào được /dashboard, không hiện trong danh sách thành viên — chỉ dùng để làm việc.
                 </span>
               </span>
             </label>
