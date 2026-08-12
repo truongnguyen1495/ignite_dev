@@ -34,10 +34,10 @@ export function ChatMessageList({
         return (
           <div key={message.id} className={`flex items-end gap-2 ${mine ? "flex-row-reverse" : "flex-row"}`}>
             {!mine && <UserAvatar src={message.sender.avatarUrl} name={message.sender.name} size={28} className="mb-4 text-xs" />}
-            <div className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
+            <div className={`flex max-w-[80%] flex-col ${mine ? "items-end" : "items-start"}`}>
               {!mine && <span className="mb-0.5 px-1 text-xs text-muted">{message.sender.name}</span>}
               <div
-                className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
+                className={`rounded-2xl px-3 py-2 text-sm ${
                   mine ? "bg-primary text-primary-foreground" : "bg-surface-hover text-foreground"
                 }`}
               >
