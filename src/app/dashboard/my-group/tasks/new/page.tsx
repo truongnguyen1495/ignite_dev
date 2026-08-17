@@ -21,10 +21,13 @@ export default async function NewDailyTaskPage() {
         <p className="mt-1 text-sm text-muted">Giao việc cho {membership.group.name}</p>
       </div>
       <CreateTaskForm
-        members={members.map((m) => ({ id: m.userId, name: m.user.name }))}
-        groupName={membership.group.name}
+        audience={{
+          mode: "single",
+          groupName: membership.group.name,
+          members: members.map((m) => ({ id: m.userId, name: m.user.name })),
+          action: createDailyTaskAction,
+        }}
         creatorName={student.name}
-        action={createDailyTaskAction}
         successHref="/dashboard/my-group"
       />
     </div>
