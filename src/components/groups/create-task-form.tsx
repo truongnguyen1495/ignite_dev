@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Phone, BookOpen, Dumbbell, ClipboardList, MoreHorizontal } from "lucide-react";
+import { Phone, BookOpen, Dumbbell, ClipboardList, MoreHorizontal, Lock, Users, AlertTriangle } from "lucide-react";
 import type { DailyTaskCategory, DailyTaskFrequency } from "@prisma/client";
 import {
   DAILY_TASK_CATEGORY_LABELS,
@@ -42,60 +42,130 @@ function toggleInSet<T>(set: Set<T>, value: T): Set<T> {
   return next;
 }
 
-// Shared by the group's own LEADER/DEPUTY (/dashboard/my-group/tasks/new)
-// and an admin managing any group (/admin/groups/[groupId]/tasks/new) — the
-// form itself doesn't care who's submitting, only `action` (which Server
-// Action to call, already bound to the right authorization) differs.
+// Who a task is being written for. Everything else about composing one —
+// title, category, schedule, points, explanation rule — is identical whether
+// it goes to a few people in one group or to every member of several groups,
+// so the two live in one form rather than a copy that drifts.
+export type TaskFormAudience =
+  | {
+      mode: "single";
+      groupName: string;
+      members: { id: string; name: string }[];
+      action: (input: CreateDailyTaskInput) => Promise<string | undefined>;
+    }
+  | {
+      mode: "bulk";
+      groups: { id: string; name: string; memberCount: number; leaderName: string | null }[];
+      preselectedGroupIds?: string[];
+      action: (groupIds: string[], input: CreateDailyTaskInput) => Promise<string | undefined>;
+    }
+  // Editing a whole bulk assignment: the set of receiving groups is fixed
+  // (changing it would mean creating and destroying copies, which is what
+  // "giao việc hàng loạt" and "gỡ cả đợt" are for), so the audience section
+  // becomes a read-only statement of who this reaches.
+  | {
+      mode: "locked";
+      summary: string;
+      action: (input: CreateDailyTaskInput) => Promise<string | undefined>;
+    };
+
+// Shared by the group's own LEADER/DEPUTY (/dashboard/my-group/tasks/new),
+// an admin managing one group (/admin/groups/[groupId]/tasks/new) and an
+// admin broadcasting to several (/admin/groups/assign) — the form itself
+// doesn't care who's submitting, only `audience` (which Server Action to
+// call, already bound to the right authorization, and who can receive)
+// differs.
 export function CreateTaskForm({
-  members,
-  groupName,
+  audience,
   creatorName,
-  action,
   successHref,
+  initial,
+  submitLabel,
 }: {
-  members: { id: string; name: string }[];
-  groupName: string;
+  audience: TaskFormAudience;
   creatorName: string;
-  action: (input: CreateDailyTaskInput) => Promise<string | undefined>;
-  successHref: string;
+  successHref?: string;
+  // Present when editing an existing task — the same form, pre-filled.
+  initial?: CreateDailyTaskInput;
+  submitLabel?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | undefined>();
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<DailyTaskCategory>("CALL");
-  const [audienceAll, setAudienceAll] = useState(true);
-  const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set());
-  const [frequency, setFrequency] = useState<DailyTaskFrequency>("DAILY");
-  const [weekdays, setWeekdays] = useState<Set<number>>(new Set());
-  const [startDate, setStartDate] = useState(todayISO());
-  const [dueTime, setDueTime] = useState("23:59");
-  const [requireExplanation, setRequireExplanation] = useState(true);
-  const [points, setPoints] = useState(10);
+  const [title, setTitle] = useState(initial?.title ?? "");
+  const [description, setDescription] = useState(initial?.description ?? "");
+  const [category, setCategory] = useState<DailyTaskCategory>(initial?.category ?? "CALL");
+  const [audienceAll, setAudienceAll] = useState(initial?.audienceAll ?? true);
+  const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set(initial?.memberIds ?? []));
+  const [selectedGroups, setSelectedGroups] = useState<Set<string>>(
+    () =>
+      new Set(
+        audience.mode === "bulk"
+          ? // A group emptied between the list page render and this one would
+            // otherwise arrive pre-ticked but un-submittable.
+            (audience.preselectedGroupIds ?? []).filter((id) =>
+              audience.groups.some((g) => g.id === id && g.memberCount > 0)
+            )
+          : []
+      )
+  );
+  const [frequency, setFrequency] = useState<DailyTaskFrequency>(initial?.frequency ?? "DAILY");
+  const [weekdays, setWeekdays] = useState<Set<number>>(new Set(initial?.weekdays ?? []));
+  const [startDate, setStartDate] = useState(initial?.startDate ?? todayISO());
+  const [dueTime, setDueTime] = useState(initial?.dueTime ?? "23:59");
+  const [requireExplanation, setRequireExplanation] = useState(initial?.requireExplanation ?? true);
+  const [points, setPoints] = useState(initial?.points ?? 10);
+
+  const isBulk = audience.mode === "bulk";
+  // Bulk composition and a bulk edit both describe an admin-authored task, so
+  // both show the lock the group will see on it.
+  const isAdminAuthored = audience.mode === "bulk" || audience.mode === "locked";
+  const assignableGroups = audience.mode === "bulk" ? audience.groups.filter((g) => g.memberCount > 0) : [];
+  const selectedMemberTotal =
+    audience.mode === "bulk"
+      ? audience.groups
+          .filter((g) => selectedGroups.has(g.id))
+          .reduce((sum, g) => sum + g.memberCount, 0)
+      : 0;
 
   function submit() {
     setError(undefined);
+    const shared = {
+      title,
+      description,
+      category,
+      frequency,
+      weekdays: Array.from(weekdays),
+      startDate,
+      dueTime,
+      requireExplanation,
+      points,
+    };
     startTransition(async () => {
-      const err = await action({
-        title,
-        description,
-        category,
-        audienceAll,
-        memberIds: Array.from(selectedMembers),
-        frequency,
-        weekdays: Array.from(weekdays),
-        startDate,
-        dueTime,
-        requireExplanation,
-        points,
-      });
+      const err =
+        audience.mode === "bulk"
+          ? // Bulk always targets whole groups — see
+            // validateAndBuildBulkDailyTaskData for why there's no member picker.
+            await audience.action(Array.from(selectedGroups), {
+              ...shared,
+              audienceAll: true,
+              memberIds: [],
+            })
+          : audience.mode === "locked"
+            ? // The receiving groups can't change here; the action ignores
+              // audience entirely (validateBulkDailyTaskEdit).
+              await audience.action({ ...shared, audienceAll: true, memberIds: [] })
+            : await audience.action({
+                ...shared,
+                audienceAll,
+                memberIds: Array.from(selectedMembers),
+              });
       if (err) {
         setError(err);
         return;
       }
-      router.push(successHref);
+      if (successHref) router.push(successHref);
     });
   }
 
@@ -111,9 +181,16 @@ export function CreateTaskForm({
               .map((d) => WEEKDAY_LABELS[d])
               .join(", ")
           : "Theo thứ đã chọn";
-  const audienceText = audienceAll
-    ? `Áp dụng cho cả ${members.length} thành viên ${groupName}`
-    : `Chỉ giao cho ${selectedMembers.size} thành viên được chọn`;
+  const audienceText =
+    audience.mode === "bulk"
+      ? selectedGroups.size === 0
+        ? "Chưa chọn nhóm nào nhận nhiệm vụ"
+        : `Áp dụng cho ${selectedMemberTotal} thành viên của ${selectedGroups.size} nhóm`
+      : audience.mode === "locked"
+        ? audience.summary
+        : audienceAll
+          ? `Áp dụng cho cả ${audience.members.length} thành viên ${audience.groupName}`
+          : `Chỉ giao cho ${selectedMembers.size} thành viên được chọn`;
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr] lg:items-start">
@@ -163,64 +240,174 @@ export function CreateTaskForm({
           </div>
         </section>
 
-        <section className="space-y-3 border-t border-border pt-6">
-          <h3 className="text-sm font-semibold text-foreground">Đối tượng nhận việc</h3>
-          <label
-            className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm ${
-              audienceAll ? "border-primary-border bg-primary-bg" : "border-border"
-            }`}
-          >
-            <input type="radio" checked={audienceAll} onChange={() => setAudienceAll(true)} className="accent-primary" />
-            <span>
-              <span className="font-semibold text-foreground">Cả nhóm</span>
-              <span className="block text-xs text-muted">
-                Áp dụng cho toàn bộ {members.length} thành viên {groupName}
-              </span>
-            </span>
-          </label>
-          <label
-            className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm ${
-              !audienceAll ? "border-primary-border bg-primary-bg" : "border-border"
-            }`}
-          >
-            <input type="radio" checked={!audienceAll} onChange={() => setAudienceAll(false)} className="accent-primary" />
-            <span>
-              <span className="font-semibold text-foreground">Chọn thành viên cụ thể</span>
-              <span className="block text-xs text-muted">Chỉ giao cho một số người, ví dụ thành viên mới</span>
-            </span>
-          </label>
-          {!audienceAll && (
-            <div className="ml-1 mt-2">
-              <div className="mb-1.5 flex items-center justify-between">
-                <span className="text-xs text-muted">
-                  {selectedMembers.size}/{members.length} đã chọn
-                </span>
+        {audience.mode === "bulk" ? (
+          <section className="space-y-3 border-t border-border pt-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold text-foreground">Nhóm nhận nhiệm vụ</h3>
+              {assignableGroups.length > 0 && (
                 <button
                   type="button"
                   onClick={() =>
-                    setSelectedMembers((prev) => (prev.size === members.length ? new Set() : new Set(members.map((m) => m.id))))
+                    setSelectedGroups((prev) =>
+                      prev.size === assignableGroups.length
+                        ? new Set()
+                        : new Set(assignableGroups.map((g) => g.id))
+                    )
                   }
                   className="text-xs font-bold text-primary"
                 >
-                  Chọn tất cả
+                  {selectedGroups.size === assignableGroups.length ? "Bỏ chọn tất cả" : "Chọn tất cả"}
                 </button>
-              </div>
-              <div className="grid max-h-48 grid-cols-2 gap-1 overflow-y-auto rounded-lg border border-border p-2">
-                {members.map((m) => (
-                  <label key={m.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-surface-hover">
-                    <input
-                      type="checkbox"
-                      checked={selectedMembers.has(m.id)}
-                      onChange={() => setSelectedMembers((prev) => toggleInSet(prev, m.id))}
-                      className="accent-primary"
-                    />
-                    {m.name}
-                  </label>
-                ))}
-              </div>
+              )}
             </div>
-          )}
-        </section>
+
+            {audience.groups.length === 0 ? (
+              <p className="text-sm text-muted">Chưa có nhóm nào để giao việc.</p>
+            ) : (
+              <div className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+                {audience.groups.map((group) => {
+                  const isEmpty = group.memberCount === 0;
+                  const checked = selectedGroups.has(group.id);
+                  return (
+                    <label
+                      key={group.id}
+                      className={`flex items-center gap-3 px-3 py-2.5 text-sm ${
+                        isEmpty
+                          ? "cursor-not-allowed bg-warning-bg"
+                          : `cursor-pointer hover:bg-surface-hover ${checked ? "bg-primary-bg" : ""}`
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={isEmpty}
+                        onChange={() => setSelectedGroups((prev) => toggleInSet(prev, group.id))}
+                        className="accent-primary disabled:opacity-40"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-semibold text-foreground">{group.name}</span>
+                        <span className="block text-xs text-muted">
+                          {group.leaderName ? `Trưởng nhóm: ${group.leaderName}` : "Chưa có trưởng nhóm"}
+                        </span>
+                      </span>
+                      {isEmpty ? (
+                        <span className="flex shrink-0 items-center gap-1 text-xs font-bold text-warning">
+                          <AlertTriangle className="h-3.5 w-3.5" /> Chưa có thành viên
+                        </span>
+                      ) : (
+                        <span className="shrink-0 text-xs text-muted">{group.memberCount} thành viên</span>
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+
+            <div
+              className={`flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm ${
+                selectedGroups.size > 0 ? "border-primary-border bg-primary-bg-subtle" : "border-border text-muted"
+              }`}
+            >
+              <Users className={`h-4 w-4 shrink-0 ${selectedGroups.size > 0 ? "text-primary" : "text-faint"}`} />
+              {selectedGroups.size > 0 ? (
+                <span>
+                  <strong className="font-bold text-foreground">{selectedGroups.size} nhóm</strong> ·{" "}
+                  <strong className="font-bold text-foreground">{selectedMemberTotal} thành viên</strong> sẽ nhận nhiệm
+                  vụ này.
+                </span>
+              ) : (
+                <span>Chọn ít nhất một nhóm để giao việc.</span>
+              )}
+            </div>
+
+            <div className="flex items-start gap-2.5 rounded-lg border border-info-border bg-info-bg px-3 py-2.5">
+              <Lock className="mt-0.5 h-4 w-4 shrink-0 text-info" />
+              <p className="text-xs text-foreground">
+                Giao hàng loạt luôn áp dụng cho <strong className="font-bold">toàn bộ thành viên</strong> của nhóm được
+                chọn — ai vào nhóm sau này cũng tự động nhận. Trưởng nhóm không sửa hay xoá được nhiệm vụ từ ban quản
+                trị, nhưng vẫn tự giao nhiệm vụ riêng cho nhóm mình như bình thường. Muốn giao cho vài người cụ thể, hãy
+                vào trang chi tiết của nhóm đó.
+              </p>
+            </div>
+          </section>
+        ) : audience.mode === "locked" ? (
+          <section className="space-y-3 border-t border-border pt-6">
+            <h3 className="text-sm font-semibold text-foreground">Đối tượng nhận việc</h3>
+            <div className="flex items-start gap-2.5 rounded-lg border border-primary-border bg-primary-bg-subtle px-3 py-2.5">
+              <Users className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <p className="text-sm text-foreground">
+                {audience.summary}
+                <span className="mt-0.5 block text-xs text-muted">
+                  Thay đổi ở đây áp dụng cho <strong className="font-semibold">tất cả</strong> các nhóm trong đợt. Muốn
+                  thêm hoặc bớt nhóm nhận việc, hãy giao một đợt mới hoặc gỡ đợt này.
+                </span>
+              </p>
+            </div>
+          </section>
+        ) : (
+          <section className="space-y-3 border-t border-border pt-6">
+            <h3 className="text-sm font-semibold text-foreground">Đối tượng nhận việc</h3>
+            <label
+              className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm ${
+                audienceAll ? "border-primary-border bg-primary-bg" : "border-border"
+              }`}
+            >
+              <input type="radio" checked={audienceAll} onChange={() => setAudienceAll(true)} className="accent-primary" />
+              <span>
+                <span className="font-semibold text-foreground">Cả nhóm</span>
+                <span className="block text-xs text-muted">
+                  Áp dụng cho toàn bộ {audience.members.length} thành viên {audience.groupName}
+                </span>
+              </span>
+            </label>
+            <label
+              className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm ${
+                !audienceAll ? "border-primary-border bg-primary-bg" : "border-border"
+              }`}
+            >
+              <input type="radio" checked={!audienceAll} onChange={() => setAudienceAll(false)} className="accent-primary" />
+              <span>
+                <span className="font-semibold text-foreground">Chọn thành viên cụ thể</span>
+                <span className="block text-xs text-muted">Chỉ giao cho một số người, ví dụ thành viên mới</span>
+              </span>
+            </label>
+            {!audienceAll && (
+              <div className="ml-1 mt-2">
+                <div className="mb-1.5 flex items-center justify-between">
+                  <span className="text-xs text-muted">
+                    {selectedMembers.size}/{audience.members.length} đã chọn
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedMembers((prev) =>
+                        prev.size === audience.members.length
+                          ? new Set()
+                          : new Set(audience.members.map((m) => m.id))
+                      )
+                    }
+                    className="text-xs font-bold text-primary"
+                  >
+                    Chọn tất cả
+                  </button>
+                </div>
+                <div className="grid max-h-48 grid-cols-2 gap-1 overflow-y-auto rounded-lg border border-border p-2">
+                  {audience.members.map((m) => (
+                    <label key={m.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-surface-hover">
+                      <input
+                        type="checkbox"
+                        checked={selectedMembers.has(m.id)}
+                        onChange={() => setSelectedMembers((prev) => toggleInSet(prev, m.id))}
+                        className="accent-primary"
+                      />
+                      {m.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="space-y-3 border-t border-border pt-6">
           <h3 className="text-sm font-semibold text-foreground">Lịch áp dụng</h3>
@@ -323,11 +510,17 @@ export function CreateTaskForm({
           </button>
           <button
             type="button"
-            disabled={pending}
+            disabled={pending || (isBulk && selectedGroups.size === 0)}
             onClick={submit}
-            className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
+            className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {pending ? "Đang lưu..." : "Lưu & giao việc"}
+            {pending
+              ? "Đang lưu..."
+              : submitLabel
+                ? submitLabel
+                : isBulk
+                  ? `Giao cho ${selectedGroups.size} nhóm`
+                  : "Lưu & giao việc"}
           </button>
         </div>
       </div>
@@ -348,7 +541,14 @@ export function CreateTaskForm({
               <PreviewIcon className="h-3.5 w-3.5" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground">{title || "Tiêu đề nhiệm vụ"}</p>
+              <p className="text-sm font-semibold text-foreground">
+                {title || "Tiêu đề nhiệm vụ"}
+                {isAdminAuthored && (
+                  <span className="ml-1.5 inline-flex items-center gap-1 rounded-full border border-primary-border bg-primary-bg px-2 py-0.5 align-middle text-[10px] font-bold text-primary">
+                    <Lock className="h-2.5 w-2.5" /> Từ ban quản trị
+                  </span>
+                )}
+              </p>
               <p className="mt-0.5 text-[11px] text-faint">
                 Giao bởi {creatorName} · Hạn {dueTime}
               </p>

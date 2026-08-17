@@ -5,12 +5,14 @@ import { redirect } from "next/navigation";
 import type { DailyTask } from "@prisma/client";
 import { requireActiveStudent, requireOwnGroupLeadership } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
-import { todayVN, type CreateDailyTaskInput } from "@/lib/groups";
+import { isTaskManageableByLeadership, todayVN, type CreateDailyTaskInput } from "@/lib/groups";
 import {
+  findTaskInGroup,
   getTaskAudienceUserIds,
   pickAndRecordSpin,
   reviewTaskExplanation,
   validateAndBuildDailyTaskData,
+  validateAndBuildDailyTaskEdit,
 } from "@/lib/group-data";
 
 // Shared guard for every mutation below — a task can only be touched by a
@@ -125,7 +127,66 @@ export async function createDailyTaskAction(input: CreateDailyTaskInput): Promis
   await prisma.dailyTask.create({ data: result.data });
 
   revalidatePath("/dashboard/my-group");
-  redirect("/dashboard/my-group");
+  redirect("/dashboard/my-group/tasks");
+}
+
+// A leader manages the tasks they authored for their own group, and only
+// those. Anything an admin broadcast to several groups at once carries a
+// batchId and belongs to the admin who sent it — a single group must not be
+// able to reword or quietly drop an assignment everyone else received. Both
+// mutations below run the same two gates, in the same order, so the failure
+// messages stay identical whichever one the caller hits.
+async function requireOwnManageableTask(taskId: string, groupId: string) {
+  const task = await findTaskInGroup(taskId, groupId);
+  if (!task) return { error: "Nhiệm vụ không tồn tại hoặc không thuộc nhóm của bạn." };
+  if (!isTaskManageableByLeadership(task)) {
+    return { error: "Nhiệm vụ này do ban quản trị giao — chỉ ban quản trị mới sửa hoặc gỡ được." };
+  }
+  return { task };
+}
+
+export async function updateDailyTaskAction(
+  taskId: string,
+  input: CreateDailyTaskInput
+): Promise<string | undefined> {
+  const { membership } = await requireOwnGroupLeadership();
+
+  const gate = await requireOwnManageableTask(taskId, membership.groupId);
+  if ("error" in gate) return gate.error;
+
+  const result = await validateAndBuildDailyTaskEdit(membership.groupId, input);
+  if ("error" in result) return result.error;
+
+  // Clearing the old assignee rows and writing the new ones has to be one
+  // unit: a task left with neither audience flag nor assignees would silently
+  // apply to nobody.
+  await prisma.$transaction([
+    prisma.dailyTaskAssignee.deleteMany({ where: { taskId } }),
+    prisma.dailyTask.update({
+      where: { id: taskId },
+      data: {
+        ...result.edit.data,
+        assignees: { create: result.edit.assigneeUserIds.map((userId) => ({ userId })) },
+      },
+    }),
+  ]);
+
+  revalidatePath("/dashboard/my-group");
+  revalidatePath("/dashboard/my-group/tasks");
+  redirect("/dashboard/my-group/tasks");
+}
+
+export async function deleteDailyTaskAction(taskId: string): Promise<string | undefined> {
+  const { membership } = await requireOwnGroupLeadership();
+
+  const gate = await requireOwnManageableTask(taskId, membership.groupId);
+  if ("error" in gate) return gate.error;
+
+  await prisma.dailyTask.delete({ where: { id: taskId } });
+
+  revalidatePath("/dashboard/my-group");
+  revalidatePath("/dashboard/my-group/tasks");
+  return undefined;
 }
 
 export async function reviewExplanationAction(completionId: string, approve: boolean): Promise<string | undefined> {

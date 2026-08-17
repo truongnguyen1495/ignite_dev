@@ -1,5 +1,15 @@
 import Link from "next/link";
-import { AlertTriangle, Flame, Award, Target, Coins, Quote as QuoteIcon, Settings2, ClipboardCheck } from "lucide-react";
+import {
+  AlertTriangle,
+  Flame,
+  Award,
+  Target,
+  Coins,
+  ListChecks,
+  Quote as QuoteIcon,
+  Settings2,
+  ClipboardCheck,
+} from "lucide-react";
 import { requireOwnGroupMembership } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import {
@@ -117,6 +127,12 @@ export default async function MyGroupPage({
               className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
             >
               <Settings2 className="h-4 w-4" /> Soạn nhiệm vụ mới
+            </Link>
+            <Link
+              href="/dashboard/my-group/tasks"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border-strong px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-hover"
+            >
+              <ListChecks className="h-4 w-4" /> Nhiệm vụ của nhóm
             </Link>
             <Link
               href="/dashboard/my-group/explanations"

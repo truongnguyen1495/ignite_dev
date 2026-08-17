@@ -33,6 +33,26 @@ export function isGroupLeadership(role: GroupRole): boolean {
   return GROUP_LEADERSHIP_ROLES.includes(role);
 }
 
+// A group's own LEADER/DEPUTY manages the tasks they authored themselves,
+// but never the ones an admin broadcast to several groups at once — those
+// carry a batchId (see the column comment in schema.prisma) and belong to
+// the admin who sent them, so a single group can't quietly opt itself out
+// of a company-wide assignment. Admins reach every task either way through
+// /admin/groups. Keep this the single source of truth: any future
+// leadership-side edit/delete of a DailyTask must gate on it.
+export function isTaskManageableByLeadership(task: Pick<DailyTask, "batchId">): boolean {
+  return task.batchId === null;
+}
+
+// Group weekly scores are an average per member (see
+// getGroupWeeklyPointsRanking), so they're rarely whole numbers. One decimal
+// is enough precision to break ties visibly, and a trailing ",0" is noise —
+// 34 stays "34", 21.93 becomes "21,9", using the Vietnamese decimal comma.
+export function formatPointsVN(points: number): string {
+  const rounded = Math.round(points * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1).replace(".", ",");
+}
+
 export const DAILY_TASK_CATEGORY_LABELS: Record<DailyTaskCategory, string> = {
   CALL: "Gọi điện",
   READING: "Đọc sách",

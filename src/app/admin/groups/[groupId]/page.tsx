@@ -3,15 +3,16 @@ import { notFound } from "next/navigation";
 import { Plus, Users, Brain, Gift } from "lucide-react";
 import { requireAdminPermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
-import { formatDateVN, getWeekStart, isTaskLiveOnDate, todayVN } from "@/lib/groups";
+import { formatDateVN, formatPointsVN, getWeekStart, todayVN } from "@/lib/groups";
 import {
+  getGroupTaskRows,
   getGroupTodayCompletionStats,
   getGroupWeeklyPointsRanking,
-  getTaskAudienceUserIds,
 } from "@/lib/group-data";
 import { TabsShell } from "@/components/ui/tabs-shell";
 import { ExplanationCard } from "@/components/groups/explanation-card";
-import { adminReviewExplanationAction } from "../actions";
+import { GroupTasksPanel } from "@/components/groups/group-tasks-panel";
+import { adminReviewExplanationAction, deleteDailyTaskAction, deleteTaskBatchAction } from "../actions";
 import { MembersPanel, type MemberRow } from "./members-panel";
 
 export default async function GroupDetailPage({ params }: { params: Promise<{ groupId: string }> }) {
@@ -32,7 +33,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ gr
     otherGroups,
     unassignedStudents,
     checkInsToday,
-    tasks,
+    taskRows,
     pendingExplanations,
     completionStats,
     weeklyRanking,
@@ -48,7 +49,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ gr
     memberIds.length
       ? prisma.checkIn.findMany({ where: { userId: { in: memberIds }, date: today }, select: { userId: true } })
       : Promise.resolve([]),
-    prisma.dailyTask.findMany({ where: { groupId }, orderBy: { createdAt: "desc" } }),
+    getGroupTaskRows(groupId),
     prisma.dailyTaskCompletion.findMany({
       where: { status: "EXPLAINED_PENDING", task: { groupId } },
       include: { task: true, user: true },
@@ -74,34 +75,8 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ gr
     checkedInToday: checkedInIds.has(m.userId),
   }));
 
-  // A task's "today" progress only means something on a day it's actually
-  // live (isTaskLiveOnDate) — a ONCE task shown days after its one due date,
-  // or a WEEKLY_DAYS task on an "off" weekday, would otherwise always show
-  // a stuck "0/N hoàn thành" (querying completions dated *today*, which
-  // never exist for a day the task was never assignable on) even if
-  // everyone completed it on the day it actually ran. Those fall back to a
-  // lifetime completion count instead of a misleading today-only bar.
-  const taskRows = await Promise.all(
-    tasks.map(async (task) => {
-      const audience = await getTaskAudienceUserIds(task);
-      const isLiveToday = isTaskLiveOnDate(task, today);
-      if (isLiveToday) {
-        const doneCount = audience.length
-          ? await prisma.dailyTaskCompletion.count({
-              where: { taskId: task.id, date: today, userId: { in: audience }, status: "DONE" },
-            })
-          : 0;
-        return { task, audienceSize: audience.length, doneCount, isLiveToday };
-      }
-      const lifetimeDoneCount = await prisma.dailyTaskCompletion.count({
-        where: { taskId: task.id, status: "DONE" },
-      });
-      return { task, audienceSize: audience.length, doneCount: lifetimeDoneCount, isLiveToday };
-    })
-  );
-
   const groupRankIndex = weeklyRanking.findIndex((r) => r.groupId === groupId);
-  const groupWeeklyPoints = groupRankIndex >= 0 ? weeklyRanking[groupRankIndex].totalPoints : 0;
+  const groupScore = groupRankIndex >= 0 ? weeklyRanking[groupRankIndex] : null;
   const completionPct = completionStats.total > 0 ? Math.round((completionStats.done / completionStats.total) * 100) : 0;
   const membersWithResultCount = resultRows.length;
 
@@ -134,9 +109,13 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ gr
         <StatTile value={String(group.memberships.length)} label="Thành viên trong nhóm" />
         <StatTile value={`${completionPct}%`} label="Hoàn thành hôm nay" tone="success" />
         <StatTile value={String(pendingExplanations.length)} label="Giải trình chờ duyệt" tone="warning" />
+        {/* Xếp hạng theo điểm trung bình mỗi người, không phải tổng thô — xem
+            getGroupWeeklyPointsRanking. Tổng vẫn hiện ở nhãn để không mất thông tin. */}
         <StatTile
-          value={`${groupWeeklyPoints}đ`}
-          label={`Điểm nhóm tuần này${groupRankIndex >= 0 ? ` · hạng ${groupRankIndex + 1}/${weeklyRanking.length}` : ""}`}
+          value={`${formatPointsVN(groupScore?.averagePoints ?? 0)}đ`}
+          label={`Điểm/người tuần này · tổng ${groupScore?.totalPoints ?? 0}đ${
+            groupRankIndex >= 0 ? ` · hạng ${groupRankIndex + 1}/${weeklyRanking.length}` : ""
+          }`}
         />
       </div>
 
@@ -160,49 +139,13 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ gr
             label: "Nhiệm vụ hàng ngày",
             count: taskRows.length,
             content: (
-              <div className="space-y-1">
-                {taskRows.length === 0 ? (
-                  <p className="text-sm text-muted">Nhóm này chưa có nhiệm vụ nào.</p>
-                ) : (
-                  taskRows.map(({ task, audienceSize, doneCount, isLiveToday }) => (
-                    <div key={task.id} className="flex flex-wrap items-center gap-4 border-t border-border py-3 first:border-t-0">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-foreground">
-                          {task.title}
-                          {task.frequency !== "ONCE" && (
-                            <span className="ml-2 rounded-full border border-info-border bg-info-bg px-2 py-0.5 text-[10px] font-bold text-info">
-                              {task.frequency === "DAILY" ? "Lặp mỗi ngày" : "Lặp theo thứ"}
-                            </span>
-                          )}
-                          {!isLiveToday && (
-                            <span className="ml-2 rounded-full border border-border-strong px-2 py-0.5 text-[10px] font-bold text-faint">
-                              Không áp dụng hôm nay
-                            </span>
-                          )}
-                        </p>
-                        <p className="mt-0.5 text-xs text-faint">Bắt đầu {formatDateVN(task.startDate)}</p>
-                      </div>
-                      <div className="w-48 shrink-0">
-                        {isLiveToday ? (
-                          <>
-                            <div className="h-1.5 overflow-hidden rounded-full bg-faint-bg">
-                              <div
-                                className="h-full rounded-full bg-primary"
-                                style={{ width: `${audienceSize ? Math.round((doneCount / audienceSize) * 100) : 0}%` }}
-                              />
-                            </div>
-                            <p className="mt-1 text-right text-xs text-muted">
-                              {doneCount}/{audienceSize} hoàn thành hôm nay
-                            </p>
-                          </>
-                        ) : (
-                          <p className="text-right text-xs text-muted">Đã hoàn thành {doneCount} lượt (tổng)</p>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+              <GroupTasksPanel
+                tasks={taskRows}
+                editHrefBase={`/admin/groups/${group.id}/tasks`}
+                deleteAction={deleteDailyTaskAction.bind(null, group.id)}
+                deleteBatchAction={deleteTaskBatchAction.bind(null, group.id)}
+                emptyText="Nhóm này chưa có nhiệm vụ nào."
+              />
             ),
           },
           {

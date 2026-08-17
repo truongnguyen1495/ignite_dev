@@ -23,10 +23,13 @@ export default async function AdminNewDailyTaskPage({ params }: { params: Promis
         <p className="mt-1 text-sm text-muted">Giao việc cho {group.name}</p>
       </div>
       <CreateTaskForm
-        members={group.memberships.map((m) => ({ id: m.userId, name: m.user.name }))}
-        groupName={group.name}
+        audience={{
+          mode: "single",
+          groupName: group.name,
+          members: group.memberships.map((m) => ({ id: m.userId, name: m.user.name })),
+          action: adminCreateDailyTaskAction.bind(null, groupId),
+        }}
         creatorName={admin.name}
-        action={adminCreateDailyTaskAction.bind(null, groupId)}
         successHref={`/admin/groups/${groupId}`}
       />
     </div>

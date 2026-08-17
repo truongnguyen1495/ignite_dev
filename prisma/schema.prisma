@@ -1343,6 +1343,17 @@ model DailyTask {
   id                 String             @id @default(cuid())
   groupId            String
   group              Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  // Non-null only for tasks produced by one "giao việc hàng loạt" run
+  // (/admin/groups/assign): every per-group copy of that run shares one id.
+  // A DailyTask deliberately stays one-row-per-group — getTaskAudienceUserIds,
+  // getTodayTasksForUser and DailyTaskCompletion's @@unique([taskId, userId,
+  // date]) all assume it — so "one task sent to N groups" is N sibling rows
+  // tied together by this column rather than a groups join table. That's what
+  // lets the whole run be counted and removed as a unit instead of N
+  // unrelated tasks. It doubles as the "authored by an admin, not by the
+  // group's own LEADER/DEPUTY" marker: leadership must not manage these (see
+  // isTaskManageableByLeadership in src/lib/groups.ts).
+  batchId            String?
   title              String
   description        String?            @db.Text
   category           DailyTaskCategory  @default(OTHER)
@@ -1372,6 +1383,7 @@ model DailyTask {
   completions DailyTaskCompletion[]
 
   @@index([groupId])
+  @@index([batchId])
 }
 
 // Only rows exist when DailyTask.assignAllMembers = false — an explicit
