@@ -53,6 +53,22 @@ export type LevelProgress = {
 };
 
 /**
+ * The one definition of "this lesson is finished" — the rule described at
+ * the top of this file, in code. Called from the mapper below and from the
+ * roadmap on /dashboard (src/lib/level-roadmap.ts), which reads the same
+ * facts through a different query shape. Anything that decides whether a
+ * lesson counts as done must come through here, so the two surfaces can
+ * never disagree about a member's progress.
+ */
+export function isLessonComplete(
+  quizId: string | null,
+  quizPassed: boolean,
+  markedDone: boolean
+): boolean {
+  return quizId ? quizPassed : markedDone;
+}
+
+/**
  * Everything the level page needs about one student's standing at one
  * level, in a single findMany: the per-student quiz attempt, completion
  * row and watch-progress row all ride along as filtered relations rather
@@ -100,7 +116,7 @@ export async function getLevelLessonProgress(
     const quizPassed = lesson.quiz?.attempts[0]?.passed === true;
     const markedDone = lesson.completions.length > 0;
     const watchedSeconds = lesson.watchProgress[0]?.watchedSeconds ?? 0;
-    const completed = quizId ? quizPassed : markedDone;
+    const completed = isLessonComplete(quizId, quizPassed, markedDone);
 
     return {
       id: lesson.id,

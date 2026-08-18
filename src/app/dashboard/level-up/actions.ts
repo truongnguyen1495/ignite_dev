@@ -43,5 +43,8 @@ export async function requestLevelUpAction() {
     },
   });
 
+  // Both surfaces render the gate now (LevelUpPanel), so both have to drop
+  // their cached "you may request" state once the request exists.
   revalidatePath("/dashboard/level-up");
+  revalidatePath("/dashboard");
 }
