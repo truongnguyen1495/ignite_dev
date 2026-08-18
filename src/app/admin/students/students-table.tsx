@@ -14,7 +14,6 @@ export type StudentRow = {
   id: string;
   name: string;
   email: string;
-  username: string | null;
   avatarUrl: string | null;
   grantedLevel: Level;
   status: AccountStatus;
@@ -238,9 +237,6 @@ export function StudentsTable({
                   </td>
                   <td className="px-4 py-4 sm:px-6 text-muted">
                     {student.email}
-                    {student.username && (
-                      <span className="block text-xs text-faint">@{student.username}</span>
-                    )}
                   </td>
                   <td className="px-4 py-4 sm:px-6">
                     <LevelBadge level={student.grantedLevel} />

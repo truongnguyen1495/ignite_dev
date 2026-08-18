@@ -70,7 +70,7 @@ export async function markThreadReadAction(threadId: string): Promise<void> {
 
 export async function searchStudentsForSupportAction(
   query: string
-): Promise<{ id: string; name: string; username: string | null; avatarUrl: string | null }[]> {
+): Promise<{ id: string; name: string; avatarUrl: string | null }[]> {
   const admin = await requireAdminPermission("MANAGE_CHAT");
   const trimmed = query.trim();
   if (trimmed.length < 2) return [];
@@ -84,11 +84,10 @@ export async function searchStudentsForSupportAction(
       ...(admin.role === "SUPER_ADMIN" ? {} : { isAdminManager: false }),
       OR: [
         { name: { contains: trimmed, mode: "insensitive" } },
-        { username: { contains: trimmed, mode: "insensitive" } },
         { email: { contains: trimmed, mode: "insensitive" } },
       ],
     },
-    select: { id: true, name: true, username: true, avatarUrl: true },
+    select: { id: true, name: true, avatarUrl: true },
     take: 20,
     orderBy: { name: "asc" },
   });

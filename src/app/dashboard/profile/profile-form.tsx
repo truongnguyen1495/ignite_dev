@@ -68,14 +68,12 @@ function EditableField({
 export function ProfileForm({
   name,
   email,
-  username,
   dateOfBirth,
   phoneNumber,
   grantedLevelLabel,
 }: {
   name: string;
   email: string;
-  username: string | null;
   dateOfBirth: string | null;
   phoneNumber: string | null;
   grantedLevelLabel: string;
@@ -131,7 +129,6 @@ export function ProfileForm({
           onChange={(v) => update("name", v)}
         />
         <StaticField label="Email" value={email} />
-        {username && <StaticField label="Username" value={`@${username}`} />}
         <EditableField
           label="Ngày sinh"
           type="date"

@@ -140,7 +140,7 @@ export default async function EditStudentPage({
       prisma.libraryLevelGrant.findMany(),
     ]);
 
-  const hasRegistrationInfo = Boolean(student.username || student.dateOfBirth || student.phoneNumber);
+  const hasRegistrationInfo = Boolean(student.dateOfBirth || student.phoneNumber);
 
   const grantedCourseInfos = computeGrantedItems(
     courses,
@@ -187,7 +187,6 @@ export default async function EditStudentPage({
         grantedLevel={student.grantedLevel}
         status={student.status}
         hasRegistrationInfo={hasRegistrationInfo}
-        username={student.username}
         dateOfBirthLabel={student.dateOfBirth ? formatDateOnlyVN(student.dateOfBirth) : null}
         canEdit={canEdit}
       />

@@ -58,10 +58,6 @@ export default async function AdminDetailPage({ params }: { params: Promise<{ ad
             <dd className="break-words text-foreground">{admin.email}</dd>
           </div>
           <div className="min-w-0">
-            <dt className="text-xs text-muted">Username</dt>
-            <dd className="break-words text-foreground">{admin.username ? `@${admin.username}` : "—"}</dd>
-          </div>
-          <div className="min-w-0">
             <dt className="text-xs text-muted">Số điện thoại</dt>
             <dd className="break-words text-foreground">{admin.phoneNumber ?? "—"}</dd>
           </div>

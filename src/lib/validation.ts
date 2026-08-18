@@ -53,3 +53,13 @@ export const dateOfBirthSchema = z
   }, DATE_OF_BIRTH_ERROR)
   .transform(({ day, month, year }) => new Date(Date.UTC(year, month - 1, day)))
   .refine((date) => date.getTime() <= Date.now(), "Ngày sinh không được ở tương lai.");
+
+// Same as dateOfBirthSchema but blank-friendly — registration collects a birth
+// date only if the member feels like giving one. Blank (or whitespace) becomes
+// null up front rather than being a union branch, so a genuinely malformed
+// date still reports dateOfBirthSchema's own Vietnamese message instead of
+// zod collapsing both branches into a bare "Invalid input".
+export const optionalDateOfBirthSchema = z.preprocess(
+  (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+  dateOfBirthSchema.nullable()
+);

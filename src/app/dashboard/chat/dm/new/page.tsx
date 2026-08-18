@@ -12,7 +12,7 @@ export default async function NewDirectMessagePage() {
       <div>
         <BackLink href="/dashboard/chat/dm">Quay lại</BackLink>
         <div className="mt-2">
-          <PageHeader title="Cuộc trò chuyện mới" description="Tìm thành viên theo tên, username hoặc email." />
+          <PageHeader title="Cuộc trò chuyện mới" description="Tìm thành viên theo tên hoặc email." />
         </div>
       </div>
       <StudentPicker />

@@ -26,7 +26,6 @@ export default async function ProfilePage() {
         <ProfileForm
           name={student.name}
           email={student.email}
-          username={student.username}
           dateOfBirth={student.dateOfBirth ? toDateOnlyISOString(student.dateOfBirth) : null}
           phoneNumber={student.phoneNumber}
           grantedLevelLabel={LEVEL_LABELS[student.grantedLevel]}

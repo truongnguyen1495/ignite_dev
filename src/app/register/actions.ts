@@ -7,7 +7,7 @@ import { Prisma, type User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isRegistrationEnabled, isEmailVerificationEnabled } from "@/lib/access";
 import { DEFAULT_LEVEL } from "@/lib/levels";
-import { phoneNumberSchema, dateOfBirthSchema } from "@/lib/validation";
+import { phoneNumberSchema, optionalDateOfBirthSchema } from "@/lib/validation";
 import { createEmailVerificationToken } from "@/lib/verification-tokens";
 import { sendVerificationEmail } from "@/lib/email";
 
@@ -15,13 +15,8 @@ const registerSchema = z
   .object({
     name: z.string().trim().min(1, "Họ và tên không được để trống."),
     email: z.string().trim().email("Email không hợp lệ."),
-    username: z
-      .string()
-      .trim()
-      .min(3, "Username phải có ít nhất 3 ký tự.")
-      .regex(/^[a-zA-Z0-9_.]+$/, "Username chỉ được chứa chữ, số, dấu chấm và gạch dưới."),
     phoneNumber: phoneNumberSchema,
-    dateOfBirth: dateOfBirthSchema,
+    dateOfBirth: optionalDateOfBirthSchema,
     password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự."),
     confirmPassword: z.string(),
   })
@@ -31,7 +26,7 @@ const registerSchema = z
   });
 
 export type RegisterFieldErrors = Partial<
-  Record<"name" | "email" | "username" | "phoneNumber" | "dateOfBirth" | "password" | "confirmPassword", string>
+  Record<"name" | "email" | "phoneNumber" | "dateOfBirth" | "password" | "confirmPassword", string>
 >;
 
 export type RegisterState = { fieldErrors: RegisterFieldErrors } | undefined;
@@ -46,8 +41,9 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
-    username: formData.get("username"),
     phoneNumber: formData.get("phoneNumber"),
+    // Optional — an untouched input posts "", and a payload missing the key
+    // entirely yields null; optionalDateOfBirthSchema maps both to null.
     dateOfBirth: formData.get("dateOfBirth"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
@@ -72,7 +68,6 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
       data: {
         name: parsed.data.name,
         email: parsed.data.email,
-        username: parsed.data.username,
         phoneNumber: parsed.data.phoneNumber,
         dateOfBirth: parsed.data.dateOfBirth,
         passwordHash,
@@ -94,9 +89,6 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       const target = e.meta?.target;
       const fields = Array.isArray(target) ? target : [];
-      if (fields.includes("username")) {
-        return { fieldErrors: { username: "Username này đã được sử dụng." } };
-      }
       if (fields.includes("phoneNumber")) {
         return { fieldErrors: { phoneNumber: "Số điện thoại này đã được sử dụng." } };
       }

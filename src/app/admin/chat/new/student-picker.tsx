@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { searchStudentsForSupportAction, startSupportThreadAction } from "../actions";
 
-type StudentResult = { id: string; name: string; username: string | null; avatarUrl: string | null };
+type StudentResult = { id: string; name: string; avatarUrl: string | null };
 
 export function StudentPicker() {
   const [query, setQuery] = useState("");
@@ -52,7 +52,7 @@ export function StudentPicker() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Nhập tên, username hoặc email..."
+          placeholder="Nhập tên hoặc email..."
           className="w-full rounded-lg border border-border-strong bg-surface py-2 pl-9 pr-3 text-sm text-foreground focus:border-primary focus:outline-none"
         />
       </div>
@@ -77,7 +77,6 @@ export function StudentPicker() {
             <UserAvatar src={student.avatarUrl} name={student.name} size={32} className="text-sm" />
             <div className="min-w-0">
               <p className="truncate text-sm text-foreground">{student.name}</p>
-              {student.username && <p className="truncate text-xs text-muted">@{student.username}</p>}
             </div>
           </button>
         ))}

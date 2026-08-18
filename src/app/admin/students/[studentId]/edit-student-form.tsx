@@ -22,7 +22,6 @@ export function EditStudentForm({
   grantedLevel,
   status,
   hasRegistrationInfo,
-  username,
   dateOfBirthLabel,
   canEdit,
 }: {
@@ -34,7 +33,6 @@ export function EditStudentForm({
   grantedLevel: Level;
   status: AccountStatus;
   hasRegistrationInfo: boolean;
-  username: string | null;
   dateOfBirthLabel: string | null;
   // EDIT_STUDENTS (or Super Admin) — without it this renders as a read-only
   // view: fields disabled, no submit button. updateStudentAction enforces
@@ -79,11 +77,6 @@ export function EditStudentForm({
         <h2 className="mb-4 text-sm font-semibold text-foreground">Thông tin tài khoản</h2>
         {hasRegistrationInfo && (
           <div className="mb-4 flex flex-wrap gap-x-6 gap-y-1 rounded-lg bg-background px-4 py-3 text-sm">
-            {username && (
-              <span className="text-muted">
-                Username: <span className="text-foreground">@{username}</span>
-              </span>
-            )}
             {dateOfBirthLabel && (
               <span className="text-muted">
                 Ngày sinh: <span className="text-foreground">{dateOfBirthLabel}</span>

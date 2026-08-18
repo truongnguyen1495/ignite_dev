@@ -121,7 +121,7 @@ export function NewAdminPicker() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Nhập tên, username hoặc email thành viên..."
+              placeholder="Nhập tên hoặc email thành viên..."
               className="w-full rounded-lg border border-border-strong bg-background py-2 pl-9 pr-3 text-sm text-foreground focus:border-primary focus:outline-none"
             />
             {searching && (

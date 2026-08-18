@@ -10,10 +10,17 @@ import { phoneNumberSchema } from "@/lib/validation";
 
 const profileSchema = z.object({
   name: z.string().trim().min(1, "Họ và tên không được để trống."),
-  dateOfBirth: z.coerce
-    .date()
-    .refine((date) => !Number.isNaN(date.getTime()), "Ngày sinh không hợp lệ.")
-    .refine((date) => date.getTime() <= Date.now(), "Ngày sinh không được ở tương lai."),
+  // Optional everywhere — registration no longer asks for a birth date, so
+  // the profile screen must let a member save without one (and clear one they
+  // had) instead of blocking every other edit on this field. Blank becomes
+  // null before coercion, since z.coerce.date() would read "" as 1970-01-01.
+  dateOfBirth: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+    z.coerce
+      .date("Ngày sinh không hợp lệ.")
+      .refine((date) => date.getTime() <= Date.now(), "Ngày sinh không được ở tương lai.")
+      .nullable()
+  ),
   phoneNumber: phoneNumberSchema,
 });
 

@@ -101,10 +101,9 @@ function DateOfBirthField({
       name={name}
       type="text"
       inputMode="numeric"
-      label="Ngày tháng năm sinh"
-      required
+      label="Ngày tháng năm sinh (không bắt buộc)"
       placeholder="dd/mm/yyyy"
-      hint="Nhập ngày sinh dạng ngày/tháng/năm, ví dụ 15/08/2000."
+      hint="Có thể bỏ trống. Nếu nhập, dùng dạng ngày/tháng/năm, ví dụ 15/08/2000."
       error={error}
       value={value}
       onChange={handleChange}
@@ -124,7 +123,6 @@ export function RegisterForm() {
   // fields the user already filled in correctly.
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [password, setPassword] = useState("");
@@ -153,17 +151,6 @@ export function RegisterForm() {
         error={fieldErrors.email}
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-      />
-      <Input
-        id="username"
-        name="username"
-        label="Username"
-        required
-        minLength={3}
-        hint="Ít nhất 3 ký tự, chỉ gồm chữ, số, dấu chấm và gạch dưới."
-        error={fieldErrors.username}
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
       />
       <Input
         id="phoneNumber"

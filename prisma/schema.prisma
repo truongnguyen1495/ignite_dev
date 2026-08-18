@@ -206,7 +206,6 @@ model User {
   // this with a null check before bcrypt.compare.
   passwordHash        String?
   name                String
-  username            String?       @unique
   // Public URL of a 512x512 image in the "avatars" Supabase Storage bucket
   // (see src/lib/supabase-avatar-storage.ts) — null renders as the existing
   // initials-circle fallback (see src/components/ui/user-avatar.tsx)

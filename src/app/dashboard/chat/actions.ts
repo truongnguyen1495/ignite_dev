@@ -98,7 +98,7 @@ export async function startDirectThreadAction(otherStudentId: string): Promise<s
 
 export async function searchStudentsAction(
   query: string
-): Promise<{ id: string; name: string; username: string | null; avatarUrl: string | null }[]> {
+): Promise<{ id: string; name: string; avatarUrl: string | null }[]> {
   const student = await requireActiveStudent();
   const trimmed = query.trim();
   if (trimmed.length < 2) return [];
@@ -110,11 +110,10 @@ export async function searchStudentsAction(
       id: { not: student.id },
       OR: [
         { name: { contains: trimmed, mode: "insensitive" } },
-        { username: { contains: trimmed, mode: "insensitive" } },
         { email: { contains: trimmed, mode: "insensitive" } },
       ],
     },
-    select: { id: true, name: true, username: true, avatarUrl: true },
+    select: { id: true, name: true, avatarUrl: true },
     take: 20,
     orderBy: { name: "asc" },
   });

@@ -13,7 +13,6 @@ export type AccountSearchResult = {
   id: string;
   name: string;
   email: string;
-  username: string | null;
   grantedLevel: Level;
   avatarUrl: string | null;
 };
@@ -45,11 +44,10 @@ export async function searchAccountsForPermissionAction(query: string): Promise<
       ...(isSuperAdmin ? {} : { isAdminManager: false }),
       OR: [
         { name: { contains: trimmed, mode: "insensitive" } },
-        { username: { contains: trimmed, mode: "insensitive" } },
         { email: { contains: trimmed, mode: "insensitive" } },
       ],
     },
-    select: { id: true, name: true, email: true, username: true, grantedLevel: true, avatarUrl: true },
+    select: { id: true, name: true, email: true, grantedLevel: true, avatarUrl: true },
     take: 20,
     orderBy: { name: "asc" },
   });
@@ -71,7 +69,7 @@ export async function listTopLevelCandidatesAction(): Promise<AccountSearchResul
       grantedLevel: TOP_LEVEL,
       ...(isSuperAdmin ? {} : { isAdminManager: false }),
     },
-    select: { id: true, name: true, email: true, username: true, grantedLevel: true, avatarUrl: true },
+    select: { id: true, name: true, email: true, grantedLevel: true, avatarUrl: true },
     orderBy: { name: "asc" },
   });
   return rows;

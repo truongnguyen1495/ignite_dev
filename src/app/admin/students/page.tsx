@@ -32,7 +32,6 @@ export default async function StudentsPage() {
     id: s.id,
     name: s.name,
     email: s.email,
-    username: s.username,
     avatarUrl: s.avatarUrl,
     grantedLevel: s.grantedLevel,
     status: s.status,
