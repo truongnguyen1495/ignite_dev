@@ -14,7 +14,7 @@ import {
   Undo2,
   Image as ImageIcon,
 } from "lucide-react";
-import type { OrderCancelReason, OrderItemKind, OrderStatus, PaymentMethod } from "@prisma/client";
+import type { OrderCancelReason, OrderItemKind, OrderStatus, PaymentMethod, RefundReason } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -55,6 +55,9 @@ export type OrderListItem = {
   carrier: string | null;
   trackingCode: string | null;
   hasPaymentProof: boolean;
+  deliveryNote: string | null;
+  /** Live refunds only — voided rows are filtered out server-side. */
+  refunds: { id: string; amount: number; reason: RefundReason; note: string | null; refundedAtLabel: string }[];
   createdAtLabel: string;
   studentName: string;
   studentEmail: string;
@@ -206,6 +209,7 @@ function OrderActions({ order }: { order: OrderListItem }) {
           orderId={order.id}
           orderNumber={order.orderNumber}
           refundableAmount={order.totalAmount - order.refundedTotal}
+          existingRefunds={order.refunds}
           onClose={() => setOpenModal(null)}
         />
       )}
@@ -533,6 +537,41 @@ export function OrdersList({
                           {order.shipping.name} · {order.shipping.phone} · {order.shipping.address}
                         </span>
                       </p>
+                    )}
+                    {/* What has actually happened to this order, on the row
+                        itself. All three used to be invisible here: an admin
+                        scanning the list could not tell a shipped order from
+                        an unshipped one, nor a refunded order from an intact
+                        one, and the delivery note they typed was stored and
+                        then never shown to anyone. */}
+                    {(order.shippedAt || order.deliveredAt || order.refundedTotal > 0) && (
+                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                        {order.shippedAt && !order.deliveredAt && (
+                          <span className="inline-flex items-center gap-1 text-info">
+                            <Truck className="h-3 w-3" />
+                            Đã gửi
+                            {order.carrier && ` · ${order.carrier}`}
+                            {order.trackingCode && ` · ${order.trackingCode}`}
+                          </span>
+                        )}
+                        {order.deliveredAt && (
+                          <span className="inline-flex items-center gap-1 text-success">
+                            <Package className="h-3 w-3" />
+                            Đã giao
+                            {order.trackingCode && ` · ${order.trackingCode}`}
+                          </span>
+                        )}
+                        {order.refundedTotal > 0 && (
+                          <span className="inline-flex items-center gap-1 font-medium text-danger">
+                            <Undo2 className="h-3 w-3" />
+                            Đã hoàn {formatVND(order.refundedTotal)}
+                            {order.refundedTotal >= order.totalAmount && " (toàn bộ)"}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {order.deliveryNote && (
+                      <p className="mt-1 text-xs text-muted">Ghi chú giao hàng: {order.deliveryNote}</p>
                     )}
                   </div>
                   <p className="shrink-0 font-medium text-foreground">{formatVND(order.totalAmount)}</p>

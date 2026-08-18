@@ -14,6 +14,7 @@ import {
   markOrderShippedAction,
   markOrderDeliveredAction,
   recordRefundAction,
+  voidRefundAction,
   confirmOrderPaidAction,
 } from "./actions";
 
@@ -175,11 +176,14 @@ export function RefundOrderModal({
   orderId,
   orderNumber,
   refundableAmount,
+  existingRefunds,
   onClose,
 }: {
   orderId: string;
   orderNumber: number;
   refundableAmount: number;
+  /** Live refunds already recorded on this order, newest first. */
+  existingRefunds: { id: string; amount: number; reason: RefundReason; note: string | null; refundedAtLabel: string }[];
   onClose: () => void;
 }) {
   const [amount, setAmount] = useState(String(refundableAmount));
@@ -188,6 +192,18 @@ export function RefundOrderModal({
   const [error, setError] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+
+  // Voiding rather than editing: a refund someone has already reconciled
+  // against must not quietly change its figure. The row is struck out and a
+  // corrected one is entered instead.
+  function voidRefund(refundId: string) {
+    setError(undefined);
+    startTransition(async () => {
+      await voidRefundAction(refundId);
+      router.refresh();
+      onClose();
+    });
+  }
 
   function submit() {
     setError(undefined);
@@ -217,6 +233,33 @@ export function RefundOrderModal({
         Còn hoàn được tối đa <span className="font-semibold text-foreground">{formatVND(refundableAmount)}</span>.
         Đơn vẫn giữ trạng thái đã thanh toán — khoản hoàn được ghi thành một dòng riêng.
       </p>
+
+      {existingRefunds.length > 0 && (
+        <div className="mt-4 space-y-2 rounded-lg border border-border bg-surface-hover p-3">
+          <p className="text-xs font-semibold text-foreground">Đã hoàn trước đó</p>
+          <ul className="space-y-1.5">
+            {existingRefunds.map((refund) => (
+              <li key={refund.id} className="flex items-start justify-between gap-3 text-xs">
+                <span className="min-w-0">
+                  <span className="block font-medium text-foreground">
+                    {formatVND(refund.amount)} · {REFUND_REASON_LABELS[refund.reason]}
+                  </span>
+                  <span className="block text-muted">{refund.refundedAtLabel}</span>
+                  {refund.note && <span className="block text-muted">{refund.note}</span>}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => voidRefund(refund.id)}
+                  disabled={pending}
+                  className="shrink-0 font-medium text-danger transition-colors hover:underline disabled:opacity-50"
+                >
+                  Hủy khoản này
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-4 space-y-4">
         <Input

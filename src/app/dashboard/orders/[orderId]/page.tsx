@@ -389,6 +389,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
           paidAt={order.paidAt}
           shippedAt={order.shippedAt}
           deliveredAt={order.deliveredAt}
+          deliveryNote={order.deliveryNote}
           carrier={order.carrier}
           trackingCode={order.trackingCode}
         />

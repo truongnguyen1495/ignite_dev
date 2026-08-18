@@ -1,6 +1,6 @@
 import { requireAdminPermission, requireSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
-import type { Order, OrderItem, User } from "@prisma/client";
+import type { Order, OrderItem, RefundReason, User } from "@prisma/client";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatDateVN } from "@/lib/date";
 import { purgeExpiredDeletedOrders } from "@/lib/order-fulfillment";
@@ -14,7 +14,7 @@ type OrderWithRelations = Order & {
     courseAccessGrant: { id: string } | null;
     libraryAccessGrant: { id: string } | null;
   })[];
-  refunds: { amount: number; deletedAt: Date | null }[];
+  refunds: { id: string; amount: number; reason: RefundReason; note: string | null; refundedAt: Date; deletedAt: Date | null }[];
 };
 
 function toListItem(order: OrderWithRelations): OrderListItem {
@@ -28,6 +28,18 @@ function toListItem(order: OrderWithRelations): OrderListItem {
     // Summed here rather than in the client so a voided refund can't be
     // mistaken for money that moved — see activeRefundTotal.
     refundedTotal: activeRefundTotal(order.refunds),
+    // Only the live rows: a voided refund is money that never moved, so it
+    // must not appear in the list an admin voids things from.
+    refunds: order.refunds
+      .filter((refund) => refund.deletedAt === null)
+      .map((refund) => ({
+        id: refund.id,
+        amount: refund.amount,
+        reason: refund.reason,
+        note: refund.note,
+        refundedAtLabel: formatDateVN(refund.refundedAt),
+      })),
+    deliveryNote: order.deliveryNote,
     shippedAt: order.shippedAt,
     deliveredAt: order.deliveredAt,
     carrier: order.carrier,
@@ -69,7 +81,10 @@ export default async function AdminOrdersPage() {
 
   const include = {
     student: { select: { name: true, email: true } },
-    refunds: { select: { amount: true, deletedAt: true } },
+    refunds: {
+      orderBy: { refundedAt: "desc" },
+      select: { id: true, amount: true, reason: true, note: true, refundedAt: true, deletedAt: true },
+    },
     items: {
       include: {
         courseAccessGrant: { select: { id: true } },

@@ -31,11 +31,30 @@ export type NavItem = {
   children?: NavItem[];
 };
 
+/**
+ * A non-clickable heading that breaks the rail into named runs ("Học tập",
+ * "Kết nối", "Mua sắm"). Not a NavItem with a disabled link: it owns no
+ * route, no icon and no active state, and giving it those would invite
+ * someone to click it.
+ *
+ * Collapsed, the words have nowhere to go — the divider stays so the runs
+ * are still visibly separate, and the text is dropped rather than truncated
+ * into nonsense.
+ */
+export type NavSection = { section: string };
+
+export type NavEntry = NavItem | NavSection;
+
+function isSection(entry: NavEntry): entry is NavSection {
+  return "section" in entry;
+}
+
 // The stable per-item identity used for React keys and for the expand/collapse
 // override map. `href` where there is one, otherwise the label — a grouping
 // header has no route to key on, and two headers never share a label.
-function navItemKey(item: NavItem): string {
-  return item.href ?? item.label;
+function navItemKey(entry: NavEntry): string {
+  if (isSection(entry)) return `section:${entry.section}`;
+  return entry.href ?? entry.label;
 }
 
 function isNavItemActive(item: NavItem, pathname: string): boolean {
@@ -160,7 +179,7 @@ export function Sidebar({
   brand,
   variant = "light",
 }: {
-  items: NavItem[];
+  items: NavEntry[];
   brand: React.ReactNode;
   // Admin uses the navy rail; the student dashboard keeps the light shell —
   // see globals.css for why the navy variant needs its own text tokens.
@@ -278,8 +297,27 @@ export function Sidebar({
           {!collapsed && <SidebarCollapseToggle collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} navy={navy} />}
         </div>
         <nav className={`flex-1 space-y-1 overflow-y-auto px-3 ${collapsed ? "md:px-2" : ""}`}>
-          {items.map((item) => {
-            const itemKey = navItemKey(item);
+          {items.map((entry) => {
+            const itemKey = navItemKey(entry);
+
+            if (isSection(entry)) {
+              return (
+                <div key={itemKey} className="pt-3 first:pt-1">
+                  <div className={`border-t ${navy ? "border-white/10" : "border-border"}`} />
+                  {!collapsed && (
+                    <p
+                      className={`px-2 pt-2 text-[10px] font-semibold uppercase tracking-wider ${
+                        navy ? "text-sidebar-muted" : "text-faint"
+                      }`}
+                    >
+                      {entry.section}
+                    </p>
+                  )}
+                </div>
+              );
+            }
+
+            const item = entry;
             const active = isNavItemActive(item, pathname);
             const hasChildren = !!item.children?.length;
             const childActive =
