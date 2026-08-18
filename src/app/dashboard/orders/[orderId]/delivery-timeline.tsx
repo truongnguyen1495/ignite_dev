@@ -14,6 +14,12 @@ type Step = {
    */
   doneWithoutTime?: boolean;
   hint?: string;
+  /**
+   * A line the admin wrote about this step. Shown to the buyer, because a
+   * note explaining who actually took the parcel is exactly the thing they
+   * would otherwise have to phone in to ask about.
+   */
+  note?: string | null;
 };
 
 /**
@@ -32,6 +38,7 @@ export function DeliveryTimeline({
   paidAt,
   shippedAt,
   deliveredAt,
+  deliveryNote,
   carrier,
   trackingCode,
 }: {
@@ -40,6 +47,8 @@ export function DeliveryTimeline({
   paidAt: Date | null;
   shippedAt: Date | null;
   deliveredAt: Date | null;
+  /** What the admin wrote when marking it delivered — "người nhận: mẹ khách". */
+  deliveryNote: string | null;
   carrier: string | null;
   trackingCode: string | null;
 }) {
@@ -47,14 +56,14 @@ export function DeliveryTimeline({
     ? [
         { key: "packing", label: "Đang chuẩn bị hàng", at: null, doneWithoutTime: Boolean(shippedAt) },
         { key: "shipped", label: "Đã gửi hàng", at: shippedAt },
-        { key: "delivered", label: "Đã giao", at: deliveredAt },
+        { key: "delivered", label: "Đã giao", at: deliveredAt, note: deliveryNote },
         { key: "paid", label: "Đã thu tiền", at: paidAt, hint: "Trả tiền mặt khi nhận hàng" },
       ]
     : [
         { key: "paid", label: "Đã thanh toán", at: paidAt },
         { key: "packing", label: "Đang đóng gói", at: null, doneWithoutTime: Boolean(shippedAt) },
         { key: "shipped", label: "Đã gửi hàng", at: shippedAt },
-        { key: "delivered", label: "Đã giao", at: deliveredAt },
+        { key: "delivered", label: "Đã giao", at: deliveredAt, note: deliveryNote },
       ];
 
   // The first step with no time yet is the one currently in progress; the
@@ -127,6 +136,7 @@ export function DeliveryTimeline({
                         ? "Đang xử lý"
                         : (step.hint ?? "Chưa tới bước này")}
                 </span>
+                {step.note && <span className="mt-0.5 block text-xs text-muted">{step.note}</span>}
               </span>
             </li>
           );
