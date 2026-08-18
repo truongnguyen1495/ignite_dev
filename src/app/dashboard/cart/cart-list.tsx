@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { X, Package } from "lucide-react";
 import type { OrderItemKind } from "@prisma/client";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input, Textarea } from "@/components/ui/form";
 import { formatVND } from "@/lib/currency";
-import { removeFromCartAction, confirmCartOrderAction, type ShippingDetails } from "./actions";
+import { MAX_CART_QUANTITY } from "@/lib/orders";
+import { removeFromCartAction, setCartQuantityAction } from "./actions";
 
 export type CartListItem = {
   id: string;
@@ -19,6 +20,11 @@ export type CartListItem = {
   price: number;
   originalPrice: number | null;
   unavailable: boolean;
+  // Above 1 only for a PRODUCT line — see CartItem.quantity in
+  // schema.prisma. The stepper below is hidden for every other kind rather
+  // than rendered disabled, because "buy two of this course" isn't a thing
+  // the buyer should have to reason about.
+  quantity: number;
 };
 
 function Thumbnail({ imageUrl, title, className }: { imageUrl: string | null; title: string; className: string }) {
@@ -79,177 +85,12 @@ function ItemDetailDialog({
   );
 }
 
-// Shipping is collected once for the whole cart, right before checkout —
-// only shown when the cart has at least one PRODUCT item (see CartList).
-// `initial` prefills the fields from the buyer's saved address (their most
-// recent shipped order) when they choose "Đổi địa chỉ" from the confirm
-// dialog, or stays empty for a first-time buyer who has none yet.
-function ShippingDialog({
-  initial,
-  onClose,
-  onSubmit,
-  pending,
-}: {
-  initial?: ShippingDetails | null;
-  onClose: () => void;
-  onSubmit: (shipping: ShippingDetails) => void;
-  pending: boolean;
-}) {
-  const [name, setName] = useState(initial?.name ?? "");
-  const [phone, setPhone] = useState(initial?.phone ?? "");
-  const [address, setAddress] = useState(initial?.address ?? "");
-  const [error, setError] = useState<string | undefined>();
-
-  function submit() {
-    if (!name.trim() || !phone.trim() || !address.trim()) {
-      setError("Vui lòng nhập đầy đủ họ tên, số điện thoại và địa chỉ nhận hàng.");
-      return;
-    }
-    onSubmit({ name: name.trim(), phone: phone.trim(), address: address.trim() });
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4" onClick={() => !pending && onClose()}>
-      <div
-        className="max-h-[85vh] w-full max-w-md space-y-4 overflow-y-auto rounded-xl border border-border bg-surface p-6 text-left shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-base font-semibold text-foreground">Thông tin giao hàng</h2>
-        <p className="text-sm text-muted">Giỏ hàng có sản phẩm vật lý — cho biết nơi giao hàng trước khi xác nhận đơn.</p>
-        <div className="space-y-3">
-          <Input label="Họ tên người nhận" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nguyễn Văn A" disabled={pending} />
-          <Input
-            label="Số điện thoại"
-            type="tel"
-            inputMode="numeric"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="09xxxxxxxx"
-            disabled={pending}
-          />
-          <Textarea
-            label="Địa chỉ nhận hàng"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"
-            rows={3}
-            disabled={pending}
-          />
-        </div>
-        {error && <p className="text-sm text-danger">{error}</p>}
-        <div className="flex justify-end gap-2 border-t border-border pt-4">
-          <Button type="button" variant="secondary" onClick={onClose} disabled={pending}>
-            Để sau
-          </Button>
-          <Button type="button" variant="primary" onClick={submit} isLoading={pending}>
-            Xác nhận đơn hàng
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Digital-only cart (courses/library) — no shipping step, so checkout is a
-// plain "confirm this order" before going to the payment page.
-function ConfirmOrderDialog({
-  total,
-  count,
-  onClose,
-  onConfirm,
-  pending,
-}: {
-  total: number;
-  count: number;
-  onClose: () => void;
-  onConfirm: () => void;
-  pending: boolean;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4" onClick={() => !pending && onClose()}>
-      <div
-        className="w-full max-w-md space-y-4 rounded-xl border border-border bg-surface p-6 text-left shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-base font-semibold text-foreground">Xác nhận đơn hàng</h2>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted">Tổng cộng {count} sản phẩm</span>
-          <span className="font-semibold text-foreground">{formatVND(total)}</span>
-        </div>
-        <div className="flex justify-end gap-2 border-t border-border pt-4">
-          <Button type="button" variant="secondary" onClick={onClose} disabled={pending}>
-            Hủy
-          </Button>
-          <Button type="button" variant="primary" onClick={onConfirm} isLoading={pending}>
-            Xác nhận &amp; thanh toán
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Shown to a returning buyer of a physical product who already has a saved
-// address — one-tap confirm instead of re-typing, with an explicit "Đổi địa
-// chỉ" escape to the full form so a moved/gift address is never shipped to
-// the old one silently.
-function ConfirmShippingDialog({
-  shipping,
-  total,
-  onClose,
-  onChangeAddress,
-  onConfirm,
-  pending,
-}: {
-  shipping: ShippingDetails;
-  total: number;
-  onClose: () => void;
-  onChangeAddress: () => void;
-  onConfirm: () => void;
-  pending: boolean;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4" onClick={() => !pending && onClose()}>
-      <div
-        className="w-full max-w-md space-y-4 rounded-xl border border-border bg-surface p-6 text-left shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-base font-semibold text-foreground">Xác nhận đơn hàng</h2>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted">Tổng cộng</span>
-          <span className="font-semibold text-foreground">{formatVND(total)}</span>
-        </div>
-        <div className="space-y-1 rounded-lg border border-border bg-faint-bg p-3 text-sm">
-          <p className="text-xs font-medium text-muted">Giao đến</p>
-          <p className="text-foreground">
-            {shipping.name} — {shipping.phone}
-          </p>
-          <p className="text-foreground">{shipping.address}</p>
-        </div>
-        <div className="flex justify-end gap-2 border-t border-border pt-4">
-          <Button type="button" variant="secondary" onClick={onChangeAddress} disabled={pending}>
-            Đổi địa chỉ
-          </Button>
-          <Button type="button" variant="primary" onClick={onConfirm} isLoading={pending}>
-            Xác nhận &amp; thanh toán
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// "Thanh toán" buttons elsewhere (product/course/library cards) add the
-// item and land here plainly — no dialog auto-opens on arrival. The buyer
-// reviews the cart and presses "Xác nhận đơn hàng" themselves when ready,
-// which opens whichever of the three dialogs below fits the cart (digital
-// confirm, shipping form, or confirm-with-saved-address).
-export function CartList({ items, savedShipping }: { items: CartListItem[]; savedShipping: ShippingDetails | null }) {
+// The cart is now only a cart. Choosing an address and a payment method
+// happens on /dashboard/thanh-toan, which is also where the "mua ngay" and
+// post-login paths land — one checkout screen, three ways in, instead of a
+// shipping form bolted onto this list.
+export function CartList({ items }: { items: CartListItem[] }) {
   const [viewing, setViewing] = useState<CartListItem | null>(null);
-  const [shippingOpen, setShippingOpen] = useState(false);
-  const [confirmShipOpen, setConfirmShipOpen] = useState(false);
-  const [confirmOrderOpen, setConfirmOrderOpen] = useState(false);
-  const [error, setError] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -261,34 +102,19 @@ export function CartList({ items, savedShipping }: { items: CartListItem[]; save
     });
   }
 
-  function submitOrder(shipping?: ShippingDetails) {
-    setError(undefined);
+  // Bounds-checked here as well as on the server: the buttons are already
+  // disabled at the edges, so a click that would step past them is a
+  // no-op rather than a wasted round trip.
+  function changeQuantity(item: CartListItem, delta: number) {
+    const next = item.quantity + delta;
+    if (next < 1 || next > MAX_CART_QUANTITY) return;
     startTransition(async () => {
-      const result = await confirmCartOrderAction(shipping);
-      if (result.error) {
-        setError(result.error);
-        setShippingOpen(false);
-        return;
-      }
-      router.push(`/dashboard/orders/${result.orderId}`);
+      await setCartQuantityAction(item.id, next);
+      router.refresh();
     });
   }
 
-  const hasProduct = items.some((i) => i.kind === "PRODUCT");
-  const total = items.reduce((sum, i) => sum + i.price, 0);
-
-  function startCheckout() {
-    if (hasProduct) {
-      // Physical goods need a shipping address: reuse the buyer's saved one
-      // via a one-tap confirm (with an "Đổi địa chỉ" escape), or ask for it
-      // in full the first time they order a physical item.
-      if (savedShipping) setConfirmShipOpen(true);
-      else setShippingOpen(true);
-      return;
-    }
-    // Digital-only cart (courses/library): no address, just a confirm.
-    setConfirmOrderOpen(true);
-  }
+  const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   if (items.length === 0) {
     return <p className="text-sm text-muted">Giỏ hàng của bạn đang trống.</p>;
@@ -315,7 +141,35 @@ export function CartList({ items, savedShipping }: { items: CartListItem[]; save
                 )}
               </div>
             </button>
-            <span className="shrink-0 text-sm text-muted">{formatVND(item.price)}</span>
+            {item.kind === "PRODUCT" ? (
+              <span className="flex shrink-0 items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => changeQuantity(item, -1)}
+                  disabled={pending || item.quantity <= 1}
+                  aria-label="Giảm số lượng"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-foreground transition-colors hover:bg-surface-hover disabled:opacity-40"
+                >
+                  −
+                </button>
+                <span className="w-5 text-center text-sm font-semibold tabular-nums">{item.quantity}</span>
+                <button
+                  type="button"
+                  onClick={() => changeQuantity(item, 1)}
+                  disabled={pending || item.quantity >= MAX_CART_QUANTITY}
+                  aria-label="Tăng số lượng"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-foreground transition-colors hover:bg-surface-hover disabled:opacity-40"
+                >
+                  +
+                </button>
+              </span>
+            ) : null}
+            <span className="shrink-0 text-right text-sm text-muted">
+              {formatVND(item.price * item.quantity)}
+              {item.quantity > 1 && (
+                <span className="block text-xs text-faint">{item.quantity} × {formatVND(item.price)}</span>
+              )}
+            </span>
             <button
               type="button"
               onClick={() => remove(item.id)}
@@ -333,10 +187,12 @@ export function CartList({ items, savedShipping }: { items: CartListItem[]; save
         <span className="text-foreground">Tổng cộng</span>
         <span className="text-foreground">{formatVND(total)}</span>
       </div>
-      {error && <p className="text-sm text-danger">{error}</p>}
-      <Button type="button" className="w-full" onClick={startCheckout} disabled={pending} isLoading={pending}>
-        Xác nhận đơn hàng
-      </Button>
+      <Link
+        href="/dashboard/thanh-toan"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+      >
+        Thanh toán
+      </Link>
 
       {viewing && (
         <ItemDetailDialog
@@ -344,36 +200,6 @@ export function CartList({ items, savedShipping }: { items: CartListItem[]; save
           pending={pending}
           onClose={() => setViewing(null)}
           onRemove={() => remove(viewing.id)}
-        />
-      )}
-      {confirmOrderOpen && (
-        <ConfirmOrderDialog
-          total={total}
-          count={items.length}
-          pending={pending}
-          onClose={() => setConfirmOrderOpen(false)}
-          onConfirm={() => submitOrder()}
-        />
-      )}
-      {confirmShipOpen && savedShipping && (
-        <ConfirmShippingDialog
-          shipping={savedShipping}
-          total={total}
-          pending={pending}
-          onClose={() => setConfirmShipOpen(false)}
-          onChangeAddress={() => {
-            setConfirmShipOpen(false);
-            setShippingOpen(true);
-          }}
-          onConfirm={() => submitOrder(savedShipping)}
-        />
-      )}
-      {shippingOpen && (
-        <ShippingDialog
-          initial={savedShipping}
-          pending={pending}
-          onClose={() => setShippingOpen(false)}
-          onSubmit={(shipping) => submitOrder(shipping)}
         />
       )}
     </div>

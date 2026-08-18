@@ -93,7 +93,7 @@ export function GuestLibraryList({
                         }}
                       />
                     ) : (
-                      <GuestBuyButton />
+                      <GuestBuyButton title={item.title} />
                     )}
                   </div>
                 )}

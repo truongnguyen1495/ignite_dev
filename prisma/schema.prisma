@@ -72,9 +72,79 @@ enum ChatThreadKind {
 }
 
 enum OrderStatus {
+  // Waiting on a bank transfer, with a deadline attached.
   PENDING
+  // Chose "trả khi nhận hàng": the goods go out first and the money is
+  // collected on delivery, so this deliberately has NO deadline — there is
+  // no transfer to wait for, and auto-cancelling would throw away a real
+  // order. Becomes PAID through the same fulfillOrder as a transfer, when
+  // an admin confirms the cash came back.
+  AWAITING_COD
   PAID
   CANCELLED
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  // Only offered when EVERY line is a physical product. On a mixed order it
+  // would mean either making someone wait days for a course they already
+  // paid nothing for, or unlocking that course before any money moved — see
+  // canPayOnDelivery in src/lib/orders.ts.
+  COD
+}
+
+// A shipping address the buyer saved, so checkout can offer a one-tap pick
+// instead of retyping. Deliberately its own table rather than fields on
+// User: someone ships to their home, their office and a warehouse, and the
+// old approach — reading the address off their most recent shipped order —
+// could only ever remember the last one.
+//
+// An Order still snapshots name/phone/address into its own columns at
+// checkout (Order.shipping*): editing or deleting a saved address later
+// must never rewrite where an order that already shipped was sent.
+model Address {
+  id             String  @id @default(cuid())
+  studentId      String
+  student        User    @relation("StudentAddresses", fields: [studentId], references: [id], onDelete: Cascade)
+  // Optional nickname ("Nhà", "Kho hàng") — purely for telling two entries
+  // apart in the picker.
+  label          String?
+  recipientName  String
+  recipientPhone String
+  addressLine    String  @db.Text
+  // At most one per student should be true; enforced in the action that
+  // writes it (setDefaultAddress clears the others in the same transaction)
+  // rather than by a partial unique index, which Prisma can't express.
+  isDefault      Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId, isDefault])
+}
+
+// Why a cancelled order was cancelled. Recorded so "Đã hủy" stops being a
+// dead end for both sides: the buyer reads what happened, and an admin
+// reviewing the list can tell a customer who changed their mind apart from
+// one nobody could reach.
+enum OrderCancelReason {
+  CUSTOMER_CHANGED_MIND
+  OUT_OF_STOCK
+  UNREACHABLE_CUSTOMER
+  DUPLICATE_ORDER
+  OTHER
+  // ONLY ever written by the expiry sweep (expirePendingOrderIfNeeded /
+  // expireOverduePendingOrders in src/lib/orders.ts) — deliberately absent
+  // from the reason list an admin can pick, see ADMIN_ORDER_CANCEL_REASONS
+  // in src/lib/order-cancel-labels.ts.
+  //
+  // It exists because "did the system cancel this?" needs a definite mark:
+  // inferring it from `cancelledById IS NULL` would be wrong, since every
+  // order cancelled before that column existed is also null and would be
+  // misread as auto-cancelled. This is the ONE condition that lets an admin
+  // revive an order — money that arrived late must have a way back in, and
+  // an order a human deliberately cancelled must not.
+  SYSTEM_EXPIRED
 }
 
 enum OrderItemKind {
@@ -295,6 +365,11 @@ model User {
   guestChatThreadReads      GuestChatThreadRead[]       @relation("GuestChatThreadReads")
   orders                    Order[]                     @relation("StudentOrders")
   ordersConfirmed           Order[]                     @relation("OrderConfirmedBy")
+  ordersCancelled           Order[]                     @relation("OrderCancelledBy")
+  ordersShipped             Order[]                     @relation("OrderShippedBy")
+  ordersDelivered           Order[]                     @relation("OrderDeliveredBy")
+  refundsRecorded           Refund[]                    @relation("RefundsCreated")
+  addresses                 Address[]                   @relation("StudentAddresses")
   cartItems                 CartItem[]
   consultationRequests      ConsultationRequest[]
 
@@ -1054,12 +1129,71 @@ model Order {
   studentId     String
   student       User        @relation("StudentOrders", fields: [studentId], references: [id], onDelete: Cascade)
   status        OrderStatus @default(PENDING)
+  paymentMethod PaymentMethod @default(BANK_TRANSFER)
   totalAmount   Int
   createdAt     DateTime    @default(now())
   paidAt        DateTime?
   cancelledAt   DateTime?
   confirmedById String?
   confirmedBy   User?       @relation("OrderConfirmedBy", fields: [confirmedById], references: [id])
+
+  // When this order stops waiting for a bank transfer and cancels itself.
+  //
+  // Stored per-order rather than computed as createdAt + a constant (which
+  // is how the sibling projects do it) for two reasons. Orders that predate
+  // this column are null and therefore never expire — shipping this feature
+  // must not mass-cancel orders that were placed under the old "waits
+  // forever" promise. And once the deadline is written down, changing
+  // ORDER_PENDING_EXPIRY_MINUTES later can't retroactively kill an order
+  // that is, at that moment, showing a live countdown to a real buyer.
+  paymentDeadline DateTime?
+
+  // Set together whenever an order lands in CANCELLED. cancelledById stays
+  // null for the expiry sweep (no human did it) — SYSTEM_EXPIRED is what
+  // actually marks that case, see the enum's own comment.
+  cancelReason  OrderCancelReason?
+  cancelNote    String?            @db.Text
+  cancelledById String?
+  cancelledBy   User?              @relation("OrderCancelledBy", fields: [cancelledById], references: [id])
+
+  // Storage path (not a URL) of the balance-change screenshot an admin
+  // attached when confirming the money. Lives in a PRIVATE bucket and is
+  // only ever served back through /api/admin/orders/[orderId]/proof, which
+  // re-checks MANAGE_ORDERS: this is an image of the company's own bank
+  // notification, so it is internal evidence, never something the buyer
+  // should be able to fetch.
+  //
+  // Optional on purpose. Requiring it would mean an admin who confirms a
+  // payment from their phone, screenshot on another device, simply cannot
+  // record what actually happened.
+  paymentProofPath String?
+
+  // --- Giao hàng ---------------------------------------------------------
+  //
+  // Deliberately timestamps rather than extra OrderStatus values: shipping
+  // and paying are two independent facts, and COD proves it — such an order
+  // ships while still AWAITING_COD and only becomes PAID once the courier
+  // hands the cash back. Folding both into one status column would need a
+  // value for every combination.
+  //
+  // Only ever set on an order that contains a physical product; an order of
+  // courses and books has nothing to send.
+  shippedAt    DateTime?
+  shippedById  String?
+  shippedBy    User?     @relation("OrderShippedBy", fields: [shippedById], references: [id])
+  carrier      String?
+  trackingCode String?
+
+  deliveredAt   DateTime?
+  deliveredById String?
+  deliveredBy   User?     @relation("OrderDeliveredBy", fields: [deliveredById], references: [id])
+  deliveryNote  String?   @db.Text
+
+  // Set when an admin pulls a SYSTEM_EXPIRED order back to PAID because the
+  // transfer turned up late. Kept as its own timestamp rather than inferred
+  // from "cancelledAt set but status PAID", so the buyer's order page can
+  // say plainly that this happened instead of showing a contradiction.
+  revivedAt DateTime?
 
   // Only collected (and only ever read) for a PRODUCT order — a physical
   // good needs somewhere to be shipped, unlike Course/LibraryItem which just
@@ -1081,11 +1215,54 @@ model Order {
   // only orphans the grant from any order record, the student keeps it.
   deletedAt DateTime?
 
-  items OrderItem[]
+  items   OrderItem[]
+  refunds Refund[]
 
   @@index([studentId])
   @@index([status])
   @@index([deletedAt])
+  @@index([shippedAt])
+}
+
+enum RefundReason {
+  RETURNED_GOODS
+  DAMAGED_ON_ARRIVAL
+  WRONG_ITEM
+  CUSTOMER_REQUEST
+  OTHER
+}
+
+// Money given back, recorded as its own row rather than as columns on Order.
+//
+// Two reasons. A refund can be partial and can happen more than once (one
+// item of three came back damaged, then another), which a single
+// refundedAmount column cannot represent. And a refund is a transaction with
+// its own date: `refundedAt` is when the money actually left, which is not
+// the same as when someone got around to typing it in.
+//
+// The order itself stays PAID. It was paid; that happened. What changed is
+// that some of the money went back, and the ledger should say both.
+model Refund {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount  Int
+  reason  RefundReason
+  note    String?      @db.Text
+
+  refundedAt DateTime
+
+  createdById String
+  createdBy   User     @relation("RefundsCreated", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+
+  // Soft-delete: a mis-typed amount is corrected by voiding the row and
+  // writing a new one, never by silently editing a figure someone has
+  // already reconciled against.
+  deletedAt DateTime?
+
+  @@index([orderId])
+  @@index([refundedAt, deletedAt])
 }
 
 // Discriminated by kind, same convention as ChatThread: exactly one of
@@ -1107,7 +1284,13 @@ model OrderItem {
   productId       String?
   product         Product?      @relation(fields: [productId], references: [id])
   titleSnapshot   String
+  // UNIT price at the moment of purchase, not the line total — multiply by
+  // quantity below for what the buyer actually owes for this line. The two
+  // were the same number until quantity existed (every line was one item),
+  // so no historical row needs fixing; anything reading this must now do the
+  // multiplication (see orderItemTotal in src/lib/orders.ts).
   priceAtPurchase Int
+  quantity        Int @default(1)
 
   // Back-relations to whichever access grant this item's fulfillment
   // created (at most one of the two, matching kind) — see
@@ -1137,6 +1320,12 @@ model CartItem {
   productId     String?
   product       Product?      @relation(fields: [productId], references: [id])
   createdAt     DateTime      @default(now())
+
+  // Only ever above 1 for a PRODUCT line. A course or a library item is
+  // bought once and owned forever — addToCartAction already refuses a
+  // second copy, and the cart UI hides the +/− control for those kinds
+  // rather than showing a stepper that can't move.
+  quantity Int @default(1)
 
   @@index([studentId])
 }

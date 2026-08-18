@@ -51,12 +51,22 @@ function PasswordInput({
   );
 }
 
-export function LoginForm({ googleLoginEnabled }: { googleLoginEnabled: boolean }) {
+export function LoginForm({
+  googleLoginEnabled,
+  returnTo,
+}: {
+  googleLoginEnabled: boolean;
+  /** Already sanitised by the page — see sanitizeNextPath. */
+  returnTo?: string | null;
+}) {
   const [error, formAction, pending] = useActionState(loginAction, undefined);
 
   return (
     <div className="w-full max-w-sm space-y-4">
       <form action={formAction} className="space-y-4">
+        {/* Carried through the form rather than read from the URL inside the
+            action: a Server Action has no access to the page's query string. */}
+        {returnTo && <input type="hidden" name="next" value={returnTo} />}
         <Input id="email" name="email" type="email" label="Email" required autoComplete="email" />
         <PasswordInput id="password" name="password" label="Mật khẩu" autoComplete="current-password" />
         <div className="text-right">
@@ -77,6 +87,7 @@ export function LoginForm({ googleLoginEnabled }: { googleLoginEnabled: boolean 
             <div className="h-px flex-1 bg-border" />
           </div>
           <form action={signInWithGoogleAction}>
+          {returnTo && <input type="hidden" name="next" value={returnTo} />}
             <Button type="submit" variant="outline" className="w-full">
               Đăng nhập bằng Google
             </Button>

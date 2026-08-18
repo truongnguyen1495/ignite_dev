@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { X, Zap } from "lucide-react";
 import type { OrderItemKind } from "@prisma/client";
 import { addToCartAction } from "@/app/dashboard/cart/actions";
+import { loginUrlForPurchase } from "@/lib/next-path";
 import { Button } from "@/components/ui/button";
 import { PriceBlock } from "@/components/price-block";
 
@@ -65,16 +66,27 @@ export function BuyButton({
     setError(undefined);
     startTransition(async () => {
       const result = await addToCartAction(kind, itemId);
+      if (result.needsLogin) {
+        // Keeps the intent: they come back to this exact page, and the login
+        // screen names what they were buying instead of dropping them on a
+        // generic form. See loginUrlForPurchase.
+        router.push(loginUrlForPurchase(window.location.pathname, details.title));
+        return;
+      }
       if (result.error) {
         setError(result.error);
         return;
       }
       setOpen(false);
       if (goToCheckout) {
-        // Lands the buyer on the cart page itself, no dialog auto-opened —
-        // they review the cart and press "Xác nhận đơn hàng" there when
-        // ready. Same as product-buy-button.tsx.
-        router.push("/dashboard/cart");
+        // Straight to checkout with ONLY this line — a basket holding three
+        // other things must not be billed because someone pressed "mua ngay"
+        // on a fourth.
+        router.push(
+          result.cartItemId
+            ? `/dashboard/thanh-toan?item=${result.cartItemId}`
+            : "/dashboard/thanh-toan"
+        );
         return;
       }
       router.refresh();
@@ -146,7 +158,7 @@ export function BuyButton({
                   Thêm vào giỏ hàng
                 </Button>
                 <Button type="button" variant="primary" disabled={pending} isLoading={pending} onClick={() => addItem(true)}>
-                  Thanh toán
+                  Mua riêng món này
                 </Button>
               </div>
             </div>
