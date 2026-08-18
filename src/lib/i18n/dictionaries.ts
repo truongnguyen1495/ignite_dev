@@ -73,6 +73,20 @@ export const dictionaries = {
       revenue: "Doanh thu",
       finance: "Thu chi",
       goToAdmin: "Vào trang Admin",
+      // Nhãn phân cụm — không bấm được, chỉ để mắt nghỉ giữa các nhóm.
+      sectionLearning: "Học tập",
+      sectionConnect: "Kết nối",
+      sectionShopping: "Mua sắm",
+      cart: "Giỏ hàng",
+      // "Lộ trình" một mình quá mơ hồ khi nó đứng ở đầu menu — nói rõ là
+      // 6 cấp thì người mới hiểu ngay đây là trục chính của sản phẩm.
+      roadmapLong: "Lộ trình 6 cấp",
+      // Thay cho "Training": một cái tên tiếng Anh đứng giữa toàn mục
+      // tiếng Việt, lại nghe y hệt "Lộ trình" ngay bên cạnh.
+      courses: "Khóa học",
+      myTeam: "Đội nhóm của tôi",
+      comingSoonGroup: "Sắp ra mắt",
+      revenueAndFinance: "Doanh thu · Thu chi",
     },
     guestNav: {
       home: "Trang chủ",
@@ -259,6 +273,15 @@ export const dictionaries = {
       revenue: "Revenue",
       finance: "Income & expenses",
       goToAdmin: "Go to Admin",
+      sectionLearning: "Learning",
+      sectionConnect: "Connect",
+      sectionShopping: "Shopping",
+      cart: "Cart",
+      roadmapLong: "6-level roadmap",
+      courses: "Courses",
+      myTeam: "My team",
+      comingSoonGroup: "Coming soon",
+      revenueAndFinance: "Revenue · Finances",
     },
     guestNav: {
       home: "Home",

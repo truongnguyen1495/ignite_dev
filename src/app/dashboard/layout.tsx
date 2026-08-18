@@ -2,13 +2,12 @@ import Link from "next/link";
 import {
   ArrowUpCircle,
   Award,
-  Banknote,
   BookOpen,
   Briefcase,
+  Clock,
   Contact,
   FileText,
   Globe,
-  GraduationCap,
   LayoutDashboard,
   Library,
   ListChecks,
@@ -26,8 +25,6 @@ import {
   UserPlus,
   Users,
   Video,
-  Wallet,
-  Wrench,
 } from "lucide-react";
 import { requireActiveStudent, isChatEnabled, isSalesEnabled, isWhiteboardsEnabled, getAdminPermissions } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
@@ -35,7 +32,7 @@ import { getStudentChatInbox } from "@/lib/chat";
 import { LEVEL_LABELS } from "@/lib/levels";
 import { announcementVisibleTo } from "@/lib/announcements";
 import { getDictionary } from "@/lib/i18n/get-locale";
-import { Sidebar, SidebarProvider, SidebarToggle, type NavItem } from "@/components/ui/sidebar";
+import { Sidebar, SidebarProvider, SidebarToggle, type NavItem, type NavEntry } from "@/components/ui/sidebar";
 import { AppHeader } from "@/components/ui/admin-header";
 import { MainContent } from "@/components/ui/main-content";
 import { BrandLogo } from "@/components/brand-logo";
@@ -97,24 +94,39 @@ export default async function DashboardLayout({
       chatInbox.groupRooms.reduce((sum, r) => sum + r.unreadCount, 0)
     : 0;
 
-  // Seven numbered groups from the product's own IA sketch, plus an eighth
-  // ("Kinh doanh") the sketch omitted — selling had no home in it, and
-  // Sản phẩm/Đơn hàng were already live features that needed one.
+  // Three named runs of things that WORK, then everything unbuilt in one
+  // group at the bottom.
   //
-  // Entries marked `comingSoon` point at a real route that renders
-  // <ComingSoon>; nothing here is a dead link. See NavItem in sidebar.tsx.
+  // The old shape had eight groups and eleven of its twenty destinations
+  // pointing at a "sắp ra mắt" page, scattered across five of those groups —
+  // so opening almost any group turned up dead ends, and the very first row
+  // in the rail ("Dashboard") was one of them. The "sắp ra mắt" promise is
+  // kept, per the original decision; it just stops outnumbering the product.
   //
-  // "Lộ trình" carries /dashboard because that page IS the six-tier ladder;
-  // the separate "Dashboard" overview (points, streak, today's tasks) doesn't
-  // exist yet, so it sits on its own future route.
-  const NAV_ITEMS: NavItem[] = [
-    {
-      href: "/dashboard/tong-quan",
-      label: t.dashboardNav.dashboard,
-      icon: <LayoutDashboard className={iconClass} />,
-      comingSoon: true,
-    },
-    { href: "/dashboard/profile", label: t.dashboardNav.profile, icon: <UserCircle className={iconClass} /> },
+  // Each unbuilt entry still sits at its FINAL url, so shipping one means
+  // moving its row up into a real run — no link changes, no broken bookmark.
+  const comingSoonChildren: NavItem[] = [
+    { href: "/dashboard/tong-quan", label: t.adminNav.overview, icon: <LayoutDashboard className={iconClass} /> },
+    { href: "/dashboard/leads", label: t.dashboardNav.leadManagement, icon: <UserPlus className={iconClass} /> },
+    { href: "/dashboard/checklist", label: t.dashboardNav.checklist, icon: <ListChecks className={iconClass} /> },
+    { href: "/dashboard/business-tools", label: t.dashboardNav.businessTools, icon: <Briefcase className={iconClass} /> },
+    { href: "/dashboard/certificates", label: t.dashboardNav.certificates, icon: <Award className={iconClass} /> },
+    { href: "/dashboard/community", label: t.dashboardNav.community, icon: <Globe className={iconClass} /> },
+    { href: "/dashboard/members", label: t.dashboardNav.members, icon: <Contact className={iconClass} /> },
+    { href: "/dashboard/affiliate", label: t.dashboardNav.affiliate, icon: <Share2 className={iconClass} /> },
+    // Two routes, one row: "Lead" (team-leads) duplicated "Quản lý Lead"
+    // above, and Doanh thu/Thu chi are one idea split in two. Both pairs
+    // separate again once they are real.
+    { href: "/dashboard/revenue", label: t.dashboardNav.revenueAndFinance, icon: <TrendingUp className={iconClass} /> },
+  ];
+
+  const NAV_ITEMS: NavEntry[] = [
+    { section: t.dashboardNav.sectionLearning },
+    // The six-level ladder IS /dashboard, and it is the spine of the product,
+    // so it leads. The row that used to sit here was an unbuilt "Dashboard".
+    { href: "/dashboard", label: t.dashboardNav.roadmapLong, icon: <Route className={iconClass} />, exact: true },
+    { href: "/dashboard/courses", label: t.dashboardNav.courses, icon: <Video className={iconClass} /> },
+    { href: "/dashboard/level-up", label: t.dashboardNav.levelUp, icon: <ArrowUpCircle className={iconClass} /> },
     {
       href: "/dashboard/library",
       label: t.dashboardNav.library,
@@ -128,69 +140,59 @@ export default async function DashboardLayout({
         },
       ],
     },
+
+    { section: t.dashboardNav.sectionConnect },
     {
       href: "/dashboard/announcements",
       label: t.dashboardNav.announcements,
       icon: <Megaphone className={iconClass} />,
       badge: unreadAnnouncementCount,
     },
+    { href: "/dashboard/my-group", label: t.dashboardNav.myTeam, icon: <Users className={iconClass} /> },
+    // Chat and whiteboards each have a master switch; a row for a feature
+    // that is switched off would be a dead end of a different kind.
+    ...(chatEnabled
+      ? [
+          {
+            href: "/dashboard/chat",
+            label: t.dashboardNav.chat,
+            icon: <MessageCircle className={iconClass} />,
+            badge: unreadChatCount,
+          },
+        ]
+      : []),
+    ...(whiteboardsEnabled
+      ? [{ href: "/dashboard/whiteboards", label: t.dashboardNav.whiteboards, icon: <Presentation className={iconClass} /> }]
+      : []),
+
+    // The whole run disappears when selling is off, rather than leaving a
+    // heading over nothing.
+    ...(salesEnabled
+      ? [
+          { section: t.dashboardNav.sectionShopping },
+          { href: "/dashboard/products", label: t.dashboardNav.products, icon: <Package className={iconClass} /> },
+          // The cart had no row at all — only the small icon in the header —
+          // while "Đơn hàng của tôi" did, which left the buying flow oddly
+          // half-represented in the menu.
+          {
+            href: "/dashboard/cart",
+            label: t.dashboardNav.cart,
+            icon: <ShoppingBag className={iconClass} />,
+            badge: cartCount,
+          },
+          { href: "/dashboard/orders", label: t.dashboardNav.orders, icon: <Receipt className={iconClass} /> },
+        ]
+      : []),
+
+    { section: "" },
+    { href: "/dashboard/profile", label: t.dashboardNav.profile, icon: <UserCircle className={iconClass} /> },
     {
-      label: t.dashboardNav.tools,
-      icon: <Wrench className={iconClass} />,
-      children: [
-        ...(chatEnabled
-          ? [
-              {
-                href: "/dashboard/chat",
-                label: t.dashboardNav.chat,
-                icon: <MessageCircle className={iconClass} />,
-                badge: unreadChatCount,
-              },
-            ]
-          : []),
-        ...(whiteboardsEnabled
-          ? [{ href: "/dashboard/whiteboards", label: t.dashboardNav.whiteboards, icon: <Presentation className={iconClass} /> }]
-          : []),
-        { href: "/dashboard/leads", label: t.dashboardNav.leadManagement, icon: <UserPlus className={iconClass} />, comingSoon: true },
-        { href: "/dashboard/checklist", label: t.dashboardNav.checklist, icon: <ListChecks className={iconClass} />, comingSoon: true },
-        {
-          href: "/dashboard/business-tools",
-          label: t.dashboardNav.businessTools,
-          icon: <Briefcase className={iconClass} />,
-          comingSoon: true,
-        },
-      ],
-    },
-    {
-      label: t.dashboardNav.training,
-      icon: <GraduationCap className={iconClass} />,
-      children: [
-        { href: "/dashboard", label: t.dashboardNav.roadmap, icon: <Route className={iconClass} />, exact: true },
-        { href: "/dashboard/courses", label: t.dashboardNav.exclusiveCourses, icon: <Video className={iconClass} /> },
-        { href: "/dashboard/level-up", label: t.dashboardNav.levelUp, icon: <ArrowUpCircle className={iconClass} /> },
-        { href: "/dashboard/certificates", label: t.dashboardNav.certificates, icon: <Award className={iconClass} />, comingSoon: true },
-      ],
-    },
-    {
-      label: t.dashboardNav.communityAndTeam,
-      icon: <Users className={iconClass} />,
-      children: [
-        { href: "/dashboard/community", label: t.dashboardNav.community, icon: <Globe className={iconClass} />, comingSoon: true },
-        { href: "/dashboard/my-group", label: t.dashboardNav.myGroup, icon: <Users className={iconClass} /> },
-        { href: "/dashboard/members", label: t.dashboardNav.members, icon: <Contact className={iconClass} />, comingSoon: true },
-        { href: "/dashboard/team-leads", label: t.dashboardNav.teamLeads, icon: <UserPlus className={iconClass} />, comingSoon: true },
-      ],
-    },
-    {
-      label: t.dashboardNav.business,
-      icon: <Banknote className={iconClass} />,
-      children: [
-        { href: "/dashboard/products", label: t.dashboardNav.products, icon: <Package className={iconClass} /> },
-        { href: "/dashboard/orders", label: t.dashboardNav.orders, icon: <Receipt className={iconClass} /> },
-        { href: "/dashboard/affiliate", label: t.dashboardNav.affiliate, icon: <Share2 className={iconClass} />, comingSoon: true },
-        { href: "/dashboard/revenue", label: t.dashboardNav.revenue, icon: <TrendingUp className={iconClass} />, comingSoon: true },
-        { href: "/dashboard/finance", label: t.dashboardNav.finance, icon: <Wallet className={iconClass} />, comingSoon: true },
-      ],
+      label: t.dashboardNav.comingSoonGroup,
+      icon: <Clock className={iconClass} />,
+      // No comingSoon tag on the row: the label already IS "Sắp ra mắt", and
+      // the component would append the same words again. The children inside
+      // need no tag either — the group they sit in says it once.
+      children: comingSoonChildren,
     },
   ];
 
