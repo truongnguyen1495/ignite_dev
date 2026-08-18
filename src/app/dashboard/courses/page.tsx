@@ -87,7 +87,7 @@ export default async function StudentCoursesPage() {
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Khóa học độc quyền</h1>
         <p className="mt-1 text-sm text-muted">
-          Các khóa học nằm ngoài 5 cấp đào tạo — chỉ xem được khi Super Admin cấp quyền riêng.
+          Các khóa học nằm ngoài 6 cấp đào tạo — chỉ xem được khi Super Admin cấp quyền riêng.
         </p>
       </div>
 

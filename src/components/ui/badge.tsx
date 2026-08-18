@@ -1,4 +1,5 @@
 const COLOR_CLASSES = {
+  level0: "bg-level-0-bg text-level-0",
   level1: "bg-level-1-bg text-level-1",
   level2: "bg-level-2-bg text-level-2",
   level3: "bg-level-3-bg text-level-3",

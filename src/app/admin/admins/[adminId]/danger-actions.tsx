@@ -154,7 +154,7 @@ export function DeleteAdminAccountButton({ adminId, adminName }: { adminId: stri
                   onChange={() => setMode("to_hocvien")}
                 />
                 <span className="flex-1">
-                  <span className="block font-medium text-foreground">Chuyển thành Thành viên (5 cấp)</span>
+                  <span className="block font-medium text-foreground">Chuyển thành Thành viên (6 cấp)</span>
                   <span className="block text-xs text-muted">Không còn là admin — chọn cấp độ bắt đầu.</span>
                   {mode === "to_hocvien" && (
                     <Select

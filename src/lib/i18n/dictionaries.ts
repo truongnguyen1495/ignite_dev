@@ -39,7 +39,7 @@ export const dictionaries = {
       minigame: "Mini-game & thưởng",
     },
     dashboardNav: {
-      fiveLevelTraining: "5 Cấp đào tạo",
+      fiveLevelTraining: "6 Cấp đào tạo",
       myGroup: "Nhóm của tôi",
       exclusiveCourses: "Khóa học độc quyền",
       library: "Thư viện",
@@ -90,7 +90,7 @@ export const dictionaries = {
     },
     dashboardLevelsPage: {
       accessDenied: "Bạn không có quyền truy cập nội dung đó.",
-      title: "5 Cấp Đào Tạo",
+      title: "6 Cấp Đào Tạo",
       unlocked: "Đã mở khóa",
       locked: "Chưa được cấp quyền",
     },
@@ -111,7 +111,7 @@ export const dictionaries = {
     guestHomePage: {
       welcomeTitle: "Chào mừng đến với",
       intro:
-        "Nền tảng đào tạo theo lộ trình 5 cấp — khám phá bản tin và khóa học độc quyền ngay, không cần đăng nhập. Đăng ký để mở khóa toàn bộ nội dung.",
+        "Nền tảng đào tạo theo lộ trình 6 cấp — khám phá bản tin và khóa học độc quyền ngay, không cần đăng nhập. Đăng ký để mở khóa toàn bộ nội dung.",
       registerNow: "Đăng ký ngay",
       latestAnnouncements: "Bản tin mới nhất",
       viewAll: "Xem tất cả",
@@ -156,7 +156,7 @@ export const dictionaries = {
       minigame: "Mini-game & rewards",
     },
     dashboardNav: {
-      fiveLevelTraining: "5-Level training",
+      fiveLevelTraining: "6-Level training",
       myGroup: "My group",
       exclusiveCourses: "Exclusive courses",
       library: "Library",
@@ -207,7 +207,7 @@ export const dictionaries = {
     },
     dashboardLevelsPage: {
       accessDenied: "You don't have access to that content.",
-      title: "5-Level Training",
+      title: "6-Level Training",
       unlocked: "Unlocked",
       locked: "Not yet granted",
     },
@@ -228,7 +228,7 @@ export const dictionaries = {
     guestHomePage: {
       welcomeTitle: "Welcome to",
       intro:
-        "A 5-level training platform — explore announcements and exclusive courses right away, no sign-in required. Register to unlock everything.",
+        "A 6-level training platform — explore announcements and exclusive courses right away, no sign-in required. Register to unlock everything.",
       registerNow: "Register now",
       latestAnnouncements: "Latest announcements",
       viewAll: "View all",

@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { Prisma, type User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isRegistrationEnabled, isEmailVerificationEnabled } from "@/lib/access";
+import { DEFAULT_LEVEL } from "@/lib/levels";
 import { phoneNumberSchema, dateOfBirthSchema } from "@/lib/validation";
 import { createEmailVerificationToken } from "@/lib/verification-tokens";
 import { sendVerificationEmail } from "@/lib/email";
@@ -78,8 +79,10 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
         role: "STUDENT",
         status: "ACTIVE",
         // Every self-registered account starts at Cấp 1 immediately — no
-        // manual admin approval gate for new signups.
-        grantedLevel: "CUSTOMER",
+        // manual admin approval gate for new signups. DEFAULT_LEVEL rather
+        // than a literal, so renaming the ladder never silently re-points
+        // where new members land.
+        grantedLevel: DEFAULT_LEVEL,
         // Only left unverified when the toggle is actually on — otherwise
         // this account should never be retroactively affected if the
         // toggle gets turned on later (same reasoning as the pre-existing

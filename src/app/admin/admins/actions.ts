@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { requireActiveSuperAdmin, requireAdminManagementAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { Prisma, type AdminPermissionKind, type Level } from "@prisma/client";
+import { DEFAULT_LEVEL, TOP_LEVEL } from "@/lib/levels";
 
 export type AccountSearchResult = {
   id: string;
@@ -61,13 +62,13 @@ export async function searchAccountsForPermissionAction(query: string): Promise<
 // know a name to search for. Purely a browse convenience: the search box
 // above still finds thành viên of any cấp, unrestricted, once ≥2 chars are
 // typed (see searchAccountsForPermissionAction).
-export async function listCoreLeaderCandidatesAction(): Promise<AccountSearchResult[]> {
+export async function listTopLevelCandidatesAction(): Promise<AccountSearchResult[]> {
   const { isSuperAdmin } = await requireAdminManagementAccess();
   const rows = await prisma.user.findMany({
     where: {
       role: "STUDENT",
       status: "ACTIVE",
-      grantedLevel: "CORE_LEADER",
+      grantedLevel: TOP_LEVEL,
       ...(isSuperAdmin ? {} : { isAdminManager: false }),
     },
     select: { id: true, name: true, email: true, username: true, grantedLevel: true, avatarUrl: true },
@@ -118,7 +119,7 @@ export async function createAdminAccountAction(input: {
         // Irrelevant for an adminOnly account (it never reaches /dashboard,
         // see requireActiveStudent) but the column has no default — Cấp 1
         // is a harmless placeholder, same as every other new account.
-        grantedLevel: "CUSTOMER",
+        grantedLevel: DEFAULT_LEVEL,
       },
       select: { id: true, name: true, email: true },
     });

@@ -5,6 +5,7 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
+import { DEFAULT_LEVEL } from "@/lib/levels";
 
 // Thrown by authorize() once credentials are confirmed correct but the
 // account is locked, so the login action can send the user to a dedicated
@@ -155,7 +156,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             name: user.name ?? user.email.split("@")[0],
             role: "STUDENT",
             status: "ACTIVE",
-            grantedLevel: "CUSTOMER",
+            grantedLevel: DEFAULT_LEVEL,
             // Google already proved ownership of this address.
             emailVerified: new Date(),
           },

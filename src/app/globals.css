@@ -69,10 +69,14 @@
   --on-dark: rgba(255, 255, 255, 0.2);
   --on-dark-strong: rgba(255, 255, 255, 0.9);
 
-  /* Five student tiers read as one progression toward the brand, not five
-     unrelated hues: entry level starts neutral, climbs through the indigo
-     family, tier 4 lands exactly on --primary, and the top tier breaks out
-     into --accent gold as a distinct reward color. */
+  /* Six student tiers read as one progression toward the brand, not six
+     unrelated hues: the two entry tiers start neutral, climb through the
+     indigo family, tier 4 lands exactly on --primary, and the top tier breaks
+     out into --accent gold as a distinct reward color. Cấp 0 (Visitor) is the
+     palest of the neutrals — someone who has registered but holds nothing
+     yet should read as "not started", not as a rank of its own. */
+  --level-0: #94a3b8;
+  --level-0-bg: rgba(148, 163, 184, 0.12);
   --level-1: #64748b;
   --level-1-bg: rgba(100, 116, 139, 0.12);
   --level-2: #6366f1;
@@ -149,6 +153,8 @@
   --color-on-dark: var(--on-dark);
   --color-on-dark-strong: var(--on-dark-strong);
 
+  --color-level-0: var(--level-0);
+  --color-level-0-bg: var(--level-0-bg);
   --color-level-1: var(--level-1);
   --color-level-1-bg: var(--level-1-bg);
   --color-level-2: var(--level-2);

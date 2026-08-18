@@ -29,7 +29,7 @@ async function main() {
       name: "Super Admin",
       role: "SUPER_ADMIN",
       status: "ACTIVE",
-      grantedLevel: "CORE_LEADER",
+      grantedLevel: "TEAM_PARTNER",
     },
   });
 

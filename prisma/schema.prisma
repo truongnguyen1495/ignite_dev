@@ -21,12 +21,22 @@ enum AccountStatus {
   LOCKED
 }
 
+// Declared in ladder order (Cấp 0 → Cấp 5); src/lib/levels.ts is the single
+// source of truth for the rank and display name of each.
+//
+// Renamed from the old five-tier ladder (CUSTOMER/NEW_STARTER/JUNIOR/SENIOR/
+// CORE_LEADER) on 2026-08-18. Note the trap that migration had to work
+// around: CUSTOMER exists in both ladders but at a different rank — Cấp 1
+// before, Cấp 3 now — so the values could not simply be renamed in place.
+// Every account kept the rank it already held (old Cấp N → new Cấp N), which
+// is why VISITOR starts out empty; see the migration for the exact mapping.
 enum Level {
+  VISITOR
+  REGISTERED_MEMBER
+  IGNITE_MEMBER
   CUSTOMER
-  NEW_STARTER
-  JUNIOR
-  SENIOR
-  CORE_LEADER
+  BUSINESS_BUILDER
+  TEAM_PARTNER
 }
 
 enum LevelUpStatus {

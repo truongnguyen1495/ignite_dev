@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "IGNITE RapidX",
-    short_name: "IGNITE RapidX",
-    description: "Hệ thống đào tạo nội bộ 5 cấp",
+    name: "RapidX",
+    short_name: "RapidX",
+    description: "Hệ thống đào tạo nội bộ 6 cấp",
     start_url: "/",
     display: "standalone",
     background_color: "#f8fafc",

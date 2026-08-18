@@ -10,7 +10,7 @@ import { LevelBadge } from "@/components/ui/level-badge";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   searchAccountsForPermissionAction,
-  listCoreLeaderCandidatesAction,
+  listTopLevelCandidatesAction,
   createAdminAccountAction,
   type AccountSearchResult,
 } from "../actions";
@@ -31,7 +31,7 @@ export function NewAdminPicker() {
 
   useEffect(() => {
     let cancelled = false;
-    listCoreLeaderCandidatesAction().then((found) => {
+    listTopLevelCandidatesAction().then((found) => {
       if (!cancelled) {
         setCandidates(found);
         setLoadingCandidates(false);

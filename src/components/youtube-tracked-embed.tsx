@@ -9,7 +9,7 @@ import { useLessonWatchProgress } from "@/components/lesson-watch-progress-provi
 // user shared shows it.
 
 // Drop-in replacement for <YoutubeEmbed> used only on the two course-lesson
-// viewer pages (student dashboard + guest) — everywhere else (the 5-level
+// viewer pages (student dashboard + guest) — everywhere else (the 6-level
 // Lesson viewer, etc.) keeps the plain, hook-free <YoutubeEmbed> untouched,
 // since forcing this one into a client component with the YT Player API
 // would be unnecessary overhead for pages that don't need watch-gating.

@@ -3,11 +3,12 @@ import { Badge, type BadgeColor } from "./badge";
 import { LEVEL_ORDER, LEVEL_LABELS } from "@/lib/levels";
 
 const LEVEL_COLORS: Record<Level, BadgeColor> = {
-  CUSTOMER: "level1",
-  NEW_STARTER: "level2",
-  JUNIOR: "level3",
-  SENIOR: "level4",
-  CORE_LEADER: "level5",
+  VISITOR: "level0",
+  REGISTERED_MEMBER: "level1",
+  IGNITE_MEMBER: "level2",
+  CUSTOMER: "level3",
+  BUSINESS_BUILDER: "level4",
+  TEAM_PARTNER: "level5",
 };
 
 export function LevelBadge({ level, full = false }: { level: Level; full?: boolean }) {
