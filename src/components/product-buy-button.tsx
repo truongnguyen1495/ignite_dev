@@ -73,9 +73,10 @@ export function ProductBuyButton({
       }
       setOpen(false);
       if (goToCheckout) {
-        // Straight to checkout with ONLY this line — a basket holding three
-        // other things must not be billed because someone pressed "mua ngay"
-        // on a fourth.
+        // "Thanh toán" goes STRAIGHT to the checkout page, never through the
+        // cart — and carries only this line, so a basket holding three other
+        // things is not billed because someone pressed buy on a fourth. The
+        // checkout page says as much, since the short label no longer does.
         router.push(
           result.cartItemId
             ? `/dashboard/thanh-toan?item=${result.cartItemId}`
@@ -138,7 +139,7 @@ export function ProductBuyButton({
                   Thêm vào giỏ hàng
                 </Button>
                 <Button type="button" variant="primary" disabled={pending} isLoading={pending} onClick={() => addItem(true)}>
-                  Mua riêng món này
+                  Thanh toán
                 </Button>
               </div>
             </div>
