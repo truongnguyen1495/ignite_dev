@@ -274,6 +274,8 @@ model User {
   courseGrantsGiven         CourseAccessGrant[]         @relation("CourseGrantsGiven")
   courseLessonCompletions   CourseLessonCompletion[]    @relation("CourseLessonCompletions")
   courseLessonWatchProgress CourseLessonWatchProgress[] @relation("CourseLessonWatchProgress")
+  lessonCompletions         LessonCompletion[]          @relation("LessonCompletions")
+  lessonWatchProgress       LessonWatchProgress[]       @relation("LessonWatchProgress")
   courseLevelGrantsGiven    CourseLevelGrant[]          @relation("CourseLevelGrantsGiven")
   announcementReads         AnnouncementRead[]
   libraryGrants             LibraryAccessGrant[]        @relation("LibraryGrants")
@@ -390,19 +392,71 @@ model AdminPermission {
 }
 
 model Lesson {
-  id          String   @id @default(cuid())
-  level       Level
-  title       String
-  description String?  @db.Text
-  content     String   @db.Text
-  youtubeId   String?
-  order       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(cuid())
+  level           Level
+  title           String
+  description     String?  @db.Text
+  content         String   @db.Text
+  youtubeId       String?
+  // Same contract as CourseLesson.durationSeconds: fetched automatically
+  // from the YouTube Data API whenever youtubeId is set/changed (see
+  // fetchYoutubeDurationSeconds), never typed in by an admin. Null when
+  // there's no video or the lookup failed — the level track just omits the
+  // duration chip, and the watch gate below stays off for that lesson.
+  durationSeconds Int?
+  order           Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   quiz Quiz?
 
+  completions   LessonCompletion[]
+  watchProgress LessonWatchProgress[]
+
   @@index([level, order])
+}
+
+// "This student is done with this level lesson." Deliberately a separate
+// model from CourseLessonCompletion even though the shape is identical:
+// Lesson (the 6-level ladder) and CourseLesson (standalone courses) are
+// two unrelated tables in this schema, so their completion rows can't
+// share one.
+//
+// A row here means the student clicked "Đánh dấu đã học" and passed
+// whatever gate applied at that moment. It is NOT the whole story for a
+// lesson that owns a quiz — the level track treats such a lesson as
+// finished only when this row exists AND the quiz has a passing attempt
+// (see getLevelLessonProgress), which keeps the level-up condition
+// (passing every quiz, unchanged) strictly easier than finishing every
+// lesson, never the other way round.
+model LessonCompletion {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     User     @relation("LessonCompletions", fields: [studentId], references: [id], onDelete: Cascade)
+  lessonId    String
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completedAt DateTime @default(now())
+
+  @@unique([studentId, lessonId])
+  @@index([studentId])
+}
+
+// Level-lesson counterpart of CourseLessonWatchProgress — same reasons for
+// existing separately from LessonCompletion above (it's written from the
+// first tick of playback, long before anything is complete), and same
+// monotonic, actually-playing-seconds contract: seeking to the end adds
+// nothing, only real playback does.
+model LessonWatchProgress {
+  id             String   @id @default(cuid())
+  studentId      String
+  student        User     @relation("LessonWatchProgress", fields: [studentId], references: [id], onDelete: Cascade)
+  lessonId       String
+  lesson         Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  watchedSeconds Int      @default(0)
+  updatedAt      DateTime @updatedAt
+
+  @@unique([studentId, lessonId])
+  @@index([studentId])
 }
 
 model Quiz {

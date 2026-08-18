@@ -37,6 +37,7 @@ export function LessonWatchProgressProvider({
   lessonId,
   durationSeconds,
   initialWatchedSeconds,
+  syncAction = syncLessonWatchProgressAction,
   children,
 }: {
   lessonId: string;
@@ -46,10 +47,29 @@ export function LessonWatchProgressProvider({
   // started at (0, harmless) and nothing ever syncs.
   durationSeconds: number | null;
   initialWatchedSeconds: number;
+  // Which table the checkpoints land in. Defaults to the course-lesson
+  // action (CourseLessonWatchProgress) since that's where this provider
+  // started; the 6-level lesson viewer passes its own action instead,
+  // because a Lesson id means nothing to requireCourseLessonAccess and
+  // would just redirect. Any replacement must keep the same contract:
+  // monotonic, best-effort, never throws at the caller.
+  syncAction?: (lessonId: string, watchedSeconds: number) => Promise<void>;
   children: ReactNode;
 }) {
   const [watchedSeconds, setWatchedSeconds] = useState(initialWatchedSeconds);
   const lastSyncedRef = useRef(initialWatchedSeconds);
+  // Mirrors the state for the unmount checkpoint below, which only ever
+  // sees its first-render closure otherwise. Kept in sync from the effect,
+  // never written during render.
+  const watchedRef = useRef(initialWatchedSeconds);
+  // Held in a ref, not read straight from props inside the effects: a
+  // server-action prop gets a fresh identity on every router.refresh(),
+  // and listing it in the deps below would re-run the checkpoint effect
+  // on each one.
+  const syncRef = useRef(syncAction);
+  useEffect(() => {
+    syncRef.current = syncAction;
+  }, [syncAction]);
 
   function reportTick(seconds: number) {
     if (durationSeconds == null) return;
@@ -57,21 +77,26 @@ export function LessonWatchProgressProvider({
   }
 
   useEffect(() => {
+    watchedRef.current = watchedSeconds;
     if (durationSeconds == null) return;
     // Checkpoints every +5s of new watch time (not every single tick) —
     // frequent enough that a reload never loses much progress, infrequent
     // enough to not hammer the server on every second of playback.
     if (watchedSeconds - lastSyncedRef.current < 5 && watchedSeconds < durationSeconds) return;
     lastSyncedRef.current = watchedSeconds;
-    void syncLessonWatchProgressAction(lessonId, watchedSeconds);
+    void syncRef.current(lessonId, watchedSeconds);
   }, [watchedSeconds, durationSeconds, lessonId]);
 
   useEffect(() => {
     return () => {
       // Best-effort final checkpoint on unmount (navigating away mid-video)
       // — fire-and-forget, a cleanup function can't usefully await this.
-      if (durationSeconds != null && watchedSeconds > lastSyncedRef.current) {
-        void syncLessonWatchProgressAction(lessonId, watchedSeconds);
+      // Reads the ref, not the `watchedSeconds` binding: this effect runs
+      // once, so its closure holds the value from the very first render
+      // and the comparison below could never be true.
+      const latest = watchedRef.current;
+      if (durationSeconds != null && latest > lastSyncedRef.current) {
+        void syncRef.current(lessonId, latest);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -8,11 +8,11 @@ import { useLessonWatchProgress } from "@/components/lesson-watch-progress-provi
 // not a duration, so plain "N%" matches how the reference screenshot the
 // user shared shows it.
 
-// Drop-in replacement for <YoutubeEmbed> used only on the two course-lesson
-// viewer pages (student dashboard + guest) — everywhere else (the 6-level
-// Lesson viewer, etc.) keeps the plain, hook-free <YoutubeEmbed> untouched,
-// since forcing this one into a client component with the YT Player API
-// would be unnecessary overhead for pages that don't need watch-gating.
+// Drop-in replacement for <YoutubeEmbed> on every lesson viewer that
+// watch-gates: the two course-lesson pages (student dashboard + guest) and
+// the 6-level Lesson viewer. Pages with no gate at all (product/library
+// video embeds) keep the plain, hook-free <YoutubeEmbed>, since the YT
+// Player API and a client component would be overhead for nothing there.
 //
 // Tracks real accumulated wall-clock seconds spent actively PLAYING (via a
 // 1s poll of player.getPlayerState(), not player.getCurrentTime() deltas) —

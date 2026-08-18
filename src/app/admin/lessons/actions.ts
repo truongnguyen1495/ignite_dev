@@ -7,6 +7,7 @@ import { requireAdminPermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { ORDERED_LEVELS } from "@/lib/levels";
 import { parseYoutubeId } from "@/lib/youtube";
+import { fetchYoutubeDurationSeconds } from "@/lib/youtube-duration";
 import type { Level } from "@prisma/client";
 
 const levelEnum = z.enum(ORDERED_LEVELS as [Level, ...Level[]]);
@@ -57,6 +58,12 @@ export async function createLessonAction(
     return "Link YouTube không hợp lệ.";
   }
 
+  // Best-effort (null without a YOUTUBE_API_KEY or on any API failure) —
+  // the student-side level track shows a duration chip when it's known and
+  // the watch gate only applies to a lesson that has one. Same convention
+  // as createCourseLessonAction.
+  const durationSeconds = youtubeId ? await fetchYoutubeDurationSeconds(youtubeId) : null;
+
   await prisma.lesson.create({
     data: {
       title: parsed.data.title,
@@ -64,6 +71,7 @@ export async function createLessonAction(
       description: parsed.data.description || null,
       content: parsed.data.content,
       youtubeId,
+      durationSeconds,
       order: await nextOrderForLevel(parsed.data.level),
     },
   });
@@ -104,9 +112,22 @@ export async function updateLessonAction(
   // A lesson moved to a different level has no meaningful old order there —
   // append it to the end of the new level's list. Staying in the same level
   // leaves order untouched (ReorderModal owns repositioning within a level).
-  const current = await prisma.lesson.findUnique({ where: { id: lessonId }, select: { level: true } });
+  const current = await prisma.lesson.findUnique({
+    where: { id: lessonId },
+    select: { level: true, youtubeId: true, durationSeconds: true },
+  });
   const orderUpdate =
     current && current.level !== parsed.data.level ? { order: await nextOrderForLevel(parsed.data.level) } : {};
+
+  // Only re-fetches the duration when youtubeId actually changed (including
+  // being cleared) — re-hitting the YouTube API on every text-only edit
+  // would burn quota for nothing. Same rule as updateCourseLessonAction.
+  const durationSeconds =
+    youtubeId === (current?.youtubeId ?? null)
+      ? (current?.durationSeconds ?? null)
+      : youtubeId
+        ? await fetchYoutubeDurationSeconds(youtubeId)
+        : null;
 
   await prisma.lesson.update({
     where: { id: lessonId },
@@ -116,6 +137,7 @@ export async function updateLessonAction(
       description: parsed.data.description || null,
       content: parsed.data.content,
       youtubeId,
+      durationSeconds,
       ...orderUpdate,
     },
   });
