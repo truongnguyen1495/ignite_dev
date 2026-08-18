@@ -2,6 +2,7 @@
 
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
+import { sanitizeNextPath } from "@/lib/next-path";
 import { signIn, AccountLockedError, TooManyAttemptsError, EmailNotVerifiedError } from "@/lib/auth";
 
 export async function loginAction(
@@ -12,10 +13,14 @@ export async function loginAction(
   const password = formData.get("password");
 
   try {
+    // Where to land afterwards. Sanitised, never trusted: this value comes
+    // from a query string and feeds signIn's redirectTo, so an unchecked
+    // path here would be an open redirect on the login form itself.
+    const next = sanitizeNextPath(formData.get("next")?.toString()) ?? "/";
     await signIn("credentials", {
       email,
       password,
-      redirectTo: "/",
+      redirectTo: next,
     });
   } catch (error) {
     if (error instanceof AccountLockedError) {
@@ -35,6 +40,9 @@ export async function loginAction(
   }
 }
 
-export async function signInWithGoogleAction(): Promise<void> {
-  await signIn("google", { redirectTo: "/" });
+export async function signInWithGoogleAction(formData: FormData): Promise<void> {
+  // Same return path as the credentials form — otherwise choosing Google
+  // silently drops whatever the visitor was in the middle of buying.
+  const next = sanitizeNextPath(formData.get("next")?.toString()) ?? "/";
+  await signIn("google", { redirectTo: next });
 }

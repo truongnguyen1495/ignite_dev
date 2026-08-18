@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { addToCartAction } from "@/app/dashboard/cart/actions";
+import { loginUrlForPurchase } from "@/lib/next-path";
 import { Button } from "@/components/ui/button";
 import { PriceBlock } from "@/components/price-block";
 
@@ -14,10 +15,10 @@ import { PriceBlock } from "@/components/price-block";
 // look. The dialog it opens, though, is the same app-standard light-themed
 // one BuyButton uses (image/description-free here — the product's own page
 // already shows all of that) with an explicit X to back out and two real
-// choices: add to cart and stay, or go straight to checkout. Shipping
-// address isn't collected here — asked once for the whole cart at checkout
-// (see confirmCartOrderAction), since a cart can mix several products under
-// one address.
+// choices: add to cart and stay, or buy this one item on its own. The
+// second goes to /dashboard/thanh-toan with just this cart line — the
+// address and payment method are chosen there, and whatever else is sitting
+// in the basket is left untouched.
 //
 // The dialog is rendered via createPortal straight onto document.body —
 // critical, not cosmetic. Catalog grids (product-list.tsx) wrap each card in
@@ -59,18 +60,27 @@ export function ProductBuyButton({
     setError(undefined);
     startTransition(async () => {
       const result = await addToCartAction("PRODUCT", productId);
+      if (result.needsLogin) {
+        // Keeps the intent: they come back to this exact page, and the login
+        // screen names what they were buying instead of dropping them on a
+        // generic form. See loginUrlForPurchase.
+        router.push(loginUrlForPurchase(window.location.pathname, title));
+        return;
+      }
       if (result.error) {
         setError(result.error);
         return;
       }
       setOpen(false);
       if (goToCheckout) {
-        // Lands the buyer on the cart page itself, no dialog auto-opened —
-        // they review the cart and press "Xác nhận đơn hàng" there when
-        // ready. Still routes through the cart (not a direct payment page)
-        // since it may hold more than this one product, all checked out
-        // under one address.
-        router.push("/dashboard/cart");
+        // Straight to checkout with ONLY this line — a basket holding three
+        // other things must not be billed because someone pressed "mua ngay"
+        // on a fourth.
+        router.push(
+          result.cartItemId
+            ? `/dashboard/thanh-toan?item=${result.cartItemId}`
+            : "/dashboard/thanh-toan"
+        );
         return;
       }
       router.refresh();
@@ -128,7 +138,7 @@ export function ProductBuyButton({
                   Thêm vào giỏ hàng
                 </Button>
                 <Button type="button" variant="primary" disabled={pending} isLoading={pending} onClick={() => addItem(true)}>
-                  Thanh toán
+                  Mua riêng món này
                 </Button>
               </div>
             </div>

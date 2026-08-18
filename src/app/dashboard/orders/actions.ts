@@ -12,8 +12,19 @@ export async function cancelMyOrderAction(orderId: string) {
   const student = await requireActiveStudent();
   await requireSalesEnabled("/dashboard/orders");
   await prisma.order.updateMany({
-    where: { id: orderId, studentId: student.id, status: "PENDING", deletedAt: null },
-    data: { status: "CANCELLED", cancelledAt: new Date() },
+    // Either open status — a COD order is just as cancellable as one
+    // waiting on a transfer.
+    where: { id: orderId, studentId: student.id, status: { in: ["PENDING", "AWAITING_COD"] }, deletedAt: null },
+    data: {
+      status: "CANCELLED",
+      cancelledAt: new Date(),
+      // The buyer walking away is its own reason, and recording who did it
+      // is what keeps this out of the revivable bucket: only SYSTEM_EXPIRED
+      // orders can be pulled back, and someone who deliberately cancelled
+      // shouldn't have that decision undone from the admin side.
+      cancelReason: "CUSTOMER_CHANGED_MIND",
+      cancelledById: student.id,
+    },
   });
   revalidatePath("/dashboard/orders");
   revalidatePath(`/dashboard/orders/${orderId}`);

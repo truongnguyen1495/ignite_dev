@@ -111,7 +111,7 @@ export function GuestCourseList({
                         }}
                       />
                     ) : (
-                      <GuestBuyButton />
+                      <GuestBuyButton title={course.title} />
                     )}
                   </div>
                 )}

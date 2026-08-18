@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
 import { getPricing } from "@/lib/pricing";
 import { CartList, type CartListItem } from "./cart-list";
-import type { ShippingDetails } from "./actions";
 
 export default async function CartPage() {
   const student = await requireActiveStudent();
@@ -16,21 +15,6 @@ export default async function CartPage() {
     include: { course: true, libraryItem: true, product: true },
     orderBy: { createdAt: "asc" },
   });
-
-  // The buyer's "saved" shipping address = the one on their most recent
-  // shipped (physical) order. Lets checkout skip re-asking a returning buyer
-  // for an address they've already given, offering a one-tap confirm
-  // instead — see CartList. Null for anyone who has never ordered a physical
-  // item, who then gets the full shipping form.
-  const lastShipped = await prisma.order.findFirst({
-    where: { studentId: student.id, deletedAt: null, shippingAddress: { not: null } },
-    orderBy: { createdAt: "desc" },
-    select: { shippingName: true, shippingPhone: true, shippingAddress: true },
-  });
-  const savedShipping: ShippingDetails | null =
-    lastShipped?.shippingName && lastShipped.shippingPhone && lastShipped.shippingAddress
-      ? { name: lastShipped.shippingName, phone: lastShipped.shippingPhone, address: lastShipped.shippingAddress }
-      : null;
 
   const items: CartListItem[] = cartItems.map((c) => {
     if (c.kind === "COURSE") {
@@ -44,6 +28,7 @@ export default async function CartPage() {
         price: pricing?.forSale ? pricing.chargeAmount : 0,
         originalPrice: (pricing?.forSale && pricing.originalPrice) || null,
         unavailable: !pricing?.forSale,
+        quantity: c.quantity,
       };
     }
     if (c.kind === "LIBRARY_ITEM") {
@@ -57,6 +42,7 @@ export default async function CartPage() {
         price: pricing?.forSale ? pricing.chargeAmount : 0,
         originalPrice: (pricing?.forSale && pricing.originalPrice) || null,
         unavailable: !pricing?.forSale,
+        quantity: c.quantity,
       };
     }
     const pricing = c.product ? getPricing(c.product) : null;
@@ -69,6 +55,7 @@ export default async function CartPage() {
       price: pricing?.forSale ? pricing.chargeAmount : 0,
       originalPrice: (pricing?.forSale && pricing.originalPrice) || null,
       unavailable: !pricing?.forSale,
+      quantity: c.quantity,
     };
   });
 
@@ -85,7 +72,7 @@ export default async function CartPage() {
           </Link>
         }
       />
-      <CartList items={items} savedShipping={savedShipping} />
+      <CartList items={items} />
     </div>
   );
 }

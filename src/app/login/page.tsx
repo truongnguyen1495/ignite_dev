@@ -3,13 +3,14 @@ import { CheckCircle2, AlertTriangle } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isGoogleLoginEnabled } from "@/lib/access";
+import { sanitizeNextPath } from "@/lib/next-path";
 import { BrandLogo } from "@/components/brand-logo";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ verified?: string; reset?: string }>;
+  searchParams: Promise<{ verified?: string; reset?: string; next?: string; mua?: string }>;
 }) {
   const session = await auth();
   if (session?.user) {
@@ -20,11 +21,22 @@ export default async function LoginPage({
     // again, forever.
     const user = await prisma.user.findUnique({ where: { id: session.user.id } });
     if (user && user.status === "ACTIVE") {
-      redirect(user.role === "SUPER_ADMIN" ? "/admin" : "/dashboard");
+      // An already-signed-in visitor who arrived here from a buy button
+      // still deserves to land where they were going.
+      const { next: alreadyNext } = await searchParams;
+      redirect(
+        sanitizeNextPath(alreadyNext) ?? (user.role === "SUPER_ADMIN" ? "/admin" : "/dashboard")
+      );
     }
   }
 
-  const { verified, reset } = await searchParams;
+  const { verified, reset, next, mua } = await searchParams;
+  const returnTo = sanitizeNextPath(next);
+  // `mua` is attacker-controllable text rendered on a real login form, so it
+  // is capped hard. React escapes it (no XSS), but an unbounded string here
+  // would let a crafted link put an arbitrary message next to a password
+  // field — the surrounding labels stay fixed for the same reason.
+  const buyingLabel = mua ? mua.slice(0, 80) : null;
   const googleLoginEnabled = await isGoogleLoginEnabled();
 
   return (
@@ -52,7 +64,16 @@ export default async function LoginPage({
             Mật khẩu đã được đặt lại. Mời bạn đăng nhập.
           </p>
         )}
-        <LoginForm googleLoginEnabled={googleLoginEnabled} />
+        {buyingLabel && (
+          <div className="mb-4 rounded-lg border border-primary-border bg-primary-bg-subtle px-3 py-2.5">
+            <p className="text-xs text-muted">Bạn đang mua</p>
+            <p className="text-sm font-semibold text-foreground">{buyingLabel}</p>
+            <p className="mt-1 text-xs text-muted">
+              Đăng nhập xong bạn sẽ quay lại đúng chỗ đang mua.
+            </p>
+          </div>
+        )}
+        <LoginForm googleLoginEnabled={googleLoginEnabled} returnTo={returnTo} />
       </div>
     </div>
   );

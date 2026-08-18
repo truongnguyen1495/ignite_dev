@@ -19,7 +19,12 @@ export default async function AdminOverviewPage() {
     prisma.levelUpRequest.count({ where: { status: "PENDING" } }),
     prisma.lesson.count(),
     prisma.quizAttempt.count(),
-    salesEnabled ? prisma.order.count({ where: { status: "PENDING", deletedAt: null } }) : Promise.resolve(0),
+    // Both open statuses: a COD order awaiting collection is work an admin
+    // still has to do, and counting only PENDING would hide every one of them
+    // from this overview.
+    salesEnabled
+      ? prisma.order.count({ where: { status: { in: ["PENDING", "AWAITING_COD"] }, deletedAt: null } })
+      : Promise.resolve(0),
     chatEnabled
       ? Promise.all([getAdminSupportInbox(admin.id), getAdminGuestChatInbox(admin.id)])
       : Promise.resolve([[], []] as const),
@@ -32,7 +37,7 @@ export default async function AdminOverviewPage() {
     { label: "Bài học", value: lessonCount, icon: BookOpen, href: "/admin/lessons" },
     { label: "Lượt làm bài test", value: attemptCount, icon: ClipboardList, href: "/admin/results" },
     ...(salesEnabled
-      ? [{ label: "Đơn hàng chờ xác nhận", value: pendingOrders, icon: Receipt, href: "/admin/orders" }]
+      ? [{ label: "Đơn hàng cần xử lý", value: pendingOrders, icon: Receipt, href: "/admin/orders" }]
       : []),
     ...(chatEnabled
       ? [{ label: "Hỗ trợ thành viên chưa đọc", value: unreadSupportCount, icon: MessageCircle, href: "/admin/chat" }]

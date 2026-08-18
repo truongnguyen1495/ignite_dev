@@ -24,8 +24,13 @@ export async function fulfillOrder(orderId: string, confirmedById: string | null
   // interactive transaction, because Supabase's pooled connection can't hold
   // one open across round trips — see the array-form $transaction comment on
   // saveQuizAction in src/app/admin/quizzes/actions.ts.
+  // Accepts either open status: a bank transfer arriving (PENDING) and cash
+  // collected on delivery (AWAITING_COD) are the same event as far as this
+  // function is concerned — money is in, grant what was bought. Listing both
+  // explicitly rather than "not PAID, not CANCELLED" keeps the atomic guard
+  // exact: a cancelled order must never be resurrected by a stray confirm.
   const { count } = await prisma.order.updateMany({
-    where: { id: orderId, status: "PENDING" },
+    where: { id: orderId, status: { in: ["PENDING", "AWAITING_COD"] } },
     data: { status: "PAID", paidAt: new Date(), confirmedById },
   });
   if (count === 0) return;

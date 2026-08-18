@@ -4,6 +4,8 @@ import type { Order, OrderItem, User } from "@prisma/client";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatDateVN } from "@/lib/date";
 import { purgeExpiredDeletedOrders } from "@/lib/order-fulfillment";
+import { expireOverduePendingOrders } from "@/lib/order-expiry";
+import { activeRefundTotal } from "@/lib/refund-labels";
 import { OrdersList, type OrderListItem } from "./orders-list";
 
 type OrderWithRelations = Order & {
@@ -12,6 +14,7 @@ type OrderWithRelations = Order & {
     courseAccessGrant: { id: string } | null;
     libraryAccessGrant: { id: string } | null;
   })[];
+  refunds: { amount: number; deletedAt: Date | null }[];
 };
 
 function toListItem(order: OrderWithRelations): OrderListItem {
@@ -19,7 +22,19 @@ function toListItem(order: OrderWithRelations): OrderListItem {
     id: order.id,
     orderNumber: order.orderNumber,
     status: order.status,
+    paymentMethod: order.paymentMethod,
+    cancelReason: order.cancelReason,
     totalAmount: order.totalAmount,
+    // Summed here rather than in the client so a voided refund can't be
+    // mistaken for money that moved — see activeRefundTotal.
+    refundedTotal: activeRefundTotal(order.refunds),
+    shippedAt: order.shippedAt,
+    deliveredAt: order.deliveredAt,
+    carrier: order.carrier,
+    trackingCode: order.trackingCode,
+    // Only whether one exists — the bytes are fetched on demand from an
+    // admin-gated route, never inlined into the page payload.
+    hasPaymentProof: Boolean(order.paymentProofPath),
     createdAtLabel: formatDateVN(order.createdAt),
     studentName: order.student.name,
     studentEmail: order.student.email,
@@ -47,9 +62,14 @@ export default async function AdminOrdersPage() {
   const isSuperAdmin = admin.role === "SUPER_ADMIN";
 
   await purgeExpiredDeletedOrders();
+  // Unscoped: this is the one page that sees every buyer's orders, so it's
+  // where the whole backlog gets swept. Runs before the read below so the
+  // list can't show a status the very next click contradicts.
+  await expireOverduePendingOrders();
 
   const include = {
     student: { select: { name: true, email: true } },
+    refunds: { select: { amount: true, deletedAt: true } },
     items: {
       include: {
         courseAccessGrant: { select: { id: true } },

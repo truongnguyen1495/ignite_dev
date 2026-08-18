@@ -7,11 +7,17 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatVND } from "@/lib/currency";
 import { formatOrderCode, ORDER_STATUS_LABELS, ORDER_STATUS_BADGE_COLOR } from "@/lib/orders";
+import { expireOverduePendingOrders } from "@/lib/order-expiry";
 import { formatDateVN } from "@/lib/date";
 
 export default async function OrdersPage() {
   const student = await requireActiveStudent();
   await requireSalesEnabled("/dashboard");
+  // Scoped to this buyer — see the function's comment. Without it, a list
+  // row could still read "Chờ thanh toán" for an order that flips to "Đã
+  // hủy" the moment they open it, because the detail page runs the same
+  // check on its own.
+  await expireOverduePendingOrders(student.id);
   const orders = await prisma.order.findMany({
     where: { studentId: student.id, deletedAt: null },
     include: { items: true },
