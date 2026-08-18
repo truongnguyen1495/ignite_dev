@@ -6,7 +6,10 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { ChevronDown, Menu, X, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 export type NavItem = {
-  href: string;
+  // Optional so a row can be a pure grouping header ("Công cụ", "Đào tạo")
+  // that owns no page of its own — such a row toggles its children instead of
+  // navigating. Everything keyed per-item falls back to `label` when absent.
+  href?: string;
   label: string;
   // A pre-rendered icon element (e.g. <Users className="h-4 w-4" />), not a
   // component reference — Server Components can't pass function/component
@@ -16,6 +19,11 @@ export type NavItem = {
   // Unread-style count pill shown after the label, e.g. for "Bản tin". Only
   // rendered when > 0.
   badge?: number;
+  // Marks a destination that exists as a route but has no feature behind it
+  // yet — it still navigates (to a "sắp ra mắt" page), it just carries a
+  // label saying so. Deliberately NOT a disabled row: a greyed-out dead entry
+  // tells a member nothing, whereas a real page can explain what is coming.
+  comingSoon?: boolean;
   // Nested items shown collapsed under the parent, e.g. "Bài học"/"Kết
   // quả"/"Yêu cầu lên cấp" under "Thành viên" — collapsed by default, expands
   // automatically when the active route is one of the children (see the
@@ -23,9 +31,22 @@ export type NavItem = {
   children?: NavItem[];
 };
 
+// The stable per-item identity used for React keys and for the expand/collapse
+// override map. `href` where there is one, otherwise the label — a grouping
+// header has no route to key on, and two headers never share a label.
+function navItemKey(item: NavItem): string {
+  return item.href ?? item.label;
+}
+
 function isNavItemActive(item: NavItem, pathname: string): boolean {
+  if (!item.href) return false;
   return item.exact ? pathname === item.href : pathname.startsWith(item.href);
 }
+
+// Not routed through the i18n dictionary: the sidebar takes already-localised
+// labels from its caller, but this tag is rendered by the component itself and
+// both dictionaries would say the same thing anyway.
+const COMING_SOON_TAG = "Sắp ra mắt";
 
 const SIDEBAR_COLLAPSED_KEY = "sidebar-collapsed";
 
@@ -172,6 +193,37 @@ export function Sidebar({
     }`;
   const collapsibleClass = collapsed ? "md:hidden" : "";
 
+  // Label + optional "sắp ra mắt" tag + optional badge, shared by every row
+  // shape below (parent link, grouping button, child link) so the three can
+  // never drift apart. `hideOnCollapse` is only true for top-level rows: the
+  // whole children container already carries collapsibleClass, so repeating it
+  // per child would be redundant.
+  const rowContent = (item: NavItem, active: boolean, hideOnCollapse: boolean) => {
+    const hideClass = hideOnCollapse ? collapsibleClass : "";
+    return (
+      <>
+        {item.icon}
+        <span className={`flex-1 truncate ${hideClass}`}>{item.label}</span>
+        {item.comingSoon && (
+          <span
+            className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${hideClass} ${
+              active ? "bg-on-dark text-primary-foreground" : "bg-faint-bg text-faint"
+            }`}
+          >
+            {COMING_SOON_TAG}
+          </span>
+        )}
+        {!!item.badge && (
+          <span
+            className={`flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-accent-foreground ${hideClass}`}
+          >
+            {item.badge}
+          </span>
+        )}
+      </>
+    );
+  };
+
   return (
     <>
       {open && (
@@ -227,32 +279,44 @@ export function Sidebar({
         </div>
         <nav className={`flex-1 space-y-1 overflow-y-auto px-3 ${collapsed ? "md:px-2" : ""}`}>
           {items.map((item) => {
+            const itemKey = navItemKey(item);
             const active = isNavItemActive(item, pathname);
             const hasChildren = !!item.children?.length;
-            const childActive = hasChildren && item.children!.some((c) => pathname.startsWith(c.href));
-            const expanded = expandOverrides[item.href] ?? childActive;
+            const childActive =
+              hasChildren && item.children!.some((c) => isNavItemActive(c, pathname));
+            const expanded = expandOverrides[itemKey] ?? childActive;
+            const toggle = () => setExpandOverrides((o) => ({ ...o, [itemKey]: !expanded }));
 
             return (
-              <div key={item.href}>
+              <div key={itemKey}>
                 <div className="flex items-center gap-1">
-                  <Link
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    title={collapsed ? item.label : undefined}
-                    className={`${linkClasses(active)} flex-1`}
-                  >
-                    {item.icon}
-                    <span className={`flex-1 truncate ${collapsibleClass}`}>{item.label}</span>
-                    {!!item.badge && (
-                      <span className={`flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-accent-foreground ${collapsibleClass}`}>
-                        {item.badge}
-                      </span>
-                    )}
-                  </Link>
+                  {item.href ? (
+                    <Link
+                      href={item.href}
+                      onClick={() => setOpen(false)}
+                      title={collapsed ? item.label : undefined}
+                      className={`${linkClasses(active)} flex-1`}
+                    >
+                      {rowContent(item, active, true)}
+                    </Link>
+                  ) : (
+                    // A grouping header owns no page, so the row itself is the
+                    // expand control — clicking the label must do something,
+                    // and there is nowhere to navigate to.
+                    <button
+                      type="button"
+                      onClick={toggle}
+                      title={collapsed ? item.label : undefined}
+                      aria-expanded={expanded}
+                      className={`${linkClasses(false)} flex-1`}
+                    >
+                      {rowContent(item, false, true)}
+                    </button>
+                  )}
                   {hasChildren && (
                     <button
                       type="button"
-                      onClick={() => setExpandOverrides((o) => ({ ...o, [item.href]: !expanded }))}
+                      onClick={toggle}
                       aria-label={expanded ? `Thu gọn ${item.label}` : `Mở rộng ${item.label}`}
                       aria-expanded={expanded}
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${collapsibleClass} ${
@@ -270,23 +334,19 @@ export function Sidebar({
                 {hasChildren && expanded && (
                   <div className={`mt-1 space-y-1 border-l border-current/10 pl-3 ${collapsibleClass}`}>
                     {item.children!.map((child) => {
-                      const childIsActive = child.exact
-                        ? pathname === child.href
-                        : pathname.startsWith(child.href);
+                      const childIsActive = isNavItemActive(child, pathname);
+                      // A child without an href would be unreachable; the
+                      // sidebar renders exactly two levels, so a grouping row
+                      // only ever makes sense at the top.
+                      if (!child.href) return null;
                       return (
                         <Link
-                          key={child.href}
+                          key={navItemKey(child)}
                           href={child.href}
                           onClick={() => setOpen(false)}
                           className={linkClasses(childIsActive)}
                         >
-                          {child.icon}
-                          <span className="flex-1 truncate">{child.label}</span>
-                          {!!child.badge && (
-                            <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-accent-foreground">
-                              {child.badge}
-                            </span>
-                          )}
+                          {rowContent(child, childIsActive, false)}
                         </Link>
                       );
                     })}

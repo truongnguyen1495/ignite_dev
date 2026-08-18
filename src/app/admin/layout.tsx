@@ -20,6 +20,10 @@ import {
   UsersRound,
   Brain,
   Gift,
+  Banknote,
+  Share2,
+  TrendingUp,
+  Wallet,
 } from "lucide-react";
 import { requireAnyAdminAccess, isChatEnabled, isSalesEnabled, isWhiteboardsEnabled } from "@/lib/access";
 import { getAdminSupportInbox } from "@/lib/chat";
@@ -74,17 +78,21 @@ export default async function AdminLayout({
     supportThreads.reduce((sum, t) => sum + t.unreadCount, 0) +
     guestThreads.reduce((sum, t) => sum + t.unreadCount, 0);
 
-  // Every item not gated by a permission (Tổng quan) is visible to any admin,
-  // full or limited — the rest only show up if requireAnyAdminAccess granted
-  // that specific slice (or the caller is a full Super Admin).
-  const ALL_NAV_ITEMS: { item: NavItem; permission?: AdminPermissionKind }[] = [
-    { item: { href: "/admin", label: t.adminNav.overview, icon: <LayoutDashboard className={iconClass} />, exact: true } },
-    // No `permission` — unconditionally visible to anyone who reached
-    // /admin at all (this app has no MANAGE_WHITEBOARDS permission; the
-    // only gate is the whiteboardsEnabled master switch, checked below).
-    ...(whiteboardsEnabled
-      ? [{ item: { href: "/admin/whiteboards", label: t.adminNav.whiteboards, icon: <Presentation className={iconClass} /> } }]
-      : []),
+  // Visibility rule for every permission-gated row. MANAGE_CHAT and
+  // MANAGE_ORDERS also depend on their own feature master switch, which is
+  // why they resolve through their booleans instead of canManage().
+  const isVisible = (permission?: AdminPermissionKind) => {
+    if (!permission) return true;
+    if (permission === "MANAGE_CHAT") return canManageChat;
+    if (permission === "MANAGE_ORDERS") return canManageOrders;
+    return canManage(permission);
+  };
+  const visible = (entries: { item: NavItem; permission?: AdminPermissionKind }[]): NavItem[] =>
+    entries.filter(({ permission }) => isVisible(permission)).map(({ item }) => item);
+
+  // Content an admin authors. Whiteboards has no permission of its own (this
+  // app has no MANAGE_WHITEBOARDS) — only the master switch gates it.
+  const contentChildren = visible([
     {
       item: { href: "/admin/courses", label: t.adminNav.exclusiveCourses, icon: <Crown className={iconClass} /> },
       permission: "MANAGE_COURSES",
@@ -94,38 +102,61 @@ export default async function AdminLayout({
       permission: "MANAGE_LIBRARY",
     },
     {
-      item: { href: "/admin/products", label: t.adminNav.products, icon: <Package className={iconClass} /> },
-      permission: "MANAGE_PRODUCTS",
+      item: { href: "/admin/announcements", label: t.adminNav.announcements, icon: <Megaphone className={iconClass} /> },
+      permission: "MANAGE_ANNOUNCEMENTS",
     },
+    ...(whiteboardsEnabled
+      ? [{ item: { href: "/admin/whiteboards", label: t.adminNav.whiteboards, icon: <Presentation className={iconClass} /> } }]
+      : []),
+  ]);
+
+  // Everything touching money or the sales funnel, previously scattered
+  // through the flat list. The three comingSoon rows have no feature behind
+  // them yet so they borrow MANAGE_ORDERS, the closest existing grant. When
+  // they become real they need permissions of their own (MANAGE_AFFILIATE /
+  // MANAGE_FINANCE): whoever confirms an order should not automatically also
+  // see company revenue or edit commission rules.
+  const businessChildren = visible([
     {
       item: { href: "/admin/orders", label: t.adminNav.orders, icon: <Receipt className={iconClass} /> },
       permission: "MANAGE_ORDERS",
+    },
+    {
+      item: { href: "/admin/products", label: t.adminNav.products, icon: <Package className={iconClass} /> },
+      permission: "MANAGE_PRODUCTS",
     },
     {
       item: { href: "/admin/consultations", label: t.adminNav.consultations, icon: <Phone className={iconClass} /> },
       permission: "MANAGE_PRODUCTS",
     },
     {
-      item: { href: "/admin/announcements", label: t.adminNav.announcements, icon: <Megaphone className={iconClass} /> },
-      permission: "MANAGE_ANNOUNCEMENTS",
+      item: {
+        href: "/admin/affiliate",
+        label: t.adminNav.affiliate,
+        icon: <Share2 className={iconClass} />,
+        comingSoon: true,
+      },
+      permission: "MANAGE_ORDERS",
     },
     {
       item: {
-        href: "/admin/chat",
-        label: t.adminNav.support,
-        icon: <MessageCircle className={iconClass} />,
-        badge: unreadSupportCount,
+        href: "/admin/revenue",
+        label: t.adminNav.revenue,
+        icon: <TrendingUp className={iconClass} />,
+        comingSoon: true,
       },
-      permission: "MANAGE_CHAT",
+      permission: "MANAGE_ORDERS",
     },
-  ];
-
-  const NAV_ITEMS: NavItem[] = ALL_NAV_ITEMS.filter(({ permission }) => {
-    if (!permission) return true;
-    if (permission === "MANAGE_CHAT") return canManageChat;
-    if (permission === "MANAGE_ORDERS") return canManageOrders;
-    return canManage(permission);
-  }).map(({ item }) => item);
+    {
+      item: {
+        href: "/admin/finance",
+        label: t.adminNav.finance,
+        icon: <Wallet className={iconClass} />,
+        comingSoon: true,
+      },
+      permission: "MANAGE_ORDERS",
+    },
+  ]);
 
   // "Bài học" / "Kết quả" / "Yêu cầu lên cấp" nest under "Thành viên" so the
   // sidebar reads shorter, per user request — collapsed by default, the
@@ -151,18 +182,6 @@ export default async function AdminLayout({
       : []),
   ];
 
-  const studentInsertCount = canManage("MANAGE_STUDENTS") ? 1 : studentChildren.length;
-  if (canManage("MANAGE_STUDENTS")) {
-    NAV_ITEMS.splice(1, 0, {
-      href: "/admin/students",
-      label: t.adminNav.students,
-      icon: <Users className={iconClass} />,
-      children: studentChildren.length > 0 ? studentChildren : undefined,
-    });
-  } else {
-    NAV_ITEMS.splice(1, 0, ...studentChildren);
-  }
-
   // "Nhóm của tôi" admin surfaces — "Khám phá bản thân" (nhập kết quả trắc
   // nghiệm) and "Mini-game & thưởng" nest under "Danh sách nhóm" the same
   // way lessons/results/level-up nest under "Thành viên" above, including the
@@ -180,28 +199,62 @@ export default async function AdminLayout({
       ? [{ href: "/admin/minigame", label: t.adminNav.minigame, icon: <Gift className={iconClass} /> }]
       : []),
   ];
-  const groupInsertIndex = 1 + studentInsertCount;
-  if (canManage("MANAGE_GROUPS")) {
-    NAV_ITEMS.splice(groupInsertIndex, 0, {
-      href: "/admin/groups",
-      label: t.adminNav.groups,
-      icon: <UsersRound className={iconClass} />,
-      children: groupChildren.length > 0 ? groupChildren : undefined,
-    });
-  } else {
-    NAV_ITEMS.splice(groupInsertIndex, 0, ...groupChildren);
-  }
 
-  // Admin management needs its own explicit canManageAdmins grant even for
-  // an Admin Manager (see requireAdminManagementAccess in src/lib/access.ts)
-  // — isAdminManager alone isn't enough. Settings (feature toggles) stays
+  // Built in display order rather than assembled with splice() at computed
+  // indices, which is how this read before: every row added or removed shifted
+  // the offsets the later inserts depended on. A grouping row is dropped
+  // entirely when the admin can see none of its children, so a limited admin
+  // never gets an empty header that expands into nothing.
+  //
+  // Admin management needs its own explicit canManageAdmins grant even for an
+  // Admin Manager (see requireAdminManagementAccess in src/lib/access.ts) —
+  // isAdminManager alone isn't enough. Settings (feature toggles) stays
   // Super-Admin only no matter what, so an Admin Manager never sees it.
-  if (isSuperAdmin || (isAdminManager && canManageAdmins)) {
-    NAV_ITEMS.push({ href: "/admin/admins", label: t.adminNav.adminManagement, icon: <UserCog className={iconClass} /> });
-  }
-  if (isSuperAdmin) {
-    NAV_ITEMS.push({ href: "/admin/settings", label: t.adminNav.settings, icon: <Settings className={iconClass} /> });
-  }
+  const NAV_ITEMS: NavItem[] = [
+    { href: "/admin", label: t.adminNav.overview, icon: <LayoutDashboard className={iconClass} />, exact: true },
+    ...(contentChildren.length > 0
+      ? [{ label: t.adminNav.content, icon: <BookOpen className={iconClass} />, children: contentChildren }]
+      : []),
+    ...(businessChildren.length > 0
+      ? [{ label: t.adminNav.business, icon: <Banknote className={iconClass} />, children: businessChildren }]
+      : []),
+    ...(canManageChat
+      ? [
+          {
+            href: "/admin/chat",
+            label: t.adminNav.support,
+            icon: <MessageCircle className={iconClass} />,
+            badge: unreadSupportCount,
+          },
+        ]
+      : []),
+    ...(canManage("MANAGE_STUDENTS")
+      ? [
+          {
+            href: "/admin/students",
+            label: t.adminNav.students,
+            icon: <Users className={iconClass} />,
+            children: studentChildren.length > 0 ? studentChildren : undefined,
+          },
+        ]
+      : studentChildren),
+    ...(canManage("MANAGE_GROUPS")
+      ? [
+          {
+            href: "/admin/groups",
+            label: t.adminNav.groups,
+            icon: <UsersRound className={iconClass} />,
+            children: groupChildren.length > 0 ? groupChildren : undefined,
+          },
+        ]
+      : groupChildren),
+    ...(isSuperAdmin || (isAdminManager && canManageAdmins)
+      ? [{ href: "/admin/admins", label: t.adminNav.adminManagement, icon: <UserCog className={iconClass} /> }]
+      : []),
+    ...(isSuperAdmin
+      ? [{ href: "/admin/settings", label: t.adminNav.settings, icon: <Settings className={iconClass} /> }]
+      : []),
+  ];
 
   return (
     <SidebarProvider>

@@ -1,17 +1,33 @@
 import Link from "next/link";
 import {
-  LayoutDashboard,
   ArrowUpCircle,
-  Video,
-  UserCircle,
-  Megaphone,
+  Award,
+  Banknote,
+  BookOpen,
+  Briefcase,
+  Contact,
+  FileText,
+  Globe,
+  GraduationCap,
+  LayoutDashboard,
   Library,
+  ListChecks,
+  Megaphone,
   MessageCircle,
-  ShieldCheck,
-  ShoppingBag,
   Package,
   Presentation,
+  Receipt,
+  Route,
+  Share2,
+  ShieldCheck,
+  ShoppingBag,
+  TrendingUp,
+  UserCircle,
+  UserPlus,
   Users,
+  Video,
+  Wallet,
+  Wrench,
 } from "lucide-react";
 import { requireActiveStudent, isChatEnabled, isSalesEnabled, isWhiteboardsEnabled, getAdminPermissions } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
@@ -81,33 +97,101 @@ export default async function DashboardLayout({
       chatInbox.groupRooms.reduce((sum, r) => sum + r.unreadCount, 0)
     : 0;
 
+  // Seven numbered groups from the product's own IA sketch, plus an eighth
+  // ("Kinh doanh") the sketch omitted — selling had no home in it, and
+  // Sản phẩm/Đơn hàng were already live features that needed one.
+  //
+  // Entries marked `comingSoon` point at a real route that renders
+  // <ComingSoon>; nothing here is a dead link. See NavItem in sidebar.tsx.
+  //
+  // "Lộ trình" carries /dashboard because that page IS the six-tier ladder;
+  // the separate "Dashboard" overview (points, streak, today's tasks) doesn't
+  // exist yet, so it sits on its own future route.
   const NAV_ITEMS: NavItem[] = [
-    { href: "/dashboard", label: t.dashboardNav.fiveLevelTraining, icon: <LayoutDashboard className={iconClass} />, exact: true },
-    { href: "/dashboard/my-group", label: t.dashboardNav.myGroup, icon: <Users className={iconClass} /> },
-    { href: "/dashboard/courses", label: t.dashboardNav.exclusiveCourses, icon: <Video className={iconClass} /> },
-    { href: "/dashboard/library", label: t.dashboardNav.library, icon: <Library className={iconClass} /> },
-    { href: "/dashboard/products", label: t.dashboardNav.products, icon: <Package className={iconClass} /> },
+    {
+      href: "/dashboard/tong-quan",
+      label: t.dashboardNav.dashboard,
+      icon: <LayoutDashboard className={iconClass} />,
+      comingSoon: true,
+    },
+    { href: "/dashboard/profile", label: t.dashboardNav.profile, icon: <UserCircle className={iconClass} /> },
+    {
+      href: "/dashboard/library",
+      label: t.dashboardNav.library,
+      icon: <Library className={iconClass} />,
+      children: [
+        { href: "/dashboard/library/sach", label: t.dashboardNav.libraryBooks, icon: <BookOpen className={iconClass} /> },
+        {
+          href: "/dashboard/library/tai-lieu",
+          label: t.dashboardNav.libraryDocuments,
+          icon: <FileText className={iconClass} />,
+        },
+      ],
+    },
     {
       href: "/dashboard/announcements",
       label: t.dashboardNav.announcements,
       icon: <Megaphone className={iconClass} />,
       badge: unreadAnnouncementCount,
     },
-    ...(chatEnabled
-      ? [
-          {
-            href: "/dashboard/chat",
-            label: t.dashboardNav.chat,
-            icon: <MessageCircle className={iconClass} />,
-            badge: unreadChatCount,
-          },
-        ]
-      : []),
-    ...(whiteboardsEnabled
-      ? [{ href: "/dashboard/whiteboards", label: t.dashboardNav.whiteboards, icon: <Presentation className={iconClass} /> }]
-      : []),
-    { href: "/dashboard/level-up", label: t.dashboardNav.levelUp, icon: <ArrowUpCircle className={iconClass} /> },
-    { href: "/dashboard/profile", label: t.dashboardNav.profile, icon: <UserCircle className={iconClass} /> },
+    {
+      label: t.dashboardNav.tools,
+      icon: <Wrench className={iconClass} />,
+      children: [
+        ...(chatEnabled
+          ? [
+              {
+                href: "/dashboard/chat",
+                label: t.dashboardNav.chat,
+                icon: <MessageCircle className={iconClass} />,
+                badge: unreadChatCount,
+              },
+            ]
+          : []),
+        ...(whiteboardsEnabled
+          ? [{ href: "/dashboard/whiteboards", label: t.dashboardNav.whiteboards, icon: <Presentation className={iconClass} /> }]
+          : []),
+        { href: "/dashboard/leads", label: t.dashboardNav.leadManagement, icon: <UserPlus className={iconClass} />, comingSoon: true },
+        { href: "/dashboard/checklist", label: t.dashboardNav.checklist, icon: <ListChecks className={iconClass} />, comingSoon: true },
+        {
+          href: "/dashboard/business-tools",
+          label: t.dashboardNav.businessTools,
+          icon: <Briefcase className={iconClass} />,
+          comingSoon: true,
+        },
+      ],
+    },
+    {
+      label: t.dashboardNav.training,
+      icon: <GraduationCap className={iconClass} />,
+      children: [
+        { href: "/dashboard", label: t.dashboardNav.roadmap, icon: <Route className={iconClass} />, exact: true },
+        { href: "/dashboard/courses", label: t.dashboardNav.exclusiveCourses, icon: <Video className={iconClass} /> },
+        { href: "/dashboard/level-up", label: t.dashboardNav.levelUp, icon: <ArrowUpCircle className={iconClass} /> },
+        { href: "/dashboard/certificates", label: t.dashboardNav.certificates, icon: <Award className={iconClass} />, comingSoon: true },
+      ],
+    },
+    {
+      label: t.dashboardNav.communityAndTeam,
+      icon: <Users className={iconClass} />,
+      children: [
+        { href: "/dashboard/community", label: t.dashboardNav.community, icon: <Globe className={iconClass} />, comingSoon: true },
+        { href: "/dashboard/my-group", label: t.dashboardNav.myGroup, icon: <Users className={iconClass} /> },
+        { href: "/dashboard/members", label: t.dashboardNav.members, icon: <Contact className={iconClass} />, comingSoon: true },
+        { href: "/dashboard/team-leads", label: t.dashboardNav.teamLeads, icon: <UserPlus className={iconClass} />, comingSoon: true },
+      ],
+    },
+    {
+      label: t.dashboardNav.business,
+      icon: <Banknote className={iconClass} />,
+      children: [
+        { href: "/dashboard/products", label: t.dashboardNav.products, icon: <Package className={iconClass} /> },
+        { href: "/dashboard/orders", label: t.dashboardNav.orders, icon: <Receipt className={iconClass} /> },
+        { href: "/dashboard/affiliate", label: t.dashboardNav.affiliate, icon: <Share2 className={iconClass} />, comingSoon: true },
+        { href: "/dashboard/revenue", label: t.dashboardNav.revenue, icon: <TrendingUp className={iconClass} />, comingSoon: true },
+        { href: "/dashboard/finance", label: t.dashboardNav.finance, icon: <Wallet className={iconClass} />, comingSoon: true },
+      ],
+    },
   ];
 
   return (
@@ -138,9 +222,6 @@ export default async function DashboardLayout({
                 <span className="min-w-0">
                   <span className="block truncate text-xs font-medium text-foreground">{student.name}</span>
                   <span className="flex items-center gap-1.5">
-                    {student.username && (
-                      <span className="truncate text-[11px] text-muted">@{student.username}</span>
-                    )}
                     <LevelBadge level={student.grantedLevel} />
                   </span>
                 </span>
