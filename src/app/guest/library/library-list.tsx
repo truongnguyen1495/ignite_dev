@@ -65,14 +65,14 @@ export function GuestLibraryList({
               )}
               <div className="mt-auto space-y-3 pt-4">
                 <div className="flex flex-nowrap items-center justify-between gap-2">
-                  <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
+                  <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-dark-muted">
                     {item.fullyUnlocked
                       ? "Đọc toàn bộ"
                       : item.guestPreviewPages
                         ? `Xem thử ${item.guestPreviewPages} trang`
                         : "Xem thử"}
                   </span>
-                  <span className="flex shrink-0 items-center gap-0.5 whitespace-nowrap text-xs font-medium text-indigo-400">
+                  <span className="flex shrink-0 items-center gap-0.5 whitespace-nowrap text-xs font-medium text-primary">
                     {item.fullyUnlocked ? "Đọc ngay" : "Đọc thử"}
                     <ChevronRight className="h-3.5 w-3.5" />
                   </span>

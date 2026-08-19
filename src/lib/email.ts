@@ -24,7 +24,7 @@ function emailShell(title: string, bodyHtml: string): string {
 }
 
 function buttonHtml(href: string, label: string): string {
-  return `<a href="${href}" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#2563EB;color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">${label}</a>`;
+  return `<a href="${href}" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#7C3AED;color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">${label}</a>`;
 }
 
 export async function sendVerificationEmail(to: string, token: string): Promise<void> {

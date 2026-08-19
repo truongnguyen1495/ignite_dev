@@ -2,103 +2,139 @@
 @plugin "@tailwindcss/typography";
 
 :root {
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --surface-hover: #f1f5f9;
-  --border: #e5e7eb;
-  --border-strong: #d1d5db;
-  --foreground: #111827;
-  --muted: #6b7280;
-  --faint: #9ca3af;
-  --faint-bg: rgba(156, 163, 175, 0.14);
+  /* Dark by commitment, not by preference: there is no light counterpart and
+     no prefers-color-scheme switch. Three grounds stack from deepest to
+     nearest — --background is the page, --surface is a card sitting on it,
+     --surface-hover is that card lifted. Chrome that used to go *darker* than
+     the page to stand out (the admin rail, "dark" content cards) now goes
+     *lighter*, since the page itself is already the darkest thing on screen. */
+  --background: #050712;
+  --surface: #0b1020;
+  --surface-hover: #111634;
+  /* Borders are a translucent tint of --primary rather than a grey: on a
+     near-black ground a neutral hairline reads as dirt, while a low-alpha
+     purple reads as the same material the rest of the UI is made of. */
+  --border: rgba(168, 85, 247, 0.15);
+  --border-strong: rgba(168, 85, 247, 0.28);
+  --foreground: #f5f3ff;
+  --muted: #9ca3cf;
+  --faint: #6b729b;
+  --faint-bg: rgba(156, 163, 207, 0.1);
 
-  /* Admin sidebar is a fixed navy rail, distinct from the light app shell —
-     its own text tokens exist because text-foreground/text-muted (dark text
-     for a light background) would be unreadable against --sidebar. */
-  --sidebar: #0f172a;
-  --sidebar-hover: #1e293b;
-  --sidebar-foreground: #f8fafc;
-  --sidebar-muted: #94a3b8;
+  /* The admin sidebar is still its own rail, but it no longer needs its own
+     text tokens for contrast reasons — the whole app is dark now, so
+     --sidebar-foreground/-muted match --foreground/--muted exactly. They stay
+     separate tokens because the rail may diverge from the page again later,
+     which is the same reason they existed in the first place. */
+  --sidebar: #0b1020;
+  --sidebar-hover: #111634;
+  --sidebar-foreground: #f5f3ff;
+  --sidebar-muted: #9ca3cf;
 
-  --primary: #4338ca;
-  --primary-hover: #3730a3;
-  --primary-foreground: #ffffff;
+  --primary: #a855f7;
+  /* Hover goes LIGHTER, never darker. --primary-foreground below is a
+     near-black, so a darker hover would drop the label's contrast instead of
+     raising it — the opposite of what a hover state is for. */
+  --primary-hover: #c084fc;
+  /* Near-black on the fill, not white. White on #a855f7 measures 3.96:1,
+     under the 4.5:1 AA floor for button-sized text; this measures 4.93:1.
+     Same reasoning --accent-foreground has always used for amber. */
+  --primary-foreground: #14061f;
+  /* The literal glow: box-shadows and focus rings around primary surfaces.
+     Deliberately NOT the hover colour — as a fill it is too dark to carry
+     --primary-foreground, and as text on --background it only reaches 3.52:1. */
+  --primary-glow: #7c3aed;
   /* Pre-mixed (not Tailwind's /NN opacity-modifier syntax, which compiles to
      color-mix() in Tailwind v4 and silently fails on Safari < 16.2 — old
      iPhones render these solid instead of translucent, hiding same-color
      text on top). Recompute these by hand if --primary ever changes. */
-  --primary-bg: rgba(67, 56, 202, 0.1);
-  --primary-bg-subtle: rgba(67, 56, 202, 0.05);
-  --primary-bg-strong: rgba(67, 56, 202, 0.15);
-  --primary-border: rgba(67, 56, 202, 0.3);
-  --primary-border-strong: rgba(67, 56, 202, 0.4);
-  --primary-border-hover: rgba(67, 56, 202, 0.5);
+  --primary-bg: rgba(168, 85, 247, 0.12);
+  --primary-bg-subtle: rgba(168, 85, 247, 0.06);
+  --primary-bg-strong: rgba(168, 85, 247, 0.18);
+  --primary-border: rgba(168, 85, 247, 0.3);
+  --primary-border-strong: rgba(168, 85, 247, 0.45);
+  --primary-border-hover: rgba(168, 85, 247, 0.55);
 
   /* Accent is reserved for earned/celebratory moments (streaks, level-up,
      quiz passed, badges) — never a generic CTA, and never interchangeable
-     with --warning even though both are amber-family. accent-foreground is
-     dark, not white: amber-500 fails AA contrast with white text. */
-  --accent: #f59e0b;
-  --accent-hover: #d97706;
-  --accent-foreground: #1c1917;
-  --accent-bg: rgba(245, 158, 11, 0.14);
-  --accent-border: rgba(245, 158, 11, 0.4);
+     with --warning even though both are warm. accent-foreground is dark, not
+     white: gold fails AA contrast with white text by a wide margin. */
+  --accent: #facc15;
+  --accent-hover: #fde047;
+  --accent-foreground: #1c1400;
+  --accent-bg: rgba(250, 204, 21, 0.12);
+  --accent-border: rgba(250, 204, 21, 0.35);
 
-  --info: #0891b2;
-  --info-bg: rgba(8, 145, 178, 0.12);
-  --info-border: rgba(8, 145, 178, 0.3);
+  --info: #38bdf8;
+  --info-bg: rgba(56, 189, 248, 0.12);
+  --info-border: rgba(56, 189, 248, 0.32);
 
-  --success: #16a34a;
-  --success-bg: rgba(22, 163, 74, 0.12);
-  --success-border: rgba(22, 163, 74, 0.3);
-  --warning: #d97706;
-  --warning-bg: rgba(217, 119, 6, 0.14);
-  --warning-border: rgba(217, 119, 6, 0.3);
-  --warning-border-strong: rgba(217, 119, 6, 0.4);
-  --danger: #dc2626;
-  --danger-bg: rgba(220, 38, 38, 0.12);
-  --danger-border: rgba(220, 38, 38, 0.3);
+  /* Neither success nor warning came with the brand palette. Both are picked
+     to clear AAA on --background and, just as importantly, to stay
+     distinguishable from --accent: warning is pushed to orange precisely so a
+     "cần chú ý" badge never reads as a gold "đã đạt" one. */
+  /* The -foreground tokens are new, and they are not cosmetic. On the light
+     theme these three were dark colours (#16a34a, #d97706, #dc2626) that
+     carried white text comfortably. Inverting the app inverted them too, and
+     white on the new light-on-dark versions measures 1.92:1, 2.26:1 and
+     2.77:1 — unreadable. Anything filled with a solid semantic colour takes
+     the matching -foreground, exactly as --accent has always done. */
+  --success: #34d399;
+  --success-foreground: #04170f;
+  --success-bg: rgba(52, 211, 153, 0.12);
+  --success-border: rgba(52, 211, 153, 0.32);
+  --warning: #fb923c;
+  --warning-foreground: #26120a;
+  --warning-bg: rgba(251, 146, 60, 0.13);
+  --warning-border: rgba(251, 146, 60, 0.32);
+  --warning-border-strong: rgba(251, 146, 60, 0.45);
+  --danger: #f87171;
+  --danger-foreground: #2a0708;
+  --danger-bg: rgba(248, 113, 113, 0.12);
+  --danger-border: rgba(248, 113, 113, 0.32);
 
   /* Neutral overlay tints — bg-black/NN and text-white/NN go through the
      same color-mix() codepath as the custom theme colors above, even
      though black/white are Tailwind's built-in palette. Used for modal
      backdrops (confirm dialogs, danger-action dialogs) and icon tints on
-     dark/gradient surfaces. */
-  --overlay: rgba(0, 0, 0, 0.5);
-  --overlay-strong: rgba(0, 0, 0, 0.6);
+     dark/gradient surfaces. Pushed well past the old 0.5/0.6: a half-opaque
+     black over a page that is already near-black barely separates the dialog
+     from what is behind it. */
+  --overlay: rgba(2, 3, 8, 0.72);
+  --overlay-strong: rgba(2, 3, 8, 0.85);
   --on-dark: rgba(255, 255, 255, 0.2);
   --on-dark-strong: rgba(255, 255, 255, 0.9);
 
   /* Six student tiers read as one progression toward the brand, not six
      unrelated hues: the two entry tiers start neutral, climb through the
-     indigo family, tier 4 lands exactly on --primary, and the top tier breaks
+     violet family, tier 4 lands exactly on --primary, and the top tier breaks
      out into --accent gold as a distinct reward color. Cấp 0 (Visitor) is the
-     palest of the neutrals — someone who has registered but holds nothing
+     dimmest of the neutrals — someone who has registered but holds nothing
      yet should read as "not started", not as a rank of its own. */
-  --level-0: #94a3b8;
-  --level-0-bg: rgba(148, 163, 184, 0.12);
-  --level-1: #64748b;
-  --level-1-bg: rgba(100, 116, 139, 0.12);
-  --level-2: #6366f1;
-  --level-2-bg: rgba(99, 102, 241, 0.12);
-  --level-3: #4f46e5;
-  --level-3-bg: rgba(79, 70, 229, 0.12);
-  --level-4: #4338ca;
-  --level-4-bg: rgba(67, 56, 202, 0.12);
-  --level-5: #f59e0b;
-  --level-5-bg: rgba(245, 158, 11, 0.14);
+  --level-0: #6b729b;
+  --level-0-bg: rgba(107, 114, 155, 0.14);
+  --level-1: #9ca3cf;
+  --level-1-bg: rgba(156, 163, 207, 0.14);
+  --level-2: #818cf8;
+  --level-2-bg: rgba(129, 140, 248, 0.14);
+  --level-3: #a78bfa;
+  --level-3-bg: rgba(167, 139, 250, 0.14);
+  --level-4: #a855f7;
+  --level-4-bg: rgba(168, 85, 247, 0.14);
+  --level-5: #facc15;
+  --level-5-bg: rgba(250, 204, 21, 0.14);
 
-  /* Dark content surfaces (lesson "reading mode", dark media cards) — kept
-     separate from --sidebar even though values start identical, since one is
-     structural chrome and the other is inline page content; they may diverge
-     later. Deliberately shares --sidebar's navy family instead of the
-     unrelated neutral-* gray those surfaces used before, so the app has one
-     dark visual language instead of two. */
-  --dark-surface: #0f172a;
-  --dark-surface-raised: #1e293b;
-  --dark-border: #334155;
-  --dark-foreground: #f8fafc;
-  --dark-muted: #94a3b8;
+  /* Named "dark" from when the app shell was light and these were the one
+     dark thing on the page (lesson "reading mode", dark media cards). On a
+     dark shell that inverts: to stand out they now have to sit ABOVE
+     --surface, not below it. The names are kept because sixteen files ask for
+     them by name and they still mean the same thing — "this block is its own
+     surface, distinct from the page around it". */
+  --dark-surface: #111634;
+  --dark-surface-raised: #1a2145;
+  --dark-border: rgba(168, 85, 247, 0.22);
+  --dark-foreground: #f5f3ff;
+  --dark-muted: #9ca3cf;
 }
 
 @theme inline {
@@ -120,6 +156,7 @@
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-glow: var(--primary-glow);
   --color-primary-bg: var(--primary-bg);
   --color-primary-bg-subtle: var(--primary-bg-subtle);
   --color-primary-bg-strong: var(--primary-bg-strong);
@@ -138,13 +175,16 @@
   --color-info-border: var(--info-border);
 
   --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-success-bg: var(--success-bg);
   --color-success-border: var(--success-border);
   --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-warning-bg: var(--warning-bg);
   --color-warning-border: var(--warning-border);
   --color-warning-border-strong: var(--warning-border-strong);
   --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
   --color-danger-bg: var(--danger-bg);
   --color-danger-border: var(--danger-border);
 

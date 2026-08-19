@@ -303,7 +303,7 @@ export function Sidebar({
             if (isSection(entry)) {
               return (
                 <div key={itemKey} className="pt-3 first:pt-1">
-                  <div className={`border-t ${navy ? "border-white/10" : "border-border"}`} />
+                  <div className={`border-t ${navy ? "border-sidebar-hover" : "border-border"}`} />
                   {!collapsed && (
                     <p
                       className={`px-2 pt-2 text-[10px] font-semibold uppercase tracking-wider ${

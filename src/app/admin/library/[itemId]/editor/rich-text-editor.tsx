@@ -361,7 +361,7 @@ export function RichTextEditor({
 
   if (expanded) {
     return createPortal(
-      <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 p-6">
+      <div className="fixed inset-0 z-[999] flex items-center justify-center bg-overlay p-6">
         <div className="flex max-h-full w-full max-w-3xl flex-col gap-1.5 rounded-xl bg-surface p-4 shadow-xl">
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm font-semibold text-foreground">Soạn nội dung</span>
@@ -377,7 +377,7 @@ export function RichTextEditor({
           <EditorContent
             editor={editor}
             style={contentStyle}
-            className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border bg-background text-sm"
+            className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border bg-white text-sm"
           />
         </div>
       </div>,
@@ -391,7 +391,7 @@ export function RichTextEditor({
       <EditorContent
         editor={editor}
         style={contentStyle}
-        className="rounded-lg border border-border bg-background text-sm"
+        className="rounded-lg border border-border bg-white text-sm"
       />
     </div>
   );

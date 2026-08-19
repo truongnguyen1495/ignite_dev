@@ -39,7 +39,7 @@ export function LessonTrack({
             <span
               className={`relative z-10 mt-3.5 flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-semibold tabular-nums ${
                 item.completed
-                  ? "border-success bg-success text-white"
+                  ? "border-success bg-success text-success-foreground"
                   : isNext
                     ? "border-primary bg-surface text-primary ring-4 ring-primary-bg"
                     : "border-border bg-surface text-faint"

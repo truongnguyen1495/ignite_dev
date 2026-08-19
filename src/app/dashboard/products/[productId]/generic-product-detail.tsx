@@ -69,7 +69,7 @@ export function GenericProductDetail({
             ) : (
               <span className="text-sm text-dark-muted">Liên hệ để biết giá</span>
             )}
-            <span className="text-xs text-slate-400">CV {product.cv}</span>
+            <span className="text-xs text-dark-muted">CV {product.cv}</span>
           </div>
           {salesEnabled && pricing.forSale && (
             <div className="space-y-2">

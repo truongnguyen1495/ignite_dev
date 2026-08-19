@@ -85,11 +85,11 @@ export function GuestCourseList({
               {isLoggedIn && <ProgressBar course={course} />}
               <div className="mt-auto space-y-3 pt-4">
                 <div className="flex flex-nowrap items-center justify-between gap-2">
-                  <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
+                  <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-dark-muted">
                     <BookOpen className="h-3.5 w-3.5" />
                     {course.totalLessons} bài học
                   </span>
-                  <span className="flex shrink-0 items-center gap-0.5 whitespace-nowrap text-xs font-medium text-indigo-400">
+                  <span className="flex shrink-0 items-center gap-0.5 whitespace-nowrap text-xs font-medium text-primary">
                     {course.ctaLabel}
                     <ChevronRight className="h-3.5 w-3.5" />
                   </span>

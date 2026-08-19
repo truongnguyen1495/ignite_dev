@@ -134,12 +134,12 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                   )}
                   <div className="mt-auto space-y-3 pt-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
+                      <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-dark-muted">
                         <BookOpen className="h-3.5 w-3.5" />
                         {course.totalLessons} bài học
                       </span>
                       {clickable && (
-                        <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
+                        <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-primary">
                           {course.accessLevel === "trial" ? "Vào học thử" : "Vào học"}
                           <ArrowRight className="h-3.5 w-3.5" />
                         </span>
@@ -209,7 +209,7 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                 <div className="hidden w-40 shrink-0 sm:block">
                   <ProgressBar course={course} />
                 </div>
-                <div className="hidden shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300 md:flex">
+                <div className="hidden shrink-0 items-center gap-1 whitespace-nowrap text-xs text-dark-muted md:flex">
                   <BookOpen className="h-3.5 w-3.5" />
                   {course.totalLessons} bài học
                 </div>
