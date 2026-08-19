@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { SpinReward } from "@prisma/client";
 import { spinWheelAction } from "./actions";
 
-const SEGMENT_COLORS = ["#a855f7", "#facc15", "#38bdf8", "#34d399"];
+const SEGMENT_COLORS = ["#4338ca", "#f59e0b", "#0891b2", "#16a34a"];
 
 export function SpinWheel({ rewards, spinsRemaining: initialSpinsRemaining }: { rewards: SpinReward[]; spinsRemaining: number }) {
   const [rotation, setRotation] = useState(0);
@@ -75,8 +75,8 @@ export function SpinWheel({ rewards, spinsRemaining: initialSpinsRemaining }: { 
                 return (
                   <div key={r.id} className="absolute left-1/2 top-1/2 h-0 w-0" style={{ transform: `rotate(${center}deg)` }}>
                     <span
-                      className="absolute -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-[#14061f]"
-                      style={{ transform: "translateY(-84px)", textShadow: "0 1px 2px rgba(255,255,255,0.35)" }}
+                      className="absolute -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-white"
+                      style={{ transform: "translateY(-84px)", textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}
                     >
                       {r.label}
                     </span>

@@ -63,15 +63,9 @@ function restrictIframeSources() {
   };
 }
 
-// `variant` names the surface the content is sitting ON, and it defaults to
-// dark because that is now every caller: lessons, announcements and the guest
-// pages all render inside the app shell, which is dark throughout. Plain
-// `prose` sets near-black body text — on the new --background that is a page
-// of invisible text, which is exactly what this default prevents. The light
-// branch is kept for content shown on paper (a book page), not deleted.
 export function LessonMarkdown({
   content,
-  variant = "dark",
+  variant = "light",
 }: {
   content: string;
   variant?: "light" | "dark";

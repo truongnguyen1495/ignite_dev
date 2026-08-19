@@ -236,7 +236,7 @@ export default async function DashboardLayout({
                 >
                   <ShoppingBag className="h-4 w-4" />
                   {cartCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-danger-foreground">
+                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-on-dark-strong">
                       {cartCount}
                     </span>
                   )}

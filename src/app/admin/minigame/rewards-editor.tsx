@@ -11,7 +11,7 @@ const TYPE_LABELS: Record<SpinRewardType, string> = {
   NONE: "Không trúng gì",
 };
 const TYPE_OPTIONS = Object.keys(TYPE_LABELS) as SpinRewardType[];
-const SWATCH_COLORS = ["#a855f7", "#facc15", "#38bdf8", "#34d399"];
+const SWATCH_COLORS = ["#4338ca", "#f59e0b", "#0891b2", "#16a34a"];
 
 export function RewardsEditor({ initialRewards }: { initialRewards: SpinRewardInput[] }) {
   const router = useRouter();

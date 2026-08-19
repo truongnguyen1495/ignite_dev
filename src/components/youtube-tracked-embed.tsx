@@ -85,7 +85,7 @@ export function YoutubeTrackedEmbed({
     <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border">
       <div id={containerId} className="h-full w-full" />
       {percent !== null && (
-        <span className="absolute left-2 top-2 rounded-full bg-warning px-2.5 py-1 text-xs font-semibold text-warning-foreground shadow">
+        <span className="absolute left-2 top-2 rounded-full bg-warning px-2.5 py-1 text-xs font-semibold text-white shadow">
           Đã xem {percent}%
         </span>
       )}

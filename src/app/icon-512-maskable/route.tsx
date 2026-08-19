@@ -20,10 +20,10 @@ export async function GET() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#a855f7",
+          background: "#4338ca",
         }}
       >
-        <svg width="260" height="260" viewBox="0 0 24 24" fill="#14061f">
+        <svg width="260" height="260" viewBox="0 0 24 24" fill="white">
           <path d="M13 2 3 14h7l-1 8 11-14h-7l1-6Z" />
         </svg>
       </div>

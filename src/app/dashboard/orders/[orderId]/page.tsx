@@ -207,7 +207,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
                       <p className="mt-1 truncate font-semibold text-dark-foreground">{item.titleSnapshot}</p>
                       {unlockedMeta && <p className="truncate text-xs text-dark-muted">{unlockedMeta}</p>}
                     </div>
-                    <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-primary">
+                    <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
                       {item.kind === "COURSE" ? "Vào học" : "Đọc"}
                       <ArrowRight className="h-3.5 w-3.5" />
                     </span>

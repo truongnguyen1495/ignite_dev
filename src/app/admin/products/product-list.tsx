@@ -104,9 +104,9 @@ export function ProductList({ products }: { products: AdminProductItem[] }) {
                     {formatVND(pricing.chargeAmount)}
                   </span>
                 ) : (
-                  <span className="text-xs text-dark-muted">Chưa niêm yết giá</span>
+                  <span className="text-xs text-slate-400">Chưa niêm yết giá</span>
                 )}
-                <span className="whitespace-nowrap text-xs text-dark-muted">CV {product.cv}</span>
+                <span className="whitespace-nowrap text-xs text-slate-300">CV {product.cv}</span>
               </div>
             </div>
           </Link>

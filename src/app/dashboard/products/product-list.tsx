@@ -55,7 +55,7 @@ function PriceRow({ product }: { product: StudentProductItem }) {
       ) : (
         <span className="text-xs text-dark-muted">Liên hệ để biết giá</span>
       )}
-      <span className="text-xs text-dark-muted">CV {product.cv}</span>
+      <span className="text-xs text-slate-400">CV {product.cv}</span>
     </div>
   );
 }
@@ -112,7 +112,7 @@ export function ProductList({
                   {product.subtitle && <p className="mt-0.5 text-sm text-dark-muted">{product.subtitle}</p>}
                   <div className="mt-auto space-y-3 pt-4">
                     <PriceRow product={product} />
-                    <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-primary">
+                    <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
                       Xem chi tiết
                       <ArrowRight className="h-3.5 w-3.5" />
                     </span>

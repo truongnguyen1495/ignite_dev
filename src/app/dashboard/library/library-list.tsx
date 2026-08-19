@@ -112,11 +112,11 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
                   )}
                   <div className="mt-auto space-y-3 pt-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-dark-muted">
+                      <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
                         {item.pageCount ? `${item.pageCount} trang` : "—"}
                       </span>
                       {clickable && (
-                        <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-primary">
+                        <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-indigo-400">
                           {item.accessLevel === "trial" ? "Đọc thử" : "Đọc"}
                           <ArrowRight className="h-3.5 w-3.5" />
                         </span>
@@ -181,7 +181,7 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
                   </div>
                   {item.author && <p className="line-clamp-1 text-sm text-dark-muted">{item.author}</p>}
                 </div>
-                <div className="hidden shrink-0 items-center gap-1 whitespace-nowrap text-xs text-dark-muted md:flex">
+                <div className="hidden shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300 md:flex">
                   {item.pageCount ? `${item.pageCount} trang` : "—"}
                 </div>
                 <div className="flex shrink-0 items-center gap-3">

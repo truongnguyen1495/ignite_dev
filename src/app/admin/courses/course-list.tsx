@@ -120,11 +120,11 @@ export function CourseList({ courses }: { courses: AdminCourseItem[] }) {
                   <p className="mt-2 line-clamp-2 text-sm text-dark-muted">{course.description}</p>
                 )}
                 <div className="mt-auto flex flex-nowrap items-center gap-4 pt-4">
-                  <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-dark-muted">
+                  <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
                     <BookOpen className="h-3.5 w-3.5" />
                     {course.lessonsCount} bài học
                   </span>
-                  <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-dark-muted">
+                  <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
                     <Users className="h-3.5 w-3.5" />
                     {course.manualGrantsCount + course.purchasedGrantsCount} thành viên
                   </span>
@@ -151,7 +151,7 @@ export function CourseList({ courses }: { courses: AdminCourseItem[] }) {
                   <p className="mt-1 line-clamp-1 text-sm text-dark-muted">{course.description}</p>
                 )}
               </div>
-              <div className="hidden shrink-0 flex-col items-end gap-1 text-xs text-dark-muted sm:flex">
+              <div className="hidden shrink-0 flex-col items-end gap-1 text-xs text-slate-300 sm:flex">
                 <span className="flex items-center gap-1 whitespace-nowrap">
                   <BookOpen className="h-3.5 w-3.5" />
                   {course.lessonsCount} bài học

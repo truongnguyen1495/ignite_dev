@@ -72,14 +72,14 @@ function stripPastedColor(html: string): string {
 }
 
 const TEXT_COLORS: { label: string; value: string }[] = [
-  { label: "Đỏ", value: "#f87171" },
-  { label: "Cam", value: "#fb923c" },
-  { label: "Vàng", value: "#facc15" },
-  { label: "Lục", value: "#34d399" },
-  { label: "Lam", value: "#60a5fa" },
-  { label: "Chàm", value: "#818cf8" },
-  { label: "Tím", value: "#c084fc" },
-  { label: "Hồng", value: "#f472b6" },
+  { label: "Đỏ", value: "#ef4444" },
+  { label: "Cam", value: "#f97316" },
+  { label: "Vàng", value: "#eab308" },
+  { label: "Lục", value: "#16a34a" },
+  { label: "Lam", value: "#2563eb" },
+  { label: "Chàm", value: "#4338ca" },
+  { label: "Tím", value: "#9333ea" },
+  { label: "Hồng", value: "#db2777" },
 ];
 
 export function LessonContentEditor({
@@ -131,7 +131,7 @@ export function LessonContentEditor({
     content: defaultValue,
     editorProps: {
       attributes: {
-        class: "lesson-content prose prose-invert max-w-none focus:outline-none px-4 py-3",
+        class: "lesson-content prose max-w-none focus:outline-none px-4 py-3",
       },
       transformPastedHTML: stripPastedColor,
     },
@@ -569,7 +569,7 @@ export function LessonContentEditor({
                     <button type="button" onClick={() => setPopover(null)} className={toolbarButtonClass}>
                       <X className="h-4 w-4" />
                     </button>
-                    {uploadError && <p className="w-full text-xs text-danger">{uploadError}</p>}
+                    {uploadError && <p className="w-full text-xs text-red-600">{uploadError}</p>}
                   </div>
                 ) : popover.type === "youtube" ? (
                   <div className="flex flex-wrap items-end gap-2">
@@ -594,7 +594,7 @@ export function LessonContentEditor({
                     <button type="button" onClick={() => setPopover(null)} className={toolbarButtonClass}>
                       <X className="h-4 w-4" />
                     </button>
-                    {youtubeError && <p className="w-full text-xs text-danger">{youtubeError}</p>}
+                    {youtubeError && <p className="w-full text-xs text-red-600">{youtubeError}</p>}
                   </div>
                 ) : popover.type === "color" ? (
                   <div className="flex flex-wrap items-center gap-2">
