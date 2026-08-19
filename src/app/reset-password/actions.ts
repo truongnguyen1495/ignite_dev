@@ -43,8 +43,19 @@ export async function resetPasswordAction(
   // submit — the same defense-in-depth reasoning as every other guard in
   // this codebase re-checking fresh from the DB rather than trusting an
   // earlier read.
-  const record = await prisma.passwordResetToken.findUnique({ where: { token: parsed.data.token } });
+  const record = await prisma.passwordResetToken.findUnique({
+    where: { token: parsed.data.token },
+    include: { user: { select: { status: true } } },
+  });
   if (!record || record.expiresAt < new Date()) {
+    return { fieldErrors: { password: "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn." } };
+  }
+  // A disabled account has no password worth setting — login rejects it
+  // regardless (AccountLockedError in src/lib/auth.ts), and letting the reset
+  // through would clear the brute-force counters on an account an admin has
+  // deliberately taken out of service. Answered with the same message as an
+  // expired link so the page never reports account state.
+  if (record.user.status === "LOCKED") {
     return { fieldErrors: { password: "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn." } };
   }
 

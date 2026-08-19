@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored third-party bundles copied in verbatim from pdfjs-dist — not
+    // ours to fix, and linting them buried the project's own 25 real errors
+    // under 1850 warnings from a single minified worker file.
+    "public/pdf.worker.min.mjs",
+    "public/pdfjs-wasm/**",
   ]),
 ]);
 

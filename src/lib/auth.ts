@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
 import { DEFAULT_LEVEL } from "@/lib/levels";
+import { credentialFingerprint } from "@/lib/session-fingerprint";
 
 // Thrown by authorize() once credentials are confirmed correct but the
 // account is locked, so the login action can send the user to a dedicated
@@ -30,6 +31,18 @@ export class EmailNotVerifiedError extends CredentialsSignin {
 const FAILED_LOGIN_LIMIT = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000;
 
+// A real bcrypt hash (cost 10, of a throwaway string nobody can submit) used
+// only to burn the same ~100ms a genuine comparison costs when there is no
+// account to compare against.
+//
+// Returning early for an unknown email made this route answer in about a
+// millisecond, while a known one took as long as bcrypt does — a difference
+// big enough to read over the network, which handed anyone a way to test
+// whether an address has an account here. Comparing against this constant
+// instead makes both paths cost the same, so the "treated identically to a
+// wrong password" promise below holds in time as well as in wording.
+const TIMING_EQUALIZER_HASH = "$2b$10$48bbAJM418XYA/LFx8dEI.PFhS3.BZhr0eGjeNXqUYLaBH7FZx.wK";
+
 // Google is only registered as a provider when its credentials are actually
 // configured — Settings.googleLoginEnabled also gates the button/flow at
 // runtime (see the signIn callback below), but omitting the provider
@@ -51,22 +64,49 @@ const providers: Provider[] = [
       const user = await prisma.user.findUnique({ where: { email } });
       // A Google-only account (no passwordHash) can never succeed here —
       // treated identically to a wrong password so this doesn't leak
-      // account existence/kind to an unauthenticated caller.
+      // account existence/kind to an unauthenticated caller. The throwaway
+      // comparison keeps that true of the response time too, not just the
+      // response (see TIMING_EQUALIZER_HASH).
       if (!user || !user.passwordHash) {
+        await bcrypt.compare(password, TIMING_EQUALIZER_HASH);
         return null;
       }
 
+      // Brute-force cooldown, decided BEFORE the password is looked at.
+      // This check used to sit below bcrypt.compare, which meant a wrong
+      // guess was only ever counted and never actually refused: an attacker
+      // could keep guessing at full speed, and the distinct error raised on
+      // a correct guess during an active cooldown told them they had just
+      // found the password. Refusing up here evaluates no guess at all, so
+      // the answer stops depending on what was typed.
+      //
+      // The trade-off is that reaching this message confirms an account
+      // exists at this address — weaker than it sounds, since the timing of
+      // bcrypt.compare below already gives that away to anyone measuring it,
+      // and it costs five wrong guesses to reach.
+      if (user.lockedUntil && user.lockedUntil > new Date()) {
+        throw new TooManyAttemptsError();
+      }
+
+      // A cooldown that has already run out resets the counter before this
+      // attempt is judged. Carrying failedLoginAttempts >= FAILED_LOGIN_LIMIT
+      // forward would re-lock the account for another 15 minutes on the very
+      // next typo, and on every typo after that, since each one still counts
+      // past the limit.
+      const priorAttempts = user.lockedUntil ? 0 : user.failedLoginAttempts;
+
       const valid = await bcrypt.compare(password, user.passwordHash);
       if (!valid) {
-        // Brute-force cooldown: increment regardless of any existing
-        // lockedUntil (a guess made during an active cooldown still
-        // counts) so it keeps extending while wrong guesses continue.
-        const attempts = user.failedLoginAttempts + 1;
+        const attempts = priorAttempts + 1;
         await prisma.user.update({
           where: { id: user.id },
           data: {
             failedLoginAttempts: attempts,
-            lockedUntil: attempts >= FAILED_LOGIN_LIMIT ? new Date(Date.now() + LOCKOUT_DURATION_MS) : user.lockedUntil,
+            // Always written out, never carried over: any lockedUntil still
+            // on the row here is an expired one the guard above let through,
+            // and leaving it in place would keep the account looking locked
+            // to the reset below.
+            lockedUntil: attempts >= FAILED_LOGIN_LIMIT ? new Date(Date.now() + LOCKOUT_DURATION_MS) : null,
           },
         });
         return null;
@@ -74,13 +114,9 @@ const providers: Provider[] = [
 
       // Everything below only runs once the password is confirmed
       // correct — same reasoning as the LOCKED check further down: never
-      // reveal account state (rate-limited, disabled, unverified) to
-      // someone who hasn't already proven they know the password.
-      if (user.lockedUntil && user.lockedUntil > new Date()) {
-        throw new TooManyAttemptsError();
-      }
-
-      if (user.failedLoginAttempts > 0 || user.lockedUntil) {
+      // reveal account state (disabled, unverified) to someone who hasn't
+      // already proven they know the password.
+      if (priorAttempts > 0 || user.lockedUntil) {
         await prisma.user.update({
           where: { id: user.id },
           data: { failedLoginAttempts: 0, lockedUntil: null },
@@ -102,6 +138,10 @@ const providers: Provider[] = [
         name: user.name,
         role: user.role,
         grantedLevel: user.grantedLevel,
+        // Stamped here so every later request can tell whether the password
+        // this session was issued against is still the account's password —
+        // see src/lib/session-fingerprint.ts.
+        credentialFingerprint: credentialFingerprint(user.passwordHash),
       };
     },
   }),
@@ -179,6 +219,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       user.name = dbUser.name;
       user.role = dbUser.role;
       user.grantedLevel = dbUser.grantedLevel;
+      user.credentialFingerprint = credentialFingerprint(dbUser.passwordHash);
       return true;
     },
   },

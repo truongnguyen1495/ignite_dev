@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { hasLevelAccess } from "@/lib/levels";
 import { announcementVisibleTo } from "@/lib/announcements";
 import { getOrCreateSupportThread } from "@/lib/chat";
+import { credentialFingerprint } from "@/lib/session-fingerprint";
 
 export class AccessDeniedError extends Error {
   constructor(message = "Access denied") {
@@ -34,6 +35,21 @@ export const requireSession = cache(async () => {
   return session;
 });
 
+// Whether this session was issued against the password the account still has.
+//
+// Costs nothing extra: every caller has already loaded the User row for its
+// own status/role check, so this is a string comparison, not a query. A token
+// with no stamp predates the feature and is allowed through — see the comment
+// in src/types/next-auth.d.ts for why that grandfathering is safe.
+function sessionMatchesCredential(
+  session: { user: { credentialFingerprint?: string } },
+  user: User
+): boolean {
+  const stamped = session.user.credentialFingerprint;
+  if (!stamped) return true;
+  return stamped === credentialFingerprint(user.passwordHash);
+}
+
 export const requireRole = cache(async (role: Role): Promise<User> => {
   const session = await requireSession();
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
@@ -43,6 +59,13 @@ export const requireRole = cache(async (role: Role): Promise<User> => {
   // /admin forever, since it can never satisfy either section's gate. Force
   // re-authentication instead; login itself already rejects locked accounts.
   if (!user || user.status !== "ACTIVE") {
+    redirect("/login");
+  }
+
+  // The password changed after this token was handed out — whoever is holding
+  // it is not who the account belongs to any more, or at least the owner has
+  // decided they shouldn't be.
+  if (!sessionMatchesCredential(session, user)) {
     redirect("/login");
   }
 
@@ -75,6 +98,7 @@ export async function getActiveStudentOrNull(): Promise<User | null> {
   if (!session?.user?.id) return null;
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (!user || user.status !== "ACTIVE" || user.role !== "STUDENT" || user.adminOnly) return null;
+  if (!sessionMatchesCredential(session, user)) return null;
   return user;
 }
 
@@ -105,7 +129,7 @@ export function hasFullAdminAccess(user: User): boolean {
 export const requireAnyActiveAccount = cache(async (): Promise<User> => {
   const session = await requireSession();
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-  if (!user || user.status !== "ACTIVE") {
+  if (!user || user.status !== "ACTIVE" || !sessionMatchesCredential(session, user)) {
     redirect("/login");
   }
   return user;

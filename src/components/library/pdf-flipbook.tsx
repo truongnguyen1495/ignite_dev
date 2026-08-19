@@ -82,9 +82,21 @@ export function PdfFlipbook({
   const flipRef = useRef<PageFlipHandle | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { isFullscreen, isFake: isFakeFullscreen, toggle: toggleFullscreen } = useFullscreen(containerRef);
-  const zoom = useFlipbookZoom();
+  // Destructured rather than held as one `zoom` object: the hook hands back a
+  // real ref (wrapperRef) alongside plain values, and reading any property off
+  // an object that carries a ref counts as touching a ref during render. Named
+  // bindings keep the ref exactly where a ref belongs — passed straight to
+  // ref= — and leave the rendered values as ordinary values.
+  const {
+    zoomed,
+    toggleZoom,
+    wrapperRef: zoomWrapperRef,
+    transform: zoomTransform,
+    transition: zoomTransition,
+    overlayHandlers: zoomOverlayHandlers,
+  } = useFlipbookZoom();
   const { muted, toggleMuted, playFlipSound } = useFlipbookSound();
-  const availableHeight = useAvailableHeight(zoom.wrapperRef);
+  const availableHeight = useAvailableHeight(zoomWrapperRef);
 
   const displaySlots = useMemo(() => (numPages ? buildDisplaySlots(numPages) : []), [numPages]);
 
@@ -272,8 +284,8 @@ export function PdfFlipbook({
       onLast={() => jumpTo(totalDisplayPages - 1)}
       canPrev={canPrev}
       canNext={canNext}
-      zoomed={zoom.zoomed}
-      onToggleZoom={zoom.toggleZoom}
+      zoomed={zoomed}
+      onToggleZoom={toggleZoom}
       onToggleFullscreen={() => void toggleFullscreen()}
       muted={muted}
       onToggleMuted={toggleMuted}
@@ -299,7 +311,7 @@ export function PdfFlipbook({
       }}
       bookArea={
         <div
-          ref={zoom.wrapperRef}
+          ref={zoomWrapperRef}
           // Both axes hidden (not overflow-x-auto) — see the matching
           // comment in book-flipbook.tsx: confirmed live (direct
           // scrollWidth/clientWidth polling through a real flip) that
@@ -314,7 +326,7 @@ export function PdfFlipbook({
           // visible.
           className="relative flex h-full w-full max-w-full justify-center overflow-hidden px-4"
         >
-          <div className="w-full" style={{ transform: zoom.transform, transition: zoom.transition }}>
+          <div className="w-full" style={{ transform: zoomTransform, transition: zoomTransition }}>
             {availableHeight === null ? (
               // react-pageflip only reads its sizing props once, at the
               // moment it first constructs its internal instance (see
@@ -417,10 +429,10 @@ export function PdfFlipbook({
               </div>
             )}
           </div>
-          {zoom.overlayHandlers && (
+          {zoomOverlayHandlers && (
             <div
               className="absolute inset-0 z-30 cursor-grab touch-none active:cursor-grabbing"
-              {...zoom.overlayHandlers}
+              {...zoomOverlayHandlers}
             />
           )}
         </div>

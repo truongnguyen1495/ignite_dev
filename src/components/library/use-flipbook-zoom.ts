@@ -13,7 +13,13 @@ export function useFlipbookZoom() {
   const [zoomed, setZoomed] = useState(false);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const draggingRef = useRef(false);
+  // State, not a ref: `transition` below is part of the rendered output, and
+  // a ref read during render is a value React never re-renders for — the
+  // transition could stay stale against what the drag is actually doing.
+  // pointerdown is a discrete event, so React flushes this before the first
+  // pointermove arrives and no movement is dropped at the start of a drag.
+  const [dragging, setDragging] = useState(false);
+  // Stays a ref: read only inside pointer handlers, never during render.
   const dragStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
 
   function toggleZoom() {
@@ -33,20 +39,20 @@ export function useFlipbookZoom() {
   }
 
   function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
-    draggingRef.current = true;
+    setDragging(true);
     dragStartRef.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
     e.currentTarget.setPointerCapture(e.pointerId);
   }
 
   function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
-    if (!draggingRef.current) return;
+    if (!dragging) return;
     const dx = e.clientX - dragStartRef.current.x;
     const dy = e.clientY - dragStartRef.current.y;
     setPan(clampPan({ x: dragStartRef.current.panX + dx, y: dragStartRef.current.panY + dy }));
   }
 
   function handlePointerUp(e: PointerEvent<HTMLDivElement>) {
-    draggingRef.current = false;
+    setDragging(false);
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
@@ -57,7 +63,7 @@ export function useFlipbookZoom() {
     toggleZoom,
     wrapperRef,
     transform: zoomed ? `translate(${pan.x}px, ${pan.y}px) scale(${ZOOM_SCALE})` : undefined,
-    transition: draggingRef.current ? "none" : "transform 0.2s ease",
+    transition: dragging ? "none" : "transform 0.2s ease",
     overlayHandlers: zoomed
       ? {
           onPointerDown: handlePointerDown,

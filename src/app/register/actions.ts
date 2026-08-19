@@ -10,6 +10,7 @@ import { DEFAULT_LEVEL } from "@/lib/levels";
 import { phoneNumberSchema, optionalDateOfBirthSchema } from "@/lib/validation";
 import { createEmailVerificationToken } from "@/lib/verification-tokens";
 import { sendVerificationEmail } from "@/lib/email";
+import { allowByIp, MINUTE_MS } from "@/lib/rate-limit";
 
 const registerSchema = z
   .object({
@@ -36,6 +37,17 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
   // registration is disabled, but a direct POST must be rejected too.
   if (!(await isRegistrationEnabled())) {
     redirect("/register");
+  }
+
+  // Checked before the schema parse and well before bcrypt.hash, which is the
+  // expensive part: a flood should be turned away at the cheapest possible
+  // point, not after the server has already done ~100ms of hashing per
+  // request. Unlike the reset flows this one names what happened — there is
+  // no account state to protect here, only the cost of creating accounts.
+  if (!(await allowByIp("register", 5, 10 * MINUTE_MS))) {
+    return {
+      fieldErrors: { email: "Bạn đã thử đăng ký quá nhiều lần. Vui lòng đợi vài phút rồi thử lại." },
+    };
   }
 
   const parsed = registerSchema.safeParse({
@@ -100,7 +112,13 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
   if (verificationRequired) {
     try {
       const token = await createEmailVerificationToken(user.id);
-      await sendVerificationEmail(user.email, token);
+      // Never null on this path (the account was created a line ago, so it
+      // has no earlier token to be inside a cooldown for), but the type says
+      // it can be and the flow below is fine either way — the member can
+      // always ask for a new link from /login/unverified.
+      if (token) {
+        await sendVerificationEmail(user.email, token);
+      }
     } catch (e) {
       // The account was created successfully either way — a failed send
       // (e.g. Resend misconfigured) shouldn't block registration. The user

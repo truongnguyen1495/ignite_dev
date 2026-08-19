@@ -18,9 +18,15 @@ export const authConfig = {
   providers: [],
   callbacks: {
     jwt({ token, user }) {
+      // `user` is only present on the initial sign-in, never on the silent
+      // refreshes updateAge triggers — which is exactly what makes this the
+      // right place to stamp the credential. The value then rides along
+      // unchanged for the life of the session, so a refresh can't launder an
+      // old token into looking newly issued.
       if (user) {
         token.role = user.role;
         token.grantedLevel = user.grantedLevel;
+        token.credentialFingerprint = user.credentialFingerprint;
       }
       return token;
     },
@@ -28,6 +34,7 @@ export const authConfig = {
       session.user.id = token.sub as string;
       session.user.role = token.role;
       session.user.grantedLevel = token.grantedLevel;
+      session.user.credentialFingerprint = token.credentialFingerprint;
       return session;
     },
   },

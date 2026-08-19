@@ -76,6 +76,17 @@ export function useAutoFitFontSize(params: {
     const innerW = Math.max(1, width - paddingX);
     const innerH = Math.max(1, height - paddingY);
     const fontFamily = getComputedStyle(document.body).fontFamily;
+    // The measure-then-set the rule warns about, kept deliberately. The size
+    // cannot be derived — only a real browser laying out real text can say
+    // what fits — and the measurement cannot move into render either: this
+    // component is server-rendered first, where `document` does not exist,
+    // and measuring during the client's first render would produce a
+    // different font size than the server sent and break hydration. Running
+    // after commit is what makes both halves agree. The extra render is
+    // bounded: the dependency list only changes when the box or the text
+    // does, and measureFit returns the same number for the same inputs, so
+    // there is no cascade.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSize(measureFit(content, innerW, innerH, fontFamily, bold));
   }, [enabled, content, width, height, paddingX, paddingY, bold]);
 

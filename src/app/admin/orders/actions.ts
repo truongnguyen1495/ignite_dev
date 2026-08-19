@@ -114,6 +114,16 @@ export async function reviveOrderAction(
       status: "PENDING",
       cancelledAt: null,
       cancelReason: null,
+      // Cleared, not left alone: the deadline that expired this order is
+      // still in the past, and expireOverduePendingOrders runs on every load
+      // of /admin/orders and /dashboard/orders. Between this write and
+      // fulfillOrder's own updateMany sits a findUnique — a real window under
+      // connection_limit=1 — and a sweep landing inside it would cancel the
+      // order straight back to SYSTEM_EXPIRED. fulfillOrder would then match
+      // no PENDING row and return silently, leaving an admin who saw
+      // "confirmed" with a cancelled order and a buyer whose money is in the
+      // bank but who was never granted what they paid for.
+      paymentDeadline: null,
       revivedAt: now,
       ...(paymentProofPath ? { paymentProofPath } : {}),
     },
@@ -198,7 +208,11 @@ export async function restoreOrderItemAccessAction(orderItemId: string) {
 // revokeOrderItemAccessAction first if the intent is to also pull access.
 export async function deleteOrderAction(orderId: string) {
   await requireActiveSuperAdmin();
-  await prisma.order.update({ where: { id: orderId }, data: { deletedAt: new Date() } });
+  // updateMany, not update, for the same reason restoreOrderAction below uses
+  // it: update throws P2025 when the row is gone, and this one can lose to
+  // purgeExpiredDeletedOrders or to another admin deleting the same order
+  // from a second tab. Losing that race should be a no-op, not a crash.
+  await prisma.order.updateMany({ where: { id: orderId, deletedAt: null }, data: { deletedAt: new Date() } });
   revalidatePath("/admin/orders");
 }
 

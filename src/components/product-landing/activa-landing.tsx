@@ -498,7 +498,8 @@ export function ActivaLandingPage({
             Lưu ý: SANAREY Activa là sản phẩm chăm sóc sức khỏe năng lượng, hướng đến việc hỗ trợ cân bằng, thư
             giãn và cảm giác khỏe khoắn. Sản phẩm không phải là thiết bị y tế và không nhằm mục đích chẩn đoán,
             điều trị, chữa khỏi hay ngăn ngừa bất kỳ bệnh nào, cũng không thay thế cho tư vấn hay điều trị y tế.
-            Các mô tả về "năng lượng", "cộng hưởng" và lợi ích liên quan phản ánh khái niệm của thương hiệu và
+            Các mô tả về &ldquo;năng lượng&rdquo;, &ldquo;cộng hưởng&rdquo; và lợi ích liên quan phản ánh khái
+            niệm của thương hiệu và
             chưa được các cơ quan y tế đánh giá hay kiểm chứng khoa học. Vui lòng tham khảo ý kiến chuyên gia y tế
             cho các vấn đề sức khỏe.
           </p>
