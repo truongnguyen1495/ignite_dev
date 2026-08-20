@@ -16,9 +16,9 @@ export const PdfPage = forwardRef<HTMLDivElement, { dataUrl: string | null; page
           // eslint-disable-next-line @next/next/no-img-element
           <img src={dataUrl} alt={`Trang ${pageNumber}`} className="h-full w-full object-contain" draggable={false} />
         ) : (
-          <Loader2 className="h-6 w-6 animate-spin text-muted" />
+          <Loader2 className="h-6 w-6 animate-spin text-paper-muted" />
         )}
-        <span className="absolute bottom-1.5 right-2 text-[10px] text-muted/70">{pageNumber}</span>
+        <span className="absolute bottom-1.5 right-2 text-[10px] text-paper-muted">{pageNumber}</span>
       </div>
     );
   }

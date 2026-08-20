@@ -305,7 +305,7 @@ export function PdfFlipbook({
           <img src={dataUrl} alt={`Trang ${i + 1}`} className="h-16 w-auto bg-white object-contain" />
         ) : (
           <div className="flex h-16 w-12 items-center justify-center bg-white">
-            <Loader2 className="h-3 w-3 animate-spin text-muted" />
+            <Loader2 className="h-3 w-3 animate-spin text-paper-muted" />
           </div>
         );
       }}

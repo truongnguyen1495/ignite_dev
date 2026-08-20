@@ -285,7 +285,7 @@ export function WhiteboardElementRenderer({ element, isSelected }: { element: Po
                   </Fragment>
                 ))
               ) : (
-                <span className="text-muted">Nhập chữ...</span>
+                <span className="text-paper-muted">Nhập chữ...</span>
               )}
             </div>
           )}
@@ -297,7 +297,7 @@ export function WhiteboardElementRenderer({ element, isSelected }: { element: Po
         // eslint-disable-next-line @next/next/no-img-element
         <img src={element.url} alt={element.alt ?? ""} draggable={false} className="h-full w-full object-contain" />
       ) : (
-        <div className="flex h-full w-full items-center justify-center bg-faint-bg text-xs text-muted">Ảnh</div>
+        <div className="flex h-full w-full items-center justify-center bg-paper-faint-bg text-xs text-paper-muted">Ảnh</div>
       );
     case "video":
       if (element.url) {
@@ -306,7 +306,7 @@ export function WhiteboardElementRenderer({ element, isSelected }: { element: Po
       if (element.youtubeId) {
         return <YoutubeEmbed youtubeId={element.youtubeId} isSelected={isSelected} />;
       }
-      return <div className="flex h-full w-full items-center justify-center bg-faint-bg text-xs text-muted">Video</div>;
+      return <div className="flex h-full w-full items-center justify-center bg-paper-faint-bg text-xs text-paper-muted">Video</div>;
     case "drawing": {
       // viewBox is derived from `points` alone, never from the element's
       // current width/height — points are fixed in a natural coordinate
@@ -343,7 +343,7 @@ export function WhiteboardElementRenderer({ element, isSelected }: { element: Po
       // corner button actually opens the link; the card body stays a plain
       // draggable/selectable div.
       return element.url ? (
-        <div className="relative flex h-full w-full items-center gap-2 overflow-hidden rounded-lg border border-border bg-surface p-3">
+        <div className="relative flex h-full w-full items-center gap-2 overflow-hidden rounded-lg border border-paper-border bg-paper p-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`https://www.google.com/s2/favicons?domain=${element.domain}&sz=64`}
@@ -352,8 +352,8 @@ export function WhiteboardElementRenderer({ element, isSelected }: { element: Po
             className="h-8 w-8 shrink-0 rounded"
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-foreground">{element.title || element.domain}</p>
-            <p className="truncate text-xs text-muted">{element.domain}</p>
+            <p className="truncate text-sm font-medium text-paper-foreground">{element.title || element.domain}</p>
+            <p className="truncate text-xs text-paper-muted">{element.domain}</p>
           </div>
           <button
             type="button"
@@ -361,13 +361,13 @@ export function WhiteboardElementRenderer({ element, isSelected }: { element: Po
             aria-label="Mở liên kết"
             onMouseDown={(e) => e.stopPropagation()}
             onClick={() => window.open(element.url, "_blank", "noopener,noreferrer")}
-            className="shrink-0 rounded p-1 text-muted hover:bg-surface-hover hover:text-foreground"
+            className="shrink-0 rounded p-1 text-paper-muted hover:bg-paper-hover hover:text-paper-foreground"
           >
             <ExternalLink className="h-3.5 w-3.5" />
           </button>
         </div>
       ) : (
-        <div className="flex h-full w-full items-center justify-center bg-faint-bg text-xs text-muted">Link</div>
+        <div className="flex h-full w-full items-center justify-center bg-paper-faint-bg text-xs text-paper-muted">Link</div>
       );
   }
 }

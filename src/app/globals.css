@@ -123,6 +123,22 @@
   --dark-border: var(--border);
   --dark-foreground: var(--foreground);
   --dark-muted: var(--muted);
+
+  /* Paper — a printed page, not app chrome. Book pages, PDF pages and the
+     whiteboard canvas are white regardless of the app's ground, so anything
+     drawn *onto* one has to take its colours from here: --muted and
+     --foreground are cream, which measures 1.06:1 and 1.12:1 on white, i.e.
+     completely invisible. These values are the light palette this app used
+     before it went dark, kept alive for exactly the surfaces that stayed
+     light. Chrome that floats *above* the canvas (toolbars, property panels,
+     comment popovers) is not paper — it paints its own dark surface and keeps
+     the normal tokens. */
+  --paper: #ffffff;
+  --paper-foreground: #111827;
+  --paper-muted: #6b7280;
+  --paper-border: #e5e7eb;
+  --paper-hover: #f3f4f6;
+  --paper-faint-bg: rgba(17, 24, 39, 0.06);
 }
 
 @theme inline {
@@ -199,6 +215,13 @@
   --color-dark-border: var(--dark-border);
   --color-dark-foreground: var(--dark-foreground);
   --color-dark-muted: var(--dark-muted);
+
+  --color-paper: var(--paper);
+  --color-paper-foreground: var(--paper-foreground);
+  --color-paper-muted: var(--paper-muted);
+  --color-paper-border: var(--paper-border);
+  --color-paper-hover: var(--paper-hover);
+  --color-paper-faint-bg: var(--paper-faint-bg);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);

@@ -30,7 +30,7 @@ function Thumbnail({ product }: { product: GuestProductItem }) {
   }
   return (
     <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--primary)] to-[var(--info)]">
-      <Package className="h-9 w-9 text-on-dark-strong" />
+      <Package className="h-9 w-9 text-primary-foreground" />
     </div>
   );
 }

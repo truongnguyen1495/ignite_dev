@@ -51,9 +51,9 @@ function Thumbnail({ course, className }: { course: StudentCourseItem; className
   return (
     <div className={`${className} flex items-center justify-center bg-gradient-to-br ${course.gradient}`}>
       {course.accessLevel === "none" ? (
-        <Lock className="h-9 w-9 text-on-dark-strong" />
+        <Lock className="h-9 w-9 text-primary-foreground" />
       ) : (
-        <Video className="h-9 w-9 text-on-dark-strong" />
+        <Video className="h-9 w-9 text-primary-foreground" />
       )}
     </div>
   );

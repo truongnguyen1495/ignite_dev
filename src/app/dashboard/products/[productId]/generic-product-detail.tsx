@@ -41,7 +41,7 @@ export function GenericProductDetail({
             <Image src={product.imageUrl} alt={product.title} fill sizes="(min-width: 640px) 42rem, 100vw" className="object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--primary)] to-[var(--info)]">
-              <Package className="h-12 w-12 text-on-dark-strong" />
+              <Package className="h-12 w-12 text-primary-foreground" />
             </div>
           )}
           {product.badgeLabel && (
