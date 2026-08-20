@@ -2,103 +2,127 @@
 @plugin "@tailwindcss/typography";
 
 :root {
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --surface-hover: #f1f5f9;
-  --border: #e5e7eb;
-  --border-strong: #d1d5db;
-  --foreground: #111827;
-  --muted: #6b7280;
-  --faint: #9ca3af;
-  --faint-bg: rgba(156, 163, 175, 0.14);
+  /* Three grounds stack from deepest to nearest: the page is the darkest
+     thing on screen, cards/rails sit above it, hover states above those.
+     Chrome that used to go *darker* than the page to stand out now goes
+     lighter instead. */
+  --background: #061426;
+  --surface: #0b2340;
+  --surface-hover: #14315a;
+  /* Borders are a translucent tint of --primary rather than a grey: on this
+     near-black navy a grey line reads as dirt, a gold one reads as material. */
+  --border: rgba(227, 181, 45, 0.25);
+  --border-strong: rgba(227, 181, 45, 0.4);
+  --foreground: #f7f2e7;
+  --muted: rgba(247, 242, 231, 0.65);
+  --faint: rgba(247, 242, 231, 0.4);
+  --faint-bg: rgba(247, 242, 231, 0.08);
 
-  /* Admin sidebar is a fixed navy rail, distinct from the light app shell —
-     its own text tokens exist because text-foreground/text-muted (dark text
-     for a light background) would be unreadable against --sidebar. */
-  --sidebar: #0f172a;
-  --sidebar-hover: #1e293b;
-  --sidebar-foreground: #f8fafc;
-  --sidebar-muted: #94a3b8;
+  /* The admin/student rail used to be a navy island in a light app and needed
+     text tokens of its own. The whole app is that navy now, so these are
+     aliases — kept as separate names so the rail can diverge again later
+     without touching every call site. */
+  --sidebar: var(--surface);
+  --sidebar-hover: var(--surface-hover);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-muted: var(--muted);
 
-  --primary: #4338ca;
-  --primary-hover: #3730a3;
-  --primary-foreground: #ffffff;
+  --primary: #e3b52d;
+  --primary-hover: #f5ce4a;
+  --primary-foreground: #061426;
   /* Pre-mixed (not Tailwind's /NN opacity-modifier syntax, which compiles to
      color-mix() in Tailwind v4 and silently fails on Safari < 16.2 — old
      iPhones render these solid instead of translucent, hiding same-color
      text on top). Recompute these by hand if --primary ever changes. */
-  --primary-bg: rgba(67, 56, 202, 0.1);
-  --primary-bg-subtle: rgba(67, 56, 202, 0.05);
-  --primary-bg-strong: rgba(67, 56, 202, 0.15);
-  --primary-border: rgba(67, 56, 202, 0.3);
-  --primary-border-strong: rgba(67, 56, 202, 0.4);
-  --primary-border-hover: rgba(67, 56, 202, 0.5);
+  --primary-bg: rgba(227, 181, 45, 0.14);
+  --primary-bg-subtle: rgba(227, 181, 45, 0.07);
+  --primary-bg-strong: rgba(227, 181, 45, 0.2);
+  --primary-border: rgba(227, 181, 45, 0.35);
+  --primary-border-strong: rgba(227, 181, 45, 0.45);
+  --primary-border-hover: rgba(227, 181, 45, 0.55);
 
-  /* Accent is reserved for earned/celebratory moments (streaks, level-up,
-     quiz passed, badges) — never a generic CTA, and never interchangeable
-     with --warning even though both are amber-family. accent-foreground is
-     dark, not white: amber-500 fails AA contrast with white text. */
-  --accent: #f59e0b;
-  --accent-hover: #d97706;
-  --accent-foreground: #1c1917;
-  --accent-bg: rgba(245, 158, 11, 0.14);
-  --accent-border: rgba(245, 158, 11, 0.4);
+  /* Accent is the brand's deep gold, reserved for earned/celebratory moments
+     (streaks, level-up, quiz passed, badges) — never a generic CTA, and never
+     interchangeable with --warning even though both are amber-family.
+     accent-foreground is navy, not the brand cream: cream on this gold
+     measures 3.00:1, which fails AA at the exact spots that use it (reward
+     buttons, achievement chips). Navy takes it to 5.52:1. */
+  --accent: #b98218;
+  --accent-hover: #a3730f;
+  --accent-foreground: #061426;
+  --accent-bg: rgba(185, 130, 24, 0.16);
+  --accent-border: rgba(185, 130, 24, 0.4);
 
-  --info: #0891b2;
-  --info-bg: rgba(8, 145, 178, 0.12);
-  --info-border: rgba(8, 145, 178, 0.3);
+  /* Every semantic colour here is a *light* hue, so anything filling one as a
+     solid background needs dark text on top — white measures 1.92:1 to 3.76:1
+     against them, i.e. unreadable. Each therefore carries a -foreground of its
+     own, the way --primary and --accent always have. Navy scores 4.91:1
+     (danger, the tightest) to 8.61:1 (warning). */
+  --info: #17a9e8;
+  --info-foreground: #061426;
+  --info-bg: rgba(23, 169, 232, 0.16);
+  --info-border: rgba(23, 169, 232, 0.4);
 
-  --success: #16a34a;
-  --success-bg: rgba(22, 163, 74, 0.12);
-  --success-border: rgba(22, 163, 74, 0.3);
-  --warning: #d97706;
-  --warning-bg: rgba(217, 119, 6, 0.14);
-  --warning-border: rgba(217, 119, 6, 0.3);
-  --warning-border-strong: rgba(217, 119, 6, 0.4);
-  --danger: #dc2626;
-  --danger-bg: rgba(220, 38, 38, 0.12);
-  --danger-border: rgba(220, 38, 38, 0.3);
+  --success: #22c55e;
+  --success-foreground: #061426;
+  --success-bg: rgba(34, 197, 94, 0.16);
+  --success-border: rgba(34, 197, 94, 0.4);
+  --warning: #f59e0b;
+  --warning-foreground: #061426;
+  --warning-bg: rgba(245, 158, 11, 0.16);
+  --warning-border: rgba(245, 158, 11, 0.4);
+  --warning-border-strong: rgba(245, 158, 11, 0.5);
+  --danger: #ef4444;
+  --danger-foreground: #061426;
+  --danger-bg: rgba(239, 68, 68, 0.16);
+  --danger-border: rgba(239, 68, 68, 0.4);
 
   /* Neutral overlay tints — bg-black/NN and text-white/NN go through the
      same color-mix() codepath as the custom theme colors above, even
      though black/white are Tailwind's built-in palette. Used for modal
      backdrops (confirm dialogs, danger-action dialogs) and icon tints on
      dark/gradient surfaces. */
-  --overlay: rgba(0, 0, 0, 0.5);
-  --overlay-strong: rgba(0, 0, 0, 0.6);
+  --overlay: rgba(0, 0, 0, 0.6);
+  --overlay-strong: rgba(0, 0, 0, 0.72);
   --on-dark: rgba(255, 255, 255, 0.2);
   --on-dark-strong: rgba(255, 255, 255, 0.9);
 
-  /* Six student tiers read as one progression toward the brand, not six
-     unrelated hues: the two entry tiers start neutral, climb through the
-     indigo family, tier 4 lands exactly on --primary, and the top tier breaks
-     out into --accent gold as a distinct reward color. Cấp 0 (Visitor) is the
-     palest of the neutrals — someone who has registered but holds nothing
-     yet should read as "not started", not as a rank of its own. */
-  --level-0: #94a3b8;
-  --level-0-bg: rgba(148, 163, 184, 0.12);
-  --level-1: #64748b;
-  --level-1-bg: rgba(100, 116, 139, 0.12);
-  --level-2: #6366f1;
-  --level-2-bg: rgba(99, 102, 241, 0.12);
-  --level-3: #4f46e5;
-  --level-3-bg: rgba(79, 70, 229, 0.12);
-  --level-4: #4338ca;
-  --level-4-bg: rgba(67, 56, 202, 0.12);
-  --level-5: #f59e0b;
-  --level-5-bg: rgba(245, 158, 11, 0.14);
+  /* Six student tiers climb through the brand gold and break out into cyan at
+     the top. Cấp 0 (Visitor) sits deliberately outside that ramp in a cool
+     slate — someone who has registered but holds nothing yet should read as
+     "not started", not as a rank of its own.
+
+     --level-N is the *text* colour and --level-N-bg the tint behind it (see
+     Badge's level variants, the only place the two meet). The brand sheet's
+     bottom three golds were drawn for a light ground; against a tint of
+     themselves on this navy they measure 2.75:1 to 3.91:1, so tiers 0-2 use
+     lightened members of the same hues here — 5.67:1 to 5.92:1, with the
+     luminance ramp still climbing 1 → 4. The -bg values stay at the sheet's
+     deeper golds, which is what keeps the badge fill subtle.
+     Tiers 3-5 are the sheet's values untouched; they also feed the cover
+     gradients in courses/library, so they must not drift. */
+  --level-0: #a5b2c4;
+  --level-0-bg: rgba(125, 141, 163, 0.16);
+  --level-1: #c9a545;
+  --level-1-bg: rgba(138, 106, 31, 0.16);
+  --level-2: #d6a238;
+  --level-2-bg: rgba(185, 130, 24, 0.16);
+  --level-3: #e3b52d;
+  --level-3-bg: rgba(227, 181, 45, 0.16);
+  --level-4: #f5ce4a;
+  --level-4-bg: rgba(245, 206, 74, 0.16);
+  --level-5: #17a9e8;
+  --level-5-bg: rgba(23, 169, 232, 0.16);
 
   /* Dark content surfaces (lesson "reading mode", dark media cards) — kept
-     separate from --sidebar even though values start identical, since one is
+     separate from --surface even though they now alias it, since one is
      structural chrome and the other is inline page content; they may diverge
-     later. Deliberately shares --sidebar's navy family instead of the
-     unrelated neutral-* gray those surfaces used before, so the app has one
-     dark visual language instead of two. */
-  --dark-surface: #0f172a;
-  --dark-surface-raised: #1e293b;
-  --dark-border: #334155;
-  --dark-foreground: #f8fafc;
-  --dark-muted: #94a3b8;
+     again later. */
+  --dark-surface: var(--surface);
+  --dark-surface-raised: var(--surface-hover);
+  --dark-border: var(--border);
+  --dark-foreground: var(--foreground);
+  --dark-muted: var(--muted);
 }
 
 @theme inline {
@@ -134,17 +158,21 @@
   --color-accent-border: var(--accent-border);
 
   --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-info-bg: var(--info-bg);
   --color-info-border: var(--info-border);
 
   --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-success-bg: var(--success-bg);
   --color-success-border: var(--success-border);
   --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-warning-bg: var(--warning-bg);
   --color-warning-border: var(--warning-border);
   --color-warning-border-strong: var(--warning-border-strong);
   --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
   --color-danger-bg: var(--danger-bg);
   --color-danger-border: var(--danger-border);
 

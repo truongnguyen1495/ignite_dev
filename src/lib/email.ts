@@ -23,8 +23,12 @@ function emailShell(title: string, bodyHtml: string): string {
 </html>`;
 }
 
+// The shell around this stays light on purpose — these are read in a mail
+// client, not in the app — so only the CTA carries the brand. Brand gold with
+// navy text, not the cream used in-app: cream on this gold is 3.0:1, and a
+// mail client gives no theme control to fall back on.
 function buttonHtml(href: string, label: string): string {
-  return `<a href="${href}" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#2563EB;color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">${label}</a>`;
+  return `<a href="${href}" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#E3B52D;color:#061426;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">${label}</a>`;
 }
 
 export async function sendVerificationEmail(to: string, token: string): Promise<void> {

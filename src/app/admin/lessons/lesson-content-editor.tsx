@@ -71,15 +71,21 @@ function stripPastedColor(html: string): string {
   });
 }
 
+// Lesson content renders on the app's own dark ground, so these are the light
+// members of each hue — the mid-tone set this used to carry (red-500 through
+// indigo-700) measures 1.4:1 to 3.2:1 there, i.e. an admin could pick a colour
+// that reads fine in the picker and is unreadable in the published lesson.
+// Every value below clears 5.3:1 on --surface. The book editor's swatches
+// (rich-text-editor.tsx) deliberately do NOT match: that text prints on paper.
 const TEXT_COLORS: { label: string; value: string }[] = [
-  { label: "Đỏ", value: "#ef4444" },
-  { label: "Cam", value: "#f97316" },
-  { label: "Vàng", value: "#eab308" },
-  { label: "Lục", value: "#16a34a" },
-  { label: "Lam", value: "#2563eb" },
-  { label: "Chàm", value: "#4338ca" },
-  { label: "Tím", value: "#9333ea" },
-  { label: "Hồng", value: "#db2777" },
+  { label: "Đỏ", value: "#f87171" },
+  { label: "Cam", value: "#fb923c" },
+  { label: "Vàng", value: "#facc15" },
+  { label: "Lục", value: "#4ade80" },
+  { label: "Lam", value: "#60a5fa" },
+  { label: "Chàm", value: "#818cf8" },
+  { label: "Tím", value: "#c084fc" },
+  { label: "Hồng", value: "#f472b6" },
 ];
 
 export function LessonContentEditor({
@@ -131,7 +137,10 @@ export function LessonContentEditor({
     content: defaultValue,
     editorProps: {
       attributes: {
-        class: "lesson-content prose max-w-none focus:outline-none px-4 py-3",
+        // prose-invert to match the read side (LessonMarkdown defaults to it):
+        // this content really does render inside the app, so the editor has to
+        // compose it on the same ground it ships on.
+        class: "lesson-content prose prose-invert max-w-none focus:outline-none px-4 py-3",
       },
       transformPastedHTML: stripPastedColor,
     },
@@ -569,7 +578,7 @@ export function LessonContentEditor({
                     <button type="button" onClick={() => setPopover(null)} className={toolbarButtonClass}>
                       <X className="h-4 w-4" />
                     </button>
-                    {uploadError && <p className="w-full text-xs text-red-600">{uploadError}</p>}
+                    {uploadError && <p className="w-full text-xs text-danger">{uploadError}</p>}
                   </div>
                 ) : popover.type === "youtube" ? (
                   <div className="flex flex-wrap items-end gap-2">
@@ -594,7 +603,7 @@ export function LessonContentEditor({
                     <button type="button" onClick={() => setPopover(null)} className={toolbarButtonClass}>
                       <X className="h-4 w-4" />
                     </button>
-                    {youtubeError && <p className="w-full text-xs text-red-600">{youtubeError}</p>}
+                    {youtubeError && <p className="w-full text-xs text-danger">{youtubeError}</p>}
                   </div>
                 ) : popover.type === "color" ? (
                   <div className="flex flex-wrap items-center gap-2">

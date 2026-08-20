@@ -117,7 +117,7 @@ export default async function StudentCourseLessonPage({
             kind="COURSE"
             itemId={course.id}
             label="Nâng cấp để mở khóa toàn bộ"
-            className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-danger px-3 py-1.5 text-xs font-medium text-white transition-colors hover:opacity-90"
+            className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-danger px-3 py-1.5 text-xs font-medium text-danger-foreground transition-colors hover:opacity-90"
             details={{
               title: course.title,
               description: course.description,

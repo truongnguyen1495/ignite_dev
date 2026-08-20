@@ -112,7 +112,7 @@ export function DeliveryTimeline({
                 <span
                   className={`relative z-10 mt-1 flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 ${
                     done
-                      ? "border-success bg-success text-on-dark-strong"
+                      ? "border-success bg-success text-success-foreground"
                       : current
                         ? "border-primary bg-primary shadow-[0_0_0_3px_var(--color-primary-bg)]"
                         : "border-border-strong bg-surface"

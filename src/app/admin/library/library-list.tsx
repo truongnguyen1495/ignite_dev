@@ -55,7 +55,7 @@ function Thumbnail({ item, className }: { item: LibraryListItem; className: stri
   }
   return (
     <div className={`${className} flex items-center justify-center bg-dark-surface-raised`}>
-      <Icon className="h-9 w-9 text-slate-400" />
+      <Icon className="h-9 w-9 text-dark-muted" />
     </div>
   );
 }
@@ -157,7 +157,7 @@ export function LibraryList({ items }: { items: LibraryListItem[] }) {
                   <AccessBadges item={item} />
                   <div className="mt-auto flex items-end justify-between gap-2 pt-2">
                     {item.pageCount ? (
-                      <span className="text-xs text-slate-300">{item.pageCount} trang</span>
+                      <span className="text-xs text-dark-muted">{item.pageCount} trang</span>
                     ) : (
                       <span />
                     )}
@@ -197,7 +197,7 @@ export function LibraryList({ items }: { items: LibraryListItem[] }) {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-dark-foreground">{item.title}</span>
                     {item.author && <span className="text-sm text-dark-muted">— {item.author}</span>}
-                    {item.pageCount && <span className="text-xs text-slate-300">{item.pageCount} trang</span>}
+                    {item.pageCount && <span className="text-xs text-dark-muted">{item.pageCount} trang</span>}
                   </div>
                   {item.description && (
                     <p className="line-clamp-1 text-sm text-dark-muted">{item.description}</p>
