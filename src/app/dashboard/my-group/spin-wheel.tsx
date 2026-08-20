@@ -4,7 +4,11 @@ import { useState } from "react";
 import type { SpinReward } from "@prisma/client";
 import { spinWheelAction } from "./actions";
 
-const SEGMENT_COLORS = ["#4338ca", "#f59e0b", "#0891b2", "#16a34a"];
+// Brand gold, deep gold, cyan, green — four adjacent-distinct fills drawn from
+// the palette. All four are light colours, so the segment labels below are
+// navy, not white (white measures 1.9:1 to 3.4:1 on these). Keep in sync with
+// rewards-editor.tsx's SWATCH_COLORS, which is the admin-side picker for them.
+const SEGMENT_COLORS = ["#e3b52d", "#b98218", "#17a9e8", "#22c55e"];
 
 export function SpinWheel({ rewards, spinsRemaining: initialSpinsRemaining }: { rewards: SpinReward[]; spinsRemaining: number }) {
   const [rotation, setRotation] = useState(0);
@@ -75,7 +79,7 @@ export function SpinWheel({ rewards, spinsRemaining: initialSpinsRemaining }: { 
                 return (
                   <div key={r.id} className="absolute left-1/2 top-1/2 h-0 w-0" style={{ transform: `rotate(${center}deg)` }}>
                     <span
-                      className="absolute -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-white"
+                      className="absolute -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-primary-foreground"
                       style={{ transform: "translateY(-84px)", textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}
                     >
                       {r.label}

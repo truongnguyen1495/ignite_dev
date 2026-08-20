@@ -1,13 +1,18 @@
 "use client";
 
-import { Zap } from "lucide-react";
+import Image from "next/image";
 import { useSidebarCollapsed } from "@/components/ui/sidebar";
+import wordmark from "../../public/brand/rapidx-wordmark-dark.png";
+import mark from "../../public/brand/rapidx-mark.png";
 
 export function BrandLogo({
   subtitle,
   variant = "light",
 }: {
   subtitle?: string;
+  // Kept even though both branches resolve to the same tokens today: the rail
+  // and the page shell only *happen* to share a ground since the app went
+  // dark, and --sidebar-* exists precisely so the rail can diverge again.
   variant?: "navy" | "light";
 }) {
   const navy = variant === "navy";
@@ -20,19 +25,31 @@ export function BrandLogo({
   // not also strip the wordmark down there. See the matching comment on
   // `collapsibleClass` in sidebar.tsx.
   const collapsed = useSidebarCollapsed();
-  const collapsibleClass = collapsed ? "md:hidden" : "";
   return (
     <div>
-      <div className={`flex items-center gap-2 ${collapsed ? "md:justify-center" : ""}`}>
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <Zap className="h-4 w-4" />
-        </span>
-        <span className={`text-lg font-bold ${collapsibleClass} ${navy ? "text-sidebar-foreground" : "text-foreground"}`}>
-          <span className="text-primary">RapidX</span>
-        </span>
+      <div className={`flex items-center ${collapsed ? "md:justify-center" : ""}`}>
+        {/* Both marks are raster: the wordmark is a rendered 3D logo with
+            bevels and a gradient sweep, so there is no SVG of it to inline
+            and nothing here is recolourable by CSS. It doesn't need to be —
+            the cream-on-transparent cut sits on every ground the app has. */}
+        <Image
+          src={wordmark}
+          alt="RapidX"
+          priority
+          className={`h-auto w-[168px] ${collapsed ? "md:hidden" : ""}`}
+        />
+        {collapsed && (
+          <Image src={mark} alt="RapidX" priority className="hidden h-9 w-9 md:block" />
+        )}
       </div>
       {subtitle && (
-        <p className={`mt-1 text-xs ${collapsibleClass} ${navy ? "text-sidebar-muted" : "text-muted"}`}>{subtitle}</p>
+        <p
+          className={`mt-1.5 text-xs ${collapsed ? "md:hidden" : ""} ${
+            navy ? "text-sidebar-muted" : "text-muted"
+          }`}
+        >
+          {subtitle}
+        </p>
       )}
     </div>
   );

@@ -36,8 +36,10 @@ const toolbarButtonClass =
   "flex h-7 w-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground";
 const activeToolbarButtonClass = "flex h-7 w-7 items-center justify-center rounded-md bg-surface-hover text-foreground";
 
-// Same swatch set as lesson-content-editor.tsx's TEXT_COLORS, for the same
-// look across both editors.
+// Mid-tone hues, and deliberately NOT the light set lesson-content-editor.tsx
+// now uses: a book page is printed onto white paper, so these are chosen
+// against white the way that editor's are chosen against the app's dark
+// ground. The two editors split on where their text ends up, not on looks.
 const TEXT_COLORS: { label: string; value: string }[] = [
   { label: "Đỏ", value: "#ef4444" },
   { label: "Cam", value: "#f97316" },
@@ -377,7 +379,11 @@ export function RichTextEditor({
           <EditorContent
             editor={editor}
             style={contentStyle}
-            className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border bg-background text-sm"
+            // White sheet, not bg-background: this edits text that gets
+            // printed onto a book page. A dark editor here would mean
+            // composing one thing and shipping another. Same reason the page
+            // canvas, the flipbook and the PDF reader all stay bg-white.
+            className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border bg-white text-sm"
           />
         </div>
       </div>,
@@ -391,7 +397,7 @@ export function RichTextEditor({
       <EditorContent
         editor={editor}
         style={contentStyle}
-        className="rounded-lg border border-border bg-background text-sm"
+        className="rounded-lg border border-border bg-white text-sm"
       />
     </div>
   );

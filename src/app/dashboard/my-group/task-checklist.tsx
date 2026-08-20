@@ -98,7 +98,7 @@ function TaskRowItem({ row }: { row: TodayTaskView }) {
         aria-pressed={isDone}
         aria-label={isDone ? "Bỏ đánh dấu hoàn thành" : "Đánh dấu hoàn thành"}
         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors disabled:cursor-not-allowed ${
-          isDone ? "border-success bg-success text-white" : "border-border-strong bg-surface"
+          isDone ? "border-success bg-success text-success-foreground" : "border-border-strong bg-surface"
         }`}
       >
         {isDone && <Check className="h-3 w-3" />}

@@ -65,13 +65,17 @@ function restrictIframeSources() {
 
 export function LessonMarkdown({
   content,
-  variant = "light",
+  variant = "dark",
 }: {
   content: string;
-  variant?: "light" | "dark";
+  // Defaults to the inverted variant because plain `prose` sets near-black
+  // body text, which every lesson, announcement and course page would now
+  // render as a wall of invisible text. The light branch stays for content
+  // shown on paper (a printed/exported sheet, not the app's own ground).
+  variant?: "dark" | "light";
 }) {
   return (
-    <div className={`lesson-content prose max-w-none ${variant === "dark" ? "prose-invert" : ""}`}>
+    <div className={`lesson-content prose max-w-none ${variant === "light" ? "" : "prose-invert"}`}>
       <Markdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw, restrictIframeSources, [rehypeSanitize, lessonContentSchema]]}

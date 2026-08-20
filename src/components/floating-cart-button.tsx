@@ -30,7 +30,7 @@ export async function FloatingCartButton() {
     >
       <ShoppingBag className="h-5 w-5" />
       {cartCount > 0 && (
-        <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 text-[11px] font-semibold text-on-dark-strong">
+        <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 text-[11px] font-semibold text-danger-foreground">
           {cartCount}
         </span>
       )}

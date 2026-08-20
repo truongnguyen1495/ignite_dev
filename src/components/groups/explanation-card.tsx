@@ -59,7 +59,7 @@ export function ExplanationCard({
           type="button"
           disabled={pending}
           onClick={() => review(true)}
-          className="rounded-lg bg-success px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
+          className="rounded-lg bg-success px-3 py-1.5 text-xs font-semibold text-success-foreground hover:opacity-90 disabled:opacity-50"
         >
           Duyệt
         </button>

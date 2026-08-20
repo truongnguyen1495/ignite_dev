@@ -11,7 +11,8 @@ const TYPE_LABELS: Record<SpinRewardType, string> = {
   NONE: "Không trúng gì",
 };
 const TYPE_OPTIONS = Object.keys(TYPE_LABELS) as SpinRewardType[];
-const SWATCH_COLORS = ["#4338ca", "#f59e0b", "#0891b2", "#16a34a"];
+// Mirrors spin-wheel.tsx's SEGMENT_COLORS — this is the picker that feeds it.
+const SWATCH_COLORS = ["#e3b52d", "#b98218", "#17a9e8", "#22c55e"];
 
 export function RewardsEditor({ initialRewards }: { initialRewards: SpinRewardInput[] }) {
   const router = useRouter();
