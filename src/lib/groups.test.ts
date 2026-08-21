@@ -4,11 +4,14 @@ import {
   addDays,
   computeStreaksFromDates,
   dateOnly,
+  dateOnlyVN,
   formatDateVN,
+  formatTimeVN,
   getWeekStart,
   isSameDate,
   isTaskLiveOnDate,
   pickWeightedReward,
+  rankByPoints,
 } from "./groups";
 
 function d(iso: string): Date {
@@ -166,5 +169,54 @@ test("computeStreaksFromDates", async (t) => {
       computeStreaksFromDates([daysAgo(0), daysAgo(2), daysAgo(4), daysAgo(6)], TODAY),
       { current: 1, best: 1 }
     );
+  });
+});
+
+test("dateOnlyVN / formatTimeVN — a timestamp read in Vietnam, on a UTC server", async (t) => {
+  // 2026-08-21T16:30:00Z is 23:30 the same day in Vietnam (UTC+7).
+  await t.test("evening UTC stays the same VN day", () => {
+    const at = new Date("2026-08-21T16:30:00.000Z");
+    assert.equal(formatTimeVN(at), "23:30");
+    assert.equal(formatDateVN(dateOnlyVN(at)), "21/08/2026");
+  });
+  // 17:00Z is already 00:00 the NEXT day in Vietnam — the case that makes a
+  // naive getUTCDate() print yesterday's date next to tomorrow's clock time.
+  await t.test("past 17:00 UTC the Vietnam day has already rolled over", () => {
+    const at = new Date("2026-08-21T17:05:00.000Z");
+    assert.equal(formatTimeVN(at), "00:05");
+    assert.equal(formatDateVN(dateOnlyVN(at)), "22/08/2026");
+  });
+  await t.test("midnight UTC is still the same VN day, at 07:00", () => {
+    const at = new Date("2026-08-21T00:00:00.000Z");
+    assert.equal(formatTimeVN(at), "07:00");
+    assert.equal(formatDateVN(dateOnlyVN(at)), "21/08/2026");
+  });
+});
+
+test("rankByPoints — competition ranking", async (t) => {
+  await t.test("highest score is rank 1", () => {
+    assert.equal(rankByPoints([50, 30, 10], 50), 1);
+  });
+  await t.test("lowest score is last", () => {
+    assert.equal(rankByPoints([50, 30, 10], 10), 3);
+  });
+  // The reason this function exists: a whole group on 0 points must all read
+  // the same rank, not be handed arbitrary positions 1..13 by row order.
+  await t.test("everyone tied shares one rank", () => {
+    const allZero = [0, 0, 0, 0];
+    assert.deepEqual(
+      allZero.map((p) => rankByPoints(allZero, p)),
+      [1, 1, 1, 1]
+    );
+  });
+  await t.test("a tie consumes the ranks below it (1, 2, 2, 4)", () => {
+    const points = [90, 40, 40, 10];
+    assert.deepEqual(
+      points.map((p) => rankByPoints(points, p)),
+      [1, 2, 2, 4]
+    );
+  });
+  await t.test("a member alone in their group is rank 1", () => {
+    assert.equal(rankByPoints([0], 0), 1);
   });
 });

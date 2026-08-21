@@ -234,12 +234,30 @@ export async function requireAdminManagementAccess(): Promise<{ user: User; isSu
   redirect("/admin?denied=1");
 }
 
+/**
+ * The single Settings row, read at most once per request.
+ *
+ * Every is*Enabled() below used to issue its own findUnique for the same
+ * row, and a page asks several of them: the dashboard layout alone wants
+ * chat + sales + whiteboards + bilingual, which was four identical queries.
+ * DATABASE_URL runs with connection_limit=1 (see getLevelRoadmap's note), so
+ * those don't overlap — they were four sequential round trips for one row.
+ *
+ * React's cache() is scoped to ONE request, so the "checked fresh from the
+ * DB, flipping it off takes effect on the very next request" promise these
+ * toggles are documented with still holds exactly: nothing survives past the
+ * render that read it. The only thing collapsed is asking twice inside a
+ * single render. No caller writes Settings and then re-reads it in the same
+ * request (the /admin/settings actions only upsert, then revalidate).
+ */
+const getSettingsRow = cache(async () => prisma.settings.findUnique({ where: { id: 1 } }));
+
 // Master kill switch for the whole chat feature, toggled from
 // /admin/settings. Checked fresh from the DB (same convention as every
-// other guard in this file) rather than cached, so flipping it off takes
-// effect on the very next request.
+// other guard in this file) rather than cached across requests, so flipping
+// it off takes effect on the very next request.
 export async function isChatEnabled(): Promise<boolean> {
-  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
+  const settings = await getSettingsRow();
   return settings?.chatEnabled ?? true;
 }
 
@@ -257,7 +275,7 @@ export async function requireChatEnabled(redirectTo: string): Promise<void> {
 // non-guest audiences (Super Admin, Admin, thành viên) at once, subject to
 // each board's own per-board sharing (see requireWhiteboardAccess below).
 export async function isWhiteboardsEnabled(): Promise<boolean> {
-  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
+  const settings = await getSettingsRow();
   return settings?.whiteboardsEnabled ?? false;
 }
 
@@ -270,7 +288,7 @@ export async function requireWhiteboardsEnabled(redirectTo: string): Promise<voi
 // Master kill switch for public self-registration at /register, toggled from
 // /admin/settings — same fresh-from-DB convention as isChatEnabled.
 export async function isRegistrationEnabled(): Promise<boolean> {
-  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
+  const settings = await getSettingsRow();
   return settings?.registrationEnabled ?? true;
 }
 
@@ -278,14 +296,14 @@ export async function isRegistrationEnabled(): Promise<boolean> {
 // /admin/settings — same fresh-from-DB convention as isChatEnabled. When
 // off, src/lib/auth.ts's authorize() never checks User.emailVerified.
 export async function isEmailVerificationEnabled(): Promise<boolean> {
-  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
+  const settings = await getSettingsRow();
   return settings?.emailVerificationEnabled ?? false;
 }
 
 // Master switch for the "Đăng nhập bằng Google" button/flow, toggled from
 // /admin/settings — same fresh-from-DB convention as isChatEnabled.
 export async function isGoogleLoginEnabled(): Promise<boolean> {
-  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
+  const settings = await getSettingsRow();
   return settings?.googleLoginEnabled ?? false;
 }
 
@@ -294,7 +312,7 @@ export async function isGoogleLoginEnabled(): Promise<boolean> {
 // always resolves "vi" regardless of a visitor's saved language cookie, and
 // the language switcher renders nothing.
 export async function isBilingualEnabled(): Promise<boolean> {
-  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
+  const settings = await getSettingsRow();
   return settings?.bilingualEnabled ?? false;
 }
 
@@ -306,7 +324,7 @@ export async function isBilingualEnabled(): Promise<boolean> {
 // admins, so a pending order left over from before the toggle was flipped
 // off can't be confirmed/cancelled until sales are turned back on.
 export async function isSalesEnabled(): Promise<boolean> {
-  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
+  const settings = await getSettingsRow();
   return settings?.salesEnabled ?? false;
 }
 
@@ -326,14 +344,20 @@ export async function requireSalesEnabled(redirectTo: string): Promise<void> {
 // back to the pre-existing manual confirmOrderPaidAction, which stays
 // available regardless of this switch.
 export async function isAutoPaymentEnabled(): Promise<boolean> {
-  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
+  const settings = await getSettingsRow();
   return settings?.autoPaymentEnabled ?? false;
 }
 
+// The three ladder gates below land on /dashboard/lo-trinh, not /dashboard.
+// Since /dashboard became the overview, the roadmap is the page that can
+// actually answer "why can't I open this?" — it draws the six levels, where
+// the student stands, and what the next one costs. Feature-off and
+// course-grant denials further down keep pointing at /dashboard, which has
+// nothing to do with the ladder.
 export async function requireLevelAccess(requestedLevel: Level): Promise<User> {
   const student = await requireActiveStudent();
   if (!hasLevelAccess(student.grantedLevel, requestedLevel)) {
-    redirect("/dashboard?denied=1");
+    redirect("/dashboard/lo-trinh?denied=1");
   }
   return student;
 }
@@ -342,10 +366,10 @@ export async function requireLessonAccess(lessonId: string) {
   const student = await requireActiveStudent();
   const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
   if (!lesson) {
-    redirect("/dashboard?denied=1");
+    redirect("/dashboard/lo-trinh?denied=1");
   }
   if (!hasLevelAccess(student.grantedLevel, lesson.level)) {
-    redirect("/dashboard?denied=1");
+    redirect("/dashboard/lo-trinh?denied=1");
   }
   return { student, lesson };
 }
@@ -357,10 +381,10 @@ export async function requireQuizAccess(quizId: string) {
     include: { lesson: true },
   });
   if (!quiz) {
-    redirect("/dashboard?denied=1");
+    redirect("/dashboard/lo-trinh?denied=1");
   }
   if (!hasLevelAccess(student.grantedLevel, quiz.lesson.level)) {
-    redirect("/dashboard?denied=1");
+    redirect("/dashboard/lo-trinh?denied=1");
   }
   return { student, quiz };
 }

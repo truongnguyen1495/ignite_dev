@@ -43,8 +43,11 @@ export async function requestLevelUpAction() {
     },
   });
 
-  // Both surfaces render the gate now (LevelUpPanel), so both have to drop
-  // their cached "you may request" state once the request exists.
+  // Every surface that renders the gate has to drop its cached "you may
+  // request" state once the request exists: the level-up page and the
+  // roadmap both show LevelUpPanel, and the overview's learning card shows
+  // the same condition in its own words.
   revalidatePath("/dashboard/level-up");
+  revalidatePath("/dashboard/lo-trinh");
   revalidatePath("/dashboard");
 }

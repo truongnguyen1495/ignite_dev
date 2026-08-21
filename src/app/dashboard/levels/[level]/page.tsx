@@ -51,7 +51,8 @@ export default async function LevelPage({
 
   return (
     <div className="max-w-3xl space-y-5">
-      <BackLink href="/dashboard">Quay lại</BackLink>
+      {/* Back to the ladder this level is a card on, not to the overview. */}
+      <BackLink href="/dashboard/lo-trinh">Quay lại</BackLink>
 
       <div className="space-y-4 rounded-xl border border-border bg-surface p-5 sm:p-6">
         <div>

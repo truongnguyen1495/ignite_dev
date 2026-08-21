@@ -1,16 +1,14 @@
-import { requireActiveStudent } from "@/lib/access";
-import { ComingSoon } from "@/components/ui/coming-soon";
+import { redirect } from "next/navigation";
 
-export default async function Page() {
-  // Same gate as every other member route — a placeholder must not be the one
-  // page that answers to a logged-out visitor.
-  await requireActiveStudent();
-  return (
-    <ComingSoon
-      title="Dashboard"
-      description="Trang tổng quan gom điểm tuần, chuỗi check-in, nhiệm vụ hôm nay và tiến độ cấp vào một chỗ."
-      backHref="/dashboard"
-      backLabel="Về trang chính"
-    />
-  );
+/**
+ * The overview shipped, and it took /dashboard itself rather than this url.
+ *
+ * The route stays as a redirect instead of being deleted: this address was
+ * live for the whole time the feature sat behind a "sắp ra mắt" page, it is
+ * in the sidebar's history and in anyone's bookmarks, and the point of that
+ * convention (see ComingSoon in src/components/ui/coming-soon.tsx) was that
+ * shipping a feature would never break a link someone had already saved.
+ */
+export default function Page() {
+  redirect("/dashboard");
 }
