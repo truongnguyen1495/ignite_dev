@@ -350,11 +350,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
             const qrUrl = dynamicQrUrl ?? settings?.bankQrImageUrl;
             return (
               qrUrl && (
+                // White plate and padding are not decoration: the qr_only
+                // image is a bare code with no quiet zone of its own, and a
+                // scanner needs light margin around it — dropped straight
+                // onto this navy card, the outer modules would bleed into
+                // the background and phones would struggle to lock on.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={qrUrl}
                   alt="Mã QR chuyển khoản"
-                  className="mx-auto h-56 w-56 rounded-xl border border-border object-contain sm:h-64 sm:w-64"
+                  className="mx-auto h-56 w-56 rounded-xl bg-white p-3 object-contain sm:h-64 sm:w-64"
                 />
               )
             );

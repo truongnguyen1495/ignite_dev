@@ -30,5 +30,12 @@ export function buildVietQrImageUrl({
   });
   if (accountHolder) params.set("accountName", accountHolder);
 
-  return `https://img.vietqr.io/image/${bin}-${accountNumber}-compact2.png?${params.toString()}`;
+  // qr_only rather than compact2: compact2 draws the bank logo, the account
+  // number, the holder's name and the amount as text around the code, all of
+  // which the page already lists underneath in copyable fields. Printing them
+  // twice made the code itself small and the card busy — and the text baked
+  // into an image can't be copied anyway. Everything still travels inside the
+  // QR payload (amount and addInfo below), so what a banking app pre-fills is
+  // unchanged; only the picture is quieter.
+  return `https://img.vietqr.io/image/${bin}-${accountNumber}-qr_only.png?${params.toString()}`;
 }
