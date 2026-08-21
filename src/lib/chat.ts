@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { ChatThread, Level, User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ORDERED_LEVELS, hasLevelAccess } from "@/lib/levels";
@@ -98,9 +99,27 @@ export async function markThreadRead(threadId: string, userId: string): Promise<
   });
 }
 
+/**
+ * Unread message count per thread, in two round trips no matter how many
+ * threads there are.
+ *
+ * This used to issue one COUNT per thread inside a Promise.all. With
+ * connection_limit=1 on DATABASE_URL those never overlapped — a member in a
+ * handful of DMs plus their level's group rooms paid a dozen sequential
+ * round trips, on every single dashboard page load, since the sidebar's
+ * unread pill calls this on every render. It was the most expensive thing on
+ * the page by a wide margin.
+ *
+ * The per-thread cutoff is what made a single COUNT look impossible: each
+ * thread counts messages after *its own* lastReadAt. An OR of per-thread
+ * conditions expresses exactly that in one WHERE, and groupBy brings the
+ * counts back keyed by thread. Threads already fully read are dropped before
+ * the query is built (that check needs no messages at all), so a caught-up
+ * member sends no second query whatsoever.
+ */
 async function getUnreadCounts(threadIds: string[], userId: string): Promise<Map<string, number>> {
   if (threadIds.length === 0) return new Map();
-  const [reads, threads] = await Promise.all([
+  const [reads, threads] = await prisma.$transaction([
     prisma.chatThreadRead.findMany({
       where: { threadId: { in: threadIds }, userId },
       select: { threadId: true, lastReadAt: true },
@@ -112,21 +131,28 @@ async function getUnreadCounts(threadIds: string[], userId: string): Promise<Map
   ]);
   const lastReadByThread = new Map(reads.map((r) => [r.threadId, r.lastReadAt]));
 
-  const counts = await Promise.all(
-    threads.map(async (thread) => {
-      const lastReadAt = lastReadByThread.get(thread.id);
-      if (lastReadAt && lastReadAt >= thread.lastMessageAt) return [thread.id, 0] as const;
-      const count = await prisma.chatMessage.count({
-        where: {
-          threadId: thread.id,
-          senderId: { not: userId },
-          createdAt: lastReadAt ? { gt: lastReadAt } : undefined,
-        },
-      });
-      return [thread.id, count] as const;
-    })
-  );
-  return new Map(counts);
+  const counts = new Map(threads.map((thread) => [thread.id, 0]));
+  const unreadCandidates = threads.filter((thread) => {
+    const lastReadAt = lastReadByThread.get(thread.id);
+    return !lastReadAt || lastReadAt < thread.lastMessageAt;
+  });
+  if (unreadCandidates.length === 0) return counts;
+
+  const rows = await prisma.chatMessage.groupBy({
+    by: ["threadId"],
+    where: {
+      senderId: { not: userId },
+      OR: unreadCandidates.map((thread) => {
+        const lastReadAt = lastReadByThread.get(thread.id);
+        return lastReadAt ? { threadId: thread.id, createdAt: { gt: lastReadAt } } : { threadId: thread.id };
+      }),
+    },
+    _count: { _all: true },
+  });
+  for (const row of rows) {
+    counts.set(row.threadId, row._count._all);
+  }
+  return counts;
 }
 
 export type StudentChatInbox = {
@@ -141,8 +167,18 @@ export type StudentChatInbox = {
   groupRooms: { level: Level; accessible: boolean; unreadCount: number }[];
 };
 
-export async function getStudentChatInbox(student: User): Promise<StudentChatInbox> {
-  const [supportThread, directThreadRows, groupThreadRows] = await Promise.all([
+/**
+ * Cached per request: the dashboard layout reads this for the sidebar's
+ * unread pill, and /dashboard reads it again for the overview's "tin nhắn
+ * chưa đọc" row. Both reach it through requireActiveStudent, which is itself
+ * cache()d (see src/lib/access.ts) and therefore hands both callers the SAME
+ * User object — cache() keys on argument identity, so that reference is what
+ * makes the second call free instead of replaying four queries.
+ */
+export const getStudentChatInbox = cache(async (student: User): Promise<StudentChatInbox> => {
+  // One batch, not Promise.all — connection_limit=1 means these three would
+  // otherwise queue up as three round trips (see getUnreadCounts below).
+  const [supportThread, directThreadRows, groupThreadRows] = await prisma.$transaction([
     prisma.chatThread.findUnique({ where: { supportStudentId: student.id } }),
     prisma.chatThread.findMany({
       where: { kind: "DIRECT", OR: [{ directUserAId: student.id }, { directUserBId: student.id }] },
@@ -193,7 +229,7 @@ export async function getStudentChatInbox(student: User): Promise<StudentChatInb
       };
     }),
   };
-}
+});
 
 export type AdminSupportInboxRow = {
   threadId: string;

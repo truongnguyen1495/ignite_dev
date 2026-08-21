@@ -56,7 +56,7 @@ function Thumbnail({ item, className }: { item: StudentLibraryItem; className: s
   }
   return (
     <div className={`${className} flex items-center justify-center bg-gradient-to-br ${item.gradient}`}>
-      <Icon className="h-9 w-9 text-on-dark-strong" />
+      <Icon className="h-9 w-9 text-primary-foreground" />
     </div>
   );
 }

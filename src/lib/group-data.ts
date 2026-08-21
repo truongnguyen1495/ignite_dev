@@ -98,24 +98,27 @@ export async function getTodayTasksForUser(userId: string, date: Date = todayVN(
   const liveTasks = tasks.filter((t) => isTaskLiveOnDate(t, day));
   if (liveTasks.length === 0) return [];
 
+  // Both reads in one batch. Which tasks apply isn't known until the
+  // assignee rows come back, so completions are asked for across every live
+  // task and narrowed in memory afterwards — a slightly wider WHERE on an
+  // already-indexed column ([userId, date]), against one fewer round trip on
+  // a connection_limit=1 pool. Same trade as weeklyPointQueries below.
+  const liveTaskIds = liveTasks.map((t) => t.id);
   const specificTaskIds = liveTasks.filter((t) => !t.assignAllMembers).map((t) => t.id);
-  const assignedSpecificIds = specificTaskIds.length
-    ? new Set(
-        (
-          await prisma.dailyTaskAssignee.findMany({
-            where: { taskId: { in: specificTaskIds }, userId },
-            select: { taskId: true },
-          })
-        ).map((a) => a.taskId)
-      )
-    : new Set<string>();
+  const [assignees, completions] = await prisma.$transaction([
+    prisma.dailyTaskAssignee.findMany({
+      where: { taskId: { in: specificTaskIds }, userId },
+      select: { taskId: true },
+    }),
+    prisma.dailyTaskCompletion.findMany({
+      where: { userId, date: day, taskId: { in: liveTaskIds } },
+    }),
+  ]);
 
+  const assignedSpecificIds = new Set(assignees.map((a) => a.taskId));
   const applicableTasks = liveTasks.filter((t) => t.assignAllMembers || assignedSpecificIds.has(t.id));
   if (applicableTasks.length === 0) return [];
 
-  const completions = await prisma.dailyTaskCompletion.findMany({
-    where: { userId, date: day, taskId: { in: applicableTasks.map((t) => t.id) } },
-  });
   const completionByTask = new Map(completions.map((c) => [c.taskId, c]));
   const isToday = day.getTime() === todayVN().getTime();
 
@@ -173,7 +176,11 @@ export async function countGoalCompletedDays(userId: string): Promise<number> {
 
 export async function computeWeeklyPoints(userId: string, weekStart: Date): Promise<number> {
   const weekEnd = addDays(weekStart, 7);
-  const [taskCompletions, spinResults] = await Promise.all([
+  // $transaction, not Promise.all — connection_limit=1 means Promise.all
+  // runs these back to back on the one connection, so two round trips for
+  // what the batch sends as one. Same reasoning (and same fix) as
+  // getWeeklyLeaderboard's weeklyPointQueries just below.
+  const [taskCompletions, spinResults] = await prisma.$transaction([
     prisma.dailyTaskCompletion.findMany({
       where: { userId, status: "DONE", date: { gte: weekStart, lt: weekEnd } },
       include: { task: { select: { points: true } } },
@@ -335,7 +342,7 @@ export function rankGroupsByAveragePoints(
 // actually overlap round trips — handing PrismaPromises to a caller lets it
 // batch these into someone else's prisma.$transaction([...]) instead of
 // paying another round trip of its own.
-function weeklyPointQueries(userIds: string[], weekStart: Date) {
+export function weeklyPointQueries(userIds: string[], weekStart: Date) {
   const weekEnd = addDays(weekStart, 7);
   const completions = prisma.dailyTaskCompletion.findMany({
     where: { userId: { in: userIds }, status: "DONE", date: { gte: weekStart, lt: weekEnd } },
@@ -348,7 +355,7 @@ function weeklyPointQueries(userIds: string[], weekStart: Date) {
   return [completions, spins] as [typeof completions, typeof spins];
 }
 
-function sumWeeklyPointsByUser(
+export function sumWeeklyPointsByUser(
   taskCompletions: { userId: string; task: { points: number } }[],
   spinResults: { userId: string; reward: { type: SpinRewardType; value: number } }[]
 ): Map<string, number> {

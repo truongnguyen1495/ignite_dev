@@ -338,7 +338,7 @@ function VideoElement({
   }
 
   if (!youtubeId) {
-    return <div className="flex h-full w-full items-center justify-center bg-faint-bg text-xs text-muted">Video</div>;
+    return <div className="flex h-full w-full items-center justify-center bg-paper-faint-bg text-xs text-paper-muted">Video</div>;
   }
   if (!isActive || !started) {
     return (
@@ -454,7 +454,7 @@ export function BookElementRenderer({
       return element.url ? (
         <ImageElement url={element.url} alt={element.alt ?? ""} editable={editable} />
       ) : (
-        <div className="flex h-full w-full items-center justify-center bg-faint-bg text-xs text-muted">Ảnh</div>
+        <div className="flex h-full w-full items-center justify-center bg-paper-faint-bg text-xs text-paper-muted">Ảnh</div>
       );
     case "shape":
       return (
@@ -501,11 +501,11 @@ export function BookElementRenderer({
       );
     case "audio":
       if (!element.url) {
-        return <div className="flex h-full w-full items-center justify-center bg-faint-bg text-xs text-muted">Audio</div>;
+        return <div className="flex h-full w-full items-center justify-center bg-paper-faint-bg text-xs text-paper-muted">Audio</div>;
       }
       if (!isActive) {
         return (
-          <div className="flex h-full w-full items-center justify-center gap-1.5 rounded-md bg-faint-bg text-xs text-muted">
+          <div className="flex h-full w-full items-center justify-center gap-1.5 rounded-md bg-paper-faint-bg text-xs text-paper-muted">
             <Volume2 className="h-3.5 w-3.5" />
             Audio
           </div>

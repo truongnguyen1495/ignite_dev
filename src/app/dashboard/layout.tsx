@@ -106,7 +106,8 @@ export default async function DashboardLayout({
   // Each unbuilt entry still sits at its FINAL url, so shipping one means
   // moving its row up into a real run — no link changes, no broken bookmark.
   const comingSoonChildren: NavItem[] = [
-    { href: "/dashboard/tong-quan", label: t.adminNav.overview, icon: <LayoutDashboard className={iconClass} /> },
+    // "Dashboard" used to lead this list; it shipped, and it took /dashboard
+    // itself — see the first two rows of NAV_ITEMS below.
     { href: "/dashboard/leads", label: t.dashboardNav.leadManagement, icon: <UserPlus className={iconClass} /> },
     { href: "/dashboard/checklist", label: t.dashboardNav.checklist, icon: <ListChecks className={iconClass} /> },
     { href: "/dashboard/business-tools", label: t.dashboardNav.businessTools, icon: <Briefcase className={iconClass} /> },
@@ -122,9 +123,18 @@ export default async function DashboardLayout({
 
   const NAV_ITEMS: NavEntry[] = [
     { section: t.dashboardNav.sectionLearning },
-    // The six-level ladder IS /dashboard, and it is the spine of the product,
-    // so it leads. The row that used to sit here was an unbuilt "Dashboard".
-    { href: "/dashboard", label: t.dashboardNav.roadmapLong, icon: <Route className={iconClass} />, exact: true },
+    // The overview is what /dashboard answers to now, so it takes the first
+    // row — it is where signing in lands, and where the sidebar's "home" has
+    // to point. The six-level ladder keeps the row directly under it and is
+    // still the spine of the product; it just moved to its own url rather
+    // than doubling as the landing page.
+    {
+      href: "/dashboard",
+      label: t.dashboardNav.overviewHome,
+      icon: <LayoutDashboard className={iconClass} />,
+      exact: true,
+    },
+    { href: "/dashboard/lo-trinh", label: t.dashboardNav.roadmapLong, icon: <Route className={iconClass} /> },
     { href: "/dashboard/courses", label: t.dashboardNav.courses, icon: <Video className={iconClass} /> },
     { href: "/dashboard/level-up", label: t.dashboardNav.levelUp, icon: <ArrowUpCircle className={iconClass} /> },
     {

@@ -126,6 +126,23 @@ export function formatDateVN(d: Date): string {
   return `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
 }
 
+// The Vietnam calendar day a real *instant* falls on. dateOnly() above is for
+// @db.Date columns, which are already stored as UTC-midnight of the VN day;
+// this one is for true timestamps (Order.paymentDeadline, for instance),
+// which still need the offset applied before the day can be read off. Feed
+// the result to formatDateVN to print it.
+export function dateOnlyVN(d: Date): Date {
+  const vn = new Date(d.getTime() + VN_OFFSET_MS);
+  return new Date(Date.UTC(vn.getUTCFullYear(), vn.getUTCMonth(), vn.getUTCDate()));
+}
+
+// "HH:MM" — the clock time of an instant in Vietnam, for a server that runs
+// in UTC. Sibling of isPastTimeOfDayVN below, which compares against *now*.
+export function formatTimeVN(d: Date): string {
+  const vn = new Date(d.getTime() + VN_OFFSET_MS);
+  return `${String(vn.getUTCHours()).padStart(2, "0")}:${String(vn.getUTCMinutes()).padStart(2, "0")}`;
+}
+
 export function isSameDate(a: Date, b: Date): boolean {
   return dateOnly(a).getTime() === dateOnly(b).getTime();
 }
@@ -204,6 +221,22 @@ export function computeStreaksFromDates(dates: number[], today: number): { curre
   }
 
   return { current, best: Math.max(best, current) };
+}
+
+/**
+ * Standard competition ranking: everyone on the same score shares one rank
+ * (1, 2, 2, 4). Deliberately not "position in the sorted array", which is what
+ * /dashboard/my-group used to do — with most of a group sitting on 0 points,
+ * that handed out ranks in whatever arbitrary order the rows came back in, so
+ * two members with identical scores read different numbers. The overview strip
+ * on /dashboard and the group page both rank through here now.
+ *
+ * Lives here rather than beside the leaderboard query in group-data.ts for the
+ * same reason computeStreaksFromDates does: it is pure, so it can be tested
+ * without a database.
+ */
+export function rankByPoints(allPoints: number[], myPoints: number): number {
+  return allPoints.filter((points) => points > myPoints).length + 1;
 }
 
 // Rotates by calendar day (Vietnam time), not stored in the DB — no admin

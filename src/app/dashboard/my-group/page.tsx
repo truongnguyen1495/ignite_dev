@@ -19,6 +19,7 @@ import {
   getQuoteForToday,
   getWeekStart,
   isGroupLeadership,
+  rankByPoints,
   todayVN,
 } from "@/lib/groups";
 import {
@@ -78,7 +79,15 @@ export default async function MyGroupPage({
 
   const resultByTestId = new Map(results.map((r) => [r.testId, r]));
   const canManageGroup = membership ? isGroupLeadership(membership.role) : false;
-  const myRank = groupLeaderboard.findIndex((e) => e.user.id === student.id) + 1;
+  // Competition ranking, shared with the overview strip on /dashboard — a
+  // member's position in the sorted array is arbitrary among equal scores,
+  // which had two people on the same points reading different ranks.
+  const myRank = groupLeaderboard.some((e) => e.user.id === student.id)
+    ? rankByPoints(
+        groupLeaderboard.map((e) => e.points),
+        weeklyPoints
+      )
+    : 0;
 
   return (
     <div className="space-y-8">

@@ -34,12 +34,16 @@ export type GuestCourseItem = {
   progressPercent: number;
 };
 
+// Năm dải màu bìa cho mục chưa có ảnh. Mọi mục phải có dải thật và không
+// trùng nhau: trong bảng màu này --level-3 trùng đúng --primary và --level-5
+// trùng đúng --info, nên dùng thẳng chúng ở đây sẽ ra một mục phẳng lì và một
+// cặp giống hệt nhau. Icon đặt trên các dải này là chữ navy, không phải trắng.
 const BANNER_GRADIENTS = [
   "from-[var(--primary)] to-[var(--info)]",
-  "from-[var(--level-3)] to-[var(--primary)]",
+  "from-[var(--primary-hover)] to-[var(--accent)]",
   "from-[var(--level-4)] to-[var(--warning)]",
-  "from-[var(--info)] to-[var(--level-3)]",
-  "from-[var(--level-5)] to-[var(--level-4)]",
+  "from-[var(--info)] to-[var(--accent)]",
+  "from-[var(--warning)] to-[var(--info)]",
 ];
 
 // `student` switches this from the anonymous /guest/courses catalog to a
