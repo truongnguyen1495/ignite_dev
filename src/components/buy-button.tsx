@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { X, Zap } from "lucide-react";
 import type { OrderItemKind } from "@prisma/client";
-import { addToCartAction } from "@/app/dashboard/cart/actions";
+import { addToCartAction, checkoutNowAction } from "@/app/dashboard/cart/actions";
 import { loginUrlForPurchase } from "@/lib/next-path";
 import { Button } from "@/components/ui/button";
 import { PriceBlock } from "@/components/price-block";
@@ -62,7 +62,7 @@ export function BuyButton({
   const [error, setError] = useState<string | undefined>();
   const router = useRouter();
 
-  const addItem = (goToCheckout: boolean) => {
+  const addItem = () => {
     setError(undefined);
     startTransition(async () => {
       const result = await addToCartAction(kind, itemId);
@@ -78,19 +78,43 @@ export function BuyButton({
         return;
       }
       setOpen(false);
-      if (goToCheckout) {
-        // "Thanh toán" goes STRAIGHT to the checkout page, never through the
-        // cart — and carries only this line, so a basket holding three other
-        // things is not billed because someone pressed buy on a fourth. The
-        // checkout page says as much, since the short label no longer does.
-        router.push(
-          result.cartItemId
-            ? `/dashboard/thanh-toan?item=${result.cartItemId}`
-            : "/dashboard/thanh-toan"
-        );
+      router.refresh();
+    });
+  };
+
+  /**
+   * "Thanh toán" — one press, shortest legal path to a payment screen.
+   *
+   * Never through the cart, and carrying only this line, so a basket
+   * holding three other things is not billed because someone pressed buy on
+   * a fourth. What it skips depends on the item: a course or a book has no
+   * address to collect and cannot be paid on delivery, so checkoutNowAction
+   * creates the order outright and this lands on the QR; a physical product
+   * still has to say where it's going, so it stops at the checkout form
+   * with the line already waiting there.
+   */
+  const checkoutNow = () => {
+    setError(undefined);
+    startTransition(async () => {
+      const result = await checkoutNowAction(kind, itemId);
+      if (result.needsLogin) {
+        router.push(loginUrlForPurchase(window.location.pathname, details.title));
         return;
       }
-      router.refresh();
+      if (result.orderId) {
+        setOpen(false);
+        router.push(`/dashboard/orders/${result.orderId}`);
+        return;
+      }
+      if (result.cartItemId) {
+        // Either a product (always) or a digital item whose order failed to
+        // be created — both are safely in the cart, so finish on the full
+        // checkout screen rather than dead-ending in this dialog.
+        setOpen(false);
+        router.push(`/dashboard/thanh-toan?item=${result.cartItemId}`);
+        return;
+      }
+      setError(result.error ?? "Không tạo được đơn hàng, vui lòng thử lại.");
     });
   };
 
@@ -155,10 +179,10 @@ export function BuyButton({
               </div>
               {error && <p className="mt-2 text-xs text-danger">{error}</p>}
               <div className="mt-6 flex justify-end gap-2">
-                <Button type="button" variant="secondary" disabled={pending} onClick={() => addItem(false)}>
+                <Button type="button" variant="secondary" disabled={pending} onClick={addItem}>
                   Thêm vào giỏ hàng
                 </Button>
-                <Button type="button" variant="primary" disabled={pending} isLoading={pending} onClick={() => addItem(true)}>
+                <Button type="button" variant="primary" disabled={pending} isLoading={pending} onClick={checkoutNow}>
                   Thanh toán
                 </Button>
               </div>

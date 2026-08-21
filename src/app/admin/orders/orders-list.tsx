@@ -49,6 +49,9 @@ export type OrderListItem = {
   paymentMethod: PaymentMethod;
   cancelReason: OrderCancelReason | null;
   totalAmount: number;
+  /** Already inside totalAmount — surfaced separately so whoever processes
+      the order can tell goods from delivery without doing the subtraction. */
+  shippingFee: number;
   refundedTotal: number;
   shippedAt: Date | null;
   deliveredAt: Date | null;
@@ -574,7 +577,12 @@ export function OrdersList({
                       <p className="mt-1 text-xs text-muted">Ghi chú giao hàng: {order.deliveryNote}</p>
                     )}
                   </div>
-                  <p className="shrink-0 font-medium text-foreground">{formatVND(order.totalAmount)}</p>
+                  <div className="shrink-0 text-right">
+                    <p className="font-medium text-foreground">{formatVND(order.totalAmount)}</p>
+                    {order.shippingFee > 0 && (
+                      <p className="text-xs text-muted">gồm {formatVND(order.shippingFee)} ship</p>
+                    )}
+                  </div>
                   <OrderActions order={order} />
                   {isSuperAdmin && <DeleteOrderButton order={order} />}
                 </li>

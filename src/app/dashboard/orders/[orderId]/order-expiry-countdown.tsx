@@ -26,23 +26,38 @@ function formatRemaining(ms: number): string {
 export function OrderExpiryCountdown({ deadline }: { deadline: Date }) {
   const router = useRouter();
   const deadlineMs = deadline.getTime();
-  // Computed in an initializer rather than as a constant, so the first
-  // paint after hydration already shows the right number.
-  const [remaining, setRemaining] = useState(() => deadlineMs - Date.now());
+  // Starts as null — meaning "not measured yet" — and stays null through
+  // the server render AND the first client render. It used to be seeded
+  // from Date.now() in a useState initializer, which runs in both places a
+  // second or so apart: the server shipped "28:34", the browser hydrated
+  // "28:33", and React threw a hydration mismatch that (in dev) puts an
+  // error overlay over the whole page, swallowing clicks on the buttons
+  // underneath. A clock cannot agree with a render that happened in the
+  // past, so the fix is to not render one until the browser owns it.
+  const [remaining, setRemaining] = useState<number | null>(null);
   const refreshed = useRef(false);
 
   useEffect(() => {
-    const interval = setInterval(() => setRemaining(deadlineMs - Date.now()), 1000);
-    return () => clearInterval(interval);
+    const tick = () => setRemaining(deadlineMs - Date.now());
+    // rAF rather than calling tick() straight away: the first real value
+    // lands before the browser paints, so the placeholder below is never
+    // actually seen, while the update still happens outside the effect body
+    // (a synchronous setState there is its own cascading-render problem).
+    const frame = requestAnimationFrame(tick);
+    const interval = setInterval(tick, 1000);
+    return () => {
+      cancelAnimationFrame(frame);
+      clearInterval(interval);
+    };
   }, [deadlineMs]);
 
   useEffect(() => {
-    if (remaining > 0 || refreshed.current) return;
+    if (remaining === null || remaining > 0 || refreshed.current) return;
     refreshed.current = true;
     router.refresh();
   }, [remaining, router]);
 
-  const urgent = remaining > 0 && remaining <= URGENT_SECONDS * 1000;
+  const urgent = remaining !== null && remaining > 0 && remaining <= URGENT_SECONDS * 1000;
 
   return (
     <p
@@ -53,11 +68,17 @@ export function OrderExpiryCountdown({ deadline }: { deadline: Date }) {
       }`}
     >
       <Timer className="h-4 w-4 shrink-0" />
-      {remaining <= 0 ? (
+      {remaining !== null && remaining <= 0 ? (
         "Đã hết hạn thanh toán — đang cập nhật trạng thái…"
       ) : (
         <span>
-          Còn <span className="font-mono text-base tabular-nums">{formatRemaining(remaining)}</span>{" "}
+          Còn{" "}
+          <span className="font-mono text-base tabular-nums">
+            {/* The em dashes exist for one frame at most — see the rAF in
+                the effect above — but they keep the server and client
+                markup identical, which is the whole point. */}
+            {remaining === null ? "--:--" : formatRemaining(remaining)}
+          </span>{" "}
           để chuyển khoản
         </span>
       )}

@@ -30,6 +30,7 @@ import { ReorderButton } from "./reorder-button";
 import { OrderStatusPoller } from "./order-status-poller";
 import { OrderExpiryCountdown } from "./order-expiry-countdown";
 import { DeliveryTimeline } from "./delivery-timeline";
+import { OrderThanks } from "./order-thanks";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ orderId: string }> }) {
   const student = await requireActiveStudent();
@@ -83,6 +84,15 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
         </div>
       </div>
 
+      <OrderThanks
+        status={status}
+        paymentMethod={order.paymentMethod}
+        orderCode={formatOrderCode(order.orderNumber)}
+        totalAmount={order.totalAmount}
+        hasPhysicalItems={hasPhysicalItems}
+        hasDigitalItems={order.items.some((item) => item.kind !== "PRODUCT")}
+      />
+
       {status === "PAID" && (
         <Card className="flex items-center gap-3 border-success-border bg-success-bg">
           <CheckCircle2 className="h-8 w-8 shrink-0 text-success" />
@@ -118,9 +128,30 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
               </li>
             ))}
           </ul>
-          <div className="flex items-center justify-between border-t border-border pt-3 text-sm font-medium">
-            <span className="text-foreground">Tổng cộng</span>
-            <span className="text-foreground">{formatVND(order.totalAmount)}</span>
+          <div className="space-y-2 border-t border-border pt-3 text-sm">
+            {/* Delivery is only itemised for an order that had something to
+                deliver — and then always, including when it came out free,
+                so a buyer who earned free shipping can see that they did. */}
+            {hasPhysicalItems && (
+              <>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted">Tiền hàng</span>
+                  <span className="tabular-nums text-muted">
+                    {formatVND(order.totalAmount - order.shippingFee)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted">Phí vận chuyển</span>
+                  <span className="tabular-nums text-muted">
+                    {order.shippingFee === 0 ? "Miễn phí" : formatVND(order.shippingFee)}
+                  </span>
+                </div>
+              </>
+            )}
+            <div className="flex items-center justify-between gap-3 font-medium">
+              <span className="text-foreground">Tổng cộng</span>
+              <span className="tabular-nums text-foreground">{formatVND(order.totalAmount)}</span>
+            </div>
           </div>
         </Card>
       )}
@@ -219,9 +250,27 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
         </ul>
         {/* Grand total now lives only in the "Hóa đơn" card above, once PAID. */}
         {status !== "PAID" && (
-          <div className="flex items-center justify-between border-t border-border pt-3 text-sm font-medium">
-            <span className="text-foreground">Tổng cộng</span>
-            <span className="text-foreground">{formatVND(order.totalAmount)}</span>
+          <div className="space-y-2 border-t border-border pt-3 text-sm">
+            {hasPhysicalItems && (
+              <>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted">Tiền hàng</span>
+                  <span className="tabular-nums text-muted">
+                    {formatVND(order.totalAmount - order.shippingFee)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted">Phí vận chuyển</span>
+                  <span className="tabular-nums text-muted">
+                    {order.shippingFee === 0 ? "Miễn phí" : formatVND(order.shippingFee)}
+                  </span>
+                </div>
+              </>
+            )}
+            <div className="flex items-center justify-between gap-3 font-medium">
+              <span className="text-foreground">Tổng cộng</span>
+              <span className="tabular-nums text-foreground">{formatVND(order.totalAmount)}</span>
+            </div>
           </div>
         )}
       </Card>
