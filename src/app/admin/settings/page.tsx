@@ -13,6 +13,7 @@ import { EmailVerificationToggle } from "./email-verification-toggle";
 import { GoogleLoginToggle } from "./google-login-toggle";
 import { BankInfoForm } from "./bank-info-form";
 import { AutoPaymentToggle } from "./auto-payment-toggle";
+import { ShippingFeeForm } from "./shipping-fee-form";
 import { LessonWatchProgressForm } from "./lesson-watch-progress-form";
 import { WhiteboardsToggle } from "./whiteboards-toggle";
 
@@ -52,6 +53,12 @@ export default async function SettingsPage() {
       </Card>
       <Card className="max-w-lg">
         <AutoPaymentToggle autoPaymentEnabled={settings.autoPaymentEnabled} />
+      </Card>
+      <Card className="max-w-lg">
+        <ShippingFeeForm
+          shippingFee={settings.shippingFee}
+          freeShippingFromItems={settings.freeShippingFromItems}
+        />
       </Card>
       <Card className="max-w-lg">
         <WhiteboardsToggle whiteboardsEnabled={settings.whiteboardsEnabled} />

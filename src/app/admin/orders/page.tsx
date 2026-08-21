@@ -25,6 +25,7 @@ function toListItem(order: OrderWithRelations): OrderListItem {
     paymentMethod: order.paymentMethod,
     cancelReason: order.cancelReason,
     totalAmount: order.totalAmount,
+    shippingFee: order.shippingFee,
     // Summed here rather than in the client so a voided refund can't be
     // mistaken for money that moved — see activeRefundTotal.
     refundedTotal: activeRefundTotal(order.refunds),

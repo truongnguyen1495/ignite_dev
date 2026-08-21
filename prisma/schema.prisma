@@ -111,7 +111,24 @@ model Address {
   label          String?
   recipientName  String
   recipientPhone String
+  // The address as one display string ("số nhà, phường/xã, tỉnh/thành").
+  // Kept as the single source for rendering — every screen that shows an
+  // address reads this one column — and as the only thing entries written
+  // before the structured columns below existed still have.
   addressLine    String  @db.Text
+  // The same address, split the way Vietnam's two-level administrative
+  // structure actually works since 2025: tỉnh/thành → phường/xã, with no
+  // quận/huyện in between. Nullable because entries saved before this
+  // existed only ever had the free-text line above; new ones always write
+  // all five together. Codes are the official GSO ones (2 digits for a
+  // province, 5 for a ward), stored as strings so leading zeros survive,
+  // and the names are snapshotted beside them so a future merge/rename
+  // can never silently rewrite where an old parcel was sent.
+  provinceCode   String?
+  provinceName   String?
+  wardCode       String?
+  wardName       String?
+  street         String? @db.Text
   // At most one per student should be true; enforced in the action that
   // writes it (setDefaultAddress clears the others in the same transaction)
   // rather than by a partial unique index, which Prisma can't express.
@@ -637,6 +654,16 @@ model Settings {
   // sign-in if registrationEnabled is ALSO on — reuses that existing switch
   // rather than adding a second "who can register" toggle.
   googleLoginEnabled             Boolean  @default(false)
+  // Delivery charge for an order that contains anything physical, in đồng.
+  // One flat national rate rather than a per-province table: this shop
+  // ships one kind of parcel, and a rate card nobody maintains is worse
+  // than a number an admin can change in a second. Copied onto the order at
+  // checkout (Order.shippingFee), never read back from here afterwards.
+  shippingFee                    Int      @default(25000)
+  // Buy this many physical units and delivery is free. 0 turns the offer
+  // off entirely (no threshold, no "mua thêm N sản phẩm" hint) — the
+  // default, so switching the feature on is a deliberate act.
+  freeShippingFromItems          Int      @default(0)
   bankName                       String?
   bankAccountNumber              String?
   bankAccountHolder              String?
@@ -1204,6 +1231,25 @@ model Order {
   shippingName    String?
   shippingPhone   String?
   shippingAddress String? @db.Text
+  // The delivery address split into its administrative parts, mirroring
+  // Address above. Snapshotted onto the order (not read through a relation)
+  // for the same reason shippingAddress already was: the buyer may edit or
+  // delete the address-book entry afterwards, and where a parcel was
+  // actually sent must not change under an order that has already shipped.
+  shippingProvinceCode String?
+  shippingProvinceName String?
+  shippingWardCode     String?
+  shippingWardName     String?
+  shippingStreet       String? @db.Text
+
+  // What was charged for delivery, snapshotted at checkout from
+  // Settings.shippingFee — an admin changing the fee later must not
+  // retroactively change what an existing order says it billed. Zero for
+  // every digital-only order, and for a physical one that hit the
+  // free-shipping threshold. NOTE: totalAmount already INCLUDES this, so
+  // the QR amount, the COD amount and refunds all keep working untouched;
+  // the goods subtotal is totalAmount - shippingFee.
+  shippingFee     Int     @default(0)
 
   // Soft-delete only — set by deleteOrderAction (Super Admin only), which
   // just hides the row from /admin/orders immediately. The row itself (and

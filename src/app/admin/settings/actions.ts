@@ -159,3 +159,47 @@ export async function setLessonWatchSettingsAction(
   revalidatePath("/admin/settings");
   return undefined;
 }
+
+// Both numbers are plain non-negative integers rather than anything
+// cleverer: a fee is đồng (no decimals in practice), and the threshold is a
+// count of items. 0 is meaningful for both — free delivery for everyone,
+// and "no free-shipping offer at all" respectively — so neither has a
+// minimum of 1.
+const shippingSettingsSchema = z.object({
+  shippingFee: z.coerce
+    .number()
+    .int("Phí vận chuyển phải là số nguyên.")
+    .min(0, "Phí vận chuyển không được âm.")
+    .max(100_000_000, "Phí vận chuyển quá lớn."),
+  freeShippingFromItems: z.coerce
+    .number()
+    .int("Số sản phẩm phải là số nguyên.")
+    .min(0, "Số sản phẩm không được âm.")
+    .max(999, "Số sản phẩm quá lớn."),
+});
+
+export async function setShippingSettingsAction(
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  await requireActiveSuperAdmin();
+
+  const parsed = shippingSettingsSchema.safeParse({
+    shippingFee: formData.get("shippingFee"),
+    freeShippingFromItems: formData.get("freeShippingFromItems"),
+  });
+  if (!parsed.success) {
+    return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
+  }
+
+  await prisma.settings.upsert({
+    where: { id: 1 },
+    update: parsed.data,
+    create: { id: 1, ...parsed.data },
+  });
+  // Only the settings screen: existing orders keep the fee they were
+  // charged (Order.shippingFee), and the checkout screen reads this row
+  // fresh on every visit, so there is nothing else holding a stale copy.
+  revalidatePath("/admin/settings");
+  return undefined;
+}
