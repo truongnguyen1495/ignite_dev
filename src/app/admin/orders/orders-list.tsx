@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   Check,
   X,
@@ -13,6 +14,7 @@ import {
   Package,
   Undo2,
   Image as ImageIcon,
+  XCircle,
 } from "lucide-react";
 import type { OrderCancelReason, OrderItemKind, OrderStatus, PaymentMethod, RefundReason } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
@@ -23,9 +25,12 @@ import {
   formatOrderCode,
   ORDER_STATUS_LABELS,
   ORDER_STATUS_BADGE_COLOR,
+  ORDER_ITEM_KIND_LABELS,
+  PAYMENT_METHOD_LABELS,
   ORDER_TRASH_RETENTION_DAYS,
 } from "@/lib/orders";
 import { ORDER_CANCEL_REASON_LABELS } from "@/lib/order-cancel-labels";
+import { REFUND_REASON_LABELS } from "@/lib/refund-labels";
 import { getOrderActionFlags, ORDER_PRIMARY_ACTION_LABELS } from "@/lib/order-action-flags";
 import { CancelOrderModal } from "./cancel-order-modal";
 import {
@@ -62,14 +67,46 @@ export type OrderListItem = {
   /** Live refunds only — voided rows are filtered out server-side. */
   refunds: { id: string; amount: number; reason: RefundReason; note: string | null; refundedAtLabel: string }[];
   createdAtLabel: string;
+  /** "YYYY-MM-DD" the payment landed on, VN calendar day — null if unpaid. */
+  paidAtDateVN: string | null;
   studentName: string;
   studentEmail: string;
   shipping: { name: string; phone: string; address: string } | null;
   deletedAt: Date | null;
-  items: { id: string; title: string; kind: OrderItemKind; hasActiveGrant: boolean }[];
+  items: { id: string; title: string; kind: OrderItemKind; refId: string | null; hasActiveGrant: boolean }[];
 };
 
 const STATUS_FILTERS: OrderStatus[] = ["PENDING", "AWAITING_COD", "PAID", "CANCELLED"];
+
+// Query params a drill-down link from /admin/revenue can arrive with. Every
+// one narrows a dimension already present on OrderListItem — no extra fetch
+// needed, this just filters the same `orders` array the manual status pills
+// already filter client-side.
+type RevenueDrillFilters = {
+  status: string | null;
+  date: string | null;
+  kind: OrderItemKind | null;
+  method: PaymentMethod | null;
+  refundReason: RefundReason | null;
+  itemId: string | null;
+};
+
+// itemId is checked before kind — a top-products drill-down link sets both
+// (kind disambiguates which id-space itemId lives in), and naming the exact
+// product the admin clicked is more useful here than the broader category it
+// belongs to.
+function describeDrillFilter(f: RevenueDrillFilters, orders: OrderListItem[]): string | null {
+  if (f.status === "pending") return "trạng thái Chờ xử lý";
+  if (f.date) return `ngày ${f.date.split("-").reverse().join("/")}`;
+  if (f.itemId) {
+    const title = orders.flatMap((o) => o.items).find((i) => i.refId === f.itemId)?.title;
+    return title ? `sản phẩm "${title}"` : "sản phẩm đã chọn";
+  }
+  if (f.kind) return `loại "${ORDER_ITEM_KIND_LABELS[f.kind]}"`;
+  if (f.method) return `phương thức "${PAYMENT_METHOD_LABELS[f.method]}"`;
+  if (f.refundReason) return `lý do hoàn "${REFUND_REASON_LABELS[f.refundReason]}"`;
+  return null;
+}
 
 function OrderActions({ order }: { order: OrderListItem }) {
   const [pending, startTransition] = useTransition();
@@ -426,13 +463,65 @@ export function OrdersList({
   deletedOrders: OrderListItem[];
   isSuperAdmin: boolean;
 }) {
-  const [statusFilter, setStatusFilter] = useState<Set<OrderStatus>>(new Set());
+  // A drill-down link from /admin/revenue lands here with one of these set —
+  // read once on mount for the initial status pills below; see
+  // describeDrillFilter/RevenueDrillFilters above for what each one means.
+  // useSearchParams works without a <Suspense> boundary here because
+  // /admin is force-dynamic (see admin/layout.tsx), so this route is never
+  // statically prerendered — the constraint that requires Suspense only
+  // applies to a static page.
+  const searchParams = useSearchParams();
+  const drillFilters: RevenueDrillFilters = {
+    status: searchParams.get("status"),
+    date: searchParams.get("date"),
+    kind: searchParams.get("kind") as OrderItemKind | null,
+    method: searchParams.get("method") as PaymentMethod | null,
+    refundReason: searchParams.get("refundReason") as RefundReason | null,
+    itemId: searchParams.get("itemId"),
+  };
+  const hasDrillFilter = Object.values(drillFilters).some(Boolean);
+
+  const [statusFilter, setStatusFilter] = useState<Set<OrderStatus>>(() => {
+    if (drillFilters.status === "pending") return new Set(["PENDING", "AWAITING_COD"]);
+    if (drillFilters.status && STATUS_FILTERS.includes(drillFilters.status as OrderStatus)) {
+      return new Set([drillFilters.status as OrderStatus]);
+    }
+    // Every other drill dimension (date/kind/method/refundReason/itemId) only
+    // means anything among orders that actually got paid.
+    if (drillFilters.date || drillFilters.kind || drillFilters.method || drillFilters.refundReason || drillFilters.itemId) {
+      return new Set(["PAID"]);
+    }
+    return new Set();
+  });
   const [view, setView] = useState<"active" | "trash">("active");
 
   const filtered = useMemo(() => {
-    if (statusFilter.size === 0) return orders;
-    return orders.filter((o) => statusFilter.has(o.status));
-  }, [orders, statusFilter]);
+    let result = statusFilter.size === 0 ? orders : orders.filter((o) => statusFilter.has(o.status));
+    if (drillFilters.date) {
+      result = result.filter((o) => o.paidAtDateVN === drillFilters.date);
+    }
+    if (drillFilters.kind) {
+      result = result.filter((o) => o.items.some((i) => i.kind === drillFilters.kind));
+    }
+    if (drillFilters.method) {
+      result = result.filter((o) => o.paymentMethod === drillFilters.method);
+    }
+    if (drillFilters.refundReason) {
+      result = result.filter((o) => o.refunds.some((r) => r.reason === drillFilters.refundReason));
+    }
+    if (drillFilters.itemId) {
+      result = result.filter((o) => o.items.some((i) => i.refId === drillFilters.itemId));
+    }
+    return result;
+  }, [
+    orders,
+    statusFilter,
+    drillFilters.date,
+    drillFilters.kind,
+    drillFilters.method,
+    drillFilters.refundReason,
+    drillFilters.itemId,
+  ]);
 
   function toggleStatus(status: OrderStatus) {
     setStatusFilter((prev) => {
@@ -478,6 +567,18 @@ export function OrdersList({
         <p className="text-sm text-muted">Chưa có đơn hàng nào.</p>
       ) : (
         <>
+          {hasDrillFilter && (
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary-border bg-primary-bg-subtle px-3 py-2 text-xs text-foreground">
+              <span>
+                Đang lọc từ trang Doanh thu: <b>{describeDrillFilter(drillFilters, orders)}</b>
+              </span>
+              <Link href="/admin/orders" className="ml-auto inline-flex items-center gap-1 text-primary hover:underline">
+                <XCircle className="h-3.5 w-3.5" />
+                Xóa lọc
+              </Link>
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-2">
             {STATUS_FILTERS.map((status) => (
               <button

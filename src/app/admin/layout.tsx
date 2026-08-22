@@ -70,6 +70,9 @@ export default async function AdminLayout({
   const canManageChat = chatEnabled && canManage("MANAGE_CHAT");
   const salesEnabled = await isSalesEnabled();
   const canManageOrders = salesEnabled && canManage("MANAGE_ORDERS");
+  // Revenue is entirely a read of Order/Refund data — meaningless with sales
+  // switched off, same reasoning as canManageOrders above.
+  const canManageFinance = salesEnabled && canManage("MANAGE_FINANCE");
   const whiteboardsEnabled = await isWhiteboardsEnabled();
   const [supportThreads, guestThreads] = canManageChat
     ? await Promise.all([getAdminSupportInbox(admin.id), getAdminGuestChatInbox(admin.id)])
@@ -78,13 +81,15 @@ export default async function AdminLayout({
     supportThreads.reduce((sum, t) => sum + t.unreadCount, 0) +
     guestThreads.reduce((sum, t) => sum + t.unreadCount, 0);
 
-  // Visibility rule for every permission-gated row. MANAGE_CHAT and
-  // MANAGE_ORDERS also depend on their own feature master switch, which is
-  // why they resolve through their booleans instead of canManage().
+  // Visibility rule for every permission-gated row. MANAGE_CHAT,
+  // MANAGE_ORDERS and MANAGE_FINANCE also depend on their own feature master
+  // switch, which is why they resolve through their booleans instead of
+  // canManage().
   const isVisible = (permission?: AdminPermissionKind) => {
     if (!permission) return true;
     if (permission === "MANAGE_CHAT") return canManageChat;
     if (permission === "MANAGE_ORDERS") return canManageOrders;
+    if (permission === "MANAGE_FINANCE") return canManageFinance;
     return canManage(permission);
   };
   const visible = (entries: { item: NavItem; permission?: AdminPermissionKind }[]): NavItem[] =>
@@ -111,11 +116,11 @@ export default async function AdminLayout({
   ]);
 
   // Everything touching money or the sales funnel, previously scattered
-  // through the flat list. The three comingSoon rows have no feature behind
-  // them yet so they borrow MANAGE_ORDERS, the closest existing grant. When
-  // they become real they need permissions of their own (MANAGE_AFFILIATE /
-  // MANAGE_FINANCE): whoever confirms an order should not automatically also
-  // see company revenue or edit commission rules.
+  // through the flat list. Affiliate and finance have no feature behind them
+  // yet so they still borrow MANAGE_ORDERS, the closest existing grant, until
+  // each gets a permission of its own (MANAGE_AFFILIATE for affiliate;
+  // finance — cash/payout management, not the read-only revenue report below
+  // — will likely want MANAGE_FINANCE too, or its own kind, once it's real).
   const businessChildren = visible([
     {
       item: { href: "/admin/orders", label: t.adminNav.orders, icon: <Receipt className={iconClass} /> },
@@ -139,13 +144,8 @@ export default async function AdminLayout({
       permission: "MANAGE_ORDERS",
     },
     {
-      item: {
-        href: "/admin/revenue",
-        label: t.adminNav.revenue,
-        icon: <TrendingUp className={iconClass} />,
-        comingSoon: true,
-      },
-      permission: "MANAGE_ORDERS",
+      item: { href: "/admin/revenue", label: t.adminNav.revenue, icon: <TrendingUp className={iconClass} /> },
+      permission: "MANAGE_FINANCE",
     },
     {
       item: {

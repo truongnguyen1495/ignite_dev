@@ -462,6 +462,12 @@ enum AdminPermissionKind {
   // (/admin/minigame) — ảnh hưởng ngân sách/quà thật nên tách riêng, kiểm
   // soát tập trung thay vì để từng trưởng nhóm tự chỉnh tỉ lệ thưởng.
   MANAGE_MINIGAME
+  // Báo cáo doanh thu hệ thống (/admin/revenue) — độc lập với MANAGE_ORDERS
+  // vì xác nhận một đơn hàng và xem doanh thu toàn công ty là hai việc khác
+  // nhau; tách ra để một admin xử lý đơn hàng không mặc nhiên thấy được số
+  // liệu kinh doanh tổng thể. /admin/affiliate và /admin/finance vẫn đang
+  // mượn tạm MANAGE_ORDERS cho tới khi có quyền riêng của chúng.
+  MANAGE_FINANCE
 }
 
 model AdminPermission {
@@ -1268,6 +1274,11 @@ model Order {
   @@index([status])
   @@index([deletedAt])
   @@index([shippedAt])
+  // Serves the /admin/revenue report: "PAID orders whose paidAt falls in
+  // this range" is the base query behind every KPI, breakdown and chart on
+  // that page. @@index([status]) alone still leaves paidAt unsorted within
+  // the PAID bucket for a range scan.
+  @@index([status, paidAt])
 }
 
 enum RefundReason {

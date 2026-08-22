@@ -2,7 +2,8 @@ import { requireAdminPermission, requireSalesEnabled } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import type { Order, OrderItem, RefundReason, User } from "@prisma/client";
 import { PageHeader } from "@/components/ui/page-header";
-import { formatDateVN } from "@/lib/date";
+import { formatDateVN, toDateOnlyISOString } from "@/lib/date";
+import { dateOnlyVN } from "@/lib/groups";
 import { purgeExpiredDeletedOrders } from "@/lib/order-fulfillment";
 import { expireOverduePendingOrders } from "@/lib/order-expiry";
 import { activeRefundTotal } from "@/lib/refund-labels";
@@ -48,6 +49,11 @@ function toListItem(order: OrderWithRelations): OrderListItem {
     // Only whether one exists — the bytes are fetched on demand from an
     // admin-gated route, never inlined into the page payload.
     hasPaymentProof: Boolean(order.paymentProofPath),
+    // VN-calendar-day key ("YYYY-MM-DD") a paid order's money landed on —
+    // lets a "?date=" link from /admin/revenue's daily chart pick out the
+    // exact same day an admin saw a bar for, without redoing timezone math
+    // client-side. Null for an order that never got paid.
+    paidAtDateVN: order.paidAt ? toDateOnlyISOString(dateOnlyVN(order.paidAt)) : null,
     createdAtLabel: formatDateVN(order.createdAt),
     studentName: order.student.name,
     studentEmail: order.student.email,
@@ -64,6 +70,11 @@ function toListItem(order: OrderWithRelations): OrderListItem {
       id: i.id,
       title: i.titleSnapshot,
       kind: i.kind,
+      // The catalog item's own id (Course/LibraryItem/Product), not this
+      // OrderItem row's id — what a "?itemId=" link from the revenue page's
+      // top-products table actually filters on, since the same course sold
+      // across many orders needs one stable key to match against.
+      refId: i.courseId ?? i.libraryItemId ?? i.productId ?? null,
       hasActiveGrant: !!i.courseAccessGrant || !!i.libraryAccessGrant,
     })),
   };

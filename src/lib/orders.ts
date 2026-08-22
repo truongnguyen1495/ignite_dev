@@ -79,6 +79,12 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   COD: "Thanh toán khi nhận hàng",
 };
 
+export const ORDER_ITEM_KIND_LABELS: Record<OrderItemKind, string> = {
+  COURSE: "Khóa học độc quyền",
+  LIBRARY_ITEM: "Tài liệu thư viện",
+  PRODUCT: "Sản phẩm vật lý",
+};
+
 /**
  * An order that still owes money, whichever way it's being paid. Both the
  * "chưa xong" filters and the actions an admin may still take key off this
