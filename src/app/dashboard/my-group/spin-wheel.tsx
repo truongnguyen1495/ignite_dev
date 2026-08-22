@@ -62,7 +62,7 @@ function buildResult(reward: SpinReward | undefined, points: number | null, labe
 // card padding) without needing a resize observer.
 const SPIN_WHEEL_CSS = `
 .sw-wheel-wrap {
-  --wheel-d: clamp(190px, calc(100vw - 112px), 320px);
+  --wheel-d: calc(clamp(190px, calc(100vw - 112px), 320px) * 0.9);
   position: relative;
   width: var(--wheel-d);
   height: var(--wheel-d);
