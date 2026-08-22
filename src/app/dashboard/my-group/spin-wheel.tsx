@@ -150,8 +150,11 @@ const SPIN_WHEEL_CSS = `
   left: 0;
   top: 0;
   transform: translate(-50%, -50%);
+  max-width: calc(var(--wheel-d) * 0.4);
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-weight: 700;
-  font-size: 11.5px;
+  font-size: 10.5px;
   color: var(--primary-foreground);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
   white-space: nowrap;
@@ -346,7 +349,7 @@ export function SpinWheel({ rewards, spinsRemaining: initialSpinsRemaining }: { 
                 const center = i * segAngle + segAngle / 2;
                 return (
                   <div key={r.id} className="sw-seg-label" style={{ transform: `rotate(${center}deg)` }}>
-                    <div className="sw-radial-pivot" style={{ transform: "translateY(calc(var(--wheel-d) * -0.317)) rotate(-90deg)" }}>
+                    <div className="sw-radial-pivot" style={{ transform: "translateY(calc(var(--wheel-d) * -0.28)) rotate(-90deg)" }}>
                       <span>{r.label}</span>
                     </div>
                   </div>
