@@ -386,6 +386,7 @@ model User {
   ordersShipped             Order[]                     @relation("OrderShippedBy")
   ordersDelivered           Order[]                     @relation("OrderDeliveredBy")
   refundsRecorded           Refund[]                    @relation("RefundsCreated")
+  financeEntriesCreated     FinanceEntry[]              @relation("FinanceEntriesCreated")
   addresses                 Address[]                   @relation("StudentAddresses")
   cartItems                 CartItem[]
   consultationRequests      ConsultationRequest[]
@@ -1320,6 +1321,50 @@ model Refund {
 
   @@index([orderId])
   @@index([refundedAt, deletedAt])
+}
+
+enum FinanceEntryType {
+  INCOME
+  EXPENSE
+}
+
+// Thu-khác/Chi thủ công cho sổ quỹ công ty ở /admin/finance. Danh mục Thu ở
+// đây KHÔNG bao gồm doanh thu bán hàng — doanh thu đến từ Order (đã có ở
+// src/lib/revenue.ts) và không có bản sao ở đây, để tránh hai nguồn sự thật;
+// getFinanceReport cộng gộp cả hai lúc đọc thay vì lúc ghi.
+enum FinanceCategory {
+  BANK_INTEREST
+  DEBT_RECOVERY
+  OTHER_INCOME
+  SALARY
+  OPERATIONS
+  MARKETING
+  COMMISSION_PAYOUT
+  OTHER_EXPENSE
+}
+
+// Cùng triết lý với Refund ở trên: một khoản ghi sai được xoá (deletedAt)
+// rồi ghi lại khoản đúng, không có API sửa-tại-chỗ — một con số tiền đã
+// nhập không nên âm thầm đổi sau khi ai đó đã xem báo cáo dựa vào nó.
+model FinanceEntry {
+  id       String           @id @default(cuid())
+  type     FinanceEntryType
+  category FinanceCategory
+  amount   Int
+  note     String           @db.Text
+
+  // Ngày khoản này thật sự xảy ra (admin tự chọn), không phải lúc nhập liệu —
+  // @db.Date + dateOnlyVN giống DailyTaskCompletion/CheckIn ở dưới, không
+  // phải mốc thời gian thật như Order.paidAt/Refund.refundedAt.
+  occurredAt DateTime @db.Date
+
+  createdById String
+  createdBy   User     @relation("FinanceEntriesCreated", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+
+  deletedAt DateTime?
+
+  @@index([occurredAt, deletedAt])
 }
 
 // Discriminated by kind, same convention as ChatThread: exactly one of

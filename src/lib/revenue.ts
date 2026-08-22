@@ -12,11 +12,14 @@ import { toDateOnlyISOString } from "@/lib/date";
 // columns, which is a different thing — see their own comments in groups.ts.
 const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
 
-function vnDayToInstant(marker: Date): Date {
+// Exported — src/lib/finance.ts needs the exact same VN-calendar-day math
+// for its own period ranges (Thu chi report) rather than a second, riskier
+// copy of this timezone arithmetic.
+export function vnDayToInstant(marker: Date): Date {
   return new Date(marker.getTime() - VN_OFFSET_MS);
 }
 
-function daysBetween(from: Date, to: Date): number {
+export function daysBetween(from: Date, to: Date): number {
   return Math.round((to.getTime() - from.getTime()) / 86_400_000);
 }
 
@@ -34,7 +37,7 @@ export function isRevenuePeriod(value: string | undefined): value is RevenuePeri
 }
 
 /** VN-calendar-day markers (UTC midnight of the VN day), `to` exclusive. */
-function getPeriodMarkers(period: RevenuePeriod, today: Date): { from: Date; to: Date } {
+export function getPeriodMarkers(period: RevenuePeriod, today: Date): { from: Date; to: Date } {
   const year = today.getUTCFullYear();
   const month = today.getUTCMonth();
   switch (period) {
@@ -57,7 +60,7 @@ function getPeriodMarkers(period: RevenuePeriod, today: Date): { from: Date; to:
 // admin actually means by "so với tháng trước". Every other period is short
 // enough (a day, a week, a quarter) that a same-length rolling window
 // immediately before `from` is the simpler and equally correct reading.
-function getPreviousPeriodMarkers(period: RevenuePeriod, from: Date, to: Date): { from: Date; to: Date } {
+export function getPreviousPeriodMarkers(period: RevenuePeriod, from: Date, to: Date): { from: Date; to: Date } {
   if (period === "month") {
     const year = from.getUTCFullYear();
     const month = from.getUTCMonth();
@@ -72,7 +75,7 @@ function getPreviousPeriodMarkers(period: RevenuePeriod, from: Date, to: Date): 
 }
 
 /** null = "không có gì để so sánh" (previous period was zero) rather than ±Infinity. */
-function pctChange(current: number, previous: number): number | null {
+export function pctChange(current: number, previous: number): number | null {
   if (previous === 0) return current === 0 ? 0 : null;
   return ((current - previous) / previous) * 100;
 }

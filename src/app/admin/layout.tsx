@@ -116,11 +116,11 @@ export default async function AdminLayout({
   ]);
 
   // Everything touching money or the sales funnel, previously scattered
-  // through the flat list. Affiliate and finance have no feature behind them
-  // yet so they still borrow MANAGE_ORDERS, the closest existing grant, until
-  // each gets a permission of its own (MANAGE_AFFILIATE for affiliate;
-  // finance — cash/payout management, not the read-only revenue report below
-  // — will likely want MANAGE_FINANCE too, or its own kind, once it's real).
+  // through the flat list. Affiliate has no feature behind it yet so it
+  // still borrows MANAGE_ORDERS, the closest existing grant, until it gets
+  // MANAGE_AFFILIATE of its own. Finance (the thu-chi ledger) now shares
+  // MANAGE_FINANCE with the read-only revenue report below — see the
+  // permission-scope note on ADMIN_PERMISSION_LABELS.MANAGE_FINANCE.
   const businessChildren = visible([
     {
       item: { href: "/admin/orders", label: t.adminNav.orders, icon: <Receipt className={iconClass} /> },
@@ -148,13 +148,8 @@ export default async function AdminLayout({
       permission: "MANAGE_FINANCE",
     },
     {
-      item: {
-        href: "/admin/finance",
-        label: t.adminNav.finance,
-        icon: <Wallet className={iconClass} />,
-        comingSoon: true,
-      },
-      permission: "MANAGE_ORDERS",
+      item: { href: "/admin/finance", label: t.adminNav.finance, icon: <Wallet className={iconClass} /> },
+      permission: "MANAGE_FINANCE",
     },
   ]);
 

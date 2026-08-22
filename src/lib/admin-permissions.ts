@@ -62,7 +62,12 @@ export const ADMIN_PERMISSION_LABELS: Record<AdminPermissionKind, string> = {
   MANAGE_RESULTS: "Kết quả bài test",
   MANAGE_ANNOUNCEMENTS: "Bản tin",
   MANAGE_ORDERS: "Đơn hàng",
-  MANAGE_FINANCE: "Doanh thu",
+  // Gates both /admin/revenue (đọc doanh thu, không sửa được gì) và
+  // /admin/finance (đọc + ghi sổ thu chi — thêm/xoá tiền thật) — một
+  // permission cho cả xem lẫn ghi, theo lựa chọn "gộp chung" thay vì tách
+  // MANAGE_FINANCE_ENTRIES riêng. Tách ra sau này chỉ cần thêm 1 giá trị enum
+  // mới, không đụng dữ liệu đã có.
+  MANAGE_FINANCE: "Doanh thu & thu chi",
   MANAGE_PRODUCTS: "Sản phẩm",
   MANAGE_GROUPS: "Nhóm (cấu trúc, thành viên, trưởng/phó nhóm)",
   MANAGE_TESTS: "Kết quả trắc nghiệm",
