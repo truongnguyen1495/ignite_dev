@@ -150,7 +150,13 @@ const SPIN_WHEEL_CSS = `
   left: 0;
   top: 0;
   transform: translate(-50%, -50%);
-  max-width: calc(var(--wheel-d) * 0.4);
+  /* The pivot centers the label ON the ray at 0.30 * --wheel-d out from the
+     hub, so half of max-width extends inward toward the hub (radius 0.11)
+     and half extends outward toward the rim (radius ~0.47 inside the
+     border). 0.32 keeps both halves inside that budget with a small margin
+     on each side — any wider and a long label's inward half tucks under
+     the hub, which is what "text overlapping the center" turned out to be. */
+  max-width: calc(var(--wheel-d) * 0.32);
   overflow: hidden;
   text-overflow: ellipsis;
   font-weight: 700;
@@ -361,7 +367,7 @@ export function SpinWheel({ rewards, spinsRemaining: initialSpinsRemaining }: { 
                   <div key={r.id} className="sw-seg-label" style={{ transform: `rotate(${center}deg)` }}>
                     <div
                       className="sw-radial-pivot"
-                      style={{ transform: `translateY(calc(var(--wheel-d) * -0.28)) rotate(${pivotRotation}deg)` }}
+                      style={{ transform: `translateY(calc(var(--wheel-d) * -0.30)) rotate(${pivotRotation}deg)` }}
                     >
                       <span>{r.label}</span>
                     </div>
