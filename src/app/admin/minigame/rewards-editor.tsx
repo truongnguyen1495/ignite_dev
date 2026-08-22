@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { SpinRewardType } from "@prisma/client";
 import { saveSpinRewardsAction, type SpinRewardInput } from "./actions";
+import { SPIN_WHEEL_SEGMENT_COLORS } from "@/lib/spin-wheel-colors";
 
 const TYPE_LABELS: Record<SpinRewardType, string> = {
   POINTS: "Điểm cộng",
@@ -11,8 +12,6 @@ const TYPE_LABELS: Record<SpinRewardType, string> = {
   NONE: "Không trúng gì",
 };
 const TYPE_OPTIONS = Object.keys(TYPE_LABELS) as SpinRewardType[];
-// Mirrors spin-wheel.tsx's SEGMENT_COLORS — this is the picker that feeds it.
-const SWATCH_COLORS = ["#e3b52d", "#b98218", "#17a9e8", "#22c55e"];
 
 export function RewardsEditor({ initialRewards }: { initialRewards: SpinRewardInput[] }) {
   const router = useRouter();
@@ -82,7 +81,7 @@ export function RewardsEditor({ initialRewards }: { initialRewards: SpinRewardIn
                   <div className="flex items-center gap-2">
                     <span
                       className="h-3 w-3 shrink-0 rounded-sm"
-                      style={{ background: SWATCH_COLORS[i % SWATCH_COLORS.length] }}
+                      style={{ background: SPIN_WHEEL_SEGMENT_COLORS[i % SPIN_WHEEL_SEGMENT_COLORS.length] }}
                     />
                     <input
                       value={r.label}
