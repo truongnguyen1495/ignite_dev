@@ -62,7 +62,7 @@ function buildResult(reward: SpinReward | undefined, points: number | null, labe
 // card padding) without needing a resize observer.
 const SPIN_WHEEL_CSS = `
 .sw-wheel-wrap {
-  --wheel-d: clamp(190px, calc(100vw - 112px), 280px);
+  --wheel-d: clamp(190px, calc(100vw - 112px), 320px);
   position: relative;
   width: var(--wheel-d);
   height: var(--wheel-d);
@@ -129,7 +129,7 @@ const SPIN_WHEEL_CSS = `
   width: 2px;
   height: 50%;
   transform-origin: top center;
-  background: linear-gradient(to bottom, rgba(6, 20, 38, 0.55), rgba(6, 20, 38, 0.08) 70%);
+  background: linear-gradient(to bottom, rgba(6, 20, 38, 0.8), rgba(6, 20, 38, 0.18) 85%);
 }
 .sw-seg-label {
   position: absolute;
@@ -347,9 +347,22 @@ export function SpinWheel({ rewards, spinsRemaining: initialSpinsRemaining }: { 
               ))}
               {rewards.map((r, i) => {
                 const center = i * segAngle + segAngle / 2;
+                // A single fixed -90deg pivot rotation reads center-to-rim
+                // perfectly at 3 o'clock but drifts toward fully upside-down
+                // by 9 o'clock (on-screen rotation is center - 90, so it
+                // sweeps the whole circle as center does). Flipping the
+                // pivot to +90deg for the left half cancels that: text
+                // there reads rim-to-center instead, but stays upright —
+                // the same trick radial axis labels use, trading a
+                // direction switch at the 12/6 o'clock seams for never
+                // rendering a label upside-down.
+                const pivotRotation = center > 180 ? 90 : -90;
                 return (
                   <div key={r.id} className="sw-seg-label" style={{ transform: `rotate(${center}deg)` }}>
-                    <div className="sw-radial-pivot" style={{ transform: "translateY(calc(var(--wheel-d) * -0.28)) rotate(-90deg)" }}>
+                    <div
+                      className="sw-radial-pivot"
+                      style={{ transform: `translateY(calc(var(--wheel-d) * -0.28)) rotate(${pivotRotation}deg)` }}
+                    >
                       <span>{r.label}</span>
                     </div>
                   </div>
