@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { setShippingSettingsAction } from "./actions";
 import { Input } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,24 @@ export function ShippingFeeForm({
   freeShippingFromItems: number;
 }) {
   const [error, formAction, pending] = useActionState(setShippingSettingsAction, undefined);
+  const [isDirty, setIsDirty] = useState(false);
+  const wasPending = useRef(false);
+
+  // Without this the button went straight back to reading "Lưu" the instant
+  // the save finished, which is pixel-for-pixel what it looked like before
+  // the click — an admin had no way to tell a successful save from a click
+  // that never registered. Clearing the flag only when the action settled
+  // WITHOUT an error is the part that matters: saying "Đã lưu" over a failed
+  // save would be worse than saying nothing at all.
+  useEffect(() => {
+    if (wasPending.current && !pending && !error) {
+      setIsDirty(false);
+    }
+    wasPending.current = pending;
+  }, [pending, error]);
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} onChange={() => setIsDirty(true)} className="space-y-4">
       <div>
         <p className="text-sm font-medium text-foreground">Phí vận chuyển</p>
         <p className="text-sm text-muted">
@@ -50,8 +65,14 @@ export function ShippingFeeForm({
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
-      <Button type="submit" size="sm" disabled={pending} isLoading={pending}>
-        {pending ? "Đang lưu..." : "Lưu"}
+      <Button
+        type="submit"
+        size="sm"
+        variant={isDirty ? "primary" : "secondary"}
+        disabled={pending || !isDirty}
+        isLoading={pending}
+      >
+        {pending ? "Đang lưu..." : isDirty ? "Lưu" : "Đã lưu"}
       </Button>
     </form>
   );

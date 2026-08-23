@@ -25,6 +25,22 @@ export function AdminPermissionEditor({
   const [permissions, setPermissions] = useState<Set<AdminPermissionKind>>(new Set(initialPermissions));
   const [error, setError] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();
+  // The permission set as last written to the server. Compared against the
+  // live one below so the save button can say whether anything is still owed
+  // — there is no <form> here to listen to, and this screen has dozens of
+  // checkboxes whose combined state a single boolean flag could not describe
+  // honestly (tick a box, untick it, and nothing is actually pending).
+  const [saved, setSaved] = useState({
+    adminOnly: initialAdminOnly,
+    permissions: new Set(initialPermissions),
+  });
+  // Set equality, order-independent: same count and every member present. A
+  // plain !== on the Set objects would report a change on every single
+  // keystroke, since togglePermission always builds a fresh Set.
+  const isDirty =
+    adminOnly !== saved.adminOnly ||
+    permissions.size !== saved.permissions.size ||
+    !Array.from(permissions).every((p) => saved.permissions.has(p));
 
   function togglePermission(permission: AdminPermissionKind) {
     setPermissions((prev) => {
@@ -63,6 +79,10 @@ export function AdminPermissionEditor({
         setError(result);
         return;
       }
+      // Copied, not aliased: `permissions` is replaced wholesale on every
+      // toggle today, but storing a reference to live state is the kind of
+      // thing that quietly breaks the moment someone mutates it in place.
+      setSaved({ adminOnly, permissions: new Set(permissions) });
       router.refresh();
     });
   }
@@ -165,8 +185,14 @@ export function AdminPermissionEditor({
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}
-      <Button type="button" onClick={handleSave} disabled={pending} isLoading={pending}>
-        Lưu thay đổi
+      <Button
+        type="button"
+        onClick={handleSave}
+        variant={isDirty ? "primary" : "secondary"}
+        disabled={pending || !isDirty}
+        isLoading={pending}
+      >
+        {pending ? "Đang lưu..." : isDirty ? "Lưu thay đổi" : "Đã lưu"}
       </Button>
     </div>
   );

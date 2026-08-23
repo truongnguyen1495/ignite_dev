@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { setLessonWatchSettingsAction } from "./actions";
 import { Input } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -15,9 +15,22 @@ export function LessonWatchProgressForm({
   enforceLessonWatchForHocVien: boolean;
 }) {
   const [error, formAction, pending] = useActionState(setLessonWatchSettingsAction, undefined);
+  const [isDirty, setIsDirty] = useState(false);
+  const wasPending = useRef(false);
+
+  // See the matching comment in shipping-fee-form.tsx — same reason, and the
+  // checkboxes below are exactly why the listener sits on the <form> rather
+  // than on each field: change events bubble, so one handler covers the
+  // number input and both toggles without touching any of them.
+  useEffect(() => {
+    if (wasPending.current && !pending && !error) {
+      setIsDirty(false);
+    }
+    wasPending.current = pending;
+  }, [pending, error]);
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} onChange={() => setIsDirty(true)} className="space-y-4">
       <div>
         <p className="text-sm font-medium text-foreground">Theo dõi tiến độ xem video bài học</p>
         <p className="text-sm text-muted">
@@ -62,8 +75,14 @@ export function LessonWatchProgressForm({
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
-      <Button type="submit" size="sm" disabled={pending} isLoading={pending}>
-        {pending ? "Đang lưu..." : "Lưu"}
+      <Button
+        type="submit"
+        size="sm"
+        variant={isDirty ? "primary" : "secondary"}
+        disabled={pending || !isDirty}
+        isLoading={pending}
+      >
+        {pending ? "Đang lưu..." : isDirty ? "Lưu" : "Đã lưu"}
       </Button>
     </form>
   );

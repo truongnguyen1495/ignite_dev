@@ -6,10 +6,17 @@ import { setVendorCommissionOverrideAction } from "../actions";
 import { Button } from "@/components/ui/button";
 
 export function CommissionRateForm({ vendorId, currentOverride }: { vendorId: string; currentOverride: number | null }) {
-  const [value, setValue] = useState(currentOverride === null ? "" : String(currentOverride));
+  const initial = currentOverride === null ? "" : String(currentOverride);
+  const [value, setValue] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  // The rate last written to the server, compared against the live field to
+  // work out whether anything is owed. Before this the button read "Lưu thay
+  // đổi" both before and after a save, so a successful save looked exactly
+  // like a click that did nothing.
+  const [saved, setSaved] = useState(initial);
+  const isDirty = value.trim() !== saved.trim();
 
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-lg bg-background p-4">
@@ -26,7 +33,8 @@ export function CommissionRateForm({ vendorId, currentOverride }: { vendorId: st
         type="button"
         size="sm"
         className="ml-auto"
-        disabled={pending}
+        variant={isDirty ? "primary" : "secondary"}
+        disabled={pending || !isDirty}
         isLoading={pending}
         onClick={() =>
           startTransition(async () => {
@@ -36,11 +44,12 @@ export function CommissionRateForm({ vendorId, currentOverride }: { vendorId: st
               return;
             }
             setError(null);
+            setSaved(value);
             router.refresh();
           })
         }
       >
-        Lưu thay đổi
+        {pending ? "Đang lưu..." : isDirty ? "Lưu thay đổi" : "Đã lưu"}
       </Button>
     </div>
   );

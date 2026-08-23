@@ -19,6 +19,17 @@ export function AdminManagerEditor({
   const [canManageAdmins, setCanManageAdmins] = useState(initialCanManageAdmins);
   const [error, setError] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();
+  // What is currently on the server, as far as this component knows. There is
+  // no <form> here to hang an onChange off, so "has anything changed?" is
+  // derived by comparing the live checkboxes against this instead of being
+  // tracked with a flag. Deriving it also handles the case a flag cannot: tick
+  // a box and untick it again and the button goes back to "Đã lưu" on its own,
+  // because nothing actually differs any more.
+  const [saved, setSaved] = useState({
+    isAdminManager: initialIsAdminManager,
+    canManageAdmins: initialCanManageAdmins,
+  });
+  const isDirty = isAdminManager !== saved.isAdminManager || canManageAdmins !== saved.canManageAdmins;
 
   function handleSave() {
     setError(undefined);
@@ -28,6 +39,9 @@ export function AdminManagerEditor({
         setError(result);
         return;
       }
+      // Only moved on success — leaving it untouched after a failed save keeps
+      // the button reading "Lưu thay đổi" so the change is visibly still owed.
+      setSaved({ isAdminManager, canManageAdmins });
       router.refresh();
     });
   }
@@ -69,8 +83,14 @@ export function AdminManagerEditor({
         </label>
       )}
       {error && <p className="text-sm text-danger">{error}</p>}
-      <Button type="button" onClick={handleSave} disabled={pending} isLoading={pending}>
-        Lưu thay đổi
+      <Button
+        type="button"
+        onClick={handleSave}
+        variant={isDirty ? "primary" : "secondary"}
+        disabled={pending || !isDirty}
+        isLoading={pending}
+      >
+        {pending ? "Đang lưu..." : isDirty ? "Lưu thay đổi" : "Đã lưu"}
       </Button>
     </div>
   );

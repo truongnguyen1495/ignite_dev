@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { SpinRewardType } from "@prisma/client";
 import { saveSpinRewardsAction, type SpinRewardInput } from "./actions";
 import { SPIN_WHEEL_SEGMENT_COLORS } from "@/lib/spin-wheel-colors";
+import { Button } from "@/components/ui/button";
 
 const TYPE_LABELS: Record<SpinRewardType, string> = {
   POINTS: "Điểm cộng",
@@ -18,20 +19,39 @@ export function RewardsEditor({ initialRewards }: { initialRewards: SpinRewardIn
   const [rewards, setRewards] = useState<SpinRewardInput[]>(initialRewards);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | undefined>();
-  const [saved, setSaved] = useState(false);
+  // The rows as last written to the server. This replaced a plain "did I just
+  // save?" boolean, which could only ever mean "saved at some point this
+  // visit" — it could not tell an untouched table apart from one with edits
+  // still pending, and it stayed false forever if you edited a row and put it
+  // back the way it was.
+  const [savedRewards, setSavedRewards] = useState<SpinRewardInput[]>(initialRewards);
+
+  // Compared field by field rather than with JSON.stringify: rows added by
+  // add() below are built with their keys in one order while rows loaded from
+  // the server may serialise in another, and a string compare would call that
+  // a change when nothing differs.
+  const isDirty =
+    rewards.length !== savedRewards.length ||
+    rewards.some((r, i) => {
+      const s = savedRewards[i];
+      return (
+        r.id !== s.id ||
+        r.label !== s.label ||
+        r.type !== s.type ||
+        r.value !== s.value ||
+        r.weightPercent !== s.weightPercent
+      );
+    });
 
   const total = rewards.reduce((sum, r) => sum + (r.weightPercent || 0), 0);
 
   function update(index: number, patch: Partial<SpinRewardInput>) {
-    setSaved(false);
     setRewards((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
   }
   function remove(index: number) {
-    setSaved(false);
     setRewards((prev) => prev.filter((_, i) => i !== index));
   }
   function add() {
-    setSaved(false);
     setRewards((prev) => [...prev, { id: null, label: "Phần thưởng mới", type: "POINTS", value: 0, weightPercent: 0 }]);
   }
   function save() {
@@ -42,7 +62,7 @@ export function RewardsEditor({ initialRewards }: { initialRewards: SpinRewardIn
         setError(err);
         return;
       }
-      setSaved(true);
+      setSavedRewards(rewards);
       router.refresh();
     });
   }
@@ -152,15 +172,15 @@ export function RewardsEditor({ initialRewards }: { initialRewards: SpinRewardIn
 
       {error && <p className="text-sm text-danger">{error}</p>}
       <div className="flex items-center justify-end gap-3">
-        {saved && <span className="text-xs font-semibold text-success">Đã lưu.</span>}
-        <button
+        <Button
           type="button"
-          disabled={pending}
           onClick={save}
-          className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
+          variant={isDirty ? "primary" : "secondary"}
+          disabled={pending || !isDirty}
+          isLoading={pending}
         >
-          {pending ? "Đang lưu..." : "Lưu thay đổi"}
-        </button>
+          {pending ? "Đang lưu..." : isDirty ? "Lưu thay đổi" : "Đã lưu"}
+        </Button>
       </div>
     </div>
   );
