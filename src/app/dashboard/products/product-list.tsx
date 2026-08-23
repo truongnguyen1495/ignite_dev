@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Package, ArrowRight } from "lucide-react";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
 import { ProductBuyButton } from "@/components/product-buy-button";
+import { VendorBadge } from "@/components/vendor-badge";
 import { getPricing } from "@/lib/pricing";
 import { formatVND } from "@/lib/currency";
 
@@ -20,6 +21,8 @@ export type StudentProductItem = {
   price: number;
   salePrice: number | null;
   cv: number;
+  sellerShopName: string | null;
+  sellerSlug: string | null;
 };
 
 function Thumbnail({ product, className }: { product: StudentProductItem; className: string }) {
@@ -110,6 +113,11 @@ export function ProductList({
                 <div className="flex flex-1 flex-col p-5">
                   <p className="font-semibold text-dark-foreground">{product.title}</p>
                   {product.subtitle && <p className="mt-0.5 text-sm text-dark-muted">{product.subtitle}</p>}
+                  {product.sellerShopName && product.sellerSlug && (
+                    <div className="mt-1.5">
+                      <VendorBadge shopName={product.sellerShopName} slug={product.sellerSlug} />
+                    </div>
+                  )}
                   <div className="mt-auto space-y-3 pt-4">
                     <PriceRow product={product} />
                     <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-medium text-primary">
@@ -159,6 +167,11 @@ export function ProductList({
                     <p className="truncate font-semibold text-dark-foreground">{product.title}</p>
                   </div>
                   {product.subtitle && <p className="line-clamp-1 text-sm text-dark-muted">{product.subtitle}</p>}
+                  {product.sellerShopName && product.sellerSlug && (
+                    <div className="mt-1">
+                      <VendorBadge shopName={product.sellerShopName} slug={product.sellerSlug} />
+                    </div>
+                  )}
                 </div>
                 <div className="hidden shrink-0 sm:block">
                   <PriceRow product={product} />

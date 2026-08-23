@@ -343,7 +343,22 @@ export async function confirmCartOrderAction(input: CheckoutInput): Promise<Conf
   }
 
   const staleIds: string[] = [];
-  const orderItems: { kind: OrderItemKind; courseId?: string; libraryItemId?: string; productId?: string; titleSnapshot: string; priceAtPurchase: number; quantity: number }[] = [];
+  // Marketplace "Nhà bán hàng" — sellerId is snapshotted from the catalog
+  // row's own sellerId right here, the only place an OrderItem is ever
+  // created, same reasoning as titleSnapshot/priceAtPurchase: whoever this
+  // line was actually bought from must not silently change later. Left
+  // undefined (not just omitted) for a platform-authored row so Prisma
+  // writes a real NULL, matching every row that predates this feature.
+  const orderItems: {
+    kind: OrderItemKind;
+    courseId?: string;
+    libraryItemId?: string;
+    productId?: string;
+    titleSnapshot: string;
+    priceAtPurchase: number;
+    quantity: number;
+    sellerId?: string | null;
+  }[] = [];
 
   for (const item of cartItems) {
     if (item.kind === "COURSE") {
@@ -362,6 +377,7 @@ export async function confirmCartOrderAction(input: CheckoutInput): Promise<Conf
         // stepper for one. Written out rather than left to the column
         // default so the intent is visible next to the PRODUCT line below.
         quantity: 1,
+        sellerId: item.course.sellerId,
       });
     } else if (item.kind === "LIBRARY_ITEM") {
       const pricing = item.libraryItem && getPricing(item.libraryItem);
@@ -376,6 +392,7 @@ export async function confirmCartOrderAction(input: CheckoutInput): Promise<Conf
         titleSnapshot: item.libraryItem.title,
         priceAtPurchase: pricing.chargeAmount,
         quantity: 1,
+        sellerId: item.libraryItem.sellerId,
       });
     } else {
       const pricing = item.product && getPricing(item.product);
@@ -391,6 +408,7 @@ export async function confirmCartOrderAction(input: CheckoutInput): Promise<Conf
         // Re-clamped rather than trusted: the row could have been written
         // before the cap existed, or by an older client.
         quantity: sanitizeQuantity(item.quantity),
+        sellerId: item.product.sellerId,
       });
     }
   }

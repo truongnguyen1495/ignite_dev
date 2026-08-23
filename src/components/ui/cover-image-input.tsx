@@ -37,6 +37,7 @@ export function CoverImageInput({
   onChange,
   onUploadingChange,
   enforceRatio = true,
+  uploadUrl = "/api/admin/upload-image",
 }: {
   name?: string;
   label?: string;
@@ -52,6 +53,10 @@ export function CoverImageInput({
   // the 16:9 warning text is specific to card thumbnails and would be
   // misleading for an image that's meant to fill an arbitrary frame.
   enforceRatio?: boolean;
+  // /vendor/san-pham's composer points this at /api/vendor/upload-image
+  // instead — that route gates on an APPROVED Vendor row rather than an
+  // AdminPermissionKind, since a vendor account holds neither.
+  uploadUrl?: string;
 }) {
   const [url, setUrl] = useState(defaultValue);
   const [uploading, setUploading] = useState(false);
@@ -87,7 +92,7 @@ export function CoverImageInput({
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch("/api/admin/upload-image", { method: "POST", body: formData });
+      const res = await fetch(uploadUrl, { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || "Tải ảnh lên thất bại.");

@@ -27,6 +27,7 @@ export default async function StudentCoursesPage() {
           orderBy: [{ order: "asc" }, { createdAt: "asc" }],
           select: { id: true, visibleToGuest: true },
         },
+        seller: { select: { shopName: true, slug: true } },
       },
     }),
     prisma.courseAccessGrant.findMany({ where: { studentId: student.id } }),
@@ -83,6 +84,8 @@ export default async function StudentCoursesPage() {
       salePrice: course.salePrice,
       isFree: course.isFree,
       salesEnabled,
+      sellerShopName: course.seller?.shopName ?? null,
+      sellerSlug: course.seller?.slug ?? null,
     };
   });
 

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { PriceBlock } from "@/components/price-block";
 import { BuyButton } from "@/components/buy-button";
 import { GuestBuyButton } from "@/components/guest-buy-button";
+import { VendorBadge } from "@/components/vendor-badge";
 import { getPricing } from "@/lib/pricing";
 
 export type { GuestCourseItem };
@@ -81,6 +82,11 @@ export function GuestCourseList({
               <p className="font-semibold text-dark-foreground">{course.title}</p>
               {course.description && (
                 <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{course.description}</p>
+              )}
+              {course.sellerShopName && course.sellerSlug && (
+                <div className="mt-1.5">
+                  <VendorBadge shopName={course.sellerShopName} slug={course.sellerSlug} />
+                </div>
               )}
               {isLoggedIn && <ProgressBar course={course} />}
               <div className="mt-auto space-y-3 pt-4">

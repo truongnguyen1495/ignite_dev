@@ -19,7 +19,7 @@ export default async function ProductsPage({
   const student = await requireActiveStudent();
   const { denied } = await searchParams;
   const [allProducts, salesEnabled] = await Promise.all([
-    prisma.product.findMany({ orderBy: { order: "asc" } }),
+    prisma.product.findMany({ orderBy: { order: "asc" }, include: { seller: { select: { shopName: true, slug: true } } } }),
     isSalesEnabled(),
   ]);
 
@@ -35,6 +35,8 @@ export default async function ProductsPage({
     price: product.price,
     salePrice: product.salePrice,
     cv: product.cv,
+    sellerShopName: product.seller?.shopName ?? null,
+    sellerSlug: product.seller?.slug ?? null,
   }));
 
   return (

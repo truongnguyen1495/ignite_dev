@@ -32,6 +32,8 @@ export type GuestCourseItem = {
   // caller simply never renders a progress bar in that case.
   completedCount: number;
   progressPercent: number;
+  sellerShopName: string | null;
+  sellerSlug: string | null;
 };
 
 // Năm dải màu bìa cho mục chưa có ảnh. Mọi mục phải có dải thật và không
@@ -67,6 +69,7 @@ export async function getGuestCourseItems({
         orderBy: [{ order: "asc" }, { createdAt: "asc" }],
         select: { id: true, visibleToGuest: true },
       },
+      seller: { select: { shopName: true, slug: true } },
     },
   });
 
@@ -122,6 +125,8 @@ export async function getGuestCourseItems({
       salesEnabled,
       completedCount,
       progressPercent: totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0,
+      sellerShopName: course.seller?.shopName ?? null,
+      sellerSlug: course.seller?.slug ?? null,
     };
   });
 }

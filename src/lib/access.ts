@@ -1,10 +1,20 @@
 import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import type { AdminPermissionKind, ChatThread, Level, Role, User, Whiteboard, WhiteboardAccessRole } from "@prisma/client";
+import type {
+  AdminPermissionKind,
+  ChatThread,
+  Level,
+  Role,
+  User,
+  VendorApplicationStatus,
+  Whiteboard,
+  WhiteboardAccessRole,
+} from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hasLevelAccess } from "@/lib/levels";
+import { isVendorActive } from "@/lib/vendor";
 import { announcementVisibleTo } from "@/lib/announcements";
 import { getOrCreateSupportThread } from "@/lib/chat";
 import { credentialFingerprint } from "@/lib/session-fingerprint";
@@ -83,6 +93,12 @@ export async function requireActiveStudent(): Promise<User> {
   // /admin instead of the usual mismatched-role destination.
   if (user.adminOnly) {
     redirect("/admin");
+  }
+  // Same shape as adminOnly above, for a vendor-application-only account
+  // (see User.vendorOnly) — someone who registered purely to sell has no
+  // /dashboard to land on.
+  if (user.vendorOnly) {
+    redirect("/vendor");
   }
   return user;
 }
@@ -402,6 +418,42 @@ export async function requireQuizAccess(quizId: string) {
 // guest gets (CourseLesson.visibleToGuest), not the whole course. A student
 // only reaches "full" once explicitly granted, same as anyone else — via
 // CourseAccessGrant or a level rule.
+// Marketplace "Nhà bán hàng" — a vendor listing (sellerId set) is invisible
+// to EVERYONE, guest or student, regardless of what the ordinary
+// hiddenFromGuest/level-grant/access-grant rules below would otherwise say,
+// whenever either the item was individually taken down by admin
+// (vendorHiddenAt) or the vendor itself isn't currently active (application
+// not approved, self-paused, or admin-suspended — see isVendorActive). This
+// is deliberately computed as a final override pass rather than folded into
+// each function's own logic, so a row with sellerId: null (the overwhelming
+// majority, and every row that existed before this feature) takes zero extra
+// queries and is byte-for-byte unaffected.
+// Exported so the public storefront (/shop/[slug], which has no logged-in
+// student to run getCourseAccessLevels/getLibraryItemAccessLevels through)
+// can apply the exact same vendor-active/vendorHiddenAt rule directly,
+// instead of re-deriving it from isVendorActive by hand.
+export async function getInactiveVendorListingIds(
+  items: { id: string; sellerId: string | null; vendorHiddenAt: Date | null }[]
+): Promise<Set<string>> {
+  const withSeller = items.filter((i) => i.sellerId);
+  if (withSeller.length === 0) return new Set();
+
+  const vendorIds = Array.from(new Set(withSeller.map((i) => i.sellerId!)));
+  const vendors = await prisma.vendor.findMany({
+    where: { id: { in: vendorIds } },
+    select: { id: true, applicationStatus: true, pausedAt: true, suspendedAt: true },
+  });
+  const vendorById = new Map(vendors.map((v) => [v.id, v]));
+
+  const inactive = new Set<string>();
+  for (const item of withSeller) {
+    if (item.vendorHiddenAt || !isVendorActive(vendorById.get(item.sellerId!) ?? null)) {
+      inactive.add(item.id);
+    }
+  }
+  return inactive;
+}
+
 export type CourseAccessLevel = "none" | "trial" | "full";
 
 // Batched sibling of getCourseAccessLevel below — 3 queries total regardless
@@ -423,7 +475,7 @@ export async function getCourseAccessLevels(
     prisma.courseLevelGrant.findMany({ where: { courseId: { in: courseIds } } }),
     prisma.course.findMany({
       where: { id: { in: courseIds } },
-      select: { id: true, hiddenFromGuest: true, isFree: true },
+      select: { id: true, hiddenFromGuest: true, isFree: true, sellerId: true, vendorHiddenAt: true },
     }),
   ]);
 
@@ -449,6 +501,12 @@ export async function getCourseAccessLevels(
     );
     result.set(course.id, isFullViaLevel ? "full" : !course.hiddenFromGuest ? "trial" : "none");
   }
+
+  const inactiveVendorIds = await getInactiveVendorListingIds(courses);
+  for (const id of inactiveVendorIds) {
+    result.set(id, "none");
+  }
+
   return result;
 }
 
@@ -513,6 +571,8 @@ export async function getLibraryItemAccessLevels(
         previewFilePath: true,
         format: true,
         guestPreviewPages: true,
+        sellerId: true,
+        vendorHiddenAt: true,
       },
     }),
   ]);
@@ -547,6 +607,12 @@ export async function getLibraryItemAccessLevels(
       item.format === "INTERACTIVE" ? (item.guestPreviewPages ?? 0) > 0 : !!item.previewFilePath;
     result.set(item.id, item.visibleToGuest && hasTrialContent ? "trial" : "none");
   }
+
+  const inactiveVendorIds = await getInactiveVendorListingIds(libraryItems);
+  for (const id of inactiveVendorIds) {
+    result.set(id, "none");
+  }
+
   return result;
 }
 
@@ -597,14 +663,17 @@ export async function getVisibleProductIds(
 
   const products = await prisma.product.findMany({
     where: { id: { in: productIds } },
-    select: { id: true, hiddenFromGuest: true },
+    select: { id: true, hiddenFromGuest: true, sellerId: true, vendorHiddenAt: true },
   });
 
   const visible = new Set(products.filter((p) => !p.hiddenFromGuest).map((p) => p.id));
-  if (!student) return visible;
-
   const restrictedIds = products.filter((p) => p.hiddenFromGuest).map((p) => p.id);
-  if (restrictedIds.length === 0) return visible;
+
+  if (!student || restrictedIds.length === 0) {
+    const inactiveVendorIds = await getInactiveVendorListingIds(products);
+    for (const id of inactiveVendorIds) visible.delete(id);
+    return visible;
+  }
 
   const [levelGrants, accessGrants] = await Promise.all([
     prisma.productLevelGrant.findMany({ where: { productId: { in: restrictedIds } } }),
@@ -631,6 +700,10 @@ export async function getVisibleProductIds(
       visible.add(id);
     }
   }
+
+  const inactiveVendorIds = await getInactiveVendorListingIds(products);
+  for (const id of inactiveVendorIds) visible.delete(id);
+
   return visible;
 }
 
@@ -929,4 +1002,54 @@ export async function requireOwnGroupLeadership() {
     redirect("/dashboard/my-group?denied=1");
   }
   return { student, membership };
+}
+
+// ============================================================================
+// "Nhà bán hàng" marketplace — a vendor's own account, not an AdminPermission
+// (see requireOwnGroupLeadership above for the same "act on your own thing,
+// zero admin setup" shape this mirrors). Admin-side actions on ANY vendor
+// go through requireAdminPermission("MANAGE_VENDORS") instead, same split as
+// Group/MANAGE_GROUPS.
+// ============================================================================
+
+// Gate for the whole /vendor area. Deliberately NOT requireActiveStudent —
+// a vendorOnly account (see the User model) never becomes a "student" at
+// all, so this re-derives the same "active, real password, not locked"
+// checks requireRole does, without pinning Role/adminOnly. Only an
+// APPROVED application may reach the real dashboard; PENDING/REJECTED lands
+// on /vendor/trang-thai instead so a vendorOnly account (which has nowhere
+// else to go) always has somewhere to land.
+export async function requireVendorAccountAccess(): Promise<{
+  user: User;
+  vendor: { id: string; shopName: string; slug: string; applicationStatus: VendorApplicationStatus; pausedAt: Date | null };
+}> {
+  const session = await requireSession();
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (!user || user.status !== "ACTIVE" || !sessionMatchesCredential(session, user)) {
+    redirect("/login");
+  }
+  const vendor = await prisma.vendor.findUnique({
+    where: { userId: user.id },
+    select: { id: true, shopName: true, slug: true, applicationStatus: true, pausedAt: true },
+  });
+  if (!vendor) {
+    redirect("/vendor/dang-ky");
+  }
+  if (vendor.applicationStatus !== "APPROVED") {
+    redirect("/vendor/trang-thai");
+  }
+  return { user, vendor };
+}
+
+// Non-redirecting lookup for spots that need to know "does this logged-in
+// account already have (or is waiting on) a vendor profile" without forcing
+// a redirect — e.g. the dashboard header's "Chuyển sang không gian bán hàng"
+// pill, which should only render for an approved vendor, and the
+// registration page itself, which should offer "tiếp tục hồ sơ đã nộp"
+// instead of a blank form when one already exists.
+export async function getVendorForUser(userId: string) {
+  return prisma.vendor.findUnique({
+    where: { userId },
+    select: { id: true, shopName: true, slug: true, applicationStatus: true, pausedAt: true, suspendedAt: true },
+  });
 }

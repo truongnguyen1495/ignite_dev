@@ -20,13 +20,21 @@ import {
   Share2,
   ShieldCheck,
   ShoppingBag,
+  Store,
   TrendingUp,
   UserCircle,
   UserPlus,
   Users,
   Video,
 } from "lucide-react";
-import { requireActiveStudent, isChatEnabled, isSalesEnabled, isWhiteboardsEnabled, getAdminPermissions } from "@/lib/access";
+import {
+  requireActiveStudent,
+  isChatEnabled,
+  isSalesEnabled,
+  isWhiteboardsEnabled,
+  getAdminPermissions,
+  getVendorForUser,
+} from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { getStudentChatInbox } from "@/lib/chat";
 import { LEVEL_LABELS } from "@/lib/levels";
@@ -64,7 +72,7 @@ export default async function DashboardLayout({
   const student = await requireActiveStudent();
   const { t } = await getDictionary();
 
-  const [announcements, reads, chatEnabled, salesEnabled, whiteboardsEnabled, adminPermissions, cartCount] =
+  const [announcements, reads, chatEnabled, salesEnabled, whiteboardsEnabled, adminPermissions, cartCount, vendor] =
     await Promise.all([
       prisma.announcement.findMany({
         select: { id: true, minLevel: true, visibleToStudents: true, visibleToLeveled: true },
@@ -78,7 +86,12 @@ export default async function DashboardLayout({
       isWhiteboardsEnabled(),
       getAdminPermissions(student.id),
       prisma.cartItem.count({ where: { studentId: student.id } }),
+      getVendorForUser(student.id),
     ]);
+  // Mirrors the admin-access pill below it: only an APPROVED vendor gets the
+  // shortcut — PENDING/REJECTED has nowhere useful to land from here (that's
+  // /vendor/trang-thai's job, reached by actually opening /vendor).
+  const isApprovedVendor = vendor?.applicationStatus === "APPROVED";
   // An Admin Manager's full content access bypasses the AdminPermission
   // table entirely (see hasFullAdminAccess in src/lib/access.ts), so its size
   // alone would miss them here.
@@ -227,6 +240,15 @@ export default async function DashboardLayout({
                 >
                   <ShieldCheck className="h-3.5 w-3.5" />
                   {t.dashboardNav.goToAdmin}
+                </Link>
+              )}
+              {isApprovedVendor && (
+                <Link
+                  href="/vendor"
+                  className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-primary-border-hover hover:text-foreground"
+                >
+                  <Store className="h-3.5 w-3.5" />
+                  {t.dashboardNav.goToVendor}
                 </Link>
               )}
               <span className="flex min-w-0 items-center gap-2 rounded-full border border-border py-1 pl-1 pr-3">

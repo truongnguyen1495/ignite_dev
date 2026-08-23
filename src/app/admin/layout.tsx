@@ -24,6 +24,7 @@ import {
   Share2,
   TrendingUp,
   Wallet,
+  Store,
 } from "lucide-react";
 import { requireAnyAdminAccess, isChatEnabled, isSalesEnabled, isWhiteboardsEnabled } from "@/lib/access";
 import { getAdminSupportInbox } from "@/lib/chat";
@@ -133,6 +134,10 @@ export default async function AdminLayout({
     {
       item: { href: "/admin/consultations", label: t.adminNav.consultations, icon: <Phone className={iconClass} /> },
       permission: "MANAGE_PRODUCTS",
+    },
+    {
+      item: { href: "/admin/vendors", label: t.adminNav.vendors, icon: <Store className={iconClass} /> },
+      permission: "MANAGE_VENDORS",
     },
     {
       item: {

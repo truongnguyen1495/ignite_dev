@@ -76,6 +76,7 @@ export default async function CheckoutPage({
       title: source.title,
       unitPrice: pricing.chargeAmount,
       quantity: item.quantity,
+      sellerId: source.sellerId,
     });
   }
 

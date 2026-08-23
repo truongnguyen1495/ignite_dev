@@ -50,6 +50,7 @@ export async function StudentLibraryView({
     prisma.libraryItem.findMany({
       where: { visibleToStudents: true, ...(type ? { type } : {}) },
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+      include: { seller: { select: { shopName: true, slug: true } } },
     }),
     prisma.libraryAccessGrant.findMany({ where: { studentId: student.id } }),
     prisma.libraryLevelGrant.findMany(),
@@ -90,6 +91,8 @@ export async function StudentLibraryView({
       salePrice: item.salePrice,
       isFree: item.isFree,
       salesEnabled,
+      sellerShopName: item.seller?.shopName ?? null,
+      sellerSlug: item.seller?.slug ?? null,
     };
   });
 

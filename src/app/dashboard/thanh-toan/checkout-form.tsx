@@ -24,6 +24,9 @@ export type CheckoutLine = {
   title: string;
   unitPrice: number;
   quantity: number;
+  // Marketplace "Nhà bán hàng" — only carried here so canPayOnDelivery can
+  // exclude a vendor line from the COD option shown below; never rendered.
+  sellerId?: string | null;
 };
 
 export type SavedAddress = {

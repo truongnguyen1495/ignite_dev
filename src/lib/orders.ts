@@ -104,9 +104,16 @@ export function isOpenOrder(status: OrderStatus): boolean {
  * the parcel lands and someone who bought an online course is waiting days
  * for a courier. Enforced in confirmCartOrderAction, not just hidden in the
  * UI — the checkout form is an ordinary POST.
+ *
+ * Also refused for any vendor-fulfilled line (sellerId set) — COD in this
+ * app means the platform's own courier/admin confirms cash was collected
+ * (see fulfillOrder), which makes no sense for a vendor's own dropship
+ * arrangement: nobody on the platform side would ever actually know the
+ * vendor's customer paid, so the order would just sit unconfirmable forever.
+ * A vendor's physical goods must be paid up front by bank transfer instead.
  */
-export function canPayOnDelivery(items: { kind: OrderItemKind }[]): boolean {
-  return items.length > 0 && items.every((item) => item.kind === "PRODUCT");
+export function canPayOnDelivery(items: { kind: OrderItemKind; sellerId?: string | null }[]): boolean {
+  return items.length > 0 && items.every((item) => item.kind === "PRODUCT" && !item.sellerId);
 }
 
 // How long a soft-deleted Order (Order.deletedAt set, see deleteOrderAction

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
 import { BuyButton } from "@/components/buy-button";
 import { PriceBlock } from "@/components/price-block";
+import { VendorBadge } from "@/components/vendor-badge";
 import { getPricing } from "@/lib/pricing";
 import type { LibraryAccessLevel } from "@/lib/access";
 
@@ -28,6 +29,8 @@ export type StudentLibraryItem = {
   price: number;
   salePrice: number | null;
   salesEnabled: boolean;
+  sellerShopName: string | null;
+  sellerSlug: string | null;
 };
 
 function AccessBadge({ accessLevel, isFree }: { accessLevel: LibraryAccessLevel; isFree: boolean }) {
@@ -110,6 +113,11 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
                   {item.description && (
                     <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{item.description}</p>
                   )}
+                  {item.sellerShopName && item.sellerSlug && (
+                    <div className="mt-1.5">
+                      <VendorBadge shopName={item.sellerShopName} slug={item.sellerSlug} />
+                    </div>
+                  )}
                   <div className="mt-auto space-y-3 pt-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-dark-muted">
@@ -180,6 +188,11 @@ export function LibraryList({ items }: { items: StudentLibraryItem[] }) {
                     <p className="truncate font-semibold text-dark-foreground">{item.title}</p>
                   </div>
                   {item.author && <p className="line-clamp-1 text-sm text-dark-muted">{item.author}</p>}
+                  {item.sellerShopName && item.sellerSlug && (
+                    <div className="mt-1">
+                      <VendorBadge shopName={item.sellerShopName} slug={item.sellerSlug} />
+                    </div>
+                  )}
                 </div>
                 <div className="hidden shrink-0 items-center gap-1 whitespace-nowrap text-xs text-dark-muted md:flex">
                   {item.pageCount ? `${item.pageCount} trang` : "—"}

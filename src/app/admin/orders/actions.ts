@@ -7,6 +7,7 @@ import { fulfillOrder } from "@/lib/order-fulfillment";
 import { isAdminCancelReason } from "@/lib/order-cancel-labels";
 import { isRefundReason } from "@/lib/refund-labels";
 import { deleteOrderProof } from "@/lib/order-proof-storage";
+import { clawbackCommissionsForRefund } from "@/lib/vendor-commission";
 
 export async function confirmOrderPaidAction(
   orderId: string,
@@ -372,6 +373,13 @@ export async function recordRefundAction(input: {
       createdById: admin.id,
     },
   });
+
+  // Marketplace "Nhà bán hàng" — see clawbackCommissionsForRefund's own
+  // comment for the documented simplification (Refund is one lump amount
+  // per order, not itemized, so this reverses every vendor line in the
+  // order regardless of the refunded amount).
+  await clawbackCommissionsForRefund(input.orderId);
+
   revalidatePath("/admin/orders");
   revalidatePath(`/dashboard/orders/${input.orderId}`);
   return {};

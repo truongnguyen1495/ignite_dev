@@ -25,6 +25,8 @@ export type GuestLibraryItem = {
   price: number;
   salePrice: number | null;
   salesEnabled: boolean;
+  sellerShopName: string | null;
+  sellerSlug: string | null;
 };
 
 // Năm dải màu bìa cho mục chưa có ảnh. Mọi mục phải có dải thật và không
@@ -67,6 +69,7 @@ export async function getGuestLibraryItems({
       ],
     },
     orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+    include: { seller: { select: { shopName: true, slug: true } } },
   });
 
   const basePath = student ? "/dashboard/library" : "/guest/library";
@@ -96,6 +99,8 @@ export async function getGuestLibraryItems({
       price: item.price,
       salePrice: item.salePrice,
       salesEnabled,
+      sellerShopName: item.seller?.shopName ?? null,
+      sellerSlug: item.seller?.slug ?? null,
     };
   });
 }

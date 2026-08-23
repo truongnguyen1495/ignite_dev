@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { ORDER_TRASH_RETENTION_DAYS } from "@/lib/orders";
+import { createCommissionsForOrder } from "@/lib/vendor-commission";
 
 // Single choke point for "this order is now paid" — called today by the
 // manual admin confirm action (src/app/admin/orders/actions.ts), and meant
@@ -64,6 +65,12 @@ export async function fulfillOrder(orderId: string, confirmedById: string | null
   if (grantOps.length > 0) {
     await prisma.$transaction(grantOps);
   }
+
+  // Marketplace "Nhà bán hàng" — one Commission row per line that was bought
+  // from a vendor. Deliberately after the access-grant upserts above (a
+  // vendor's course/library line already behaves exactly like a platform
+  // one for the buyer; this only adds bookkeeping for the seller's side).
+  await createCommissionsForOrder(orderId);
 
   revalidatePath("/admin/orders");
   revalidatePath("/dashboard/orders");

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { PriceBlock } from "@/components/price-block";
 import { BuyButton } from "@/components/buy-button";
 import { GuestBuyButton } from "@/components/guest-buy-button";
+import { VendorBadge } from "@/components/vendor-badge";
 import { getPricing } from "@/lib/pricing";
 
 export type { GuestLibraryItem };
@@ -62,6 +63,11 @@ export function GuestLibraryList({
               {item.author && <p className="mt-0.5 text-sm text-dark-muted">{item.author}</p>}
               {item.description && (
                 <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{item.description}</p>
+              )}
+              {item.sellerShopName && item.sellerSlug && (
+                <div className="mt-1.5">
+                  <VendorBadge shopName={item.sellerShopName} slug={item.sellerSlug} />
+                </div>
               )}
               <div className="mt-auto space-y-3 pt-4">
                 <div className="flex flex-nowrap items-center justify-between gap-2">

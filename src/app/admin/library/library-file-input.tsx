@@ -16,10 +16,15 @@ export function LibraryFileInput({
   defaultPath = "",
   defaultPageCount = null,
   onChange,
+  uploadUrl = "/api/admin/upload-library-file",
 }: {
   defaultPath?: string;
   defaultPageCount?: number | null;
   onChange?: (info: { path: string; pageCount: number | null }) => void;
+  // /vendor/san-pham's library composer points this at
+  // /api/vendor/upload-library-file — gated on an APPROVED Vendor row
+  // instead of MANAGE_LIBRARY, same reasoning as CoverImageInput's uploadUrl.
+  uploadUrl?: string;
 }) {
   const [path, setPath] = useState(defaultPath);
   const [pageCount, setPageCount] = useState<number | null>(defaultPageCount);
@@ -48,7 +53,7 @@ export function LibraryFileInput({
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch("/api/admin/upload-library-file", { method: "POST", body: formData });
+      const res = await fetch(uploadUrl, { method: "POST", body: formData });
       if (!res.ok) {
         // A 413 from Vercel's own platform limit (request too large before
         // our route even runs) comes back as a plain-text body, not JSON —

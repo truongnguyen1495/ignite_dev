@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
 import { BuyButton } from "@/components/buy-button";
 import { PriceBlock } from "@/components/price-block";
+import { VendorBadge } from "@/components/vendor-badge";
 import { getPricing } from "@/lib/pricing";
 import type { CourseAccessLevel } from "@/lib/access";
 
@@ -28,6 +29,8 @@ export type StudentCourseItem = {
   salePrice: number | null;
   isFree: boolean;
   salesEnabled: boolean;
+  sellerShopName: string | null;
+  sellerSlug: string | null;
 };
 
 function AccessBadge({ accessLevel, isFree }: { accessLevel: CourseAccessLevel; isFree: boolean }) {
@@ -127,6 +130,11 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                   {course.description && (
                     <p className="mt-1 line-clamp-2 text-sm text-dark-muted">{course.description}</p>
                   )}
+                  {course.sellerShopName && course.sellerSlug && (
+                    <div className="mt-1.5">
+                      <VendorBadge shopName={course.sellerShopName} slug={course.sellerSlug} />
+                    </div>
+                  )}
                   {course.accessLevel === "full" && course.totalLessons > 0 && (
                     <div className="mt-4">
                       <ProgressBar course={course} />
@@ -204,6 +212,11 @@ export function CourseList({ courses }: { courses: StudentCourseItem[] }) {
                   </div>
                   {course.description && (
                     <p className="line-clamp-1 text-sm text-dark-muted">{course.description}</p>
+                  )}
+                  {course.sellerShopName && course.sellerSlug && (
+                    <div className="mt-1">
+                      <VendorBadge shopName={course.sellerShopName} slug={course.sellerSlug} />
+                    </div>
                   )}
                 </div>
                 <div className="hidden w-40 shrink-0 sm:block">

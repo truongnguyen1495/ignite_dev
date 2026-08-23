@@ -336,6 +336,14 @@ model User {
   // restorable). Cleared back to false the moment any permission is granted
   // again via setAccountPermissionsAction, so a re-added admin reappears.
   hiddenFromAdminList Boolean       @default(false)
+  // A vendor-application-only account (never studies) — see Vendor below.
+  // Mirrors adminOnly's shape exactly: excludes this account from /dashboard
+  // and the student ladder entirely, same reasoning as adminOnly's own
+  // comment. False for a student who additionally becomes a vendor — they
+  // keep studying as normal and just gain a /vendor space alongside
+  // /dashboard, the same "dual role, one login" convention adminOnly already
+  // established for admin+student.
+  vendorOnly          Boolean       @default(false)
   // Brute-force lockout, separate from the permanent admin-set `status:
   // LOCKED` above — auto-locks after too many wrong passwords in a row (see
   // src/lib/auth.ts authorize()), reset on the next successful login.
@@ -411,6 +419,13 @@ model User {
   weeklyRewardsReceived       WeeklyRewardEntry[]   @relation("WeeklyRewardsReceived")
   weeklyRewardsSettled        WeeklyRewardEntry[]   @relation("WeeklyRewardsSettled")
 
+  // Marketplace "Nhà bán hàng" — see the Vendor/Commission/CommissionAdjustment/
+  // PayoutRequest models below for what each relation backs.
+  vendor                     Vendor?
+  vendorApplicationsReviewed Vendor[]        @relation("VendorApplicationsReviewed")
+  vendorsSuspended           Vendor[]        @relation("VendorsSuspended")
+  payoutRequestsProcessed    PayoutRequest[] @relation("PayoutRequestsProcessed")
+
   @@index([role])
 }
 
@@ -466,9 +481,15 @@ enum AdminPermissionKind {
   // Báo cáo doanh thu hệ thống (/admin/revenue) — độc lập với MANAGE_ORDERS
   // vì xác nhận một đơn hàng và xem doanh thu toàn công ty là hai việc khác
   // nhau; tách ra để một admin xử lý đơn hàng không mặc nhiên thấy được số
-  // liệu kinh doanh tổng thể. /admin/affiliate và /admin/finance vẫn đang
-  // mượn tạm MANAGE_ORDERS cho tới khi có quyền riêng của chúng.
+  // liệu kinh doanh tổng thể. /admin/affiliate vẫn đang mượn tạm MANAGE_ORDERS
+  // cho tới khi có quyền riêng của nó.
   MANAGE_FINANCE
+  // Marketplace "Nhà bán hàng" (/admin/vendors) — duyệt/từ chối hồ sơ đăng ký
+  // vendor, xem danh sách gian hàng, hậu kiểm (ẩn) sản phẩm vi phạm, chỉnh
+  // % hoa hồng riêng từng gian hàng, khoá gian hàng. Một quyền duy nhất cho
+  // cả việc duyệt hồ sơ lẫn vận hành sau đó — khác MANAGE_ORDERS/MANAGE_FINANCE
+  // vì đây là quan hệ với bên thứ ba (vendor), không phải khách mua hàng.
+  MANAGE_VENDORS
 }
 
 model AdminPermission {
@@ -709,6 +730,11 @@ model Settings {
   // học viên) at once, subject to each board's own per-board sharing
   // (Whiteboard.generalAccessRole / WhiteboardCollaborator).
   whiteboardsEnabled             Boolean  @default(false)
+  // Default % RapidX keeps on a vendor's sale when Vendor.commissionPercentOverride
+  // is null — see the Commission model below. Changing this only affects
+  // Commission rows created afterward; every existing row already snapshotted
+  // its own rate at creation time and never reads this back.
+  vendorDefaultCommissionPercent Int      @default(20)
   updatedAt                      DateTime @updatedAt
 }
 
@@ -747,38 +773,47 @@ model PasswordResetToken {
 // level-up gating) — a sequence of video lessons only visible to students
 // the Super Admin explicitly grants access to via CourseAccessGrant.
 model Course {
-  id              String   @id @default(cuid())
-  title           String
-  description     String?  @db.Text
-  coverImageUrl   String?
-  order           Int      @default(0)
+  id                 String    @id @default(cuid())
+  title              String
+  description        String?   @db.Text
+  coverImageUrl      String?
+  order              Int       @default(0)
   // Master hide switch for the /guest/* public site: true removes the course
   // from the guest listing and blocks direct access entirely, regardless of
   // any CourseLesson.visibleToGuest flags below. Default false = listed. This
   // is intentionally NOT what gates individual trial lessons — that's driven
   // purely by CourseLesson.visibleToGuest now (see requireGuestCourseAccess /
   // requireGuestCourseLessonAccess in src/lib/access.ts).
-  hiddenFromGuest Boolean  @default(false)
+  hiddenFromGuest    Boolean   @default(false)
   // Admin-curated, independent of hiddenFromGuest: only checked by the guest
   // homepage's "Khóa học nổi bật" section, which shows exactly the courses
   // opted in here rather than just the first few by `order`.
-  featuredOnHome  Boolean  @default(false)
+  featuredOnHome     Boolean   @default(false)
   // VND, 0 = "không bán" (khóa học vẫn hoạt động như cũ, chỉ cấp qua
   // grant/level-rule như trước giờ) — xem OrderItem cho snapshot giá lúc mua.
-  price           Int      @default(0)
+  price              Int       @default(0)
   // Optional discounted price, must be < price when set — the actual amount
   // charged at checkout (see getPricing in src/lib/pricing.ts). Null = no
   // discount, full price applies. Irrelevant when isFree is true.
-  salePrice       Int?
+  salePrice          Int?
   // Master "free for everyone" switch — distinct from price = 0 ("không
   // bán", still admin-grant-only). True grants every student full access
   // outright, no order/checkout involved — checked first in
   // getCourseAccessLevel (src/lib/access.ts). Does not affect guest access,
   // which stays governed by hiddenFromGuest/CourseLesson.visibleToGuest
   // independently.
-  isFree          Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  isFree             Boolean   @default(false)
+  // Marketplace "Nhà bán hàng" — same convention as Product.sellerId/
+  // vendorHiddenAt above: null means platform-authored, unchanged. A vendor
+  // course reuses this exact model (chapters, lessons, quizzes) — full
+  // authoring parity with admin, per the locked decision — just scoped to
+  // rows this vendor owns.
+  sellerId           String?
+  seller             Vendor?   @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  vendorHiddenAt     DateTime?
+  vendorHiddenReason String?   @db.Text
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   lessons     CourseLesson[]
   chapters    CourseChapter[]
@@ -935,25 +970,25 @@ model CourseLevelGrant {
 // src/lib/access.ts) — every product defaults fully public (hiddenFromGuest:
 // false) so existing rows are unaffected.
 model Product {
-  id                 String   @id @default(cuid())
+  id                 String    @id @default(cuid())
   title              String
   subtitle           String?
-  description        String?  @db.Text
+  description        String?   @db.Text
   // e.g. "Package" — shown as a small tag on the catalog card.
   badgeLabel         String?
   imageUrl           String?
-  order              Int      @default(0)
+  order              Int       @default(0)
   // VND, same convention as Course/LibraryItem.
-  price              Int      @default(0)
+  price              Int       @default(0)
   salePrice          Int?
   // Commission Volume — display-only figure for now; this app has no
   // compensation-plan/downline logic, just shows the number next to price.
-  cv                 Int      @default(0)
+  cv                 Int       @default(0)
   // Non-null only for the one product (today: "sanarey-aria") that gets a
   // fully bespoke landing page instead of the generic detail view — see the
   // branch in dashboard/products/[productId]/page.tsx. Every other product
   // renders the plain fallback detail page.
-  slug               String?  @unique
+  slug               String?   @unique
   // Only populated (and only ever read) when slug is set — the 3 lifestyle
   // photos used by that bespoke landing page's "ai nên sử dụng" section.
   // Left null for every ordinary product.
@@ -964,9 +999,22 @@ model Product {
   // a signed-in student sees at least as much as a guest does, so this only
   // ever restricts guests; students additionally need a levelGrant or
   // accessGrant once it's true (see getVisibleProductIds).
-  hiddenFromGuest    Boolean  @default(false)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  hiddenFromGuest    Boolean   @default(false)
+  // Marketplace "Nhà bán hàng" — null (the default) means this row is still
+  // the platform's own catalog, unchanged from before. Set only via a
+  // vendor's own /vendor/products composer, never by admin (see
+  // vendorHiddenAt below for the admin-side lever on a vendor's own row).
+  sellerId           String?
+  seller             Vendor?   @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  // Post-hoc moderation only — admin can hide a live vendor listing (with a
+  // reason, shown back to the vendor) but never edits its content, per the
+  // "no pre-publish review, only after-the-fact takedown" decision. Fully
+  // independent of hiddenFromGuest, which is the vendor's own listing
+  // visibility control mirroring what admin uses for platform items.
+  vendorHiddenAt     DateTime?
+  vendorHiddenReason String?   @db.Text
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   orderItems           OrderItem[]
   cartItems            CartItem[]
@@ -1040,48 +1088,56 @@ model ConsultationRequest {
 // paths point at objects in a private Supabase bucket, never a public URL —
 // everything is served through our own authenticated route handlers.
 model LibraryItem {
-  id                String            @id @default(cuid())
-  title             String
-  author            String?
-  description       String?           @db.Text
-  type              LibraryItemType   @default(BOOK)
+  id                 String            @id @default(cuid())
+  title              String
+  author             String?
+  description        String?           @db.Text
+  type               LibraryItemType   @default(BOOK)
   // Defaults to PDF so every existing row keeps behaving exactly as before.
   // INTERACTIVE items have no filePath/previewFilePath — see LibraryBookPage
   // and requireGuestLibraryItemAccess/getLibraryItemAccessLevel in
   // src/lib/access.ts for the format-aware branches.
-  format            LibraryItemFormat @default(PDF)
-  coverImageUrl     String?
+  format             LibraryItemFormat @default(PDF)
+  coverImageUrl      String?
   // Only set (and required, enforced at the action layer, not by the
   // schema) when format is PDF — INTERACTIVE items have no uploaded file.
-  filePath          String?
+  filePath           String?
   // "N trang" for list views either way — for INTERACTIVE items this is
   // just pages.length, kept in sync on every saveLibraryBookPagesAction.
-  pageCount         Int?
+  pageCount          Int?
   // Fixed design-pixel canvas size for an INTERACTIVE item, chosen once in
   // the editor and not resizable after (every element's x/y/width/height in
   // LibraryBookPage.elements is relative to this). Null for PDF items.
-  bookWidth         Int?
-  bookHeight        Int?
-  previewFilePath   String?
-  guestPreviewPages Int?
-  order             Int               @default(0)
-  visibleToGuest    Boolean           @default(false)
+  bookWidth          Int?
+  bookHeight         Int?
+  previewFilePath    String?
+  guestPreviewPages  Int?
+  order              Int               @default(0)
+  visibleToGuest     Boolean           @default(false)
   // Master hide switch, same convention as Announcement.visibleToStudents:
   // false pulls the item from student and guest access alike (overriding
   // visibleToGuest and any grants) without deleting it or touching grants.
   // Defaults true so existing rows keep showing up unchanged.
-  visibleToStudents Boolean           @default(true)
+  visibleToStudents  Boolean           @default(true)
   // Admin-curated, independent of visibleToGuest: only checked by the guest
   // homepage's "Ebook nổi bật" section, same convention as Course.featuredOnHome.
-  featuredOnHome    Boolean           @default(false)
+  featuredOnHome     Boolean           @default(false)
   // VND, 0 = "không bán", same convention as Course.price.
-  price             Int               @default(0)
+  price              Int               @default(0)
   // Optional discounted price, same convention as Course.salePrice.
-  salePrice         Int?
+  salePrice          Int?
   // Master "free for everyone" switch, same convention as Course.isFree.
-  isFree            Boolean           @default(false)
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  isFree             Boolean           @default(false)
+  // Marketplace "Nhà bán hàng" — same convention as Product.sellerId/
+  // vendorHiddenAt above. A vendor library item reuses this exact model
+  // (both PDF upload and the INTERACTIVE book-page editor) — full authoring
+  // parity with admin, per the locked decision.
+  sellerId           String?
+  seller             Vendor?           @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  vendorHiddenAt     DateTime?
+  vendorHiddenReason String?           @db.Text
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 
   grants      LibraryAccessGrant[]
   levelGrants LibraryLevelGrant[]
@@ -1156,20 +1212,20 @@ model LibraryLevelGrant {
 // (grantedById: null = hệ thống cấp qua đơn hàng) — không có logic quyền
 // riêng nào ở đây, src/lib/access.ts không cần biết Order tồn tại.
 model Order {
-  id            String      @id @default(cuid())
+  id            String        @id @default(cuid())
   // Số ngắn, duy nhất, dùng làm nội dung chuyển khoản — hiển thị dạng
   // "DH" + số này (xem formatOrderCode trong src/lib/orders.ts).
-  orderNumber   Int         @unique @default(autoincrement())
+  orderNumber   Int           @unique @default(autoincrement())
   studentId     String
-  student       User        @relation("StudentOrders", fields: [studentId], references: [id], onDelete: Cascade)
-  status        OrderStatus @default(PENDING)
+  student       User          @relation("StudentOrders", fields: [studentId], references: [id], onDelete: Cascade)
+  status        OrderStatus   @default(PENDING)
   paymentMethod PaymentMethod @default(BANK_TRANSFER)
   totalAmount   Int
-  createdAt     DateTime    @default(now())
+  createdAt     DateTime      @default(now())
   paidAt        DateTime?
   cancelledAt   DateTime?
   confirmedById String?
-  confirmedBy   User?       @relation("OrderConfirmedBy", fields: [confirmedById], references: [id])
+  confirmedBy   User?         @relation("OrderConfirmedBy", fields: [confirmedById], references: [id])
 
   // When this order stops waiting for a bank transfer and cancels itself.
   //
@@ -1235,9 +1291,9 @@ model Order {
   // once at checkout (createOrderAction) rather than re-derived from the
   // student's profile, since User has no address field and this may differ
   // from where the buyer actually lives.
-  shippingName    String?
-  shippingPhone   String?
-  shippingAddress String? @db.Text
+  shippingName         String?
+  shippingPhone        String?
+  shippingAddress      String? @db.Text
   // The delivery address split into its administrative parts, mirroring
   // Address above. Snapshotted onto the order (not read through a relation)
   // for the same reason shippingAddress already was: the buyer may edit or
@@ -1256,7 +1312,7 @@ model Order {
   // free-shipping threshold. NOTE: totalAmount already INCLUDES this, so
   // the QR amount, the COD amount and refunds all keep working untouched;
   // the goods subtotal is totalAmount - shippingFee.
-  shippingFee     Int     @default(0)
+  shippingFee Int @default(0)
 
   // Soft-delete only — set by deleteOrderAction (Super Admin only), which
   // just hides the row from /admin/orders immediately. The row itself (and
@@ -1301,9 +1357,9 @@ enum RefundReason {
 // The order itself stays PAID. It was paid; that happened. What changed is
 // that some of the money went back, and the ledger should say both.
 model Refund {
-  id      String @id @default(cuid())
+  id      String       @id @default(cuid())
   orderId String
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order   Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
   amount  Int
   reason  RefundReason
   note    String?      @db.Text
@@ -1364,6 +1420,13 @@ model FinanceEntry {
 
   deletedAt DateTime?
 
+  // Set only when this entry was auto-created by a vendor PayoutRequest being
+  // marked paid (see PayoutRequest below) — the single source of truth stays
+  // PayoutRequest, this is just the ledger's copy for /admin/finance's own
+  // totals, same "avoid two sources of truth, join at read time" principle
+  // this model's own comment already states for revenue vs. finance entries.
+  payoutRequest PayoutRequest?
+
   @@index([occurredAt, deletedAt])
 }
 
@@ -1392,15 +1455,32 @@ model OrderItem {
   // so no historical row needs fixing; anything reading this must now do the
   // multiplication (see orderItemTotal in src/lib/orders.ts).
   priceAtPurchase Int
-  quantity        Int @default(1)
+  quantity        Int           @default(1)
+
+  // Marketplace "Nhà bán hàng" — snapshotted from the catalog row's own
+  // sellerId at checkout, same reasoning as titleSnapshot/priceAtPurchase:
+  // whoever this line was actually bought from must not silently change if
+  // the underlying Product/Course/LibraryItem is ever reassigned later. Null
+  // for every platform-authored line, unchanged from before this feature.
+  sellerId        String?
+  seller          Vendor?   @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  // Only ever set on a PRODUCT line with a sellerId — a vendor's own
+  // dropship confirmation, independent of Order.shippedAt/deliveredBy which
+  // are for the platform's own internal fulfillment only. Flips this line's
+  // Commission from PENDING to CONFIRMED (see src/lib/vendor-commission.ts).
+  vendorShippedAt DateTime?
 
   // Back-relations to whichever access grant this item's fulfillment
   // created (at most one of the two, matching kind) — see
   // CourseAccessGrant.orderItemId / LibraryAccessGrant.orderItemId.
   courseAccessGrant  CourseAccessGrant?  @relation("CourseGrantOrderItem")
   libraryAccessGrant LibraryAccessGrant? @relation("LibraryGrantOrderItem")
+  // At most one — created by fulfillOrder for a line whose catalog row had a
+  // sellerId at the moment the order became PAID. See Commission below.
+  commission         Commission?
 
   @@index([orderId])
+  @@index([sellerId])
 }
 
 // Pre-checkout cart — separate from Order/OrderItem on purpose: a row here
@@ -1922,4 +2002,223 @@ model WeeklyRewardEntry {
 
   @@unique([weekStart, scope, groupId, rank])
   @@index([userId])
+}
+
+// ============================================================================
+// "Nhà bán hàng" — multi-vendor marketplace. Third parties list their OWN
+// Product/Course/LibraryItem to sell; RapidX keeps a % commission on each
+// sale, the vendor gets the rest. Completely independent of the Level ladder
+// and of /admin/affiliate (referral-commission — a different, unbuilt
+// feature): a vendor here is never gated by rank, and this has nothing to do
+// with who-referred-whom.
+//
+// Consultation/mockup history: see the project's own notes for the full
+// back-and-forth that arrived at this shape (full authoring parity with
+// admin for Course/LibraryItem, dropship-only physical fulfillment, auto
+// commission clawback even after payout, a real per-vendor storefront).
+// ============================================================================
+
+enum VendorApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// A vendor's shop profile, 1-1 with User. Registration is open to anyone,
+// including someone who has never studied on the platform (see
+// User.vendorOnly) — eligibility is never gated by Level. Only the
+// APPLICATION itself needs admin approval (applicationStatus); once
+// approved, every listing the vendor posts auto-publishes immediately with
+// no separate per-item review (see Product/Course/LibraryItem.sellerId) —
+// two different gates, and only the first one exists.
+model Vendor {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  shopName String
+  // Powers the public storefront at /shop/[slug] — generated from shopName
+  // once at creation and never changed afterward even if shopName is edited
+  // later, so a shared link never breaks.
+  slug     String  @unique
+  logoUrl  String?
+  bio      String? @db.Text
+
+  // Shown on the public storefront so a buyer can reach the vendor directly —
+  // load-bearing for physical-goods returns, which the platform deliberately
+  // does not mediate (the customer contacts the vendor themselves).
+  contactEmail String
+  contactPhone String
+
+  bankName          String?
+  bankAccountNumber String?
+  bankAccountHolder String?
+
+  // What the applicant said they intend to sell at signup — informational
+  // only for the admin reviewing the application, never enforced afterward;
+  // an approved vendor may list any of the 3 kinds regardless of what they
+  // originally checked.
+  intendsProducts     Boolean @default(false)
+  intendsCourses      Boolean @default(false)
+  intendsLibraryItems Boolean @default(false)
+
+  applicationStatus VendorApplicationStatus @default(PENDING)
+  appliedAt         DateTime                @default(now())
+  reviewedAt        DateTime?
+  reviewedById      String?
+  reviewedBy        User?                   @relation("VendorApplicationsReviewed", fields: [reviewedById], references: [id])
+  reviewNote        String?                 @db.Text
+
+  // Vendor's own self-service pause — distinct from suspendedAt (admin
+  // lock) below. Either one hides every listing, but only the vendor can
+  // clear this one and only an admin can clear that one.
+  pausedAt DateTime?
+
+  suspendedAt   DateTime?
+  suspendedById String?
+  suspendedBy   User?     @relation("VendorsSuspended", fields: [suspendedById], references: [id])
+  suspendReason String?   @db.Text
+
+  // % RapidX keeps on this vendor's sales; null = fall back to
+  // Settings.vendorDefaultCommissionPercent at the moment each Commission
+  // row is created (see Commission.commissionPercent, a snapshot that never
+  // changes retroactively when this is edited later).
+  commissionPercentOverride Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products              Product[]
+  courses               Course[]
+  libraryItems          LibraryItem[]
+  orderItems            OrderItem[]
+  commissions           Commission[]
+  commissionAdjustments CommissionAdjustment[]
+  payoutRequests        PayoutRequest[]
+
+  @@index([applicationStatus])
+}
+
+enum CommissionStatus {
+  // Order is PAID but the line isn't releasable yet — every PRODUCT line
+  // starts here until the vendor confirms dropship (OrderItem.vendorShippedAt).
+  PENDING
+  // Releasable — a COURSE/LIBRARY_ITEM line reaches this the instant the
+  // order is PAID (nothing to ship), a PRODUCT line reaches it when the
+  // vendor confirms shipped.
+  CONFIRMED
+  // Included in a settled PayoutRequest — money has actually moved.
+  PAID
+  // The underlying order was refunded before this line was ever paid out —
+  // voided outright, nothing to claw back since the vendor never received it.
+  CANCELLED
+}
+
+// One row per qualifying OrderItem (its catalog row had a sellerId at the
+// moment the order became PAID) — created in fulfillOrder, never derived at
+// read time, because this represents money and needs an audit trail that
+// survives the underlying rate/price changing later. See
+// src/lib/vendor-commission.ts for the only code that creates/transitions
+// these.
+model Commission {
+  id          String    @id @default(cuid())
+  vendorId    String
+  vendor      Vendor    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  orderItemId String    @unique
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  // Snapshots at creation — orderItemTotal(orderItem) as of that moment, the
+  // % that applied, and the vendor's resulting cut. Editing
+  // Vendor.commissionPercentOverride/Settings.vendorDefaultCommissionPercent
+  // afterward must never change what an already-recorded line says it owed.
+  grossAmount       Int
+  commissionPercent Int
+  vendorAmount      Int
+
+  status      CommissionStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  confirmedAt DateTime?
+  cancelledAt DateTime?
+
+  payoutRequestId String?
+  payoutRequest   PayoutRequest? @relation(fields: [payoutRequestId], references: [id], onDelete: SetNull)
+
+  adjustments CommissionAdjustment[]
+
+  @@index([vendorId, status])
+}
+
+enum CommissionAdjustmentReason {
+  REFUND_AFTER_PAYOUT
+}
+
+// A negative entry recorded when a Commission that was already PAID out gets
+// its underlying order refunded afterward — the Commission row itself is
+// NEVER edited retroactively (same philosophy as Refund's own comment: the
+// original event still happened, this just records that some money came back
+// out). Nets against the vendor's balance and is settled into whichever
+// PayoutRequest comes next, rather than anyone having to remember to claw the
+// money back by hand. See src/lib/vendor-commission.ts.
+//
+// Simplification worth knowing: Refund is recorded per-Order with one lump
+// amount, not itemized per line — so a refund against an order containing
+// vendor lines claws back EVERY vendor Commission in that order in full, not
+// a proportional share of the refunded amount. Itemizing Refund itself was
+// out of scope for this feature.
+model CommissionAdjustment {
+  id           String                     @id @default(cuid())
+  vendorId     String
+  vendor       Vendor                     @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  commissionId String
+  commission   Commission                 @relation(fields: [commissionId], references: [id], onDelete: Cascade)
+  amount       Int
+  reason       CommissionAdjustmentReason @default(REFUND_AFTER_PAYOUT)
+  createdAt    DateTime                   @default(now())
+
+  // Null = still outstanding, counted against the vendor's current balance.
+  // Set the moment a PayoutRequest is created that nets this against the
+  // vendor's payout — see settleVendorPayoutAction.
+  settledInPayoutRequestId String?
+  settledInPayoutRequest   PayoutRequest? @relation(fields: [settledInPayoutRequestId], references: [id], onDelete: SetNull)
+
+  @@index([vendorId])
+}
+
+enum PayoutRequestStatus {
+  PENDING
+  PAID
+  REJECTED
+}
+
+// A vendor's request to withdraw their currently-CONFIRMED (and not yet
+// PAID) commission balance, net of any outstanding CommissionAdjustment.
+// amount is snapshotted at request time — settling it later moves the exact
+// Commission/CommissionAdjustment rows onto this request rather than
+// recomputing, so the number a vendor saw when they asked for it is the
+// number that gets paid.
+model PayoutRequest {
+  id       String              @id @default(cuid())
+  vendorId String
+  vendor   Vendor              @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  amount   Int
+  status   PayoutRequestStatus @default(PENDING)
+
+  requestedAt DateTime @default(now())
+
+  processedAt   DateTime?
+  processedById String?
+  processedBy   User?     @relation("PayoutRequestsProcessed", fields: [processedById], references: [id])
+  rejectReason  String?   @db.Text
+
+  // Set only once PAID — auto-creates exactly one FinanceEntry
+  // (category COMMISSION_PAYOUT) rather than making an admin double-enter
+  // the same expense, per the "avoid a second source of truth" principle
+  // already established for FinanceEntry vs. Order-derived revenue.
+  financeEntryId String?       @unique
+  financeEntry   FinanceEntry? @relation(fields: [financeEntryId], references: [id])
+
+  commissions        Commission[]
+  adjustmentsSettled CommissionAdjustment[]
+
+  @@index([vendorId, status])
 }

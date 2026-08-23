@@ -50,6 +50,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
           course: { select: { coverImageUrl: true, description: true, _count: { select: { lessons: true } } } },
           libraryItem: { select: { coverImageUrl: true, description: true, author: true, pageCount: true } },
           product: { select: { imageUrl: true, subtitle: true, description: true } },
+          // Marketplace "Nhà bán hàng" — only populated for a line bought
+          // from a vendor (see OrderItem.sellerId's own comment). Used below
+          // to group the order into per-fulfiller cards, additive to the
+          // existing item list so an order with no vendor lines renders
+          // byte-for-byte as it did before this feature existed.
+          seller: { select: { shopName: true, contactEmail: true, contactPhone: true } },
         },
       },
     },
@@ -71,6 +77,47 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
   const hasPhysicalItems = order.items.some((item) => item.kind === "PRODUCT");
   const stage = deliveryStage({ hasPhysicalItems, status, shippedAt: order.shippedAt, deliveredAt: order.deliveredAt });
   const refundedTotal = order.refunds.reduce((sum, refund) => sum + refund.amount, 0);
+
+  // Marketplace "Nhà bán hàng" — one card per distinct (vendor, is-digital)
+  // pair present in this order, mirroring the mockup's "Khách hàng · Đơn
+  // hàng nhiều vendor" screen. Deliberately ADDITIVE: the "Sản phẩm"/"Thông
+  // tin giao hàng" cards below still list every item exactly as they always
+  // have (including vendor ones) — these cards only ever ADD the
+  // vendor-specific shipped-status/contact info on top, so an order with no
+  // vendor lines at all is completely untouched by this feature (the array
+  // below is simply empty and nothing renders).
+  const vendorGroups = (() => {
+    const groups = new Map<
+      string,
+      {
+        vendorId: string;
+        vendorName: string;
+        contactEmail: string;
+        contactPhone: string;
+        isDigital: boolean;
+        items: typeof order.items;
+      }
+    >();
+    for (const item of order.items) {
+      if (!item.sellerId || !item.seller) continue;
+      const isDigital = item.kind !== "PRODUCT";
+      const key = `${item.sellerId}:${isDigital ? "digital" : "physical"}`;
+      const existing = groups.get(key);
+      if (existing) {
+        existing.items.push(item);
+      } else {
+        groups.set(key, {
+          vendorId: item.sellerId,
+          vendorName: item.seller.shopName,
+          contactEmail: item.seller.contactEmail,
+          contactPhone: item.seller.contactPhone,
+          isDigital,
+          items: [item],
+        });
+      }
+    }
+    return Array.from(groups.values());
+  })();
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
@@ -274,6 +321,54 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ or
           </div>
         )}
       </Card>
+
+      {status === "PAID" && vendorGroups.length > 0 && (
+        <div className="space-y-4">
+          {vendorGroups.map((group) => {
+            const allShipped = group.items.every((item) => item.vendorShippedAt);
+            return (
+              <Card key={`${group.vendorId}:${group.isDigital}`} className="space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-sm font-semibold text-foreground">
+                      {group.isDigital ? "Truy cập ngay, không cần giao hàng" : `${group.vendorName} tự giao`}
+                    </h2>
+                    <p className="mt-0.5 text-xs text-muted">
+                      {group.isDigital
+                        ? `Khoá học/tài liệu điện tử của ${group.vendorName} — hệ thống cấp quyền tự động.`
+                        : "Hàng vật lý — nhà bán hàng tự đóng gói & vận chuyển phần này."}
+                    </p>
+                  </div>
+                  {group.isDigital ? (
+                    <Badge color="success">Đã kích hoạt</Badge>
+                  ) : allShipped ? (
+                    <Badge color="success">Đã giao</Badge>
+                  ) : (
+                    <Badge color="warning">Chờ đóng gói</Badge>
+                  )}
+                </div>
+                <ul className="space-y-2 text-sm">
+                  {group.items.map((item) => (
+                    <li key={item.id} className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 truncate text-foreground">{item.titleSnapshot}</span>
+                      <span className="shrink-0 tabular-nums text-muted">{formatVND(orderItemTotal(item))}</span>
+                    </li>
+                  ))}
+                </ul>
+                {!group.isDigital && (
+                  <p className="border-t border-border pt-3 text-xs text-muted">
+                    Cần đổi/trả phần này?{" "}
+                    <a href={`mailto:${group.contactEmail}`} className="text-primary hover:text-primary-hover">
+                      Liên hệ trực tiếp {group.vendorName} →
+                    </a>{" "}
+                    ({group.contactPhone})
+                  </p>
+                )}
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {order.shippingAddress && (
         <Card className="space-y-3">
