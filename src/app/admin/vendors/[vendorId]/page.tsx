@@ -12,6 +12,7 @@ import { formatDateVN } from "@/lib/date";
 import { CommissionRateForm } from "./commission-rate-form";
 import { HideListingButton } from "./hide-listing-button";
 import { SuspendVendorControl } from "./suspend-vendor-control";
+import { PendingVendorActions } from "../pending/pending-vendor-actions";
 
 type ListingRow = {
   id: string;
@@ -92,7 +93,8 @@ export default async function AdminVendorDetailPage({ params }: { params: Promis
   const kindLabel = { PRODUCT: "Sản phẩm", COURSE: "Khoá học", LIBRARY_ITEM: "Sách" } as const;
 
   const isSuspended = !!vendor.suspendedAt;
-  const isActive = vendor.applicationStatus === "APPROVED" && !vendor.pausedAt && !isSuspended;
+  const isApproved = vendor.applicationStatus === "APPROVED";
+  const isActive = isApproved && !vendor.pausedAt && !isSuspended;
 
   return (
     <div className="space-y-6">
@@ -124,6 +126,48 @@ export default async function AdminVendorDetailPage({ params }: { params: Promis
         }
       />
 
+      {vendor.applicationStatus === "PENDING" && (
+        <div className="space-y-4 rounded-xl border border-warning-border bg-warning-bg/10 p-5">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Hồ sơ đang chờ duyệt</p>
+            <p className="mt-0.5 text-xs text-muted">
+              Nộp ngày {formatDateVN(vendor.appliedAt)}. Duyệt xong vendor có thể đăng sản phẩm bán ngay lập tức.
+            </p>
+          </div>
+          <dl className="grid gap-2 text-sm sm:grid-cols-2">
+            <div className="flex justify-between gap-3 sm:block">
+              <dt className="text-muted">Email</dt>
+              <dd className="text-foreground sm:text-right">{vendor.contactEmail}</dd>
+            </div>
+            <div className="flex justify-between gap-3 sm:block">
+              <dt className="text-muted">Điện thoại</dt>
+              <dd className="text-foreground sm:text-right">{vendor.contactPhone}</dd>
+            </div>
+            <div className="flex justify-between gap-3 sm:block">
+              <dt className="text-muted">Ngân hàng</dt>
+              <dd className="text-foreground sm:text-right">{vendor.bankName ?? "—"}</dd>
+            </div>
+            <div className="flex justify-between gap-3 sm:block">
+              <dt className="text-muted">Số tài khoản</dt>
+              <dd className="text-foreground sm:text-right">{vendor.bankAccountNumber ?? "—"}</dd>
+            </div>
+          </dl>
+          {vendor.bio && (
+            <div className="rounded-lg border border-border bg-background p-3 text-sm text-muted">&quot;{vendor.bio}&quot;</div>
+          )}
+          <div className="sm:max-w-xs">
+            <PendingVendorActions vendorId={vendor.id} />
+          </div>
+        </div>
+      )}
+
+      {vendor.applicationStatus === "REJECTED" && (
+        <div className="rounded-xl border border-danger-border bg-danger-bg/10 p-5">
+          <p className="text-sm font-semibold text-foreground">Hồ sơ đã bị từ chối</p>
+          {vendor.reviewNote && <p className="mt-1 text-sm text-danger">Lý do: {vendor.reviewNote}</p>}
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-border bg-surface p-5">
           <p className="text-sm text-muted">Tổng doanh số</p>
@@ -143,13 +187,15 @@ export default async function AdminVendorDetailPage({ params }: { params: Promis
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-surface p-5">
-        <h2 className="text-sm font-semibold text-foreground">Tỉ lệ hoa hồng áp dụng</h2>
-        <p className="mt-0.5 text-xs text-muted">Mặc định theo cấu hình chung — có thể chỉnh riêng cho gian hàng này.</p>
-        <div className="mt-4">
-          <CommissionRateForm vendorId={vendor.id} currentOverride={vendor.commissionPercentOverride} />
+      {isApproved && (
+        <div className="rounded-xl border border-border bg-surface p-5">
+          <h2 className="text-sm font-semibold text-foreground">Tỉ lệ hoa hồng áp dụng</h2>
+          <p className="mt-0.5 text-xs text-muted">Mặc định theo cấu hình chung — có thể chỉnh riêng cho gian hàng này.</p>
+          <div className="mt-4">
+            <CommissionRateForm vendorId={vendor.id} currentOverride={vendor.commissionPercentOverride} />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="rounded-xl border border-border bg-surface">
         <div className="border-b border-border p-4">
@@ -208,17 +254,19 @@ export default async function AdminVendorDetailPage({ params }: { params: Promis
         )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-danger-border bg-danger-bg/10 p-5">
-        <div>
-          <p className="text-sm font-semibold text-foreground">{isSuspended ? "Gian hàng đang bị khoá" : "Khoá gian hàng"}</p>
-          <p className="mt-0.5 text-xs text-muted">
-            {isSuspended && vendor.suspendReason
-              ? `Lý do: ${vendor.suspendReason}`
-              : "Ẩn toàn bộ sản phẩm khỏi khách & học viên, tạm dừng nhận đơn mới. Đơn đang xử lý vẫn tiếp tục."}
-          </p>
+      {isApproved && (
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-danger-border bg-danger-bg/10 p-5">
+          <div>
+            <p className="text-sm font-semibold text-foreground">{isSuspended ? "Gian hàng đang bị khoá" : "Khoá gian hàng"}</p>
+            <p className="mt-0.5 text-xs text-muted">
+              {isSuspended && vendor.suspendReason
+                ? `Lý do: ${vendor.suspendReason}`
+                : "Ẩn toàn bộ sản phẩm khỏi khách & học viên, tạm dừng nhận đơn mới. Đơn đang xử lý vẫn tiếp tục."}
+            </p>
+          </div>
+          <SuspendVendorControl vendorId={vendor.id} suspended={isSuspended} />
         </div>
-        <SuspendVendorControl vendorId={vendor.id} suspended={isSuspended} />
-      </div>
+      )}
     </div>
   );
 }
