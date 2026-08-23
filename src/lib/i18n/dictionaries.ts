@@ -75,6 +75,7 @@ export const dictionaries = {
       finance: "Thu chi",
       goToAdmin: "Vào trang Admin",
       goToVendor: "Chuyển sang không gian bán hàng",
+      vendorRegister: "Nhà bán hàng",
       // Nhãn phân cụm — không bấm được, chỉ để mắt nghỉ giữa các nhóm.
       sectionLearning: "Học tập",
       sectionConnect: "Kết nối",
@@ -101,6 +102,8 @@ export const dictionaries = {
       products: "Sản phẩm",
       login: "Đăng nhập",
       register: "Đăng ký",
+      vendorRegister: "Nhà bán hàng",
+      becomeVendor: "Bán hàng cùng RapidX",
     },
     settingsPage: {
       title: "Cài đặt",
@@ -396,6 +399,7 @@ export const dictionaries = {
       finance: "Income & expenses",
       goToAdmin: "Go to Admin",
       goToVendor: "Switch to seller space",
+      vendorRegister: "Vendors",
       sectionLearning: "Learning",
       sectionConnect: "Connect",
       sectionShopping: "Shopping",
@@ -415,6 +419,8 @@ export const dictionaries = {
       products: "Products",
       login: "Log in",
       register: "Sign up",
+      vendorRegister: "Vendors",
+      becomeVendor: "Sell on RapidX",
     },
     settingsPage: {
       title: "Settings",

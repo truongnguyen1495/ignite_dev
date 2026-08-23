@@ -92,6 +92,20 @@ export default async function DashboardLayout({
   // shortcut — PENDING/REJECTED has nowhere useful to land from here (that's
   // /vendor/trang-thai's job, reached by actually opening /vendor).
   const isApprovedVendor = vendor?.applicationStatus === "APPROVED";
+  // Sidebar counterpart of the header pill above — a student who is ALREADY
+  // an approved vendor uses that pill instead, so this row would just be a
+  // second path to the same place. No Vendor row at all -> the registration
+  // page; a PENDING/REJECTED one -> its own status page, so the row always
+  // leads somewhere useful rather than back through the same form twice.
+  const vendorNavItems: NavEntry[] = isApprovedVendor
+    ? []
+    : [
+        {
+          href: vendor ? "/vendor/trang-thai" : "/vendor/dang-ky",
+          label: t.dashboardNav.vendorRegister,
+          icon: <Store className={iconClass} />,
+        },
+      ];
   // An Admin Manager's full content access bypasses the AdminPermission
   // table entirely (see hasFullAdminAccess in src/lib/access.ts), so its size
   // alone would miss them here.
@@ -204,6 +218,7 @@ export default async function DashboardLayout({
             badge: cartCount,
           },
           { href: "/dashboard/orders", label: t.dashboardNav.orders, icon: <Receipt className={iconClass} /> },
+          ...vendorNavItems,
         ]
       : []),
 

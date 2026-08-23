@@ -107,6 +107,12 @@ export function LoginForm({
         </Link>{" "}
         không cần đăng nhập
       </p>
+      <p className="text-center text-sm text-muted">
+        Muốn bán hàng thay vì học?{" "}
+        <Link href="/vendor/dang-ky" className="font-medium text-primary hover:text-primary-hover">
+          Đăng ký làm Nhà bán hàng
+        </Link>
+      </p>
     </div>
   );
 }
