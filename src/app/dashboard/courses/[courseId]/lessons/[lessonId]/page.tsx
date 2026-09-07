@@ -139,7 +139,14 @@ export default async function StudentCourseLessonPage({
         </p>
       )}
 
-      <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      {/* grid-cols-1 (Tailwind: repeat(1, minmax(0, 1fr))) matters below lg:
+          with no explicit template there, a CSS grid's implicit single
+          column defaults to auto-sizing off its content's max-content width
+          instead of the container's actual width — a long tracklist row was
+          enough to blow the column past the viewport and force horizontal
+          scroll on mobile. minmax(0, 1fr) caps it, same technique the lg:
+          override already relies on. */}
+      <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-4">
           {lesson.youtubeId ? (
             <YoutubeTrackedEmbed
