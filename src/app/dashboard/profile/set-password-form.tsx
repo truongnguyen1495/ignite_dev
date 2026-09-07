@@ -4,8 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, KeyRound } from "lucide-react";
 import { setOwnPasswordAction } from "./actions";
-import { Input } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export function SetPasswordForm() {
   const [password, setPassword] = useState("");
@@ -47,9 +47,8 @@ export function SetPasswordForm() {
         Tài khoản của bạn đang chỉ đăng nhập được qua Google, chưa có mật khẩu riêng. Đặt mật khẩu để vẫn
         đăng nhập được nếu tính năng đăng nhập Google bị tắt sau này.
       </p>
-      <Input
+      <PasswordInput
         id="new-password"
-        type="password"
         label="Mật khẩu mới"
         required
         minLength={8}
@@ -58,9 +57,8 @@ export function SetPasswordForm() {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
-      <Input
+      <PasswordInput
         id="confirm-new-password"
-        type="password"
         label="Xác nhận mật khẩu mới"
         required
         minLength={8}

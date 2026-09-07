@@ -1,16 +1,18 @@
 import { forwardRef, type ComponentPropsWithoutRef, type ReactNode } from "react";
 
-const fieldClass =
+// Shared with password-input.tsx, which needs the same field styling but has
+// to live behind its own "use client" boundary (it holds show/hide state).
+export const fieldClass =
   "w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-base sm:text-sm text-foreground focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-60";
 
-type FieldWrapperProps = {
+export type FieldWrapperProps = {
   label?: string;
   error?: string;
   hint?: string;
   id?: string;
 };
 
-function FieldWrapper({ label, error, hint, id, children }: FieldWrapperProps & { children: ReactNode }) {
+export function FieldWrapper({ label, error, hint, id, children }: FieldWrapperProps & { children: ReactNode }) {
   return (
     <div>
       {label && (

@@ -1,55 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { useActionState } from "react";
 import { loginAction, signInWithGoogleAction } from "./actions";
 import { Input } from "@/components/ui/form";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
-
-// Uncontrolled counterpart to register-form.tsx's PasswordField — this form
-// submits via a plain server action (no React state needed for the value),
-// so only the show/hide toggle needs local state.
-function PasswordInput({
-  id,
-  name,
-  label,
-  autoComplete,
-}: {
-  id: string;
-  name: string;
-  label: string;
-  autoComplete: string;
-}) {
-  const [visible, setVisible] = useState(false);
-
-  return (
-    <div>
-      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-foreground">
-        {label}
-      </label>
-      <div className="relative">
-        <input
-          id={id}
-          name={name}
-          type={visible ? "text" : "password"}
-          required
-          autoComplete={autoComplete}
-          className="w-full rounded-lg border border-border-strong bg-surface px-3 py-2 pr-10 text-base sm:text-sm text-foreground focus:border-primary focus:outline-none"
-        />
-        <button
-          type="button"
-          onClick={() => setVisible((v) => !v)}
-          tabIndex={-1}
-          aria-label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-          className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted hover:text-foreground"
-        >
-          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export function LoginForm({
   googleLoginEnabled,
@@ -68,7 +24,7 @@ export function LoginForm({
             action: a Server Action has no access to the page's query string. */}
         {returnTo && <input type="hidden" name="next" value={returnTo} />}
         <Input id="email" name="email" type="email" label="Email" required autoComplete="email" />
-        <PasswordInput id="password" name="password" label="Mật khẩu" autoComplete="current-password" />
+        <PasswordInput id="password" name="password" label="Mật khẩu" required autoComplete="current-password" />
         <div className="text-right">
           <Link href="/forgot-password" className="text-xs font-medium text-primary hover:text-primary-hover">
             Quên mật khẩu?

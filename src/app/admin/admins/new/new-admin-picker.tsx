@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search, Loader2, UserPlus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/form";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -199,9 +200,8 @@ export function NewAdminPicker() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="admin@example.com"
           />
-          <Input
+          <PasswordInput
             label="Mật khẩu"
-            type="password"
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}

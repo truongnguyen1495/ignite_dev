@@ -2,8 +2,8 @@
 
 import { useActionState } from "react";
 import { resetPasswordAction, type ResetPasswordState } from "./actions";
-import { Input } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const [state, formAction, pending] = useActionState<ResetPasswordState, FormData>(resetPasswordAction, undefined);
@@ -12,10 +12,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="token" value={token} />
-      <Input
+      <PasswordInput
         id="password"
         name="password"
-        type="password"
         label="Mật khẩu mới"
         required
         minLength={8}
@@ -23,10 +22,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
         hint="Ít nhất 8 ký tự."
         error={fieldErrors.password}
       />
-      <Input
+      <PasswordInput
         id="confirmPassword"
         name="confirmPassword"
-        type="password"
         label="Xác nhận mật khẩu mới"
         required
         minLength={8}

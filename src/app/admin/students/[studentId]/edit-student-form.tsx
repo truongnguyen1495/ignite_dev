@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Input, Select } from "@/components/ui/form";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
@@ -120,10 +121,9 @@ export function EditStudentForm({
             placeholder="0xxxxxxxxx hoặc +84xxxxxxxxx"
             disabled={!canEdit}
           />
-          <Input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             label="Mật khẩu mới (để trống nếu không đổi)"
             minLength={8}
             disabled={!canEdit}
