@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { registerVendorAction, type VendorRegisterState } from "./actions";
 import { Input, Textarea } from "@/components/ui/form";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 
 const CHECK_CLASS = "h-4 w-4 accent-primary";
@@ -60,7 +61,7 @@ export function VendorRegisterForm({
       </div>
 
       {mode === "new" && (
-        <Input id="password" name="password" type="password" required minLength={8} label="Mật khẩu" hint="Ít nhất 8 ký tự." />
+        <PasswordInput id="password" name="password" required minLength={8} label="Mật khẩu" hint="Ít nhất 8 ký tự." />
       )}
 
       <div>

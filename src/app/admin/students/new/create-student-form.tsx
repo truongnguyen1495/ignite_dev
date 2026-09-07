@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { createStudentAction } from "../actions";
 import { ORDERED_LEVELS, LEVEL_LABELS } from "@/lib/levels";
 import { Input, Select } from "@/components/ui/form";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 
 export function CreateStudentForm() {
@@ -20,7 +21,7 @@ export function CreateStudentForm() {
         placeholder="0xxxxxxxxx hoặc +84xxxxxxxxx"
         label="Số điện thoại (tùy chọn)"
       />
-      <Input id="password" name="password" type="password" required minLength={8} label="Mật khẩu" />
+      <PasswordInput id="password" name="password" required minLength={8} label="Mật khẩu" />
       <Select id="grantedLevel" name="grantedLevel" defaultValue={ORDERED_LEVELS[0]} label="Cấp được cấp quyền">
         {ORDERED_LEVELS.map((level) => (
           <option key={level} value={level}>

@@ -232,6 +232,29 @@ body {
   color: var(--foreground);
 }
 
+/* Chrome paints its own near-white background on an autofilled field and
+   ignores any background-color you set, so a saved email/password turns a dark
+   field into a white box mid-form. That also swallows the show/hide eye inside
+   it, which is --muted (cream) and measures about 1:1 against that white — the
+   control is still there and still clickable, just invisible, which is exactly
+   how it reads as "there is no eye".
+
+   A large inset box-shadow is the one fill Chrome does honour here, and
+   -webkit-text-fill-color (not `color`) is what actually recolours autofilled
+   text. --surface matches the fieldClass every input in the app uses.
+   Safari/Firefox never take this branch; they leave autofilled fields alone. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset;
+  box-shadow: 0 0 0 1000px var(--surface) inset;
+  -webkit-text-fill-color: var(--foreground);
+  caret-color: var(--foreground);
+}
+
 /* Lesson content editor/preview/student-view all share this class (see
    src/components/lesson-markdown.tsx). Images always stay responsive; the
    size/align classes are inserted by the admin's image-insert toolbar as
