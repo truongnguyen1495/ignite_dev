@@ -30,7 +30,10 @@ export default async function EditCoursePage({
   const course = await prisma.course.findUnique({
     where: { id: courseId },
     include: {
-      lessons: { orderBy: { order: "asc" } },
+      lessons: {
+        orderBy: { order: "asc" },
+        include: { segments: { orderBy: { order: "asc" }, select: { seconds: true, label: true } } },
+      },
       chapters: { orderBy: { order: "asc" } },
       grants: {
         include: { student: true, orderItem: { include: { order: true } } },

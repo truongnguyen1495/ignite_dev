@@ -1,7 +1,7 @@
 import "server-only";
 import type { User, LibraryItemType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getLibraryItemAccessLevels, isSalesEnabled } from "@/lib/access";
+import { getInactiveVendorListingIds, getLibraryItemAccessLevels, isSalesEnabled } from "@/lib/access";
 
 export type GuestLibraryItem = {
   id: string;
@@ -53,7 +53,7 @@ export async function getGuestLibraryItems({
   onlyFeatured = false,
   student,
 }: { onlyFeatured?: boolean; student?: User } = {}): Promise<GuestLibraryItem[]> {
-  const items = await prisma.libraryItem.findMany({
+  const listed = await prisma.libraryItem.findMany({
     where: {
       visibleToGuest: true,
       visibleToStudents: true,
@@ -71,6 +71,12 @@ export async function getGuestLibraryItems({
     orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     include: { seller: { select: { shopName: true, slug: true } } },
   });
+
+  // Mirrors getGuestCourseItems: a taken-down or suspended vendor's item
+  // leaves the catalog rather than staying listed and only failing on click
+  // (see requireGuestLibraryItemAccess).
+  const inactiveVendorIds = await getInactiveVendorListingIds(listed);
+  const items = inactiveVendorIds.size === 0 ? listed : listed.filter((i) => !inactiveVendorIds.has(i.id));
 
   const basePath = student ? "/dashboard/library" : "/guest/library";
 

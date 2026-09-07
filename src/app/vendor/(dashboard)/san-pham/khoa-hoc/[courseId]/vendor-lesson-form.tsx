@@ -4,6 +4,8 @@ import { useActionState, useEffect, useRef } from "react";
 import { createVendorCourseLessonAction, updateVendorCourseLessonAction } from "../../actions";
 import { Input, Textarea } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { CourseLessonSegmentsEditor } from "@/components/course-lesson-segments-editor";
+import { formatTimestamp } from "@/lib/course-lesson-segments";
 
 // Plain textarea instead of admin's LessonContentEditor (Tiptap, with image
 // uploads wired to /api/admin/upload-image) — forking that editor to accept
@@ -18,6 +20,7 @@ export function VendorLessonForm({
   youtubeId = "",
   chapterId = "",
   chapters,
+  segments = [],
   onSuccess,
   onCancel,
 }: {
@@ -28,6 +31,7 @@ export function VendorLessonForm({
   youtubeId?: string | null;
   chapterId?: string | null;
   chapters: { id: string; title: string }[];
+  segments?: { seconds: number; label: string }[];
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
@@ -72,6 +76,13 @@ export function VendorLessonForm({
         placeholder="https://www.youtube.com/watch?v=..."
         label="Link video YouTube"
       />
+      <div>
+        <span className="mb-1.5 block text-sm font-medium text-foreground">Phân cảnh (tùy chọn)</span>
+        <p className="mb-2 text-xs text-muted">Học viên bấm vào một mốc để video tua ngay đến đó.</p>
+        <CourseLessonSegmentsEditor
+          initialSegments={segments.map((s) => ({ time: formatTimestamp(s.seconds), label: s.label }))}
+        />
+      </div>
       <Textarea id={`content-${lessonId ?? "new"}`} name="content" rows={3} defaultValue={content} label="Ghi chú (tùy chọn)" />
       {error && <p className="text-sm text-danger">{error}</p>}
       <div className="flex items-center justify-end gap-2">

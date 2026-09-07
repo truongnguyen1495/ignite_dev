@@ -877,9 +877,32 @@ model CourseLesson {
 
   completions   CourseLessonCompletion[]
   watchProgress CourseLessonWatchProgress[]
+  segments      CourseLessonSegment[]
 
   @@index([courseId, order])
   @@index([chapterId])
+}
+
+// In-video timestamps for a single lesson's YouTube video (e.g. the
+// tracklist YouTube shows in a video's own description) — lets a student
+// jump straight to a moment via player.seekTo() instead of scrubbing.
+// Unrelated to CourseChapter above: that groups separate lessons, this
+// marks points inside one lesson's video. `seconds` is validated
+// server-side (see resolveSegmentsInput in src/lib/course-lesson-segments.ts,
+// shared by the admin and vendor lesson actions) and capped at 24h, so it
+// can never be negative or overflow this Int's underlying int4. `order` is
+// always assigned there in chronological order, which every reader relies
+// on — see the tracklist lookup in youtube-tracked-embed.tsx.
+model CourseLessonSegment {
+  id             String       @id @default(cuid())
+  courseLessonId String
+  courseLesson   CourseLesson @relation(fields: [courseLessonId], references: [id], onDelete: Cascade)
+  seconds        Int
+  label          String
+  order          Int          @default(0)
+  createdAt      DateTime     @default(now())
+
+  @@index([courseLessonId, order])
 }
 
 model CourseLessonCompletion {

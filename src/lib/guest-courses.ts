@@ -1,7 +1,7 @@
 import "server-only";
 import type { User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getCourseAccessLevels, isSalesEnabled } from "@/lib/access";
+import { getCourseAccessLevels, getInactiveVendorListingIds, isSalesEnabled } from "@/lib/access";
 
 export type GuestCourseItem = {
   id: string;
@@ -59,7 +59,7 @@ export async function getGuestCourseItems({
   onlyFeatured = false,
   student,
 }: { onlyFeatured?: boolean; student?: User } = {}): Promise<GuestCourseItem[]> {
-  const courses = await prisma.course.findMany({
+  const listed = await prisma.course.findMany({
     where: onlyFeatured
       ? { hiddenFromGuest: false, featuredOnHome: true }
       : { hiddenFromGuest: false },
@@ -72,6 +72,14 @@ export async function getGuestCourseItems({
       seller: { select: { shopName: true, slug: true } },
     },
   });
+
+  // A vendor course an admin took down, or whose vendor is paused/suspended,
+  // drops out of the catalog entirely — otherwise it would still be listed
+  // here and only get blocked once someone clicked into it (see
+  // requireGuestCourseAccess). Costs no extra query when nothing in the list
+  // has a sellerId, which is the platform-only case.
+  const inactiveVendorIds = await getInactiveVendorListingIds(listed);
+  const courses = inactiveVendorIds.size === 0 ? listed : listed.filter((c) => !inactiveVendorIds.has(c.id));
 
   const basePath = student ? "/dashboard/courses" : "/guest/courses";
 

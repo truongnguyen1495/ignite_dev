@@ -530,7 +530,10 @@ export async function requireCourseAccess(courseId: string) {
 
 export async function requireCourseLessonAccess(lessonId: string) {
   const student = await requireActiveStudent();
-  const lesson = await prisma.courseLesson.findUnique({ where: { id: lessonId } });
+  const lesson = await prisma.courseLesson.findUnique({
+    where: { id: lessonId },
+    include: { segments: { orderBy: { order: "asc" }, select: { seconds: true, label: true } } },
+  });
   if (!lesson) {
     redirect("/dashboard?denied=1");
   }
@@ -745,6 +748,14 @@ export async function requireGuestCourseAccess(courseId: string) {
   if (!course || course.hiddenFromGuest) {
     redirect("/guest/courses?denied=1");
   }
+  // A vendor course that an admin took down (vendorHiddenAt) or whose vendor
+  // is pending/paused/suspended must disappear from the guest area too — the
+  // student path already applies this via getCourseAccessLevels, and a
+  // moderation action that only hides a course from signed-in members while
+  // leaving it open to the public is not a takedown at all.
+  if ((await getInactiveVendorListingIds([course])).has(course.id)) {
+    redirect("/guest/courses?denied=1");
+  }
   return { course };
 }
 
@@ -762,12 +773,20 @@ export async function requireGuestCourseAccess(courseId: string) {
 export async function requireGuestCourseLessonAccess(lessonId: string) {
   const lesson = await prisma.courseLesson.findUnique({
     where: { id: lessonId },
-    include: { course: true },
+    include: {
+      course: true,
+      segments: { orderBy: { order: "asc" }, select: { seconds: true, label: true } },
+    },
   });
   if (!lesson || lesson.course.hiddenFromGuest) {
     redirect("/guest/courses?denied=1");
   }
   if (!lesson.course.isFree && !lesson.visibleToGuest) {
+    redirect("/guest/courses?denied=1");
+  }
+  // Same takedown check as requireGuestCourseAccess above — reaching a
+  // lesson by its own URL must not bypass it.
+  if ((await getInactiveVendorListingIds([lesson.course])).has(lesson.courseId)) {
     redirect("/guest/courses?denied=1");
   }
   return { lesson };
@@ -784,6 +803,11 @@ export async function requireGuestCourseLessonAccess(lessonId: string) {
 export async function requireGuestLibraryItemAccess(libraryItemId: string) {
   const libraryItem = await prisma.libraryItem.findUnique({ where: { id: libraryItemId } });
   if (!libraryItem || !libraryItem.visibleToGuest || !libraryItem.visibleToStudents) {
+    redirect("/guest/library?denied=1");
+  }
+  // Same vendor-takedown check as the guest course gates above — a hidden or
+  // suspended vendor's item must not stay open to the public.
+  if ((await getInactiveVendorListingIds([libraryItem])).has(libraryItem.id)) {
     redirect("/guest/library?denied=1");
   }
   // visibleToStudents doubles as a master hide switch here too: an item

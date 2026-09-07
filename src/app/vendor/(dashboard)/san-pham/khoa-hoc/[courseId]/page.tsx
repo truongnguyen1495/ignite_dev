@@ -14,8 +14,20 @@ export default async function VendorCourseDetailPage({ params }: { params: Promi
   const course = await prisma.course.findFirst({
     where: { id: courseId, sellerId: vendor.id },
     include: {
-      chapters: { orderBy: { order: "asc" }, include: { lessons: { orderBy: { order: "asc" } } } },
-      lessons: { where: { chapterId: null }, orderBy: { order: "asc" } },
+      chapters: {
+        orderBy: { order: "asc" },
+        include: {
+          lessons: {
+            orderBy: { order: "asc" },
+            include: { segments: { orderBy: { order: "asc" }, select: { seconds: true, label: true } } },
+          },
+        },
+      },
+      lessons: {
+        where: { chapterId: null },
+        orderBy: { order: "asc" },
+        include: { segments: { orderBy: { order: "asc" }, select: { seconds: true, label: true } } },
+      },
     },
   });
   if (!course) {
@@ -61,6 +73,7 @@ export default async function VendorCourseDetailPage({ params }: { params: Promi
               content: l.content,
               youtubeId: l.youtubeId,
               chapterId: l.chapterId,
+              segments: l.segments,
             })),
           }))}
           unassignedLessons={course.lessons.map((l) => ({
@@ -69,6 +82,7 @@ export default async function VendorCourseDetailPage({ params }: { params: Promi
             content: l.content,
             youtubeId: l.youtubeId,
             chapterId: l.chapterId,
+            segments: l.segments,
           }))}
         />
       </div>

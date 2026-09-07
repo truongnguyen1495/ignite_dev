@@ -41,6 +41,7 @@ type CourseLesson = {
   order: number;
   visibleToGuest: boolean;
   chapterId: string | null;
+  segments: { seconds: number; label: string }[];
 };
 
 // Sentinel group key for lessons with no chapter — never collides with a
@@ -105,6 +106,7 @@ function SortableLessonRow({
             youtubeId={lesson.youtubeId}
             chapterId={lesson.chapterId}
             chapters={chapters}
+            segments={lesson.segments}
             onSuccess={onCollapseAndRefresh}
             onCancel={onCancel}
           />

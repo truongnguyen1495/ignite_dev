@@ -20,16 +20,45 @@ export function loadYoutubeIframeApi(): Promise<typeof YT> {
     return apiReadyPromise;
   }
 
-  apiReadyPromise = new Promise((resolve) => {
+  apiReadyPromise = new Promise((resolve, reject) => {
     const previousCallback = window.onYouTubeIframeAPIReady;
-    window.onYouTubeIframeAPIReady = () => {
-      previousCallback?.();
-      resolve(window.YT);
+    let settled = false;
+
+    // An ad blocker or corporate proxy blocking youtube.com means
+    // onYouTubeIframeAPIReady is never called. Without rejecting, every
+    // caller's `.then()` would hang forever and the player area would stay
+    // an empty box with no explanation — and because this promise is cached
+    // at module scope, one failure used to poison every embed in the tab for
+    // the rest of the session. Rejecting (and clearing the cache) lets the
+    // caller fall back to a plain iframe, and lets a later mount retry.
+    const fail = (reason: string) => {
+      if (settled) return;
+      settled = true;
+      apiReadyPromise = null;
+      reject(new Error(reason));
     };
 
-    if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+    window.onYouTubeIframeAPIReady = () => {
+      previousCallback?.();
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      resolve(window.YT!);
+    };
+
+    // Covers the slower failure modes an onerror never fires for: the script
+    // loads but is a stub, or the request hangs.
+    const timeout = setTimeout(() => fail("YouTube IFrame API timed out"), 15000);
+
+    const existing = document.querySelector<HTMLScriptElement>(
+      'script[src="https://www.youtube.com/iframe_api"]'
+    );
+    if (existing) {
+      existing.addEventListener("error", () => fail("YouTube IFrame API failed to load"));
+    } else {
       const script = document.createElement("script");
       script.src = "https://www.youtube.com/iframe_api";
+      script.onerror = () => fail("YouTube IFrame API failed to load");
       document.head.appendChild(script);
     }
   });
@@ -75,6 +104,8 @@ declare global {
       );
       getCurrentTime(): number;
       getPlayerState(): number;
+      seekTo(seconds: number, allowSeekAhead: boolean): void;
+      playVideo(): void;
       destroy(): void;
     }
   }

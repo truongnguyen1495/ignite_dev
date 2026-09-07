@@ -42,6 +42,12 @@ export default async function GuestCourseLessonPage({
   // anything (there's no completion button on the guest page at all). See
   // Settings.showLessonWatchProgressToGuest in schema.prisma.
   const showWatchBadge = settings.showLessonWatchProgressToGuest && lesson.durationSeconds != null;
+  // A lesson can have an authored tracklist even when the watch-percent
+  // badge is toggled off for guests — segments need the same tracked
+  // player (for seekTo) regardless, so this alone still has to pick the
+  // heavier embed over the plain hook-free one below. Independent of
+  // durationSeconds: the tracked embed builds a player either way.
+  const hasSegments = lesson.segments.length > 0;
 
   // A free course opens every lesson to guests (see requireGuestCourseLessonAccess
   // in src/lib/access.ts) — treat every sibling as visible instead of only
@@ -87,8 +93,13 @@ export default async function GuestCourseLessonPage({
       <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-4">
           {lesson.youtubeId &&
-            (showWatchBadge ? (
-              <YoutubeTrackedEmbed videoId={lesson.youtubeId} durationSeconds={lesson.durationSeconds} />
+            (showWatchBadge || hasSegments ? (
+              <YoutubeTrackedEmbed
+                videoId={lesson.youtubeId}
+                durationSeconds={lesson.durationSeconds}
+                segments={lesson.segments}
+                showPercent={showWatchBadge}
+              />
             ) : (
               <YoutubeEmbed videoId={lesson.youtubeId} />
             ))}

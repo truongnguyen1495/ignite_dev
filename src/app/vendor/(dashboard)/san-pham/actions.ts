@@ -7,6 +7,7 @@ import { requireVendorAccountAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { parseYoutubeId } from "@/lib/youtube";
 import { fetchYoutubeDurationSeconds } from "@/lib/youtube-duration";
+import { resolveSegmentsInput } from "@/lib/course-lesson-segments";
 import { deleteLibraryFile } from "@/lib/library-storage";
 
 // ============================================================================
@@ -255,6 +256,7 @@ const courseLessonSchema = z.object({
   content: z.string().trim().optional(),
   youtube: z.string().trim().optional(),
   chapterId: z.string().trim().optional(),
+  segments: z.string().trim().optional(),
 });
 
 function resolveYoutubeId(raw: string | undefined): string | null | "invalid" {
@@ -281,6 +283,7 @@ export async function createVendorCourseLessonAction(
     content: formData.get("content") || undefined,
     youtube: formData.get("youtube") || undefined,
     chapterId: formData.get("chapterId") || undefined,
+    segments: formData.get("segments") || undefined,
   });
   if (!parsed.success) {
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
@@ -292,6 +295,8 @@ export async function createVendorCourseLessonAction(
   if (youtubeId === "invalid") return "Link YouTube không hợp lệ.";
   const chapterId = await resolveChapterId(courseId, parsed.data.chapterId);
   if (chapterId === "invalid") return "Chương không hợp lệ.";
+  const segments = resolveSegmentsInput(parsed.data.segments);
+  if (!Array.isArray(segments)) return segments.error;
 
   const { _max } = await prisma.courseLesson.aggregate({ where: { courseId }, _max: { order: true } });
   const durationSeconds = youtubeId ? await fetchYoutubeDurationSeconds(youtubeId) : null;
@@ -305,6 +310,7 @@ export async function createVendorCourseLessonAction(
       durationSeconds,
       order: (_max.order ?? -1) + 1,
       chapterId,
+      segments: { create: segments },
     },
   });
   revalidatePath(`/vendor/san-pham/khoa-hoc/${courseId}`);
@@ -323,6 +329,7 @@ export async function updateVendorCourseLessonAction(
     content: formData.get("content") || undefined,
     youtube: formData.get("youtube") || undefined,
     chapterId: formData.get("chapterId") || undefined,
+    segments: formData.get("segments") || undefined,
   });
   if (typeof lessonId !== "string" || !lessonId || !parsed.success) {
     return parsed.success ? "Thiếu mã bài học." : (parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.");
@@ -339,13 +346,25 @@ export async function updateVendorCourseLessonAction(
   if (youtubeId === "invalid") return "Link YouTube không hợp lệ.";
   const chapterId = await resolveChapterId(courseId, parsed.data.chapterId);
   if (chapterId === "invalid") return "Chương không hợp lệ.";
+  const segments = resolveSegmentsInput(parsed.data.segments);
+  if (!Array.isArray(segments)) return segments.error;
+  // See the same split in admin's updateCourseLessonAction: an absent field
+  // leaves existing segments alone, a present-but-empty one clears them.
+  const editsSegments = typeof formData.get("segments") === "string";
 
   const durationSeconds =
     youtubeId === lesson.youtubeId ? lesson.durationSeconds : youtubeId ? await fetchYoutubeDurationSeconds(youtubeId) : null;
 
   await prisma.courseLesson.update({
     where: { id: lessonId },
-    data: { title: parsed.data.title, content: parsed.data.content ?? "", youtubeId, durationSeconds, chapterId },
+    data: {
+      title: parsed.data.title,
+      content: parsed.data.content ?? "",
+      youtubeId,
+      durationSeconds,
+      chapterId,
+      ...(editsSegments ? { segments: { deleteMany: {}, create: segments } } : {}),
+    },
   });
   revalidatePath(`/vendor/san-pham/khoa-hoc/${courseId}`);
   return undefined;

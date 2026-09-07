@@ -5,6 +5,8 @@ import { createCourseLessonAction, updateCourseLessonAction } from "../../action
 import { LessonContentEditor } from "@/app/admin/lessons/lesson-content-editor";
 import { Input } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { CourseLessonSegmentsEditor } from "@/components/course-lesson-segments-editor";
+import { formatTimestamp } from "@/lib/course-lesson-segments";
 
 export function CourseLessonForm({
   courseId,
@@ -14,6 +16,7 @@ export function CourseLessonForm({
   youtubeId = "",
   chapterId = "",
   chapters,
+  segments = [],
   onSuccess,
   onCancel,
 }: {
@@ -24,6 +27,7 @@ export function CourseLessonForm({
   youtubeId?: string | null;
   chapterId?: string | null;
   chapters: { id: string; title: string }[];
+  segments?: { seconds: number; label: string }[];
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
@@ -76,6 +80,19 @@ export function CourseLessonForm({
           defaultValue={youtubeId ?? ""}
           placeholder="https://www.youtube.com/watch?v=..."
           label="Link video YouTube"
+        />
+      </section>
+
+      <hr className="border-border" />
+
+      <section className="space-y-4">
+        <h2 className="text-sm font-semibold text-foreground">Phân cảnh (tùy chọn)</h2>
+        <p className="text-xs text-muted">
+          Học viên bấm vào một mốc để video tua ngay đến đó. Dán tracklist có sẵn trong mô tả video rồi bấm
+          &ldquo;Phân tích&rdquo;, hoặc thêm/sửa từng dòng thủ công.
+        </p>
+        <CourseLessonSegmentsEditor
+          initialSegments={segments.map((s) => ({ time: formatTimestamp(s.seconds), label: s.label }))}
         />
       </section>
 

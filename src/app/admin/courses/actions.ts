@@ -8,6 +8,7 @@ import { requireAdminPermission, hasAdminPermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { parseYoutubeId } from "@/lib/youtube";
 import { fetchYoutubeDurationSeconds } from "@/lib/youtube-duration";
+import { resolveSegmentsInput } from "@/lib/course-lesson-segments";
 
 const courseSchema = z.object({
   title: z.string().trim().min(1, "Tiêu đề không được để trống."),
@@ -235,6 +236,11 @@ const courseLessonSchema = z.object({
   // "" (the select's own "Không thuộc chương nào" option) means no chapter —
   // not passed to zod as an enum since chapter ids are dynamic per course.
   chapterId: z.string().trim().optional(),
+  // JSON-encoded [{ time, label }] from CourseLessonSegmentsEditor's hidden
+  // input — kept as raw text here since the actual per-row validation
+  // (a well-formed "m:ss"/"h:mm:ss" timestamp) happens in resolveSegmentsInput,
+  // same split as youtube/resolveYoutubeId above.
+  segments: z.string().trim().optional(),
 });
 
 // "" (or missing) means no chapter. Re-checks the chapter actually belongs
@@ -260,6 +266,7 @@ export async function createCourseLessonAction(
     content: formData.get("content") || undefined,
     youtube: formData.get("youtube") || undefined,
     chapterId: formData.get("chapterId") || undefined,
+    segments: formData.get("segments") || undefined,
   });
   if (!parsed.success) {
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
@@ -275,6 +282,11 @@ export async function createCourseLessonAction(
   const chapterId = await resolveChapterId(courseId, parsed.data.chapterId);
   if (chapterId === "invalid") {
     return "Chương không hợp lệ.";
+  }
+
+  const segments = resolveSegmentsInput(parsed.data.segments);
+  if (!Array.isArray(segments)) {
+    return segments.error;
   }
 
   // New lessons always land at the end — order is no longer a free-text
@@ -295,6 +307,7 @@ export async function createCourseLessonAction(
       durationSeconds,
       order: nextOrder,
       chapterId,
+      segments: { create: segments },
     },
   });
 
@@ -321,6 +334,7 @@ export async function updateCourseLessonAction(
     content: formData.get("content") || undefined,
     youtube: formData.get("youtube") || undefined,
     chapterId: formData.get("chapterId") || undefined,
+    segments: formData.get("segments") || undefined,
   });
   if (!parsed.success) {
     return parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
@@ -338,6 +352,17 @@ export async function updateCourseLessonAction(
     return "Chương không hợp lệ.";
   }
 
+  const segments = resolveSegmentsInput(parsed.data.segments);
+  if (!Array.isArray(segments)) {
+    return segments.error;
+  }
+  // An absent field means "this form doesn't edit segments" and leaves the
+  // lesson's existing ones alone; a present-but-empty one ("[]", what the
+  // editor posts when the author removed every row) means "clear them".
+  // Without this split, any future form that posts to this action without
+  // mounting CourseLessonSegmentsEditor would silently wipe the tracklist.
+  const editsSegments = typeof formData.get("segments") === "string";
+
   // Only re-fetches duration when youtubeId actually changed (including
   // clearing it) — re-hitting the YouTube API on every text-only edit of an
   // otherwise-unchanged video would just burn quota for no reason.
@@ -352,6 +377,10 @@ export async function updateCourseLessonAction(
         ? await fetchYoutubeDurationSeconds(youtubeId)
         : null;
 
+  // Segments have no stable client-side id to diff against, so an edit is
+  // always "replace the whole set" — deleteMany + create in the same nested
+  // write, same all-or-nothing semantics Prisma gives every other nested
+  // update here.
   await prisma.courseLesson.update({
     where: { id: lessonId },
     data: {
@@ -360,6 +389,7 @@ export async function updateCourseLessonAction(
       youtubeId,
       durationSeconds,
       chapterId,
+      ...(editsSegments ? { segments: { deleteMany: {}, create: segments } } : {}),
     },
   });
 

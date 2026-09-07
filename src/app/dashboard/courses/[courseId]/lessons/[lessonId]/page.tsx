@@ -141,24 +141,30 @@ export default async function StudentCourseLessonPage({
 
       <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-4">
-          <div className="relative">
-            {lesson.youtubeId ? (
-              <YoutubeTrackedEmbed
-                videoId={lesson.youtubeId}
-                durationSeconds={lesson.durationSeconds}
-                initialWatchedSeconds={initialWatchedSeconds}
-              />
-            ) : (
-              <div className="flex aspect-video w-full items-center justify-center rounded-lg border border-border bg-faint-bg">
-                <PlayCircle className="h-10 w-10 text-muted" />
-              </div>
-            )}
-            {lessonChapterNumber && (
-              <span className="pointer-events-none absolute bottom-2 right-2 rounded bg-black/70 px-2 py-0.5 text-[11px] font-medium text-white">
-                Chương {String(lessonChapterNumber).padStart(2, "0")}
-              </span>
-            )}
-          </div>
+          {lesson.youtubeId ? (
+            <YoutubeTrackedEmbed
+              videoId={lesson.youtubeId}
+              durationSeconds={lesson.durationSeconds}
+              initialWatchedSeconds={initialWatchedSeconds}
+              segments={lesson.segments}
+              overlay={
+                lessonChapterNumber ? (
+                  <span className="rounded bg-black/70 px-2 py-0.5 text-[11px] font-medium text-white">
+                    Chương {String(lessonChapterNumber).padStart(2, "0")}
+                  </span>
+                ) : undefined
+              }
+            />
+          ) : (
+            <div className="relative flex aspect-video w-full items-center justify-center rounded-lg border border-border bg-faint-bg">
+              <PlayCircle className="h-10 w-10 text-muted" />
+              {lessonChapterNumber && (
+                <span className="pointer-events-none absolute bottom-2 right-2 rounded bg-black/70 px-2 py-0.5 text-[11px] font-medium text-white">
+                  Chương {String(lessonChapterNumber).padStart(2, "0")}
+                </span>
+              )}
+            </div>
+          )}
 
           {lesson.youtubeId && (
             <a

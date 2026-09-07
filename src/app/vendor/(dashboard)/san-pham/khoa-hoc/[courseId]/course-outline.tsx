@@ -8,7 +8,14 @@ import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { VendorLessonForm } from "./vendor-lesson-form";
 
-type Lesson = { id: string; title: string; content: string; youtubeId: string | null; chapterId: string | null };
+type Lesson = {
+  id: string;
+  title: string;
+  content: string;
+  youtubeId: string | null;
+  chapterId: string | null;
+  segments: { seconds: number; label: string }[];
+};
 type Chapter = { id: string; title: string; lessons: Lesson[] };
 
 function AddChapterForm({ courseId }: { courseId: string }) {
@@ -108,6 +115,7 @@ function LessonRow({ courseId, lesson, chapters }: { courseId: string; lesson: L
         youtubeId={lesson.youtubeId}
         chapterId={lesson.chapterId}
         chapters={chapters}
+        segments={lesson.segments}
         onSuccess={() => {
           setEditing(false);
           router.refresh();
