@@ -115,6 +115,7 @@ export function TeamNetwork({
   const [refreshing, setRefreshing] = useState(false);
   const [mobileCursor, setMobileCursor] = useState<string | null>(null);
   const [flashId, setFlashId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
@@ -269,6 +270,42 @@ export function TeamNetwork({
     setCommand({ ...c, nonce: nonce.current } as CanvasCommand);
   }, []);
 
+  // ---- full screen ----------------------------------------------------------
+  // "Full screen" is two things at once. The whole module is laid over the page
+  // (so the admin sidebar and header are out of the way, and the dialogs, which are
+  // part of the page, still show), and the browser is asked to go full screen too.
+  // The second is best effort: a browser that refuses (iPad Safari, an embedded
+  // frame) still gets the first. The map is framed again once the window has
+  // finished resizing, since the browser changes size a moment after it agrees.
+  const setFullscreen = useCallback(
+    (next: boolean) => {
+      setExpanded(next);
+      try {
+        if (next) void document.documentElement.requestFullscreen?.().catch(() => undefined);
+        else if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
+      } catch {
+        // No Fullscreen API: the in-page layout is all there is.
+      }
+      window.setTimeout(() => send({ kind: "fit" }), 350);
+    },
+    [send]
+  );
+
+  // Esc in browser full screen is handled by the browser, which leaves full
+  // screen without telling the page's key handlers; this keeps the layout in step.
+  useEffect(() => {
+    const onChange = () => {
+      if (document.fullscreenElement) return;
+      setExpanded(false);
+      window.setTimeout(() => send({ kind: "fit" }), 350);
+    };
+    document.addEventListener("fullscreenchange", onChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onChange);
+      if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
+    };
+  }, [send]);
+
   // ---- width / first paint --------------------------------------------------
   useEffect(() => {
     const el = rootRef.current;
@@ -278,8 +315,9 @@ export function TeamNetwork({
     return () => ro.disconnect();
   }, []);
 
-  // Escape closes the open panel or sheet, unless a dialog or the "…" menu is open
-  // (they take Escape themselves) or the key was pressed inside a field. The
+  // Escape closes the open panel or sheet (and, with nothing open, leaves full
+  // screen), unless a dialog or the "…" menu is open (they take Escape themselves)
+  // or the key was pressed inside a field. The
   // delete confirmation lives outside this component and ignores Escape, so it is
   // found in the page instead: otherwise Escape would close the panel behind it.
   useEffect(() => {
@@ -287,12 +325,16 @@ export function TeamNetwork({
       if (e.key !== "Escape" || modal || menu) return;
       if (document.querySelector('[aria-modal="true"]')) return;
       if ((e.target as HTMLElement | null)?.closest("input, textarea, select")) return;
-      setSelectedId(null);
-      setBucketOpen(false);
+      if (selectedId || bucketOpen) {
+        setSelectedId(null);
+        setBucketOpen(false);
+      } else if (expanded) {
+        setFullscreen(false);
+      }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [modal, menu]);
+  }, [modal, menu, selectedId, bucketOpen, expanded, setFullscreen]);
 
   // Keep the address bar pointing at the selected member so the link can be shared.
   useEffect(() => {
@@ -744,7 +786,16 @@ export function TeamNetwork({
   const menuMember = menu ? byId.get(menu.id) : undefined;
 
   return (
-    <div ref={rootRef} className="min-w-0 max-w-full space-y-3">
+    <div
+      ref={rootRef}
+      className={
+        expanded
+          ? // Same layer as the admin sidebar (z-50) but later in the page, so it covers it
+            // while the confirm dialog and the toasts, which come later still, stay on top.
+            "fixed inset-0 z-50 flex flex-col gap-3 overflow-y-auto overscroll-contain bg-background p-3"
+          : "min-w-0 max-w-full space-y-3"
+      }
+    >
       <KpiStrip counts={counts} active={statusFilter} onChange={setStatusFilter} />
       <NetworkToolbar
         members={members}
@@ -795,7 +846,11 @@ export function TeamNetwork({
         </p>
       )}
 
-      <div className="relative flex h-[min(78dvh,860px)] min-h-[520px] overflow-hidden rounded-2xl border border-border bg-background">
+      <div
+        className={`relative flex overflow-hidden rounded-2xl border border-border bg-background ${
+          expanded ? "min-h-[320px] flex-1" : "h-[min(78dvh,860px)] min-h-[520px]"
+        }`}
+      >
         {empty ? (
           <div className="flex flex-1 items-center justify-center p-6 text-center">
             <div className="max-w-sm">
@@ -836,7 +891,7 @@ export function TeamNetwork({
           </div>
         ) : (
           <div className="relative min-w-0 flex-1">
-            <NetworkCanvas nodes={nodes} edges={edges} rects={rects} command={command} actions={actions} overlay={overlay} legend={legend} onFit={() => send({ kind: "fit" })} />
+            <NetworkCanvas nodes={nodes} edges={edges} rects={rects} command={command} actions={actions} overlay={overlay} legend={legend} onFit={() => send({ kind: "fit" })} expanded={expanded} onToggleExpand={() => setFullscreen(!expanded)} />
             {noMatches && (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 p-6 text-center">
                 <div className="max-w-xs">

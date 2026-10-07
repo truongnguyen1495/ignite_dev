@@ -14,7 +14,7 @@ import {
   type NodeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { Maximize2, Minus, Plus } from "lucide-react";
+import { Maximize2, Minimize2, Minus, Plus, Scan } from "lucide-react";
 import { boundsOf, type Rect } from "@/lib/network-layout";
 import { TreeActionsContext, TreeEdgeView, TreeNodeView, type TreeActions, type TreeNode } from "./tree-node";
 
@@ -31,7 +31,7 @@ export type CanvasCommand = { kind: "fit"; nonce: number } | { kind: "focus" | "
 
 const PADDING = 56;
 const TOP_INSET = 36; // room for the breadcrumb that floats over the top edge
-const MIN_ZOOM = 0.12;
+const MIN_ZOOM = 0.08; // low enough that "fit" can show a ~7,000px column (about 60 people in one branch)
 const MAX_ZOOM = 1.6;
 
 // React Flow lets the pointer reach a card only if the card is draggable,
@@ -72,7 +72,9 @@ function Camera({ rects, command }: { rects: ReadonlyMap<string, Rect>; command:
       if (command.kind === "fit") {
         const box = boundsOf(rects.values());
         if (!box) return;
-        const zoom = clamp(Math.min((w - PADDING * 2) / box.width, (h - PADDING * 2 - TOP_INSET) / box.height), 0.2, 1);
+        // Down to the canvas's own minimum: "fit" has to show everything. A floor above
+        // it cropped the real 124-person map (a column of ~40 cards is ~4,500px tall).
+        const zoom = clamp(Math.min((w - PADDING * 2) / box.width, (h - PADDING * 2 - TOP_INSET) / box.height), MIN_ZOOM, 1);
         void rf.setViewport(
           {
             x: (w - box.width * zoom) / 2 - box.x * zoom,
@@ -116,7 +118,7 @@ function Camera({ rects, command }: { rects: ReadonlyMap<string, Rect>; command:
   return null;
 }
 
-function ZoomControls({ onFit }: { onFit: () => void }) {
+function ZoomControls({ onFit, expanded, onToggleExpand }: { onFit: () => void; expanded: boolean; onToggleExpand: () => void }) {
   const rf = useReactFlow();
   const percent = useStore((s) => Math.round(s.transform[2] * 100));
   const button =
@@ -130,8 +132,18 @@ function ZoomControls({ onFit }: { onFit: () => void }) {
       <button type="button" className={`${button} border-b border-border`} aria-label="Thu nhỏ" onClick={() => void rf.zoomOut({ duration: 200 })}>
         <Minus className="h-4 w-4" />
       </button>
-      <button type="button" className={button} aria-label="Vừa khung" onClick={onFit}>
-        <Maximize2 className="h-3.5 w-3.5" />
+      <button type="button" className={`${button} border-b border-border`} aria-label="Vừa khung" title="Vừa khung: căn lại cho thấy cả sơ đồ" onClick={onFit}>
+        <Scan className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        className={button}
+        aria-label={expanded ? "Thoát toàn màn hình" : "Toàn màn hình"}
+        aria-pressed={expanded}
+        title={expanded ? "Thoát toàn màn hình (Esc)" : "Toàn màn hình"}
+        onClick={onToggleExpand}
+      >
+        {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
       </button>
     </div>
   );
@@ -146,6 +158,8 @@ export function NetworkCanvas({
   overlay,
   legend,
   onFit,
+  expanded,
+  onToggleExpand,
 }: {
   nodes: TreeNode[];
   edges: Edge[];
@@ -156,6 +170,8 @@ export function NetworkCanvas({
   overlay: ReactNode;
   legend: ReactNode;
   onFit: () => void;
+  expanded: boolean;
+  onToggleExpand: () => void;
 }) {
   return (
     <TreeActionsContext.Provider value={actions}>
@@ -192,7 +208,7 @@ export function NetworkCanvas({
             {overlay}
           </Panel>
           <Panel position="top-right" className="!m-3">
-            <ZoomControls onFit={onFit} />
+            <ZoomControls onFit={onFit} expanded={expanded} onToggleExpand={onToggleExpand} />
           </Panel>
           <Panel position="bottom-left" className="!m-3">
             {legend}
