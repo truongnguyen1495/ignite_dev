@@ -35,7 +35,51 @@ const memberFields = {
 
 export const createMemberSchema = z.object({ ...memberFields, status: networkStatusSchema });
 
-export const updateMemberSchema = z.object({ id, ...memberFields });
+// A change to ONE OR MORE fields of a member. Only the fields that are present are
+// touched, so two admins editing different cells of the same person do not undo each
+// other: the server merges this onto whatever the row holds at that moment. Present
+// but empty ("" / null) clears the field; absent leaves it alone.
+export type MemberPatchInput = {
+  id: string;
+  name?: string;
+  igniteId?: string | null;
+  team?: string | null;
+  leaderId?: string | null;
+  referrerId?: string | null;
+};
+
+const patchText = (label: string, max: number) =>
+  z
+    .string()
+    .nullable()
+    .optional()
+    .refine((v) => v == null || v.trim().length <= max, `${label} tối đa ${max} ký tự.`);
+
+const blankToNull = (v: string | null): string | null => (v ?? "").trim() || null;
+
+export const patchMemberSchema = z
+  .object({
+    id,
+    name: memberFields.name.optional(),
+    igniteId: patchText("RapidX ID", 20),
+    team: patchText("Team", 60),
+    leaderId: z.string().nullable().optional(),
+    referrerId: z.string().nullable().optional(),
+  })
+  .transform((v): MemberPatchInput => {
+    const out: MemberPatchInput = { id: v.id };
+    if (v.name !== undefined) out.name = v.name;
+    if (v.igniteId !== undefined) out.igniteId = blankToNull(v.igniteId)?.toUpperCase() ?? null;
+    if (v.team !== undefined) out.team = blankToNull(v.team);
+    if (v.leaderId !== undefined) out.leaderId = v.leaderId || null;
+    if (v.referrerId !== undefined) out.referrerId = v.referrerId || null;
+    return out;
+  })
+  .refine((v) => Object.keys(v).length > 1, "Không có thay đổi nào để lưu.");
+
+export const deleteMembersSchema = z.object({
+  ids: z.array(id).min(1, "Hãy chọn ít nhất một thành viên.").max(500, "Chọn tối đa 500 người một lần."),
+});
 
 // A real calendar date: "2026-02-31" has the right shape but is not a day.
 const isoDate = z

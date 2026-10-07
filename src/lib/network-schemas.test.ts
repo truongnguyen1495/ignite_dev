@@ -5,9 +5,10 @@ import {
   changeStatusSchema,
   commitImportSchema,
   createMemberSchema,
+  deleteMembersSchema,
   firstIssue,
   MAX_IMPORT_ROWS,
-  updateMemberSchema,
+  patchMemberSchema,
 } from "./network-schemas";
 
 const base = { name: "NGUYỄN VĂN A", igniteId: "dia1234567", team: "G7-N1-An", leaderId: "l1", referrerId: "r1", status: "ACTIVE" };
@@ -48,10 +49,40 @@ test("createMemberSchema", async (t) => {
   });
 });
 
-test("updateMemberSchema requires an id", () => {
-  assert.ok(updateMemberSchema.safeParse({ ...base, id: "m1" }).success);
-  assert.ok(!updateMemberSchema.safeParse({ ...base }).success);
-  assert.ok(!updateMemberSchema.safeParse({ ...base, id: "" }).success);
+test("patchMemberSchema", async (t) => {
+  await t.test("keeps only the fields that were sent", () => {
+    const r = patchMemberSchema.safeParse({ id: "m1", team: "G7-N1" });
+    assert.ok(r.success);
+    assert.deepEqual(r.data, { id: "m1", team: "G7-N1" });
+  });
+  await t.test("a blank or null value clears the field; an absent one is left alone", () => {
+    const r = patchMemberSchema.safeParse({ id: "m1", igniteId: "  ", team: null, leaderId: "", referrerId: null });
+    assert.ok(r.success);
+    assert.deepEqual(r.data, { id: "m1", igniteId: null, team: null, leaderId: null, referrerId: null });
+  });
+  await t.test("trims the name, uppercases the RapidX ID", () => {
+    const r = patchMemberSchema.safeParse({ id: "m1", name: "  NGUYỄN A ", igniteId: "dia1234567" });
+    assert.ok(r.success);
+    assert.deepEqual(r.data, { id: "m1", name: "NGUYỄN A", igniteId: "DIA1234567" });
+  });
+  await t.test("refuses an empty name, an over-long field, a missing id, and a patch that changes nothing", () => {
+    assert.ok(!patchMemberSchema.safeParse({ id: "m1", name: "   " }).success);
+    assert.ok(!patchMemberSchema.safeParse({ id: "m1", name: "x".repeat(121) }).success);
+    assert.ok(!patchMemberSchema.safeParse({ id: "m1", team: "x".repeat(61) }).success);
+    assert.ok(!patchMemberSchema.safeParse({ id: "m1", igniteId: "D".repeat(21) }).success);
+    assert.ok(!patchMemberSchema.safeParse({ team: "G7" }).success);
+    assert.ok(!patchMemberSchema.safeParse({ id: "", team: "G7" }).success);
+    const none = patchMemberSchema.safeParse({ id: "m1" });
+    assert.ok(!none.success);
+    assert.equal(firstIssue(none.error), "Không có thay đổi nào để lưu.");
+  });
+});
+
+test("deleteMembersSchema — one to five hundred people", () => {
+  assert.ok(deleteMembersSchema.safeParse({ ids: ["a", "b"] }).success);
+  assert.ok(!deleteMembersSchema.safeParse({ ids: [] }).success);
+  assert.ok(!deleteMembersSchema.safeParse({ ids: Array.from({ length: 501 }, (_, i) => `m${i}`) }).success);
+  assert.ok(!deleteMembersSchema.safeParse({ ids: [""] }).success);
 });
 
 test("changeStatusSchema", async (t) => {

@@ -27,6 +27,8 @@ export type TreeNodeData = {
   dim: boolean;
   selected: boolean;
   onPath: boolean;
+  /** The pointer is over this person's row in the table. */
+  hl: boolean;
   direction: LayoutDirection;
   /** Show the "…" action menu (not on compact summary cards). */
   actions: boolean;
@@ -80,8 +82,10 @@ export function TreeNodeView({ data, sourcePosition, targetPosition }: NodeProps
   } ${data.kind === "bucket" ? "border-dashed" : ""} ${
     data.selected
       ? "border-primary shadow-lg ring-2 ring-primary-bg-strong"
-      : data.onPath
-        ? "border-primary-border"
+      : data.hl
+        ? "border-primary-border ring-2 ring-primary-bg-strong"
+        : data.onPath
+          ? "border-primary-border"
         : "border-border hover:border-primary-border-hover"
   } ${data.dim ? "opacity-25" : ""} ${
     data.variant === "card" ? "py-3 pl-5 pr-4" : `py-2.5 pl-4 ${showToggle && data.direction === "horizontal" ? "pr-5" : "pr-3"}`

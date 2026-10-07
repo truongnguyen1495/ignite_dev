@@ -12,7 +12,8 @@ import {
   deleteMemberTx,
   importMembersTx,
   loadMemberHistory,
-  updateMemberTx,
+  patchMemberTx,
+  deleteMembersTx,
   type ImportResult,
   type StatusHistoryEntry,
 } from "@/lib/network";
@@ -24,7 +25,8 @@ import {
   commitImportSchema,
   createMemberSchema,
   firstIssue,
-  updateMemberSchema,
+  patchMemberSchema,
+  deleteMembersSchema,
   MAX_IMPORT_ROWS,
 } from "@/lib/network-schemas";
 
@@ -68,13 +70,15 @@ export async function createMemberAction(
   return guarded(() => prisma.$transaction((tx) => createMemberTx(tx, admin, parsed.data), TX));
 }
 
-export async function updateMemberAction(input: unknown): Promise<ActionResult<{ member: NetworkMemberLite }>> {
+// Saves only the fields that were sent (see patchMemberTx): the table edits one cell at a
+// time and the form sends just what changed, so neither can overwrite a field that
+// another admin changed meanwhile.
+export async function patchMemberAction(input: unknown): Promise<ActionResult<{ member: NetworkMemberLite }>> {
   await requireAdminPermission("MANAGE_NETWORK");
-  const parsed = updateMemberSchema.safeParse(input);
+  const parsed = patchMemberSchema.safeParse(input);
   if (!parsed.success) return { error: firstIssue(parsed.error) };
-  const { id: memberId, ...fields } = parsed.data;
 
-  return guarded(async () => ({ member: await prisma.$transaction((tx) => updateMemberTx(tx, memberId, fields), TX) }));
+  return guarded(async () => ({ member: await prisma.$transaction((tx) => patchMemberTx(tx, parsed.data), TX) }));
 }
 
 export async function changeStatusAction(
@@ -112,6 +116,14 @@ export async function deleteMemberAction(memberId: string): Promise<ActionResult
   if (typeof memberId !== "string" || !memberId) return { error: "Thành viên không hợp lệ." };
 
   return guarded(() => prisma.$transaction((tx) => deleteMemberTx(tx, memberId), TX));
+}
+
+export async function deleteMembersAction(input: unknown): Promise<ActionResult<{ deleted: number; leaderChildren: number; referrals: number }>> {
+  await requireAdminPermission("MANAGE_NETWORK");
+  const parsed = deleteMembersSchema.safeParse(input);
+  if (!parsed.success) return { error: firstIssue(parsed.error) };
+
+  return guarded(() => prisma.$transaction((tx) => deleteMembersTx(tx, parsed.data.ids), TX));
 }
 
 // Loaded when the admin opens the history tab rather than with the page, so

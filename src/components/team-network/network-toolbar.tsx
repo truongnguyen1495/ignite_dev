@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FileSpreadsheet, Plus, RefreshCw, Search } from "lucide-react";
+import { Expand, FileSpreadsheet, Minimize2, Plus, RefreshCw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NETWORK_STATUS_CONFIG, NETWORK_STATUS_ORDER, type NetworkStatus } from "@/lib/network-status";
 import {
@@ -18,6 +18,8 @@ import { InitialsAvatar, Segmented, StatusPill, idLabel } from "./network-ui";
 
 export type ViewMode = "tree" | "compact";
 export type RoleFilter = "all" | "leader" | "member";
+// What the main area shows: the map, the table, or the two side by side.
+export type Display = "map" | "table" | "both";
 
 // The KPI strip doubles as the status filter: clicking "Active 32" narrows the
 // map to Active people, clicking it again (or "Tổng") clears it. One control
@@ -64,14 +66,21 @@ function MemberSearch({
   members,
   heads,
   byId,
+  query,
+  onQuery,
+  showResults,
   onPick,
 }: {
   members: readonly NetworkMemberLite[];
   heads: ReadonlyMap<string, string | null>;
   byId: ReadonlyMap<string, NetworkMemberLite>;
+  /** The text lives in the page: while a table is showing it filters the table too. */
+  query: string;
+  onQuery: (query: string) => void;
+  /** The "find a person" list under the box. With a table showing, the table is the list, so it is off. */
+  showResults: boolean;
   onPick: (id: string) => void;
 }) {
-  const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const box = useRef<HTMLDivElement>(null);
@@ -96,7 +105,7 @@ function MemberSearch({
 
   function pick(m: NetworkMemberLite) {
     setOpen(false);
-    setQuery(m.name);
+    onQuery(m.name);
     onPick(m.id);
   }
 
@@ -110,7 +119,7 @@ function MemberSearch({
         aria-label="Tìm thành viên"
         autoComplete="off"
         onChange={(e) => {
-          setQuery(e.target.value);
+          onQuery(e.target.value);
           setIndex(0);
           setOpen(true);
         }}
@@ -122,7 +131,7 @@ function MemberSearch({
           } else if (e.key === "ArrowUp") {
             e.preventDefault();
             setIndex((i) => Math.max(i - 1, 0));
-          } else if (e.key === "Enter" && results[index]) {
+          } else if (e.key === "Enter" && showResults && results[index]) {
             e.preventDefault();
             pick(results[index]);
           } else if (e.key === "Escape") {
@@ -131,7 +140,7 @@ function MemberSearch({
         }}
         className="w-full rounded-lg border border-border-strong bg-surface py-2 pl-9 pr-3 text-base text-foreground placeholder:text-faint focus:border-primary focus:outline-none sm:text-sm"
       />
-      {open && query.trim() && (
+      {showResults && open && query.trim() && (
         <div className="absolute left-0 right-0 top-full z-30 mt-1.5 overflow-hidden rounded-xl border border-primary-border bg-surface shadow-xl">
           {results.length === 0 ? (
             <p className="px-3 py-3 text-sm text-muted">Không tìm thấy thành viên nào.</p>
@@ -193,6 +202,13 @@ export function NetworkToolbar({
   filtersActive,
   onClearFilters,
   onPickMember,
+  display,
+  onDisplay,
+  canSplit,
+  searchText,
+  onSearchText,
+  mapControls,
+  fullscreen,
   onAdd,
   onImport,
   onRefresh,
@@ -224,6 +240,16 @@ export function NetworkToolbar({
   filtersActive: boolean;
   onClearFilters: () => void;
   onPickMember: (id: string) => void;
+  display: Display;
+  onDisplay: (d: Display) => void;
+  /** Wide enough for the table and the map side by side. */
+  canSplit: boolean;
+  searchText: string;
+  onSearchText: (text: string) => void;
+  /** The map is showing, so its own controls (tree/compact, direction, fold) apply. */
+  mapControls: boolean;
+  /** A full-screen button for when there is no map (its controls carry one). */
+  fullscreen: { expanded: boolean; onToggle: () => void } | null;
   onAdd: () => void;
   onImport: () => void;
   onRefresh: () => void;
@@ -233,7 +259,25 @@ export function NetworkToolbar({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <MemberSearch members={members} heads={heads} byId={byId} onPick={onPickMember} />
+      <MemberSearch
+        members={members}
+        heads={heads}
+        byId={byId}
+        query={searchText}
+        onQuery={onSearchText}
+        showResults={display === "map"}
+        onPick={onPickMember}
+      />
+      <Segmented
+        label="Hiển thị"
+        value={display}
+        onChange={onDisplay}
+        options={[
+          { value: "map", label: "Sơ đồ" },
+          { value: "table", label: "Bảng" },
+          ...(canSplit ? [{ value: "both" as const, label: "Cả hai" }] : []),
+        ]}
+      />
       <Segmented
         label="Kiểu cây"
         value={view}
@@ -243,7 +287,7 @@ export function NetworkToolbar({
           { value: "referrer", label: "Giới thiệu" },
         ]}
       />
-      {!compact && (
+      {!compact && mapControls && (
         <>
           <Segmented
             label="Chế độ xem"
@@ -263,6 +307,10 @@ export function NetworkToolbar({
               { value: "vertical", label: "Dọc" },
             ]}
           />
+        </>
+      )}
+      {!compact && (
+        <>
           <select className={selectClass} aria-label="Lọc theo nhánh" value={branchFilter} onChange={(e) => onBranchFilter(e.target.value)}>
             <option value="all">Mọi nhánh</option>
             {branches.map((b) => (
@@ -292,10 +340,12 @@ export function NetworkToolbar({
             <option value="leader">Trưởng đội</option>
             <option value="member">Thành viên</option>
           </select>
-          <label className="flex cursor-pointer items-center gap-1.5 text-sm text-muted">
-            <input type="checkbox" className="h-4 w-4 accent-primary" checked={prune} onChange={(e) => onPrune(e.target.checked)} />
-            Chỉ hiện nhánh có kết quả
-          </label>
+          {mapControls && (
+            <label className="flex cursor-pointer items-center gap-1.5 text-sm text-muted">
+              <input type="checkbox" className="h-4 w-4 accent-primary" checked={prune} onChange={(e) => onPrune(e.target.checked)} />
+              Chỉ hiện nhánh có kết quả
+            </label>
+          )}
         </>
       )}
       {filtersActive && (
@@ -307,6 +357,19 @@ export function NetworkToolbar({
         <Button type="button" size="icon" variant="ghost" aria-label="Làm mới danh sách" title="Làm mới" disabled={refreshing} onClick={onRefresh}>
           <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
         </Button>
+        {fullscreen && !compact && (
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            aria-label={fullscreen.expanded ? "Thoát toàn màn hình" : "Toàn màn hình"}
+            aria-pressed={fullscreen.expanded}
+            title={fullscreen.expanded ? "Thoát toàn màn hình" : "Toàn màn hình"}
+            onClick={fullscreen.onToggle}
+          >
+            {fullscreen.expanded ? <Minimize2 className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
+          </Button>
+        )}
         {!compact && (
           <Button type="button" size="sm" variant="secondary" onClick={onImport}>
             <FileSpreadsheet className="h-4 w-4" />

@@ -7,6 +7,7 @@ import { todayVN } from "@/lib/groups";
 import { NETWORK_STATUS_CONFIG, NETWORK_STATUS_NEEDS_REASON, type NetworkStatus } from "@/lib/network-status";
 import { isValidIgniteId, type NetworkMemberLite } from "@/lib/network-tree";
 import { planImport, type ImportRow, type Resolution } from "@/lib/network-import";
+import type { MemberPatchInput } from "@/lib/network-schemas";
 
 // Server-side data access for Team Network. Every write takes a transaction
 // client so the caller decides the boundary: a Server Action wraps one call in
@@ -241,6 +242,23 @@ export async function updateMemberTx(tx: Tx, id: string, input: MemberFields): P
   });
 }
 
+// Applies only the fields in `patch` to the row as it is now, then runs the same checks
+// as a full edit (RapidX ID shape and owner, loops, the root having no leader). The
+// merge happens inside the transaction, under the lock, so a stale browser cannot put
+// back a field that someone else changed in the meantime.
+export async function patchMemberTx(tx: Tx, patch: MemberPatchInput): Promise<NetworkMemberLite> {
+  await lockNetwork(tx);
+  const current = await tx.networkMember.findUnique({ where: { id: patch.id }, select: MEMBER_SELECT });
+  if (!current) throw new NetworkError("Thành viên không còn tồn tại. Hãy tải lại trang.");
+  return updateMemberTx(tx, patch.id, {
+    name: patch.name ?? current.name,
+    igniteId: patch.igniteId !== undefined ? patch.igniteId : current.igniteId,
+    team: patch.team !== undefined ? patch.team : current.team,
+    leaderId: patch.leaderId !== undefined ? patch.leaderId : current.leaderId,
+    referrerId: patch.referrerId !== undefined ? patch.referrerId : current.referrerId,
+  });
+}
+
 export async function changeStatusTx(
   tx: Tx,
   admin: Admin,
@@ -318,6 +336,25 @@ export async function deleteMemberTx(tx: Tx, id: string): Promise<{ leaderChildr
   const referrals = await tx.networkMember.count({ where: { referrerId: id } });
   await tx.networkMember.delete({ where: { id } });
   return { leaderChildren, referrals };
+}
+
+// Several members at once (the bulk delete in the table). All or nothing: if any of them
+// is gone or is the root, nothing is deleted. People below them are not deleted; the
+// foreign keys put them in UNASSIGNED. The counts only include people who stay, which is
+// what the confirmation the admin saw promised.
+export async function deleteMembersTx(
+  tx: Tx,
+  ids: string[]
+): Promise<{ deleted: number; leaderChildren: number; referrals: number }> {
+  await lockNetwork(tx);
+  const unique = [...new Set(ids)];
+  const targets = await tx.networkMember.findMany({ where: { id: { in: unique } }, select: { id: true, isRoot: true } });
+  if (targets.length !== unique.length) throw new NetworkError("Một số thành viên không còn tồn tại. Hãy tải lại trang.");
+  if (targets.some((t) => t.isRoot)) throw new NetworkError("Không thể xóa gốc mạng lưới. Hãy bỏ chọn gốc rồi thử lại.");
+  const leaderChildren = await tx.networkMember.count({ where: { leaderId: { in: unique }, id: { notIn: unique } } });
+  const referrals = await tx.networkMember.count({ where: { referrerId: { in: unique }, id: { notIn: unique } } });
+  await tx.networkMember.deleteMany({ where: { id: { in: unique } } });
+  return { deleted: unique.length, leaderChildren, referrals };
 }
 
 export type ImportResult = { created: number; skipped: number; createdRoot: boolean };
