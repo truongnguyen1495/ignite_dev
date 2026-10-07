@@ -25,6 +25,7 @@ import {
   TrendingUp,
   Wallet,
   Store,
+  Network,
 } from "lucide-react";
 import { requireAnyAdminAccess, isChatEnabled, isSalesEnabled, isWhiteboardsEnabled } from "@/lib/access";
 import { getAdminSupportInbox } from "@/lib/chat";
@@ -248,6 +249,9 @@ export default async function AdminLayout({
           },
         ]
       : groupChildren),
+    ...(canManage("MANAGE_NETWORK")
+      ? [{ href: "/admin/team-network", label: t.adminNav.teamNetwork, icon: <Network className={iconClass} /> }]
+      : []),
     ...(isSuperAdmin || (isAdminManager && canManageAdmins)
       ? [{ href: "/admin/admins", label: t.adminNav.adminManagement, icon: <UserCog className={iconClass} /> }]
       : []),

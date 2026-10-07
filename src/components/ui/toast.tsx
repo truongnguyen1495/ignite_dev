@@ -1,15 +1,18 @@
 "use client";
 
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
-import { PartyPopper, X } from "lucide-react";
+import { AlertCircle, PartyPopper, X } from "lucide-react";
 
 type Toast = {
   id: number;
   title: string;
   description?: string;
+  tone: "success" | "error";
 };
 
-type ToastFn = (toast: { title: string; description?: string }) => void;
+// `tone: "error"` is for a save that failed and was rolled back — the default
+// stays the celebratory look every existing caller already gets.
+type ToastFn = (toast: { title: string; description?: string; tone?: "success" | "error" }) => void;
 
 const ToastContext = createContext<ToastFn | null>(null);
 
@@ -24,9 +27,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const celebrate = useCallback<ToastFn>(
-    ({ title, description }) => {
+    ({ title, description, tone = "success" }) => {
       const id = nextId.current++;
-      setToasts((current) => [...current, { id, title, description }]);
+      setToasts((current) => [...current, { id, title, description, tone }]);
       setTimeout(() => dismiss(id), AUTO_DISMISS_MS);
     },
     [dismiss]
@@ -51,10 +54,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <div
               key={toast.id}
               role="status"
-              className="pointer-events-auto flex w-full items-start gap-3 rounded-xl border border-accent-border bg-surface p-4 shadow-lg"
+              className={`pointer-events-auto flex w-full items-start gap-3 rounded-xl border bg-surface p-4 shadow-lg ${
+                toast.tone === "error" ? "border-danger-border" : "border-accent-border"
+              }`}
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-bg text-accent">
-                <PartyPopper className="h-5 w-5" />
+              <span
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                  toast.tone === "error" ? "bg-danger-bg text-danger" : "bg-accent-bg text-accent"
+                }`}
+              >
+                {toast.tone === "error" ? <AlertCircle className="h-5 w-5" /> : <PartyPopper className="h-5 w-5" />}
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-foreground">{toast.title}</p>

@@ -426,6 +426,9 @@ model User {
   vendorsSuspended           Vendor[]        @relation("VendorsSuspended")
   payoutRequestsProcessed    PayoutRequest[] @relation("PayoutRequestsProcessed")
 
+  // Team Network — see NetworkMemberStatusHistory below.
+  networkStatusChanges NetworkMemberStatusHistory[] @relation("NetworkStatusChanges")
+
   @@index([role])
 }
 
@@ -490,6 +493,11 @@ enum AdminPermissionKind {
   // cả việc duyệt hồ sơ lẫn vận hành sau đó — khác MANAGE_ORDERS/MANAGE_FINANCE
   // vì đây là quan hệ với bên thứ ba (vendor), không phải khách mua hàng.
   MANAGE_VENDORS
+  // Team Network (/admin/team-network) — xem toàn bộ cây Tổ chức/Giới thiệu và
+  // thêm, sửa, xóa thành viên mạng lưới, đổi Leader/người giới thiệu/trạng
+  // thái, nhập danh sách từ Excel. Một quyền cho cả xem lẫn ghi: dữ liệu này
+  // là cơ cấu kinh doanh của cả công ty nên không có mức "chỉ xem" cho admin.
+  MANAGE_NETWORK
 }
 
 model AdminPermission {
@@ -2244,4 +2252,96 @@ model PayoutRequest {
   adjustmentsSettled CommissionAdjustment[]
 
   @@index([vendorId, status])
+}
+
+// ============================================================================
+// Team Network (/admin/team-network) — bản đồ vận hành đội nhóm.
+//
+// NetworkMember KHÔNG phải User. Danh sách đội nhóm thật (file Excel gốc) có
+// cả những người chưa từng đăng ký tài khoản app — khách hàng, người 0_PP —
+// và file không có email, trong khi User.email là bắt buộc và duy nhất. Nên
+// mạng lưới sống ở bảng riêng, không đụng gì tới User (và các quan hệ
+// onDelete: Cascade của nó). Khi cần cho trưởng đội tự xem đội mình thì thêm
+// cột userId (nullable, unique) liên kết sau; Phase 1 chỉ admin dùng.
+//
+// "Leader" (leaderId) và "người giới thiệu" (referrerId) là HAI quan hệ khác
+// nhau và được lưu riêng — trong file gốc chúng khác nhau ở 90/119 dòng. Cây
+// Tổ chức dựng từ leaderId, cây Giới thiệu dựng từ referrerId; không có JSON
+// cây nào được lưu, đổi một người chỉ là đổi một cột.
+// ============================================================================
+
+// "In-active" của file gốc là INACTIVE; "0_PP" là ZERO_PP. Thứ tự khai báo
+// không mang ý nghĩa xếp hạng (xem src/lib/network-status.ts cho nhãn + màu).
+enum NetworkMemberStatus {
+  LEAD
+  ACTIVE
+  INACTIVE
+  ZERO_PP
+  CUSTOMER
+}
+
+model NetworkMember {
+  id   String @id @default(cuid())
+  name String
+
+  // IGNITE ID có sẵn của người đó ("DIA" + 7 chữ số), hiển thị ra UI là
+  // "RapidX ID". Nullable vì 11/123 người trong file gốc chưa có (3 người đầu
+  // nhánh + 8 người 0_PP) — không tự sinh mã giả. Unique của Postgres cho
+  // phép nhiều NULL.
+  igniteId String? @unique
+
+  status NetworkMemberStatus
+
+  // Nhãn đội kiểu "G7-N1-Hong" / "KNV" từ cột TEAM của file gốc. Khác với
+  // "nhánh" (KHANG/NHƯ/VY): nhánh được TÍNH từ cây Leader (tổ tiên cấp 1 dưới
+  // gốc), không lưu cột — đổi Leader thì nhánh tự đổi theo, không bao giờ lệch.
+  team String?
+
+  // Đúng một thành viên là gốc mạng lưới ("LN", Lead cao nhất). Gốc không có
+  // Leader và không xóa được. Ràng buộc "chỉ một gốc" do code giữ trong cùng
+  // transaction (xem src/lib/network.ts), không có partial unique index.
+  isRoot Boolean @default(false)
+
+  // Xóa một người KHÔNG xóa người bên dưới: SetNull đẩy họ về UNASSIGNED
+  // (leaderId = null) và mất thông tin người giới thiệu, đúng như màn xác nhận
+  // xóa đã nói với admin.
+  leaderId   String?
+  leader     NetworkMember?  @relation("NetworkLeader", fields: [leaderId], references: [id], onDelete: SetNull)
+  downline   NetworkMember[] @relation("NetworkLeader")
+  referrerId String?
+  referrer   NetworkMember?  @relation("NetworkReferrer", fields: [referrerId], references: [id], onDelete: SetNull)
+  referrals  NetworkMember[] @relation("NetworkReferrer")
+
+  statusHistory NetworkMemberStatusHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([leaderId])
+  @@index([referrerId])
+  @@index([status])
+}
+
+// Mỗi lần đổi trạng thái là một dòng, không bao giờ sửa/xóa lẻ — chỉ mất khi
+// cả thành viên bị xóa (Cascade). fromStatus null = dòng khởi tạo (nhập từ
+// Excel hoặc tạo tay). changedByName là bản chụp tên admin lúc đổi để lịch sử
+// vẫn đọc được nếu tài khoản admin đó sau này bị xóa (changedBy → SetNull).
+model NetworkMemberStatusHistory {
+  id         String               @id @default(cuid())
+  memberId   String
+  member     NetworkMember        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  fromStatus NetworkMemberStatus?
+  toStatus   NetworkMemberStatus
+  reason     String?              @db.Text
+
+  // Ngày hiệu lực admin chọn (có thể lùi về trước), khác createdAt là lúc ghi.
+  // @db.Date + todayVN() giống FinanceEntry.occurredAt.
+  effectiveDate DateTime @db.Date
+
+  changedById   String?
+  changedBy     User?    @relation("NetworkStatusChanges", fields: [changedById], references: [id], onDelete: SetNull)
+  changedByName String
+  createdAt     DateTime @default(now())
+
+  @@index([memberId, effectiveDate])
 }

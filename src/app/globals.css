@@ -77,6 +77,14 @@
   --danger-bg: rgba(239, 68, 68, 0.16);
   --danger-border: rgba(239, 68, 68, 0.4);
 
+  /* Team Network member statuses. Active/0_PP/Customer reuse success/warning/
+     info above; Lead and In-active have no equivalent so they get their own.
+     Measured on their own 16% tint over --surface: 5.14:1 and 4.89:1. */
+  --status-lead: #b79bff;
+  --status-lead-bg: rgba(183, 155, 255, 0.16);
+  --status-inactive: #9aa7b8;
+  --status-inactive-bg: rgba(154, 167, 184, 0.16);
+
   /* Neutral overlay tints — bg-black/NN and text-white/NN go through the
      same color-mix() codepath as the custom theme colors above, even
      though black/white are Tailwind's built-in palette. Used for modal
@@ -191,6 +199,11 @@
   --color-danger-foreground: var(--danger-foreground);
   --color-danger-bg: var(--danger-bg);
   --color-danger-border: var(--danger-border);
+
+  --color-status-lead: var(--status-lead);
+  --color-status-lead-bg: var(--status-lead-bg);
+  --color-status-inactive: var(--status-inactive);
+  --color-status-inactive-bg: var(--status-inactive-bg);
 
   --color-overlay: var(--overlay);
   --color-overlay-strong: var(--overlay-strong);

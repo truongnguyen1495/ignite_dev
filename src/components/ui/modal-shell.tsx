@@ -11,10 +11,19 @@ export function ModalShell({
   children,
   onClose,
   labelledBy,
+  wide = false,
+  scrollable = false,
+  closeOnBackdrop = true,
 }: {
   children: ReactNode;
   onClose: () => void;
   labelledBy?: string;
+  /** For dialogs that hold a table or a multi-step flow (default is a compact form width). */
+  wide?: boolean;
+  /** Cap the height to the screen and scroll inside, for forms taller than a phone. Off by default so existing dialogs keep clipping nothing. */
+  scrollable?: boolean;
+  /** Set false for a multi-step flow where a stray click outside would throw away the admin's choices. */
+  closeOnBackdrop?: boolean;
 }) {
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -25,12 +34,14 @@ export function ModalShell({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4" onClick={closeOnBackdrop ? onClose : undefined}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-lg"
+        className={`w-full rounded-xl border border-border bg-surface p-6 shadow-lg ${wide ? "max-w-3xl" : "max-w-md"} ${
+          scrollable ? "max-h-[calc(100dvh-2rem)] overflow-y-auto" : ""
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
